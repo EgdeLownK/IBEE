@@ -1,0 +1,21 @@
+{
+  "name": "@agora/ui-server",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./src/components/*": "./src/components/*"
+  },
+  "scripts": {
+    "type-check": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "tailwindcss": "^4.0.0",
+    "lucide-static": "^1.0.0",
+    "date-fns": "^4.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.0"
+  }
+}

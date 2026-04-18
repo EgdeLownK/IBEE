@@ -1,0 +1,25 @@
+{
+  "name": "@agora/supabase",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./auth/server": "./src/auth/server.ts",
+    "./auth/browser": "./src/auth/browser.ts",
+    "./auth/middleware": "./src/auth/middleware.ts"
+  },
+  "scripts": {
+    "type-check": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.10.0",
+    "@supabase/supabase-js": "^2.49.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.39",
+    "typescript": "^5.8.0",
+    "vitest": "^4.1.4"
+  }
+}

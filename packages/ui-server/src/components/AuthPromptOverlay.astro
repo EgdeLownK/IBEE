@@ -1,0 +1,69 @@
+---
+interface Props {
+  id: string
+  title: string
+  subtitle?: string
+  loginUrl?: string
+  position?: 'anchor' | 'center'
+}
+
+const { id, title, subtitle, loginUrl, position = 'anchor' } = Astro.props
+const isCenter = position === 'center'
+---
+<div
+  id={id}
+  popover="auto"
+  class:list={['auth-prompt-popover', isCenter && 'auth-prompt-popover--center']}
+  style={!isCenter ? `position-anchor: --${id};` : undefined}
+>
+  <h2 class="text-base font-semibold text-neutral-900">{title}</h2>
+  {subtitle && (
+    <p class="mt-1.5 text-sm text-neutral-400">{subtitle}</p>
+  )}
+  {loginUrl && (
+    <a
+      href={loginUrl}
+      class="mt-5 flex w-full items-center justify-center rounded-lg bg-cta-primary px-4 py-2 text-sm font-medium text-neutral-0 transition duration-200 hover:bg-cta-primary-hover"
+    >
+      Se connecter
+    </a>
+  )}
+</div>
+
+<style>
+  /* Base shared styles */
+  .auth-prompt-popover {
+    width: 320px;
+    padding: 24px;
+    background: var(--color-neutral-0);
+    border: 1px solid var(--color-neutral-200);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    margin: 0;
+    overflow: visible;
+  }
+
+  /* Anchor mode (default) */
+  .auth-prompt-popover:not(.auth-prompt-popover--center) {
+    margin-left: 8px;
+    position-area: right span-bottom;
+    position-try-fallbacks: flip-block, flip-inline;
+  }
+
+  .auth-prompt-popover:not(.auth-prompt-popover--center)::backdrop {
+    background: rgb(28 26 23 / 0.04);
+  }
+
+  /* Center mode */
+  .auth-prompt-popover--center {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    translate: -50% -50%;
+    inset: unset;
+  }
+
+  .auth-prompt-popover--center::backdrop {
+    background: rgb(28 26 23 / 0.25);
+  }
+</style>

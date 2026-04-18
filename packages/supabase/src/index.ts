@@ -1,0 +1,23 @@
+export { createClient } from './client'
+export { getEntityByUserId, getEntityBySlug, getEntityMenuSections, getEntityHomeWidgets, getEntityFaq } from './helpers'
+export { isFollowing, followEntity, unfollowEntity } from './follows'
+export { getPublicationsByEntity, getPublicationById, getPublicationByEntityAndSlug, createPublication, updatePublication, deletePublication } from './publications'
+export { getNotifications, getUnreadCount, markAsRead, markAllAsRead } from './notifications'
+export { getCommentsByPublication, createComment, updateComment, deleteComment } from './comments'
+export type { CommentWithAuthor } from './comments'
+export { getAppointmentTypesByEntity, getAppointmentTypeById, getAppointmentTypeBySlug, createAppointmentType, updateAppointmentType, deleteAppointmentType } from './appointments'
+export type { ServiceContentBlock } from './appointments'
+export { getAvailabilitySchedule, setAvailabilitySchedule, getAvailabilityExceptions, addAvailabilityException, removeAvailabilityException, getAvailableSlots } from './availability'
+export { getBookingsByEntity, getBookingById, createBooking, updateBookingStatus, updateBookingNotes, getBookingStats, getBookingExtendedStats } from './bookings'
+export type { BookingAggregates, BookingExtendedStats } from './bookings'
+export { getClientsByEntity, getClientById, getClientBookings, updateClient, deleteClient } from './clients'
+export type { Client } from './clients'
+export { purgeEntityCache, purgePublicationCache } from './cache'
+export type { Database } from './types'
+
+export const AGORA_SYSTEM_SLUG = '__agora__'
+
+// Auth helpers (aussi accessibles via sub-path imports @agora/supabase/auth/*)
+export { createServerClient } from './auth/server'
+export { createBrowserClient } from './auth/browser'
+export { getSupabaseEnv } from './auth/env'

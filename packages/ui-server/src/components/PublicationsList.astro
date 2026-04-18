@@ -1,0 +1,59 @@
+---
+import PublicationCard from './PublicationCard.astro'
+
+interface Media {
+  id: string
+  url: string
+  alt_text: string | null
+  position: number
+  width: number | null
+  height: number | null
+}
+
+interface Publication {
+  id: string
+  title: string
+  slug: string
+  content: string | null
+  published_at: string | null
+  comments_count: number
+  publication_media: Media[]
+}
+
+interface Props {
+  publications: Publication[]
+  entityDisplayName: string
+  entityAvatarUrl: string | null
+  entitySlug: string
+  entityRole?: string | null
+  isOwner?: boolean
+  dashboardUrl?: string
+}
+
+const { publications, entityDisplayName, entityAvatarUrl, entitySlug, entityRole, isOwner = false, dashboardUrl } = Astro.props
+---
+<section id="news" class="pt-4 pb-4">
+  {publications.length === 0 ? (
+    <p class="text-center text-sm text-neutral-400 py-8">Aucune publication pour le moment.</p>
+  ) : (
+    <div class="divide-y divide-neutral-200">
+      {publications.map((pub) => (
+        <PublicationCard
+          id={pub.id}
+          title={pub.title}
+          content={pub.content}
+          publishedAt={pub.published_at!}
+          entityDisplayName={entityDisplayName}
+          entityAvatarUrl={entityAvatarUrl}
+          entitySlug={entitySlug}
+          entityRole={entityRole}
+          media={pub.publication_media}
+          permalinkUrl={`/${entitySlug}/news/${pub.slug}`}
+          commentsCount={pub.comments_count ?? 0}
+          isOwner={isOwner}
+          dashboardEditUrl={dashboardUrl ? `${dashboardUrl}/dashboard/site/news/${pub.id}/edit` : undefined}
+        />
+      ))}
+    </div>
+  )}
+</section>

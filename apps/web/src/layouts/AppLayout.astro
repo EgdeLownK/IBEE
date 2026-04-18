@@ -1,0 +1,85 @@
+---
+import BaseLayout from './BaseLayout.astro'
+import GlobalSidebar from '@agora/ui-server/src/components/GlobalSidebar.astro'
+import GlobalHeader from '@agora/ui-server/src/components/GlobalHeader.astro'
+import { supabase } from '../lib/supabase/client'
+import { createAuthClient } from '../lib/supabase/auth'
+import { getEntityByUserId, getUnreadCount, getNotifications } from '@agora/supabase'
+
+interface Props {
+  title: string
+  description?: string
+  image?: string
+  url?: string
+  type?: string
+  user: { id: string } | null
+  profileUrl?: string
+  robots?: string
+}
+
+const { user, profileUrl, ...layoutProps } = Astro.props
+
+let currentUserEntity = null
+let unreadCount = 0
+let notifications: Awaited<ReturnType<typeof getNotifications>> = []
+
+if (user) {
+  const authClient = createAuthClient(Astro.request, Astro.cookies)
+
+  const [entity, count, notifs] = await Promise.all([
+    getEntityByUserId(supabase, user.id),
+    getUnreadCount(authClient, user.id),
+    getNotifications(authClient, user.id, { limit: 5 }),
+  ])
+  currentUserEntity = entity
+  unreadCount = count
+  notifications = notifs
+}
+
+const dashboardUrl = import.meta.env.DASHBOARD_URL ?? 'http://localhost:3000'
+const isEmbed = Astro.url.searchParams.get('embed') === 'true'
+---
+<BaseLayout {...layoutProps}>
+  <slot name="head" slot="head" />
+  {isEmbed ? (
+    <div>
+      <slot />
+      <script is:inline>
+        (function() {
+          document.addEventListener('click', function(e) {
+            var a = e.target.closest('a[href]')
+            if (!a) return
+            var href = a.getAttribute('href')
+            if (!href || href.startsWith('http') || href.startsWith('#') || href.startsWith('mailto:')) return
+            if (href.indexOf('embed=true') === -1) {
+              a.setAttribute('href', href + (href.indexOf('?') === -1 ? '?' : '&') + 'embed=true')
+            }
+          })
+        })()
+      </script>
+    </div>
+  ) : (
+    <div class="flex min-h-screen">
+      <GlobalSidebar
+        user={user}
+        currentUserEntity={currentUserEntity}
+        currentPath={Astro.url.pathname}
+        dashboardUrl={dashboardUrl}
+      />
+      <div class="flex flex-1 flex-col min-w-0">
+        <GlobalHeader
+          profileUrl={profileUrl}
+          avatarUrl={currentUserEntity?.avatar_url}
+          displayName={currentUserEntity?.display_name}
+          dashboardUrl={dashboardUrl}
+          isAuthenticated={!!user}
+          unreadCount={unreadCount}
+          notifications={notifications}
+        />
+        <div class="flex-1 overflow-hidden">
+          <slot />
+        </div>
+      </div>
+    </div>
+  )}
+</BaseLayout>

@@ -1,0 +1,97 @@
+---
+import { Newspaper, Calendar, FileText, Package, X } from 'lucide-static'
+
+interface Props {
+  id: string
+  newNewsUrl: string
+}
+
+const { id, newNewsUrl } = Astro.props
+
+const types = [
+  { key: 'news', icon: Newspaper, title: 'News', description: 'Partagez une actualité, une annonce, un moment avec votre communauté', href: newNewsUrl, available: true },
+  { key: 'event', icon: Calendar, title: 'Événement', description: 'Créez un événement avec date, lieu et inscriptions', href: '#', available: false },
+  { key: 'article', icon: FileText, title: 'Article', description: 'Publiez un contenu long-form avec mise en forme riche', href: '#', available: false },
+  { key: 'product', icon: Package, title: 'Produit', description: 'Vendez un produit numérique ou physique', href: '#', available: false },
+]
+---
+<dialog
+  id={id}
+  class="pub-type-dialog"
+  style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); margin: 0; border: none; padding: 32px; background: #FFFFFF; border-radius: 16px; box-shadow: 0 12px 32px rgb(28 26 23 / 0.10); width: min(560px, calc(100vw - 32px)); max-height: 85vh; overflow-y: auto;"
+>
+  <div class="flex items-start justify-between mb-6">
+    <div>
+      <h2 class="text-lg font-semibold text-neutral-900">Que voulez-vous publier ?</h2>
+      <p class="mt-1 text-sm text-neutral-400">Choisissez le type de contenu à créer</p>
+    </div>
+    <button
+      type="button"
+      data-close-dialog={id}
+      class="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-neutral-400 transition hover:bg-neutral-100 hover:text-neutral-600"
+      aria-label="Fermer"
+    >
+      <span class="flex h-5 w-5 items-center justify-center" set:html={X} />
+    </button>
+  </div>
+
+  <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+    {types.map((t) => (
+      t.available ? (
+        <a href={t.href} class="pub-type-card pub-type-card--active">
+          <span class="flex h-7 w-7 items-center justify-center text-accent" set:html={t.icon} />
+          <h3 class="mt-3 text-sm font-medium text-neutral-900">{t.title}</h3>
+          <p class="mt-1 text-xs text-neutral-400 leading-relaxed">{t.description}</p>
+        </a>
+      ) : (
+        <div class="pub-type-card pub-type-card--disabled">
+          <div class="flex items-center justify-between">
+            <span class="flex h-7 w-7 items-center justify-center text-neutral-400" set:html={t.icon} />
+            <span class="rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-400">Bientôt</span>
+          </div>
+          <h3 class="mt-3 text-sm font-medium text-neutral-400">{t.title}</h3>
+          <p class="mt-1 text-xs text-neutral-400/70 leading-relaxed">{t.description}</p>
+        </div>
+      )
+    ))}
+  </div>
+</dialog>
+
+<style>
+  .pub-type-card {
+    display: block;
+    padding: 16px;
+    border: 1px solid var(--color-neutral-200);
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+
+  .pub-type-card--active:hover {
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 1px var(--color-accent);
+  }
+
+  .pub-type-card--disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+</style>
+
+<script define:vars={{ id }}>
+  const dialog = document.getElementById(id)
+  if (dialog) {
+    const closeBtn = dialog.querySelector(`[data-close-dialog="${id}"]`)
+    closeBtn?.addEventListener('click', () => dialog.close())
+
+    dialog.addEventListener('click', (e) => {
+      if (e.target === dialog) dialog.close()
+    })
+  }
+
+  document.querySelectorAll(`[data-open-dialog="${id}"]`).forEach((btn) => {
+    btn.addEventListener('click', () => {
+      document.getElementById(id)?.showModal()
+    })
+  })
+</script>

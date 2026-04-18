@@ -1,0 +1,41 @@
+---
+interface Props {
+  icon: string
+  label: string
+  href: string
+  isActive: boolean
+  available: boolean
+}
+
+const { icon, label, href, isActive, available } = Astro.props
+---
+{available ? (
+  <a
+    href={href}
+    class:list={[
+      'flex items-center gap-3 rounded-md px-3 py-2 text-sm transition',
+      'group-data-[collapsed=true]:justify-center',
+      isActive
+        ? 'bg-background font-medium text-neutral-900'
+        : 'text-neutral-600 hover:bg-neutral-100',
+    ]}
+    title={label}
+  >
+    <span class="flex h-5 w-5 shrink-0 items-center justify-center" set:html={icon} />
+    <span class="group-data-[collapsed=true]:hidden">{label}</span>
+  </a>
+) : (
+  <div
+    class:list={[
+      'flex cursor-not-allowed items-center gap-3 rounded-md px-3 py-2 text-sm text-neutral-400',
+      'group-data-[collapsed=true]:justify-center',
+    ]}
+    title={label}
+  >
+    <span class="flex h-5 w-5 shrink-0 items-center justify-center" set:html={icon} />
+    <span class="flex-1 group-data-[collapsed=true]:hidden">{label}</span>
+    <span class="rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-400 group-data-[collapsed=true]:hidden">
+      Bientôt
+    </span>
+  </div>
+)}

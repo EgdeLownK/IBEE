@@ -1,0 +1,29 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "ignore": [
+    "SecondBrain/**",
+    "*-preview.jsx",
+    "supabase/**"
+  ],
+  "workspaces": {
+    "apps/dashboard": {
+      "entry": [
+        "src/app/**/page.tsx",
+        "src/app/**/layout.tsx",
+        "next.config.{ts,js,mjs}"
+      ],
+      "project": "src/**/*.{ts,tsx}"
+    },
+    "apps/web": {
+      "entry": [
+        "src/pages/**/*.astro",
+        "src/pages/**/*.{ts,tsx}",
+        "astro.config.{ts,mjs}"
+      ],
+      "project": "src/**/*.{ts,tsx}"
+    },
+    "packages/*": {
+      "project": "src/**/*.{ts,tsx}"
+    }
+  }
+}

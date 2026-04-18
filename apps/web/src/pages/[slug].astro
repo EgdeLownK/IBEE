@@ -1,0 +1,87 @@
+---
+import AppLayout from '../layouts/AppLayout.astro'
+import ProfilePage from '@agora/ui-server/src/components/ProfilePage.astro'
+import SchemaJsonLd from '@agora/ui-server/src/components/SchemaJsonLd.astro'
+import { supabase } from '../lib/supabase/client'
+import { createAuthClient } from '../lib/supabase/auth'
+import {
+  getEntityBySlug,
+  getEntityMenuSections,
+  getEntityHomeWidgets,
+  getEntityFaq,
+  getPublicationsByEntity,
+  getAppointmentTypesByEntity,
+  isFollowing as checkIsFollowing
+} from '@agora/supabase'
+
+const { slug } = Astro.params
+if (!slug) return new Response(null, { status: 404 })
+
+// Les slugs système (__*) ne sont pas accessibles via cette route
+if (slug.startsWith('__')) return new Response(null, { status: 404 })
+
+const entity = await getEntityBySlug(supabase, slug)
+if (!entity) return new Response(null, { status: 404 })
+
+const [menuSections, homeWidgets, faq, publications, appointmentTypes] = await Promise.all([
+  getEntityMenuSections(supabase, entity.id),
+  getEntityHomeWidgets(supabase, entity.id),
+  getEntityFaq(supabase, entity.id),
+  getPublicationsByEntity(supabase, entity.id, { publicOnly: true }),
+  getAppointmentTypesByEntity(supabase, entity.id, { activeOnly: true }),
+])
+
+const authClient = createAuthClient(Astro.request, Astro.cookies)
+const { data: { user } } = await authClient.auth.getUser()
+
+const siteUrl = import.meta.env.SITE_URL
+const profileUrl = `${siteUrl}/${entity.slug}`
+const faqItems = faq.isActive ? faq.items : []
+const dashboardUrl = import.meta.env.DASHBOARD_URL ?? 'http://localhost:3000'
+const isOwner = !!(user && entity.user_id && user.id === entity.user_id)
+const isAuthenticated = !!user
+
+let isFollowing = false
+if (user && !isOwner) {
+  isFollowing = await checkIsFollowing(supabase, user.id, entity.id)
+}
+
+Astro.response.headers.set(
+  'Cache-Control',
+  's-maxage=86400, stale-while-revalidate=604800'
+)
+Astro.response.headers.set(
+  'X-Robots-Tag',
+  'index, follow, max-snippet:-1, max-image-preview:large'
+)
+---
+<AppLayout
+  title={`${entity.display_name} — Agora`}
+  description={entity.bio ?? `${entity.display_name} sur Agora`}
+  image={entity.avatar_url ?? undefined}
+  url={profileUrl}
+  type="profile"
+  user={user}
+  profileUrl={profileUrl}
+>
+  <SchemaJsonLd
+    slot="head"
+    entity={entity}
+    siteUrl={siteUrl}
+    faqItems={faqItems}
+  />
+  <main class="md:py-8 sm:py-12">
+    <ProfilePage
+      entity={entity}
+      menuSections={menuSections}
+      homeWidgets={homeWidgets}
+      faqItems={faqItems}
+      publications={publications}
+      appointmentTypes={appointmentTypes}
+      isOwner={isOwner}
+      isAuthenticated={isAuthenticated}
+      isFollowing={isFollowing}
+      dashboardUrl={dashboardUrl}
+    />
+  </main>
+</AppLayout>

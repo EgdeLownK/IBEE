@@ -1,0 +1,223 @@
+---
+import { ChevronLeft, ChevronRight } from 'lucide-static'
+
+interface CarouselMedia {
+  id: string
+  url: string
+  alt_text: string | null
+  width: number | null
+  height: number | null
+}
+
+interface Props {
+  media: CarouselMedia[]
+  publicationId: string
+}
+
+const { media, publicationId } = Astro.props
+
+function getCropStyle(width: number | null, height: number | null): string {
+  if (!width || !height) {
+    return 'aspect-ratio: 3/2; object-fit: cover; max-height: 400px;'
+  }
+  const ratio = width / height
+  if (ratio >= 1.91) {
+    return 'aspect-ratio: 1.91/1; object-fit: cover;'
+  }
+  if (ratio >= 1) {
+    return `aspect-ratio: ${width}/${height}; object-fit: contain; max-height: 400px; background: var(--color-neutral-100);`
+  }
+  if (ratio >= 0.8) {
+    return `aspect-ratio: ${width}/${height}; object-fit: contain; max-height: 400px; background: var(--color-neutral-100);`
+  }
+  return 'aspect-ratio: 4/5; object-fit: cover;'
+}
+
+const sortedMedia = [...media].sort((a, b) => (a as any).position - (b as any).position)
+---
+
+{/* 0 images: nothing */}
+
+{/* 1 image: direct display, no carousel */}
+{sortedMedia.length === 1 && (
+  <div class="overflow-hidden">
+    <img
+      src={sortedMedia[0].url}
+      alt={sortedMedia[0].alt_text ?? ''}
+      class="w-full"
+      style={getCropStyle(sortedMedia[0].width, sortedMedia[0].height)}
+      loading="lazy"
+      width={sortedMedia[0].width ?? 800}
+      height={sortedMedia[0].height ?? 600}
+    />
+  </div>
+)}
+
+{/* 2+ images: carousel */}
+{sortedMedia.length >= 2 && (
+  <div class="group relative overflow-hidden" data-carousel={publicationId} aria-roledescription="carousel" aria-label="Images de la publication">
+    {/* Track */}
+    <div
+      class="carousel-track flex snap-x snap-mandatory overflow-x-auto"
+      data-carousel-track
+      role="group"
+      tabindex="0"
+      aria-live="polite"
+    >
+      {sortedMedia.map((m, i) => (
+        <div
+          class="w-full flex-none snap-center"
+          role="group"
+          aria-roledescription="slide"
+          aria-label={`Image ${i + 1} sur ${sortedMedia.length}`}
+        >
+          <img
+            src={m.url}
+            alt={m.alt_text ?? ''}
+            class="w-full"
+            style={getCropStyle(m.width, m.height)}
+            loading={i === 0 ? 'eager' : 'lazy'}
+            width={m.width ?? 800}
+            height={m.height ?? 600}
+          />
+        </div>
+      ))}
+    </div>
+
+    {/* Counter (top-right) */}
+    <div class="absolute top-3 right-3 rounded-full bg-neutral-900/60 px-2.5 py-1 text-xs font-medium text-white" data-carousel-counter aria-hidden="true">
+      1/{sortedMedia.length}
+    </div>
+
+    {/* Prev arrow */}
+    <button
+      type="button"
+      class="absolute left-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-neutral-0/90 text-neutral-600 shadow-sm opacity-0 transition-opacity group-hover:opacity-100"
+      data-carousel-prev
+      aria-label="Image précédente"
+      hidden
+    >
+      <span class="flex h-4 w-4 items-center justify-center" set:html={ChevronLeft} />
+    </button>
+
+    {/* Next arrow */}
+    <button
+      type="button"
+      class="absolute right-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-neutral-0/90 text-neutral-600 shadow-sm opacity-0 transition-opacity group-hover:opacity-100"
+      data-carousel-next
+      aria-label="Image suivante"
+    >
+      <span class="flex h-4 w-4 items-center justify-center" set:html={ChevronRight} />
+    </button>
+
+    {/* Dots */}
+    <div class="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5" data-carousel-dots aria-hidden="true">
+      {sortedMedia.map((_, i) => (
+        <button
+          type="button"
+          class={`h-1.5 w-1.5 rounded-full transition-colors ${i === 0 ? 'bg-neutral-0' : 'bg-neutral-0/50'}`}
+          data-carousel-dot={i}
+          aria-label={`Aller à l'image ${i + 1}`}
+        />
+      ))}
+    </div>
+
+    {/* Noscript fallback: all images stacked (critical for GEO bots) */}
+    <noscript>
+      <div class="flex flex-col gap-2">
+        {sortedMedia.map((m) => (
+          <img
+            src={m.url}
+            alt={m.alt_text ?? ''}
+            class="w-full"
+            style={getCropStyle(m.width, m.height)}
+            width={m.width ?? 800}
+            height={m.height ?? 600}
+          />
+        ))}
+      </div>
+    </noscript>
+  </div>
+)}
+
+<style>
+  .carousel-track {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+    scroll-behavior: smooth;
+  }
+  .carousel-track::-webkit-scrollbar {
+    display: none;
+  }
+</style>
+
+<script is:inline>
+(function() {
+  function init() {
+    document.querySelectorAll('[data-carousel]').forEach(function(carousel) {
+      var track = carousel.querySelector('[data-carousel-track]')
+      var counter = carousel.querySelector('[data-carousel-counter]')
+      var prevBtn = carousel.querySelector('[data-carousel-prev]')
+      var nextBtn = carousel.querySelector('[data-carousel-next]')
+      var dots = carousel.querySelectorAll('[data-carousel-dot]')
+      var slides = track.children
+      var total = slides.length
+      var current = 0
+
+      function goTo(index) {
+        if (index < 0 || index >= total) return
+        current = index
+        slides[current].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' })
+        update()
+      }
+
+      function update() {
+        if (counter) counter.textContent = (current + 1) + '/' + total
+        if (prevBtn) prevBtn.hidden = current === 0
+        if (nextBtn) nextBtn.hidden = current === total - 1
+        dots.forEach(function(dot, i) {
+          if (i === current) {
+            dot.className = dot.className.replace('bg-neutral-0/50', 'bg-neutral-0')
+          } else {
+            dot.className = dot.className.replace(/\bbg-neutral-0\b(?!\/)/g, 'bg-neutral-0/50')
+          }
+        })
+      }
+
+      var scrollTimeout
+      track.addEventListener('scroll', function() {
+        clearTimeout(scrollTimeout)
+        scrollTimeout = setTimeout(function() {
+          var scrollLeft = track.scrollLeft
+          var slideWidth = track.offsetWidth
+          var newIndex = Math.round(scrollLeft / slideWidth)
+          if (newIndex !== current && newIndex >= 0 && newIndex < total) {
+            current = newIndex
+            update()
+          }
+        }, 50)
+      })
+
+      if (prevBtn) prevBtn.addEventListener('click', function(e) { e.stopPropagation(); goTo(current - 1) })
+      if (nextBtn) nextBtn.addEventListener('click', function(e) { e.stopPropagation(); goTo(current + 1) })
+
+      dots.forEach(function(dot, i) {
+        dot.addEventListener('click', function(e) { e.stopPropagation(); goTo(i) })
+      })
+
+      track.addEventListener('keydown', function(e) {
+        if (e.key === 'ArrowLeft') { e.preventDefault(); goTo(current - 1) }
+        if (e.key === 'ArrowRight') { e.preventDefault(); goTo(current + 1) }
+      })
+
+      update()
+    })
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init)
+  } else {
+    init()
+  }
+})()
+</script>

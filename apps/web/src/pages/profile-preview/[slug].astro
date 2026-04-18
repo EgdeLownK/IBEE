@@ -1,0 +1,66 @@
+---
+import ProfileHero from '@agora/ui-server/src/components/ProfileHero.astro'
+import MenuTabs from '@agora/ui-server/src/components/MenuTabs.astro'
+import PublicationCard from '@agora/ui-server/src/components/PublicationCard.astro'
+import { supabase } from '../../lib/supabase/client'
+import { getEntityBySlug, getEntityMenuSections, getPublicationsByEntity } from '@agora/supabase'
+
+const { slug } = Astro.params
+if (!slug) return new Response('Not found', { status: 404 })
+
+const entity = await getEntityBySlug(supabase, slug)
+if (!entity) return new Response('Not found', { status: 404 })
+
+const [menuSections, publications] = await Promise.all([
+  getEntityMenuSections(supabase, entity.id),
+  getPublicationsByEntity(supabase, entity.id, { limit: 3, publicOnly: true }),
+])
+
+const hasNews = menuSections.some(s => s.type === 'news')
+const newsSections = hasNews ? [{ type: 'news' }] : []
+---
+<div class="mx-auto max-w-[800px] md:py-8">
+  <article class="overflow-hidden bg-neutral-0 md:rounded-2xl md:shadow-md">
+    <ProfileHero
+      displayName={entity.display_name}
+      role={entity.role}
+      location={entity.location}
+      bio={entity.bio}
+      avatarUrl={entity.avatar_url}
+      createdAt={entity.created_at}
+      isOwner={false}
+      previewMode={true}
+      entityId={entity.id}
+      entitySlug={entity.slug}
+      followersCount={entity.followers_count}
+    />
+
+    {newsSections.length > 0 && (
+      <MenuTabs sections={newsSections} activeType="news" />
+    )}
+
+    {hasNews && (
+      <section class="pt-4 pb-4">
+        {publications.length === 0 ? (
+          <p class="text-center text-sm text-neutral-400 py-8">Aucune publication pour le moment.</p>
+        ) : (
+          <div class="divide-y divide-neutral-200">
+            {publications.map((pub) => (
+              <PublicationCard
+                id={pub.id}
+                title={pub.title}
+                content={pub.content}
+                publishedAt={pub.published_at!}
+                entityDisplayName={entity.display_name}
+                entityAvatarUrl={entity.avatar_url}
+                entitySlug={entity.slug}
+                media={pub.publication_media}
+                permalinkUrl={`/${entity.slug}/news/${pub.slug}`}
+              />
+            ))}
+          </div>
+        )}
+      </section>
+    )}
+  </article>
+</div>

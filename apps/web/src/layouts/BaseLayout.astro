@@ -1,0 +1,49 @@
+---
+import '../styles/global.css'
+
+interface Props {
+  title: string
+  description?: string
+  image?: string
+  imageAlt?: string
+  url?: string
+  type?: string
+  robots?: string
+}
+
+const { title, description, image, imageAlt, url, type = 'website', robots = 'index, follow, max-snippet:-1, max-image-preview:large' } = Astro.props
+---
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    {description && <meta name="description" content={description} />}
+    {url && <link rel="canonical" href={url} />}
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="robots" content={robots} />
+
+    {/* Open Graph */}
+    <meta property="og:title" content={title} />
+    {description && <meta property="og:description" content={description} />}
+    {image && <meta property="og:image" content={image} />}
+    {image && <meta property="og:image:alt" content={imageAlt ?? "Agora \u2014 La plateforme des solopreneurs"} />}
+    <meta property="og:type" content={type} />
+    {url && <meta property="og:url" content={url} />}
+    <meta property="og:site_name" content="Agora" />
+    <meta property="og:locale" content="fr_FR" />
+
+    {/* Twitter Cards */}
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    {description && <meta name="twitter:description" content={description} />}
+    {image && <meta name="twitter:image" content={image} />}
+    <meta name="twitter:site" content="@agora" />
+
+    <slot name="head" />
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>

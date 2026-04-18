@@ -1,0 +1,104 @@
+# Dependencies
+node_modules/
+
+# Turborepo
+.turbo/
+
+# Next.js
+.next/
+out/
+
+# Astro
+dist/
+
+# Build
+*.tsbuildinfo
+
+# Environment
+.env
+.env.*
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude Code — contient des références à des variables d'env locales, ne pas committer
+.claude/mcp.json
+.mcp.json
+
+# Claude Code — settings locaux et lock files
+.claude/settings.local.json
+.claude/scheduled_tasks.lock
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# Vercel
+.vercel/
+
+# Cloudflare
+.wrangler/
+
+# Notes personnelles éphémères — ne pas versionner
+_journal/*
+!_journal/README.md
+
+# Obsidian — fichiers de config locale (à n'importe quel niveau)
+**/.obsidian/workspace*
+**/.obsidian/cache
+**/.obsidian/graph.json
+**/.obsidian/community-plugins.json
+**/.obsidian/plugins/
+
+# Smart Connections / Smart Env cache (embeddings Obsidian)
+.smart-env/
+
+# Backups Obsidian
+*.md.backup
+*.md.bak
+
+# Fichiers temporaires éditeur
+.DS_Store
+Thumbs.db
+*~
+
+# === Reset repo 2026-04-18 ===
+
+# Brain Obsidian — local uniquement
+.agora-brain/
+
+# Artefacts Obsidian
+*.base
+
+# Variables d'env (jamais en clair)
+.env
+.env.local
+.env.*.local
+.env.production
+.env.development
+.env.staging
+
+# Config MCP locale (utiliser .mcp.json.example)
+.mcp.json
+
+# Backups
+*.backup
+*.bak
+*-backup-*/
+
+# Exceptions : on veut versionner les templates .env.example
+!apps/*/.env.example
+!packages/*/.env.example
+
+# Documents personnels à la racine
+Profile.pdf

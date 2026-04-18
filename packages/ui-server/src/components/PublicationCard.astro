@@ -1,0 +1,174 @@
+---
+import { Heart, MessageCircle, BarChart3, Share2, Ellipsis } from 'lucide-static'
+import { formatDistanceToNow, format } from 'date-fns'
+import { fr } from 'date-fns/locale'
+import AuthPromptOverlay from './AuthPromptOverlay.astro'
+import PublicationMediaCarousel from './PublicationMediaCarousel.astro'
+
+interface Media {
+  id: string
+  url: string
+  alt_text: string | null
+  position: number
+  width: number | null
+  height: number | null
+}
+
+interface Props {
+  id: string
+  title: string
+  content: string | null
+  publishedAt: string
+  entityDisplayName: string
+  entityAvatarUrl: string | null
+  entitySlug: string
+  entityRole?: string | null
+  media: Media[]
+  permalinkUrl: string
+  commentsCount?: number
+  isOwner?: boolean
+  dashboardEditUrl?: string
+}
+
+const {
+  id, title, content, publishedAt, entityDisplayName, entityAvatarUrl,
+  entitySlug, entityRole, media, permalinkUrl, commentsCount = 0,
+  isOwner = false, dashboardEditUrl,
+} = Astro.props
+
+const relativeDate = formatDistanceToNow(new Date(publishedAt), { addSuffix: true, locale: fr })
+const fullDate = format(new Date(publishedAt), "d MMMM yyyy 'à' HH:mm", { locale: fr })
+const initial = entityDisplayName.charAt(0).toUpperCase()
+
+const TRUNCATE_LENGTH = 120
+const isTruncated = content && content.length > TRUNCATE_LENGTH
+const truncatedContent = isTruncated ? content.slice(0, TRUNCATE_LENGTH) + '…' : content
+
+const sortedMedia = [...media].sort((a, b) => a.position - b.position)
+
+const likeOverlayId = `pub-like-${id}`
+const shareOverlayId = `pub-share-${id}`
+---
+<article data-pub-card data-permalink={permalinkUrl} class="overflow-hidden bg-neutral-0">
+  {/* Zone 1 — Meta: avatar + name + date + role + menu */}
+  <div class="flex items-center gap-3 px-4 pt-4 md:px-6 lg:px-8">
+    <div class="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-accent-soft">
+      {entityAvatarUrl ? (
+        <img src={entityAvatarUrl} alt={entityDisplayName} class="h-full w-full object-cover" />
+      ) : (
+        <span class="text-sm font-semibold text-accent">{initial}</span>
+      )}
+    </div>
+    <div class="min-w-0 flex-1">
+      <div class="flex items-center gap-1.5">
+        <a href={`/${entitySlug}`} class="truncate text-sm font-medium text-neutral-900 hover:text-accent transition-colors">{entityDisplayName}</a>
+        <span class="text-neutral-400">&middot;</span>
+        <time datetime={publishedAt} title={fullDate} class="shrink-0 text-xs text-neutral-400">{relativeDate}</time>
+      </div>
+      {entityRole && (
+        <p class="truncate text-xs text-neutral-400">{entityRole}</p>
+      )}
+    </div>
+    {/* ••• Menu (owner only) */}
+    {isOwner && (
+      <details class="relative" data-pub-menu>
+        <summary class="flex h-8 w-8 items-center justify-center rounded-full text-neutral-400 transition hover:bg-neutral-100 hover:text-neutral-600" aria-label="Actions de la publication">
+          <span class="flex h-4 w-4 items-center justify-center" set:html={Ellipsis} />
+        </summary>
+        <div class="absolute right-0 top-full z-10 mt-1 w-44 rounded-lg border border-neutral-200 bg-neutral-0 py-1 shadow-lg">
+          {dashboardEditUrl && (
+            <a href={dashboardEditUrl} class="block px-4 py-2 text-sm text-neutral-600 hover:bg-neutral-50 transition-colors">Modifier</a>
+          )}
+          <a href={`${dashboardEditUrl ? dashboardEditUrl.replace(/\/edit\/.*/, '') : '#'}`} class="block px-4 py-2 text-sm text-error hover:bg-error/5 transition-colors">Supprimer</a>
+        </div>
+      </details>
+    )}
+  </div>
+
+  {/* Zone 2 — Title */}
+  <div class="px-4 pt-3 pb-4 md:px-6 lg:px-8">
+    <h2 class="text-base font-semibold leading-snug text-neutral-900">
+      <a href={permalinkUrl} class="hover:text-accent transition-colors">{title}</a>
+    </h2>
+  </div>
+
+  {/* Images — Carousel */}
+  {sortedMedia.length > 0 && (
+    <div class="pb-3">
+      <PublicationMediaCarousel media={sortedMedia} publicationId={id} />
+    </div>
+  )}
+
+  {/* Description */}
+  {content && (
+    <div class="px-4 pt-2 pb-3 md:px-6 lg:px-8">
+      {isTruncated ? (
+        <details class="pub-read-more">
+          <summary class="list-none">
+            <span class="pub-read-more-short text-sm leading-relaxed text-neutral-600 whitespace-pre-wrap">{truncatedContent}</span>
+            <span class="pub-read-more-full text-sm leading-relaxed text-neutral-600 whitespace-pre-wrap">{content}</span>
+            <span class="pub-read-more-toggle ml-1 text-sm font-bold text-neutral-900 hover:underline"></span>
+          </summary>
+        </details>
+      ) : (
+        <p class="text-sm leading-relaxed text-neutral-600 whitespace-pre-wrap">{content}</p>
+      )}
+    </div>
+  )}
+
+  {/* Engagement bar */}
+  <div class="flex items-center justify-between border-t border-neutral-100 px-3 py-1.5 md:px-5 lg:px-7">
+    <div class="flex items-center gap-4">
+      <button type="button" popovertarget={likeOverlayId} aria-label="Liker cette publication" class="flex items-center gap-1.5 rounded-md px-2 py-2 text-sm text-neutral-500 transition hover:bg-neutral-50 hover:text-neutral-900">
+        <span class="flex h-4 w-4 items-center justify-center" set:html={Heart} />
+        <span>0</span>
+      </button>
+      <a href={`${permalinkUrl}#comments`} aria-label="Commenter cette publication" class="flex items-center gap-1.5 rounded-md px-2 py-2 text-sm text-neutral-500 transition hover:bg-neutral-50 hover:text-neutral-900">
+        <span class="flex h-4 w-4 items-center justify-center" set:html={MessageCircle} />
+        <span>{commentsCount}</span>
+      </a>
+      <span class="flex items-center gap-1.5 px-2 py-2 text-sm text-neutral-500">
+        <span class="flex h-4 w-4 items-center justify-center" set:html={BarChart3} />
+        <span>0</span>
+      </span>
+    </div>
+    <button type="button" popovertarget={shareOverlayId} aria-label="Partager cette publication" class="flex items-center gap-1.5 rounded-md px-2 py-2 text-sm text-neutral-500 transition hover:bg-neutral-50 hover:text-neutral-900">
+      <span class="flex h-4 w-4 items-center justify-center" set:html={Share2} />
+    </button>
+  </div>
+</article>
+
+{/* Engagement overlays */}
+<AuthPromptOverlay id={likeOverlayId} title="Cette fonctionnalité arrive bientôt" position="center" />
+<AuthPromptOverlay id={shareOverlayId} title="La fonctionnalité de partage arrive bientôt" subtitle="En attendant, copiez le lien de cette publication depuis votre navigateur." position="center" />
+
+<style>
+  .pub-read-more summary::-webkit-details-marker { display: none; }
+  .pub-read-more summary { cursor: pointer; }
+  .pub-read-more .pub-read-more-full { display: none; }
+  .pub-read-more .pub-read-more-toggle::after { content: "Lire la suite"; }
+  .pub-read-more[open] .pub-read-more-short { display: none; }
+  .pub-read-more[open] .pub-read-more-full { display: inline; }
+  .pub-read-more[open] .pub-read-more-toggle::after { content: "Lire moins"; }
+  [data-pub-menu] summary::-webkit-details-marker { display: none; }
+  [data-pub-menu] summary { list-style: none; cursor: pointer; }
+  [data-pub-menu][open] summary { background: var(--color-neutral-100); border-radius: 9999px; }
+</style>
+
+<script>
+  // Card click → permalink (with exceptions for interactive elements)
+  document.querySelectorAll('[data-pub-card]').forEach((card) => {
+    card.style.cursor = 'pointer'
+    card.addEventListener('click', (e) => {
+      const target = e.target
+      if (target.closest('a, button, summary, details[open], [data-carousel-track]')) return
+      const url = card.dataset.permalink
+      if (!url) return
+      if (e.ctrlKey || e.metaKey) {
+        window.open(url, '_blank')
+      } else {
+        window.location.href = url
+      }
+    })
+  })
+</script>

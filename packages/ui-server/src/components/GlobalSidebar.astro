@@ -1,0 +1,162 @@
+---
+import { Globe, Compass, LogIn, X } from 'lucide-static'
+
+interface Props {
+  user: { id: string } | null
+  currentUserEntity: { display_name: string; avatar_url: string | null; slug: string } | null
+  currentPath: string
+  dashboardUrl: string
+}
+
+const { user, currentUserEntity, currentPath, dashboardUrl } = Astro.props
+
+const isConnected = !!user && !!currentUserEntity
+const siteHref = isConnected ? `${dashboardUrl}/dashboard/site` : '/'
+---
+{/* Backdrop mobile */}
+<div
+  class="main-rail-backdrop fixed inset-0 z-40 bg-black/40 opacity-0 pointer-events-none transition-opacity duration-200 md:hidden"
+  onclick="document.documentElement.setAttribute('data-drawer-open','false')"
+/>
+
+{/* Placeholder desktop — reserves space in flex flow for the fixed rail */}
+<div class="hidden md:block w-[60px] shrink-0" />
+
+{/* Rail */}
+<aside
+  data-main-rail
+  class="main-rail fixed top-0 left-0 z-50 flex h-screen w-[280px] -translate-x-full flex-col border-r border-neutral-200 bg-neutral-0 transition-transform duration-200 md:z-40 md:w-[60px] md:translate-x-0 md:transition-[width] md:duration-200"
+>
+  {/* Logo zone */}
+  <div class="flex h-16 items-center justify-between border-b border-neutral-200 px-4">
+    <span class="main-rail-label text-lg font-semibold text-neutral-900">Agora</span>
+    <span class="main-rail-icon mx-auto text-lg font-semibold text-neutral-900 hidden">A</span>
+    <button
+      type="button"
+      onclick="document.documentElement.setAttribute('data-drawer-open','false')"
+      class="flex h-8 w-8 items-center justify-center rounded-md text-neutral-600 transition hover:bg-neutral-100 md:hidden"
+      aria-label="Fermer le menu"
+    >
+      <span class="flex h-5 w-5 items-center justify-center" set:html={X} />
+    </button>
+  </div>
+
+  {/* Navigation */}
+  <nav class="flex-1 p-3" aria-label="Navigation principale">
+    <div class="space-y-1" onclick="if(window.innerWidth < 768) document.documentElement.setAttribute('data-drawer-open','false')">
+      <a
+        href={siteHref}
+        title="Mon site"
+        class:list={[
+          'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+          currentPath.startsWith('/dashboard/site')
+            ? 'bg-neutral-100 text-neutral-900'
+            : 'text-neutral-500 hover:bg-neutral-50 hover:text-neutral-900',
+        ]}
+      >
+        <span class="flex h-5 w-5 shrink-0 items-center justify-center" set:html={Globe} />
+        <span class="main-rail-label truncate">Mon site</span>
+      </a>
+      <a
+        href="/explore"
+        title="Explorer"
+        class:list={[
+          'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+          currentPath === '/explore'
+            ? 'bg-neutral-100 text-neutral-900'
+            : 'text-neutral-500 hover:bg-neutral-50 hover:text-neutral-900',
+        ]}
+      >
+        <span class="flex h-5 w-5 shrink-0 items-center justify-center" set:html={Compass} />
+        <span class="main-rail-label truncate">Explorer</span>
+      </a>
+    </div>
+  </nav>
+
+  {/* Se connecter — non-authenticated only */}
+  {!isConnected && (
+    <div class="px-3 py-6">
+      <a
+        href={`${dashboardUrl}/login`}
+        class="flex w-full items-center justify-center gap-2 rounded-lg bg-cta-primary px-4 py-2.5 text-sm font-medium text-neutral-0 transition duration-200 hover:bg-cta-primary-hover"
+      >
+        <span class="flex h-5 w-5 shrink-0 items-center justify-center" set:html={LogIn} />
+        <span class="main-rail-label">Se connecter</span>
+      </a>
+    </div>
+  )}
+</aside>
+
+<style>
+  /* Desktop: collapsed state (default) — hide labels, show icon */
+  @media (min-width: 768px) {
+    .main-rail .main-rail-label { display: none; }
+    .main-rail .main-rail-icon { display: block; }
+
+    /* Expanded state — show labels, hide icon */
+    .main-rail[data-expanded="true"] {
+      width: 240px;
+      box-shadow: var(--shadow-md);
+    }
+    .main-rail[data-expanded="true"] .main-rail-label { display: inline; }
+    .main-rail[data-expanded="true"] .main-rail-icon { display: none; }
+  }
+
+  /* Mobile: always show labels */
+  @media (max-width: 767px) {
+    .main-rail .main-rail-icon { display: none; }
+  }
+</style>
+
+<script is:inline>
+  // Hover-expand behavior (desktop only)
+  ;(function() {
+    var rail = document.querySelector('[data-main-rail]')
+    if (!rail) return
+
+    var enterTimer = null
+    var leaveTimer = null
+    var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+    rail.addEventListener('mouseenter', function() {
+      if (leaveTimer) { clearTimeout(leaveTimer); leaveTimer = null }
+      var delay = reducedMotion ? 0 : 150
+      enterTimer = setTimeout(function() { rail.setAttribute('data-expanded', 'true') }, delay)
+    })
+
+    rail.addEventListener('mouseleave', function() {
+      if (enterTimer) { clearTimeout(enterTimer); enterTimer = null }
+      var delay = reducedMotion ? 0 : 300
+      leaveTimer = setTimeout(function() { rail.setAttribute('data-expanded', 'false') }, delay)
+    })
+
+    // Focus-within expand
+    rail.addEventListener('focusin', function() {
+      rail.setAttribute('data-expanded', 'true')
+    })
+    rail.addEventListener('focusout', function() {
+      requestAnimationFrame(function() {
+        if (!rail.contains(document.activeElement)) {
+          rail.setAttribute('data-expanded', 'false')
+        }
+      })
+    })
+
+    // Arrow key navigation
+    rail.querySelector('nav')?.addEventListener('keydown', function(e) {
+      if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return
+      e.preventDefault()
+      var items = Array.from(rail.querySelectorAll('nav a[href]'))
+      var idx = items.indexOf(document.activeElement)
+      var next = e.key === 'ArrowDown'
+        ? items[(idx + 1) % items.length]
+        : items[(idx - 1 + items.length) % items.length]
+      if (next) next.focus()
+    })
+
+    // Close drawer on Escape
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') document.documentElement.setAttribute('data-drawer-open', 'false')
+    })
+  })()
+</script>

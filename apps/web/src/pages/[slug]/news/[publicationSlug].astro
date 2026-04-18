@@ -1,0 +1,137 @@
+---
+import { ArrowLeft } from 'lucide-static'
+import AppLayout from '../../../layouts/AppLayout.astro'
+import PublicationCard from '@agora/ui-server/src/components/PublicationCard.astro'
+import CommentsList from '@agora/ui-server/src/components/CommentsList.astro'
+import { supabase } from '../../../lib/supabase/client'
+import { createAuthClient } from '../../../lib/supabase/auth'
+import { getEntityBySlug, getPublicationByEntityAndSlug, getCommentsByPublication } from '@agora/supabase'
+
+const { slug, publicationSlug } = Astro.params
+if (!slug || !publicationSlug) return new Response(null, { status: 404 })
+if (slug.startsWith('__')) return new Response(null, { status: 404 })
+
+const entity = await getEntityBySlug(supabase, slug)
+if (!entity) return new Response(null, { status: 404 })
+
+const publication = await getPublicationByEntityAndSlug(supabase, entity.id, publicationSlug)
+if (!publication) return new Response(null, { status: 404 })
+
+// Verify it's publicly visible
+if (publication.status !== 'published' || !publication.published_at || new Date(publication.published_at) > new Date()) {
+  return new Response(null, { status: 404 })
+}
+
+const authClient = createAuthClient(Astro.request, Astro.cookies)
+const { data: { user } } = await authClient.auth.getUser()
+
+// Fetch comments (public read via RLS — no auth needed)
+const comments = await getCommentsByPublication(supabase, publication.id, { limit: 50 })
+
+const siteUrl = import.meta.env.SITE_URL
+const profileUrl = `${siteUrl}/${entity.slug}`
+const publicationUrl = `${siteUrl}/${entity.slug}/news/${publication.slug}`
+const dashboardUrl = import.meta.env.DASHBOARD_URL ?? 'http://localhost:3000'
+
+const description = publication.content
+  ? publication.content.slice(0, 160) + (publication.content.length > 160 ? '…' : '')
+  : `Publication par ${entity.display_name} sur Agora`
+
+const ogImage = publication.publication_media?.[0]?.url ?? entity.avatar_url ?? undefined
+
+// Schema JSON-LD Comment[] for GEO (AI citation of commenters)
+const commentSchemas = comments.slice(0, 20).map((c) => ({
+  '@type': 'Comment',
+  author: {
+    '@type': 'Person',
+    name: c.author_display_name,
+    url: `${siteUrl}/${c.author_slug}`,
+  },
+  text: c.content,
+  dateCreated: c.created_at,
+}))
+
+const articleSchema = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Article',
+      '@id': `${publicationUrl}#article`,
+      headline: publication.title,
+      ...(publication.content && { articleBody: publication.content }),
+      datePublished: publication.published_at,
+      dateModified: publication.updated_at,
+      url: publicationUrl,
+      commentCount: publication.comments_count ?? 0,
+      ...(commentSchemas.length > 0 && { comment: commentSchemas }),
+      author: {
+        '@type': 'Person',
+        '@id': `${profileUrl}#person`,
+        name: entity.display_name,
+        url: profileUrl,
+        ...(entity.avatar_url && { image: entity.avatar_url }),
+      },
+      publisher: {
+        '@type': 'Organization',
+        name: 'Agora',
+        url: siteUrl,
+      },
+      ...(publication.publication_media?.length > 0 && {
+        image: publication.publication_media.map((m: { url: string }) => m.url),
+      }),
+    },
+  ],
+}
+
+Astro.response.headers.set('Cache-Control', 's-maxage=86400, stale-while-revalidate=604800')
+Astro.response.headers.set('X-Robots-Tag', 'index, follow, max-snippet:-1, max-image-preview:large')
+---
+<AppLayout
+  title={`${publication.title} — ${entity.display_name} — Agora`}
+  description={description}
+  image={ogImage}
+  url={publicationUrl}
+  type="article"
+  user={user}
+  profileUrl={profileUrl}
+>
+  <Fragment slot="head">
+    <script type="application/ld+json" set:html={JSON.stringify(articleSchema)} />
+  </Fragment>
+
+  <main class="py-8 sm:py-12">
+    <div class="mx-auto max-w-[800px] px-4">
+      <a href={`/${entity.slug}`} class="mb-6 inline-flex items-center gap-1.5 text-sm text-neutral-400 transition-colors hover:text-neutral-900">
+        <span class="flex h-4 w-4 items-center justify-center" set:html={ArrowLeft} />
+        Retour au profil de {entity.display_name}
+      </a>
+
+      <PublicationCard
+        id={publication.id}
+        title={publication.title}
+        content={publication.content}
+        publishedAt={publication.published_at!}
+        entityDisplayName={entity.display_name}
+        entityAvatarUrl={entity.avatar_url}
+        entitySlug={entity.slug}
+        entityRole={entity.role}
+        media={publication.publication_media ?? []}
+        permalinkUrl={`/${entity.slug}/news/${publication.slug}`}
+        commentsCount={publication.comments_count ?? 0}
+        isOwner={!!(user && entity.user_id && user.id === entity.user_id)}
+        dashboardEditUrl={`${dashboardUrl}/dashboard/site/news/${publication.id}/edit`}
+      />
+
+      <CommentsList
+        comments={comments}
+        commentsCount={publication.comments_count ?? 0}
+        publicationId={publication.id}
+        entitySlug={entity.slug}
+        publicationSlug={publication.slug}
+        user={user}
+        publicationOwnerUserId={entity.user_id!}
+        dashboardUrl={dashboardUrl}
+      />
+    </div>
+  </main>
+</AppLayout>

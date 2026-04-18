@@ -1,0 +1,78 @@
+---
+interface FaqItem {
+  question: string
+  answer: string
+}
+
+interface Entity {
+  slug: string
+  display_name: string
+  avatar_url: string | null
+  role: string | null
+  bio: string | null
+  location: string | null
+  created_at: string
+  updated_at: string
+}
+
+interface Props {
+  entity: Entity
+  siteUrl: string
+  faqItems?: FaqItem[]
+  url?: string
+}
+
+const { entity, siteUrl, faqItems, url } = Astro.props
+
+const profileUrl = url ?? `${siteUrl}/${entity.slug}`
+
+const person: Record<string, unknown> = {
+  '@type': 'Person',
+  '@id': `${profileUrl}#person`,
+  name: entity.display_name,
+  url: profileUrl,
+}
+
+if (entity.avatar_url) person.image = entity.avatar_url
+if (entity.role) person.jobTitle = entity.role
+if (entity.bio) person.description = entity.bio
+if (entity.location) {
+  person.homeLocation = {
+    '@type': 'Place',
+    name: entity.location,
+  }
+}
+person.sameAs = []
+
+const profilePage = {
+  '@type': 'ProfilePage',
+  '@id': `${profileUrl}#profilepage`,
+  url: profileUrl,
+  mainEntity: { '@id': `${profileUrl}#person` },
+  dateCreated: entity.created_at,
+  dateModified: entity.updated_at,
+}
+
+const graph: Record<string, unknown>[] = [person, profilePage]
+
+if (faqItems && faqItems.length > 0) {
+  graph.push({
+    '@type': 'FAQPage',
+    '@id': `${profileUrl}#faq`,
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: item.answer,
+      },
+    })),
+  })
+}
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': graph,
+}
+---
+<script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />

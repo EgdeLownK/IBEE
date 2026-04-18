@@ -1,0 +1,29 @@
+{
+  "mcpServers": {
+    "supabase": {
+      "command": "cmd",
+      "args": ["/c", "npx", "-y", "@supabase/mcp-server-supabase@latest"],
+      "env": {
+        "SUPABASE_ACCESS_TOKEN": "sbp_xxx_replace_with_your_token",
+        "SUPABASE_PROJECT_REF": "ztblirxxptdwqobmervk"
+      }
+    },
+    "github": {
+      "command": "cmd",
+      "args": ["/c", "npx", "-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "ghp_xxx_replace_with_your_token"
+      }
+    },
+    "playwright": {
+      "command": "cmd",
+      "args": ["/c", "npx", "-y", "@playwright/mcp@latest"]
+    },
+    "obsidian": {
+      "command": "C:\\Users\\KillianLQ\\Agora\\.agora-brain\\.obsidian\\plugins\\mcp-tools\\bin\\mcp-server.exe",
+      "env": {
+        "OBSIDIAN_API_KEY": "your_obsidian_api_key_here"
+      }
+    }
+  }
+}
