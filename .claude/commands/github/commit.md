@@ -21,9 +21,53 @@ git diff --stat
 ```
 
 **Garde-fous bloquants** :
-- Si la branche est `main` → STOP avec message : "❌ Tu es sur main. Crée une branche d'abord : `git switch -c feat/...` (ou fix/, chore/, docs/)"
 - Si aucun fichier modifié ou stagé → STOP avec message : "Rien à commiter."
 - Si la branche existe sur le remote ET a déjà été mergée (vérifier avec `git branch -r --merged origin/main | grep $(git branch --show-current)`) → ALERTE : "⚠️ Cette branche a déjà été mergée. Tu devrais probablement créer une nouvelle branche."
+
+### Étape 1.5 — Auto-création de branche si on est sur `main`
+
+**Si la branche actuelle != `main`** → skip cette étape, continuer le flux normal.
+
+**Si la branche actuelle == `main`** :
+
+- **Working tree clean** : déjà géré par le garde-fou "rien à commiter" ci-dessus.
+- **Working tree avec modifs** : auto-créer une branche, ne pas demander à Killian.
+
+1. Lire le diff pour comprendre la nature des changements :
+
+```bash
+git diff HEAD --stat
+git diff HEAD | head -100
+```
+
+2. Générer un nom de branche court et parlant selon cette logique :
+
+   - **Préfixe** selon la nature dominante des modifs :
+     - Ajout/modif de fonctionnalité produit (`apps/`, `packages/`) → `feat/`
+     - Correction de bug → `fix/`
+     - Docs, rules, `CLAUDE.md`, `README` → `docs/`
+     - Config, CI, MCPs, tooling, `.gitignore`, `.claude/` → `chore/`
+     - Refactoring sans changement fonctionnel → `refactor/`
+     - Tests uniquement → `test/`
+   - **Slug** : 2-5 mots en kebab-case qui décrivent ce qui change.
+   - Exemples : `chore/add-fetch-context7-mcps`, `feat/web-about-page`, `fix/research-web-wikilinks`, `docs/update-claude-md`.
+
+3. Créer la branche et basculer dessus :
+
+```bash
+git switch -c <nom-genere>
+```
+
+4. Vérifier que la bascule a réussi : `git branch --show-current` doit retourner le nouveau nom.
+
+5. Mémoriser cette information pour l'afficher dans le rapport final (Étape 6) :
+
+```
+🌿 Branche créée automatiquement : <nom-genere>
+   (auto-création car modifs détectées sur main)
+```
+
+6. **Continuer le flux normal** (validation fichiers, type-check, test, génération du message, commit).
 
 ### Étape 2 — Validation rapide des fichiers
 
@@ -110,6 +154,10 @@ git commit -m "<message généré>"
 Affiche :
 
 ```
+[si auto-création effectuée à l'Étape 1.5]
+🌿 Branche créée automatiquement : <nom-genere>
+   (auto-création car modifs détectées sur main)
+
 ✅ Commit créé : <hash court>
    Message : <message>
    Branche : <nom>
@@ -122,7 +170,7 @@ Prochaine action :
 
 ## Garde-fous absolus
 
-- JAMAIS commit sur `main`
+- JAMAIS commit directement sur `main` — si on y est avec des modifs, auto-créer une branche (Étape 1.5) avant de commit
 - JAMAIS skip les vérifications sans `--quick` explicite
 - JAMAIS amend ou rebase automatiquement
 - Si type-check ou test échoue : STOP, ne jamais commit
