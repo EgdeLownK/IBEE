@@ -66,6 +66,17 @@ Voir `.claude/commands/github/` pour le détail.
 
 **Killian merge manuellement sur GitHub** après vérification de la CI verte.
 
+### 6. Commandes de recherche
+
+Pour toute recherche approfondie (web ou projet), utiliser :
+- `/research:web "<question>" [--standard] [--with-hn] [--type=fact|opinion|comparison|exploration]` — recherche internet, défaut approfondi + exploration
+
+Sortie systématique dans `.agora-brain/research/web/<DATE>_<TIME>_<SLUG>/` avec `_SUMMARY.md`, `_SOURCES.md`, `_METHODOLOGY.md`, et `raw/`.
+
+Voir `.claude/commands/research/` pour le détail des 11 phases et 7 principes.
+
+**NB** : `/research:project` n'est pas encore implémentée (prochaine itération).
+
 ## Brain
 
 Le brain (`.agora-brain/`) est la mémoire long terme du projet.
