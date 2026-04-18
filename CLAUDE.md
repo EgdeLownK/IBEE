@@ -53,26 +53,17 @@ Dès qu'une tâche est complexe (multi-fichiers, multi-packages, recherche + imp
 ### 3. Auto-amélioration
 Chaque erreur significative (bug introduit, mauvaise approche, oubli de vérification) est loguée dans la mémoire de session. La session suivante ne reproduira pas la même erreur. Les erreurs techniques runtime vont dans `pieges-claude-code.md` (technique/). Les erreurs de processus vont dans la mémoire Claude Code.
 
-### 4. Vérifier après chaque tâche
-Après chaque tâche d'implémentation, exécuter la chaîne de vérification :
-1. `pnpm type-check` — zéro erreurs TypeScript
-2. `pnpm build` — build complet passe
-3. Tests unitaires si existants
-Si un check échoue, diagnostiquer et corriger avant de présenter le résultat à Killian.
-
-### 5. Fix autonome des bugs
+### 4. Fix autonome des bugs
 Quand un test ou un build échoue, lire les logs, diagnostiquer, et corriger automatiquement. Si 2 tentatives échouent : stop, lister les hypothèses testées, escalader à Killian. Jamais plus de 2 tentatives aveugles.
 
-### 6. Workflow PR
-Toute modification passe par une Pull Request sur `main` :
-1. Créer une branche depuis `main` : `feat/description`, `fix/description`, ou `chore/description`
-2. Committer les changements sur la branche (après revue Killian des fichiers modifiés)
-3. Pousser la branche et créer une PR via `gh pr create`
-4. CI (GitHub Actions) exécute type-check + build + tests automatiquement
-5. Killian demande `/code-review` pour une revue technique de la PR
-6. Killian valide et merge sur GitHub
+### 5. Workflow Git/GitHub
+Toute opération de commit/push/PR passe **exclusivement** par les slash commands :
+- `/commit` — commit local avec vérifs (type-check + test)
+- `/push` — push + création PR + code-review
 
-Exception : fix d'urgence d'un seul fichier peut aller directement sur `main` si Killian le demande.
+Voir `.claude/commands/commit.md` et `.claude/commands/push.md` pour le détail.
+
+**Killian merge manuellement sur GitHub** après vérification de la CI verte.
 
 ## Brain
 

@@ -20,7 +20,6 @@ Court sur le "quoi". Complet sur le "pourquoi" quand il y a un trade-off — dé
 
 ## Scope
 "Go" = scope validé + bugs triviaux croisés en passant. Tout ajout hors scope → stop, signaler, attendre.
-Les bugs détectés par la chaîne de vérification (typecheck, build, tests) sont corrigés automatiquement dans la limite de 2 tentatives.
 
 ## Challenge produit
 Si une demande contredit le brain (piliers, decision-log, marché), signaler une fois avec argument complet. Puis exécuter.
