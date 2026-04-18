@@ -57,11 +57,12 @@ Chaque erreur significative (bug introduit, mauvaise approche, oubli de vérific
 Quand un test ou un build échoue, lire les logs, diagnostiquer, et corriger automatiquement. Si 2 tentatives échouent : stop, lister les hypothèses testées, escalader à Killian. Jamais plus de 2 tentatives aveugles.
 
 ### 5. Workflow Git/GitHub
-Toute opération de commit/push/PR passe **exclusivement** par les slash commands :
-- `/commit` — commit local avec vérifs (type-check + test)
-- `/push` — push + création PR + code-review
+Toute opération de commit/push/PR/sync passe **exclusivement** par les slash commands :
+- `/github:commit` — commit local avec vérifs (type-check + test)
+- `/github:push` — push + création PR + code-review
+- `/github:sync` — retour propre sur main après merge d'une PR
 
-Voir `.claude/commands/commit.md` et `.claude/commands/push.md` pour le détail.
+Voir `.claude/commands/github/` pour le détail.
 
 **Killian merge manuellement sur GitHub** après vérification de la CI verte.
 

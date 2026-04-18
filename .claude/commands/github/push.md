@@ -87,11 +87,15 @@ gh pr create --base main --head <branche> --title "<titre>" --body "<body>"
 
 Note l'URL retournée.
 
-### Étape 6 — Lancement de /code-review
+### Étape 6 — Lancement de la code-review
 
-Lance `/code-review` sur la PR. Affiche le résultat synthétique (les findings principaux, pas le rapport complet).
+Invoque la skill `code-review:code-review` (nom exact, format `plugin:skill`) sur la PR fraîchement créée.
 
-Si `/code-review` n'est pas disponible (plugin non installé), signale-le et continue.
+Si le plugin a un filtre d'éligibilité interne (par exemple un agent Haiku qui décide si la PR mérite une review), respecte sa décision : si la review est skippée, signale-le clairement dans le rapport final (`⏭ Code review skippée par le plugin — raison : <raison renvoyée>`).
+
+Si le plugin n'est pas disponible (pas installé / pas dans la liste des skills), signale-le et continue sans bloquer.
+
+Affiche le résultat synthétique : findings principaux et recommandations (pas le rapport intégral).
 
 ### Étape 7 — Rapport final
 
