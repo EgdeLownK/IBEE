@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { getEntityByUserId, getClientsByEntity } from '@agora/supabase'
+import { getEntityByUserId, getClientsByEntity } from '@ibee/supabase'
 import { ClientsList } from './ClientsList'
 
 export default async function ClientsPage() {

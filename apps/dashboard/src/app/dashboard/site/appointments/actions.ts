@@ -13,7 +13,7 @@ import {
   removeAvailabilityException,
   updateBookingStatus,
   purgeEntityCache,
-} from '@agora/supabase'
+} from '@ibee/supabase'
 
 const siteUrl = process.env.NEXT_PUBLIC_WEB_URL ?? 'http://localhost:4321'
 

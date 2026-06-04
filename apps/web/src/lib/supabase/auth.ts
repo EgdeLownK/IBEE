@@ -1,4 +1,4 @@
-import { createServerClient } from '@agora/supabase/auth/server'
+import { createServerClient } from '@ibee/supabase/auth/server'
 import type { AstroCookies } from 'astro'
 
 export function createAuthClient(request: Request, cookies: AstroCookies) {

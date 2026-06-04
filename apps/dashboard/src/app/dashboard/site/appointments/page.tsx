@@ -7,7 +7,7 @@ import {
   getAvailabilitySchedule,
   getAvailabilityExceptions,
   getBookingExtendedStats,
-} from '@agora/supabase'
+} from '@ibee/supabase'
 import { AvailabilityEditor } from './availability/AvailabilityEditor'
 import { AppointmentsHome } from './AppointmentsHome'
 

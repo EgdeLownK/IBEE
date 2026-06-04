@@ -1,6 +1,6 @@
 'use client'
 
-import { Input, UploadAvatar } from '@agora/ui-react'
+import { Input, UploadAvatar } from '@ibee/ui-react'
 
 type IdentityCardProps = {
   displayName: string

@@ -1,6 +1,6 @@
 'use client'
 
-import { Textarea } from '@agora/ui-react'
+import { Textarea } from '@ibee/ui-react'
 
 type PresentationCardProps = {
   bio: string

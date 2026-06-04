@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro'
 import { supabase } from '../../../lib/supabase/client'
-import { getAvailableSlots } from '@agora/supabase'
+import { getAvailableSlots } from '@ibee/supabase'
 
 export const GET: APIRoute = async ({ url }) => {
   const entityId = url.searchParams.get('entityId')

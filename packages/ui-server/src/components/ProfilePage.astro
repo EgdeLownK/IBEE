@@ -5,6 +5,11 @@ import MenuTabs from './MenuTabs.astro'
 import ProfileEmptyState from './ProfileEmptyState.astro'
 import PublicationsList from './PublicationsList.astro'
 import AppointmentBooking from './AppointmentBooking.astro'
+import SectionHeader from './SectionHeader.astro'
+import WidgetCard from './WidgetCard.astro'
+import BannerWelcomeWidget from './BannerWelcomeWidget.astro'
+import ShopWidget from './ShopWidget.astro'
+import ProductCreateOverlay from './ProductCreateOverlay.astro'
 
 interface Media {
   id: string
@@ -34,21 +39,28 @@ interface Props {
     slug: string
     followers_count: number
   }
-  menuSections: { id: string; type: string; position: number }[]
+  menuSections: { id: string; type: string; position: number; is_configured?: boolean | null }[]
   homeWidgets?: unknown[]
   faqItems?: unknown[]
   publications?: Publication[]
   appointmentTypes?: { id: string; title: string; slug: string; description: string | null; duration_minutes: number; location_type: string; price_cents: number | null; currency: string }[]
+  shopProducts?: { id: string; title: string; slug: string; description?: string | null; price_cents?: number | null; sale_price_cents?: number | null; sale_ends_at?: string | null; currency?: string; image_url?: string | null; status?: string | null }[]
+  productCategories?: { id: string; name: string }[]
   isOwner?: boolean
   isAuthenticated?: boolean
   isFollowing?: boolean
   dashboardUrl?: string
 }
 
-const { entity, menuSections, isOwner, isAuthenticated, isFollowing, dashboardUrl, publications = [], appointmentTypes = [] } = Astro.props
+const { entity, menuSections, isOwner, isAuthenticated, isFollowing, dashboardUrl, publications = [], appointmentTypes = [], shopProducts = [], productCategories = [], faqItems = [] } = Astro.props
+const hasFaqItems = Array.isArray(faqItems) && faqItems.length > 0
 
 const hasNewsSection = menuSections.some(s => s.type === 'news')
 const hasAppointmentsSection = menuSections.some(s => s.type === 'appointments')
+const hasShopSection = menuSections.some(s => s.type === 'shop')
+// La section "home" est implicite : toujours présente comme tab par défaut, même
+// si elle n'est pas dans entity_menu_sections (les widgets viennent de entity_home_widgets)
+const defaultActiveType = 'home'
 ---
 <ProfileCard>
   <ProfileHero
@@ -66,9 +78,26 @@ const hasAppointmentsSection = menuSections.some(s => s.type === 'appointments')
     followersCount={entity.followers_count}
     dashboardUrl={dashboardUrl}
   />
-  {menuSections.length > 0
-    ? <MenuTabs sections={menuSections} activeType={hasNewsSection ? 'news' : menuSections[0]?.type} />
-    : <ProfileEmptyState />}
+  {(menuSections.length > 0 || isOwner) ? (
+    <MenuTabs sections={menuSections} activeType={defaultActiveType} isOwner={isOwner} hasFaq={hasFaqItems} />
+  ) : <ProfileEmptyState />}
+
+  {/* Section Accueil — widgets de la home */}
+  <div data-section="home" class="profile-section">
+    <SectionHeader title="Accueil" sectionType="home" isOwner={isOwner} isVisible={true} />
+    <div class="profile-section__widgets">
+      <WidgetCard title="Bannière" isOwner={isOwner}>
+        <BannerWelcomeWidget
+          title={`Bienvenue chez ${entity.display_name}`}
+          description={entity.bio ?? 'Solopreneur sur IBEE.'}
+          ctaLabel="Réserver"
+          ctaHref={`/${entity.slug}#appointments`}
+          secondaryLabel="Voir le profil"
+          secondaryHref={`/${entity.slug}`}
+        />
+      </WidgetCard>
+    </div>
+  </div>
 
   {/* Section News */}
   {hasNewsSection && (
@@ -96,6 +125,20 @@ const hasAppointmentsSection = menuSections.some(s => s.type === 'appointments')
     </div>
   )}
 
+  {/* Section Shop — aperçu (max 6) ; le tab "Shop" navigue vers /[slug]/shop */}
+  {hasShopSection && (
+    <div data-section="shop" class="profile-section">
+      <ShopWidget products={shopProducts} isOwner={isOwner} entitySlug={entity.slug} />
+      <div class="profile-section__shop-more">
+        <a href={`/${entity.slug}/shop`} class="profile-section__shop-link">
+          Voir toute la boutique
+        </a>
+      </div>
+    </div>
+  )}
+
+  {isOwner && <ProductCreateOverlay entitySlug={entity.slug} categories={productCategories} />}
+
   {/* Tab switching — affiche uniquement la section active */}
   <script is:inline>
     (function() {
@@ -108,22 +151,22 @@ const hasAppointmentsSection = menuSections.some(s => s.type === 'appointments')
           s.style.display = s.dataset.section === type ? '' : 'none';
         });
         tabs.forEach(function(a) {
-          var t = a.getAttribute('href').slice(1);
-          var cl = a.classList;
+          var t = a.dataset.sectionTab || a.getAttribute('href').slice(1);
           if (t === type) {
-            cl.remove('border-transparent', 'text-neutral-400');
-            cl.add('border-accent', 'text-accent');
+            a.classList.add('is-active');
           } else {
-            cl.remove('border-accent', 'text-accent');
-            cl.add('border-transparent', 'text-neutral-400');
+            a.classList.remove('is-active');
           }
         });
       }
 
       tabs.forEach(function(a) {
+        // Les tabs sans data-section-tab naviguent vers une page dédiée (ex: shop) :
+        // on laisse le navigateur suivre le lien normalement.
+        if (!a.dataset.sectionTab) return;
         a.addEventListener('click', function(e) {
           e.preventDefault();
-          var type = this.getAttribute('href').slice(1);
+          var type = this.dataset.sectionTab;
           show(type);
           history.replaceState(null, '', '#' + type);
         });
@@ -143,3 +186,36 @@ const hasAppointmentsSection = menuSections.some(s => s.type === 'appointments')
     </style>
   </noscript>
 </ProfileCard>
+
+<style>
+  .profile-section {
+    padding: 0 27px 24px;
+  }
+  .profile-section__widgets {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .profile-section__shop-more {
+    display: flex;
+    justify-content: center;
+    padding: 4px 27px 0;
+  }
+  .profile-section__shop-link {
+    display: inline-flex;
+    align-items: center;
+    height: 38px;
+    padding: 0 20px;
+    border-radius: 999px;
+    border: 1px solid var(--color-border);
+    color: var(--color-neutral-700);
+    font-size: 13px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: border-color 120ms, color 120ms;
+  }
+  .profile-section__shop-link:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+  }
+</style>

@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { getEntityByUserId } from '@agora/supabase'
+import { getEntityByUserId } from '@ibee/supabase'
 import { NewsEditor } from './NewsEditor'
 
 export default async function NewNewsPage() {

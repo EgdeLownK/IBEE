@@ -10,7 +10,7 @@ export default defineConfig({
   vite: {
     plugins: [tailwindcss()],
     ssr: {
-      noExternal: ['@agora/supabase', '@supabase/ssr']
+      noExternal: ['@ibee/supabase', '@supabase/ssr']
     }
   }
 });

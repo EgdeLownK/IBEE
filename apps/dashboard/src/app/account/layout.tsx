@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { getEntityByUserId, getUnreadCount } from '@agora/supabase'
+import { getEntityByUserId, getUnreadCount } from '@ibee/supabase'
 import { MainRail } from '@/components/dashboard/MainRail'
 import { GlobalHeader } from '@/components/dashboard/GlobalHeader'
 

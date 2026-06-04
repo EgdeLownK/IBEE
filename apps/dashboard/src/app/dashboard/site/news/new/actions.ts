@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { getEntityByUserId, createPublication, updatePublication, getPublicationById, purgeEntityCache, purgePublicationCache } from '@agora/supabase'
+import { getEntityByUserId, createPublication, updatePublication, getPublicationById, purgeEntityCache, purgePublicationCache } from '@ibee/supabase'
 
 const siteUrl = process.env.NEXT_PUBLIC_WEB_URL ?? 'http://localhost:4321'
 

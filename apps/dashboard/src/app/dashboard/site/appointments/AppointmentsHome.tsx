@@ -3,7 +3,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { toast } from 'sonner'
 import { CalendarClock, Download, Plus } from 'lucide-react'
-import type { BookingExtendedStats } from '@agora/supabase'
+import type { BookingExtendedStats } from '@ibee/supabase'
 import { AppointmentsChartHero } from './components/AppointmentsChartHero'
 import { AppointmentsRecapSidebar } from './components/AppointmentsRecapSidebar'
 import { ServicesGrid } from './components/ServicesGrid'

@@ -1,17 +1,77 @@
 ---
-import { Globe, Compass, LogIn, X } from 'lucide-static'
+import {
+  PanelsTopLeft,
+  ChartColumnBig,
+  Folder,
+  Users,
+  Plug,
+  X,
+  ChevronDown,
+  LogIn,
+} from 'lucide-static'
+
+interface SidebarItem {
+  href: string
+  label: string
+  icon: string
+  match?: (path: string) => boolean
+}
 
 interface Props {
   user: { id: string } | null
   currentUserEntity: { display_name: string; avatar_url: string | null; slug: string } | null
   currentPath: string
   dashboardUrl: string
+  projectLabel?: string | null
 }
 
-const { user, currentUserEntity, currentPath, dashboardUrl } = Astro.props
-
+const { user, currentUserEntity, currentPath, dashboardUrl, projectLabel } = Astro.props
 const isConnected = !!user && !!currentUserEntity
-const siteHref = isConnected ? `${dashboardUrl}/dashboard/site` : '/'
+
+// Profile web : 3 états selon l'utilisateur
+//  - pas connecté → login dashboard
+//  - connecté sans entity → dashboard site (créer/configurer son profile)
+//  - connecté avec entity → son profile public
+const profileWebHref = !user
+  ? `${dashboardUrl}/login`
+  : currentUserEntity
+    ? `/${currentUserEntity.slug}`
+    : `${dashboardUrl}/dashboard/site`
+
+const espaceItems: SidebarItem[] = [
+  {
+    href: profileWebHref,
+    label: 'Profile web',
+    icon: PanelsTopLeft,
+    match: (p) => !!currentUserEntity && p === `/${currentUserEntity.slug}`,
+  },
+  {
+    href: '#analyse',
+    label: 'Analyse',
+    icon: ChartColumnBig,
+  },
+]
+
+const outilsItems: SidebarItem[] = [
+  {
+    href: '#drive',
+    label: 'Drive',
+    icon: Folder,
+  },
+  {
+    href: '#equipe',
+    label: 'Équipe',
+    icon: Users,
+  },
+  {
+    href: '#connecteur',
+    label: 'Connecteur',
+    icon: Plug,
+  },
+]
+
+const isActive = (item: SidebarItem) => (item.match ? item.match(currentPath) : currentPath === item.href)
+const projectDisplay = projectLabel ?? (isConnected && currentUserEntity ? currentUserEntity.display_name : 'Projet 1')
 ---
 {/* Backdrop mobile */}
 <div
@@ -20,21 +80,24 @@ const siteHref = isConnected ? `${dashboardUrl}/dashboard/site` : '/'
 />
 
 {/* Placeholder desktop — reserves space in flex flow for the fixed rail */}
-<div class="hidden md:block w-[60px] shrink-0" />
+<div class="hidden md:block w-[260px] shrink-0" aria-hidden="true" />
 
-{/* Rail */}
+{/* Sidebar */}
 <aside
   data-main-rail
-  class="main-rail fixed top-0 left-0 z-50 flex h-screen w-[280px] -translate-x-full flex-col border-r border-neutral-200 bg-neutral-0 transition-transform duration-200 md:z-40 md:w-[60px] md:translate-x-0 md:transition-[width] md:duration-200"
+  class="main-rail fixed top-0 left-0 z-50 flex h-screen w-[280px] -translate-x-full flex-col transition-transform duration-200 md:z-40 md:w-[260px] md:translate-x-0"
+  aria-label="Navigation principale"
 >
-  {/* Logo zone */}
-  <div class="flex h-16 items-center justify-between border-b border-neutral-200 px-4">
-    <span class="main-rail-label text-lg font-semibold text-neutral-900">Agora</span>
-    <span class="main-rail-icon mx-auto text-lg font-semibold text-neutral-900 hidden">A</span>
+  {/* Header zone — Projet selector */}
+  <div class="flex h-[65px] shrink-0 items-center justify-between px-[25px]">
+    <button type="button" class="app-header__project">
+      <span class="truncate max-w-[180px]">{projectDisplay}</span>
+      <span class="flex h-4 w-4 items-center justify-center text-neutral-500" set:html={ChevronDown} />
+    </button>
     <button
       type="button"
       onclick="document.documentElement.setAttribute('data-drawer-open','false')"
-      class="flex h-8 w-8 items-center justify-center rounded-md text-neutral-600 transition hover:bg-neutral-100 md:hidden"
+      class="flex h-8 w-8 items-center justify-center rounded-md text-neutral-600 transition hover:bg-panel md:hidden"
       aria-label="Fermer le menu"
     >
       <span class="flex h-5 w-5 items-center justify-center" set:html={X} />
@@ -42,121 +105,129 @@ const siteHref = isConnected ? `${dashboardUrl}/dashboard/site` : '/'
   </div>
 
   {/* Navigation */}
-  <nav class="flex-1 p-3" aria-label="Navigation principale">
-    <div class="space-y-1" onclick="if(window.innerWidth < 768) document.documentElement.setAttribute('data-drawer-open','false')">
-      <a
-        href={siteHref}
-        title="Mon site"
-        class:list={[
-          'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
-          currentPath.startsWith('/dashboard/site')
-            ? 'bg-neutral-100 text-neutral-900'
-            : 'text-neutral-500 hover:bg-neutral-50 hover:text-neutral-900',
-        ]}
-      >
-        <span class="flex h-5 w-5 shrink-0 items-center justify-center" set:html={Globe} />
-        <span class="main-rail-label truncate">Mon site</span>
-      </a>
-      <a
-        href="/explore"
-        title="Explorer"
-        class:list={[
-          'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
-          currentPath === '/explore'
-            ? 'bg-neutral-100 text-neutral-900'
-            : 'text-neutral-500 hover:bg-neutral-50 hover:text-neutral-900',
-        ]}
-      >
-        <span class="flex h-5 w-5 shrink-0 items-center justify-center" set:html={Compass} />
-        <span class="main-rail-label truncate">Explorer</span>
-      </a>
+  <nav class="sidebar-nav flex-1 overflow-y-auto" onclick="if(window.innerWidth < 768) document.documentElement.setAttribute('data-drawer-open','false')">
+    {/* Section "Espace" */}
+    <div class="sidebar__section">
+      <p class="sidebar__label">Espace</p>
+      {espaceItems.map((item) => (
+        <a
+          href={item.href}
+          class:list={['sidebar__item', isActive(item) && 'is-active']}
+        >
+          <span class="flex h-5 w-5 shrink-0 items-center justify-center" set:html={item.icon} />
+          <span class="truncate">{item.label}</span>
+        </a>
+      ))}
+    </div>
+
+    {/* Section "Outils" */}
+    <div class="sidebar__section">
+      <p class="sidebar__label">Outils</p>
+      {outilsItems.map((item) => (
+        <a
+          href={item.href}
+          class:list={['sidebar__item', isActive(item) && 'is-active']}
+        >
+          <span class="flex h-5 w-5 shrink-0 items-center justify-center" set:html={item.icon} />
+          <span class="truncate">{item.label}</span>
+        </a>
+      ))}
     </div>
   </nav>
 
-  {/* Se connecter — non-authenticated only */}
+  {/* Footer — Login si non connecté */}
   {!isConnected && (
-    <div class="px-3 py-6">
+    <div class="shrink-0 p-[22px]">
       <a
         href={`${dashboardUrl}/login`}
-        class="flex w-full items-center justify-center gap-2 rounded-lg bg-cta-primary px-4 py-2.5 text-sm font-medium text-neutral-0 transition duration-200 hover:bg-cta-primary-hover"
+        class="flex w-full items-center justify-center gap-2 rounded-full bg-cta-primary px-4 py-2.5 text-sm font-medium text-white transition duration-200 hover:bg-accent"
       >
         <span class="flex h-5 w-5 shrink-0 items-center justify-center" set:html={LogIn} />
-        <span class="main-rail-label">Se connecter</span>
+        <span>Se connecter</span>
       </a>
     </div>
   )}
 </aside>
 
 <style>
-  /* Desktop: collapsed state (default) — hide labels, show icon */
-  @media (min-width: 768px) {
-    .main-rail .main-rail-label { display: none; }
-    .main-rail .main-rail-icon { display: block; }
-
-    /* Expanded state — show labels, hide icon */
-    .main-rail[data-expanded="true"] {
-      width: 240px;
-      box-shadow: var(--shadow-md);
-    }
-    .main-rail[data-expanded="true"] .main-rail-label { display: inline; }
-    .main-rail[data-expanded="true"] .main-rail-icon { display: none; }
+  .main-rail {
+    background: var(--color-surface);
+    box-shadow: var(--shadow-card);
   }
 
-  /* Mobile: always show labels */
-  @media (max-width: 767px) {
-    .main-rail .main-rail-icon { display: none; }
+  .sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    padding: 22px 25px;
+  }
+
+  .sidebar__section {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .sidebar__label {
+    font-size: 14px;
+    color: var(--color-neutral-500);
+    margin: 0;
+  }
+
+  .sidebar__item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    height: 32px;
+    border-radius: 8px;
+    padding: 0 8px;
+    margin: 0 -8px;
+    color: var(--color-neutral-900);
+    font-family: var(--font-display);
+    font-size: 16px;
+    cursor: pointer;
+    transition: background 120ms ease, color 120ms ease;
+    position: relative;
+    text-decoration: none;
+  }
+
+  .sidebar__item:hover {
+    background: var(--color-panel);
+  }
+
+  .sidebar__item.is-active {
+    color: var(--color-accent);
+    background: var(--color-accent-tint);
+  }
+
+  .sidebar__item.is-active::before {
+    content: "";
+    position: absolute;
+    left: -25px;
+    top: 6px;
+    bottom: 6px;
+    width: 3px;
+    background: var(--color-accent);
+    border-radius: 0 3px 3px 0;
+  }
+
+  .app-header__project {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--color-neutral-900);
+    cursor: pointer;
+    background: transparent;
+    border: none;
+    padding: 0;
   }
 </style>
 
 <script is:inline>
-  // Hover-expand behavior (desktop only)
-  ;(function() {
-    var rail = document.querySelector('[data-main-rail]')
-    if (!rail) return
-
-    var enterTimer = null
-    var leaveTimer = null
-    var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-
-    rail.addEventListener('mouseenter', function() {
-      if (leaveTimer) { clearTimeout(leaveTimer); leaveTimer = null }
-      var delay = reducedMotion ? 0 : 150
-      enterTimer = setTimeout(function() { rail.setAttribute('data-expanded', 'true') }, delay)
-    })
-
-    rail.addEventListener('mouseleave', function() {
-      if (enterTimer) { clearTimeout(enterTimer); enterTimer = null }
-      var delay = reducedMotion ? 0 : 300
-      leaveTimer = setTimeout(function() { rail.setAttribute('data-expanded', 'false') }, delay)
-    })
-
-    // Focus-within expand
-    rail.addEventListener('focusin', function() {
-      rail.setAttribute('data-expanded', 'true')
-    })
-    rail.addEventListener('focusout', function() {
-      requestAnimationFrame(function() {
-        if (!rail.contains(document.activeElement)) {
-          rail.setAttribute('data-expanded', 'false')
-        }
-      })
-    })
-
-    // Arrow key navigation
-    rail.querySelector('nav')?.addEventListener('keydown', function(e) {
-      if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return
-      e.preventDefault()
-      var items = Array.from(rail.querySelectorAll('nav a[href]'))
-      var idx = items.indexOf(document.activeElement)
-      var next = e.key === 'ArrowDown'
-        ? items[(idx + 1) % items.length]
-        : items[(idx - 1 + items.length) % items.length]
-      if (next) next.focus()
-    })
-
-    // Close drawer on Escape
-    document.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape') document.documentElement.setAttribute('data-drawer-open', 'false')
-    })
-  })()
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') document.documentElement.setAttribute('data-drawer-open', 'false')
+  })
 </script>

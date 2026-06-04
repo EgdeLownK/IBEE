@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react'
-import type { BookingExtendedStats } from '@agora/supabase'
+import type { BookingExtendedStats } from '@ibee/supabase'
 
 type Props = {
   weekChart: BookingExtendedStats['weekChart']

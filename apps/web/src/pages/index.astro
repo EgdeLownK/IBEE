@@ -1,81 +1,79 @@
 ---
 import AppLayout from '../layouts/AppLayout.astro'
-import ProfilePage from '@agora/ui-server/src/components/ProfilePage.astro'
-import SchemaJsonLd from '@agora/ui-server/src/components/SchemaJsonLd.astro'
-import { supabase } from '../lib/supabase/client'
 import { createAuthClient } from '../lib/supabase/auth'
-import {
-  getEntityBySlug,
-  getEntityMenuSections,
-  getEntityHomeWidgets,
-  getEntityFaq,
-  getPublicationsByEntity,
-  AGORA_SYSTEM_SLUG,
-  isFollowing as checkIsFollowing
-} from '@agora/supabase'
-
-const entity = await getEntityBySlug(supabase, AGORA_SYSTEM_SLUG)
-if (!entity) {
-  throw new Error('Agora system profile not found in database')
-}
-
-const [menuSections, homeWidgets, faq, publications] = await Promise.all([
-  getEntityMenuSections(supabase, entity.id),
-  getEntityHomeWidgets(supabase, entity.id),
-  getEntityFaq(supabase, entity.id),
-  getPublicationsByEntity(supabase, entity.id, { publicOnly: true }),
-])
 
 const authClient = createAuthClient(Astro.request, Astro.cookies)
 const { data: { user } } = await authClient.auth.getUser()
 
 const siteUrl = import.meta.env.SITE_URL
-const profileUrl = `${siteUrl}/`
-const faqItems = faq.isActive ? faq.items : []
-const dashboardUrl = import.meta.env.DASHBOARD_URL ?? 'http://localhost:3000'
-const isAuthenticated = !!user
-
-let isFollowing = false
-if (user) {
-  isFollowing = await checkIsFollowing(supabase, user.id, entity.id)
-}
+const homeUrl = `${siteUrl}/`
 
 Astro.response.headers.set(
   'Cache-Control',
-  's-maxage=86400, stale-while-revalidate=604800'
-)
-Astro.response.headers.set(
-  'X-Robots-Tag',
-  'index, follow, max-snippet:-1, max-image-preview:large'
+  's-maxage=300, stale-while-revalidate=3600'
 )
 ---
 <AppLayout
-  title="Agora — La plateforme des solopreneurs"
-  description={entity.bio ?? undefined}
-  image={entity.avatar_url ?? undefined}
-  url={profileUrl}
-  type="profile"
+  title="IBEE — Accueil"
+  description="Bienvenue sur IBEE, la plateforme des solopreneurs."
+  url={homeUrl}
+  type="website"
   user={user}
-  profileUrl={profileUrl}
 >
-  <SchemaJsonLd
-    slot="head"
-    entity={entity}
-    siteUrl={siteUrl}
-    faqItems={faqItems}
-    url={profileUrl}
-  />
-  <main class="md:py-8 sm:py-12">
-    <ProfilePage
-      entity={entity}
-      menuSections={menuSections}
-      homeWidgets={homeWidgets}
-      faqItems={faqItems}
-      publications={publications}
-      isOwner={false}
-      isAuthenticated={isAuthenticated}
-      isFollowing={isFollowing}
-      dashboardUrl={dashboardUrl}
-    />
+  <main class="home-stage">
+    <div class="home-stage__inner">
+      <h1 class="home-stage__title">Home</h1>
+      <p class="home-stage__lead">
+        Ton feed personnalisé arrive bientôt. En attendant, explore les profiles publiés.
+      </p>
+      <a href="/explore" class="home-stage__cta">Explorer les profiles</a>
+    </div>
   </main>
 </AppLayout>
+
+<style>
+  .home-stage {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 64px 24px;
+  }
+  .home-stage__inner {
+    max-width: 560px;
+    width: 100%;
+    text-align: center;
+    background: var(--color-surface);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+    padding: 48px 32px;
+  }
+  .home-stage__title {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 28px;
+    color: var(--color-neutral-900);
+    margin: 0 0 12px;
+  }
+  .home-stage__lead {
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--color-neutral-500);
+    margin: 0 0 28px;
+  }
+  .home-stage__cta {
+    display: inline-flex;
+    align-items: center;
+    height: 40px;
+    padding: 0 20px;
+    border-radius: 999px;
+    background: var(--color-accent);
+    color: #FFFFFF;
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: background 120ms;
+  }
+  .home-stage__cta:hover {
+    background: var(--color-accent-hover);
+  }
+</style>

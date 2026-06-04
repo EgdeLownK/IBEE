@@ -1,0 +1,215 @@
+---
+import { ArrowLeft } from 'lucide-static'
+import AppLayout from '../../../layouts/AppLayout.astro'
+import ProfileCard from '@ibee/ui-server/src/components/ProfileCard.astro'
+import ProductDetail from '@ibee/ui-server/src/components/ProductDetail.astro'
+import ProductReviewsList from '@ibee/ui-server/src/components/ProductReviewsList.astro'
+import ProductQAList from '@ibee/ui-server/src/components/ProductQAList.astro'
+import ProductSchemaJsonLd from '@ibee/ui-server/src/components/ProductSchemaJsonLd.astro'
+import { supabase } from '../../../lib/supabase/client'
+import { createAuthClient } from '../../../lib/supabase/auth'
+import {
+  getEntityBySlug,
+  getPublishedProductBySlug,
+  lookupProductSlugHistory,
+  listPublishedReviews,
+  getReviewAggregates,
+  listPublishedQuestions,
+  getMyReview,
+  isInWishlist,
+} from '@ibee/supabase'
+
+const { slug, productSlug } = Astro.params
+if (!slug || !productSlug) return new Response(null, { status: 404 })
+if (slug.startsWith('__')) return new Response(null, { status: 404 })
+
+// 1) Entity d'abord (besoin de entity.id pour le lookup d'historique de slug)
+const entity = await getEntityBySlug(supabase, slug)
+if (!entity) return new Response(null, { status: 404 })
+
+// 2) Produit publié par slug
+const product = await getPublishedProductBySlug(supabase, slug, productSlug)
+
+// 3) Si introuvable : tenter un ancien slug → redirect 301 SEO
+if (!product) {
+  const history = await lookupProductSlugHistory(supabase, entity.id, productSlug)
+  if (history?.new_slug) {
+    return Astro.redirect(`/${slug}/shop/${history.new_slug}`, 301)
+  }
+  return new Response(null, { status: 404 })
+}
+
+const authClient = createAuthClient(Astro.request, Astro.cookies)
+const { data: { user } } = await authClient.auth.getUser()
+
+// Filtres/tri avis depuis query params (rendu serveur)
+const ratingParam = Astro.url.searchParams.get('rating')
+const activeRating = ratingParam ? Math.min(5, Math.max(1, parseInt(ratingParam, 10))) || null : null
+const sortParam = Astro.url.searchParams.get('sort')
+const activeSort: 'recent' | 'helpful' = sortParam === 'helpful' ? 'helpful' : 'recent'
+
+// Lectures publiques (anon) — avis, agrégats, distribution, questions
+const [reviews, aggregates, questions, allRatings] = await Promise.all([
+  listPublishedReviews(supabase, product.id, { rating: activeRating ?? undefined, sortBy: activeSort, limit: 50 }),
+  getReviewAggregates(supabase, product.id),
+  listPublishedQuestions(supabase, product.id, { limit: 50 }),
+  // Distribution : on relit toutes les notes publiées (helper agrégats ne renvoie que count/average)
+  listPublishedReviews(supabase, product.id, { limit: 500 }),
+])
+
+const distribution: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
+for (const r of allRatings) {
+  if (r.rating >= 1 && r.rating <= 5) distribution[r.rating] = (distribution[r.rating] ?? 0) + 1
+}
+
+// Lectures buyer-spécifiques (client authentifié) — uniquement si connecté
+let myReview = null
+let inWishlist = false
+if (user) {
+  ;[myReview, inWishlist] = await Promise.all([
+    getMyReview(authClient, product.id, user.id),
+    isInWishlist(authClient, product.id, null),
+  ])
+}
+
+const siteUrl = import.meta.env.SITE_URL
+const profileUrl = `${siteUrl}/${entity.slug}`
+const productUrl = `${siteUrl}/${entity.slug}/shop/${product.slug}`
+const basePath = `/${entity.slug}/shop/${product.slug}`
+const dashboardUrl = import.meta.env.DASHBOARD_URL ?? 'http://localhost:3000'
+const loginUrl = `${dashboardUrl}/login?redirect=${encodeURIComponent(productUrl)}`
+
+// Méta SEO depuis le produit
+const metaTitle = product.seo_title ?? `${product.title} — ${entity.display_name}`
+const metaDescription = product.seo_description ?? product.description_short
+const images = (product.product_media ?? [])
+  .filter((m) => !m.media_type || m.media_type === 'image')
+  .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))
+  .map((m) => m.url)
+const ogImage = product.og_image_url ?? images[0] ?? entity.avatar_url ?? undefined
+
+// --- Narrowing V2 (Json → types concrets) côté page : les composants restent fortement typés ---
+
+// Promo active : sale_price_cents != null ET (sale_ends_at == null OU dans le futur).
+// Si expirée → traitée comme absence de promo (prix normal).
+const saleActive =
+  product.sale_price_cents != null &&
+  (product.sale_ends_at == null || new Date(product.sale_ends_at).getTime() > Date.now())
+
+// Catégorie : embed entity_product_categories (objet OU tableau selon inférence) → fallback legacy
+const catEmbed = (product as { entity_product_categories?: { name: string } | { name: string }[] | null })
+  .entity_product_categories
+const categoryName =
+  (Array.isArray(catEmbed) ? catEmbed[0]?.name : catEmbed?.name) ?? product.category ?? null
+
+// bullet_points : Json → string[]
+const bulletPoints = Array.isArray(product.bullet_points)
+  ? product.bullet_points.filter((x): x is string => typeof x === 'string')
+  : []
+
+// content_blocks : Json → ContentBlock[] (text|image valides uniquement)
+type ContentBlock =
+  | { type: 'text'; content: string }
+  | { type: 'image'; url: string; alt?: string }
+const contentBlocks: ContentBlock[] = Array.isArray(product.content_blocks)
+  ? (product.content_blocks as unknown[]).flatMap((b): ContentBlock[] => {
+      if (!b || typeof b !== 'object') return []
+      const block = b as Record<string, unknown>
+      if (block.type === 'text' && typeof block.content === 'string') {
+        return [{ type: 'text', content: block.content }]
+      }
+      if (block.type === 'image' && typeof block.url === 'string') {
+        return [{ type: 'image', url: block.url, alt: typeof block.alt === 'string' ? block.alt : undefined }]
+      }
+      return []
+    })
+  : []
+
+// Vidéo produit (exclue des images du JSON-LD ; surfacée dans la galerie)
+const videoMedia = (product.product_media ?? []).find((m) => m.media_type === 'video') ?? null
+const video = videoMedia ? { url: videoMedia.url, name: product.title } : null
+
+// Échantillon d'avis pour le JSON-LD (max 5, avec nom anonymisé faute de jointure auteur publique)
+const reviewSamples = reviews.slice(0, 5).map((r) => ({
+  rating: r.rating,
+  title: r.title,
+  content: r.content,
+  created_at: r.created_at,
+  authorName: 'Client vérifié',
+}))
+
+Astro.response.headers.set('Cache-Control', 's-maxage=86400, stale-while-revalidate=604800')
+Astro.response.headers.set('X-Robots-Tag', 'index, follow, max-snippet:-1, max-image-preview:large')
+---
+<AppLayout
+  title={`${metaTitle} — Agora`}
+  description={metaDescription}
+  image={ogImage}
+  url={productUrl}
+  type="website"
+  user={user}
+  profileUrl={profileUrl}
+  showSidebar={true}
+>
+  <Fragment slot="head">
+    <ProductSchemaJsonLd
+      product={product}
+      productUrl={productUrl}
+      images={images}
+      variants={(product.product_variants ?? []).filter((v) => v.is_active)}
+      sellerName={entity.display_name}
+      sellerUrl={profileUrl}
+      aggregates={aggregates}
+      reviewSamples={reviewSamples}
+      categoryName={categoryName}
+      saleActive={saleActive}
+      saleEndsAt={product.sale_ends_at}
+      video={video}
+    />
+  </Fragment>
+
+  <main class="md:py-8 sm:py-12">
+    <div class="mx-auto max-w-[1000px] px-4 mb-3 md:px-0">
+      <a href={`/${entity.slug}/shop`} class="inline-flex items-center gap-1.5 text-sm text-neutral-500 transition hover:text-neutral-900">
+        <span class="flex h-4 w-4 items-center justify-center" set:html={ArrowLeft} />
+        Boutique de {entity.display_name}
+      </a>
+    </div>
+
+    <ProfileCard>
+      <ProductDetail
+        product={product}
+        inWishlist={inWishlist}
+        isAuthenticated={!!user}
+        dashboardUrl={dashboardUrl}
+        productUrl={productUrl}
+        categoryName={categoryName}
+        bulletPoints={bulletPoints}
+        contentBlocks={contentBlocks}
+        saleActive={saleActive}
+      />
+
+      <ProductReviewsList
+        productId={product.id}
+        reviews={reviews}
+        aggregates={aggregates}
+        distribution={distribution}
+        myReview={myReview}
+        user={user}
+        activeRating={activeRating}
+        activeSort={activeSort}
+        basePath={basePath}
+        dashboardUrl={dashboardUrl}
+        loginUrl={loginUrl}
+      />
+
+      <ProductQAList
+        productId={product.id}
+        questions={questions}
+        user={user}
+        ownerUserId={entity.user_id ?? null}
+        loginUrl={loginUrl}
+      />
+    </ProfileCard>
+  </main>
+</AppLayout>

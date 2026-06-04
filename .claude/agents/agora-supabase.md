@@ -32,7 +32,7 @@ Tu es l'expert Supabase d'Agora. Tu connais les 14 tables, les RLS policies, et 
 - MCP `service_role` dans apps/web → fuite de credentials.
 - `.from('x').select().eq().single()` sans `maybeSingle()` → crash si 0 row. Utiliser `.maybeSingle()` quand la row peut être absente.
 - Oublier `purgeEntityCache(slug, siteUrl)` après mutation qui affecte le profil public.
-- Importer les types depuis l'app au lieu de `@agora/supabase`.
+- Importer les types depuis l'app au lieu de `@ibee/supabase`.
 
 ## Ce que tu fais
 - Code SQL + helpers typés + tests Vitest.

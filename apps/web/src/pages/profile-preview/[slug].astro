@@ -1,9 +1,9 @@
 ---
-import ProfileHero from '@agora/ui-server/src/components/ProfileHero.astro'
-import MenuTabs from '@agora/ui-server/src/components/MenuTabs.astro'
-import PublicationCard from '@agora/ui-server/src/components/PublicationCard.astro'
+import ProfileHero from '@ibee/ui-server/src/components/ProfileHero.astro'
+import MenuTabs from '@ibee/ui-server/src/components/MenuTabs.astro'
+import PublicationCard from '@ibee/ui-server/src/components/PublicationCard.astro'
 import { supabase } from '../../lib/supabase/client'
-import { getEntityBySlug, getEntityMenuSections, getPublicationsByEntity } from '@agora/supabase'
+import { getEntityBySlug, getEntityMenuSections, getPublicationsByEntity } from '@ibee/supabase'
 
 const { slug } = Astro.params
 if (!slug) return new Response('Not found', { status: 404 })

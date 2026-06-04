@@ -1,5 +1,5 @@
 {
-  "name": "@agora/dashboard",
+  "name": "@ibee/dashboard",
   "version": "0.0.0",
   "private": true,
   "scripts": {
@@ -10,8 +10,8 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@agora/supabase": "workspace:*",
-    "@agora/ui-react": "workspace:*",
+    "@ibee/supabase": "workspace:*",
+    "@ibee/ui-react": "workspace:*",
     "@supabase/supabase-js": "^2.102.1",
     "date-fns": "^4.1.0",
     "lucide-react": "^1.7.0",

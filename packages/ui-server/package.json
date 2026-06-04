@@ -1,5 +1,5 @@
 {
-  "name": "@agora/ui-server",
+  "name": "@ibee/ui-server",
   "version": "0.0.0",
   "private": true,
   "type": "module",

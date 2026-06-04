@@ -2,13 +2,27 @@
 paths:
   - ".agora-brain/**"
 ---
-# Règles du brain (.agora-brain/)
+# Règle brain (.agora-brain/)
 
-- Frontmatter YAML obligatoire : `type`, `status` (draft/active/archived/superseded), `created`
-- Liens internes en syntaxe Obsidian `[[wikilinks]]`, jamais `[text](path)`
-- Mettre à jour le README dispatcher du dossier parent après création/déplacement
-- Modifier un pilier `pilier/` → alerter Killian d'abord
-- `_BRAIN-STATE.md` : mettre à jour en fin de session significative
-- `_decision-log-code.md` : ajouter une ligne pour toute décision technique (code, stack, UI, patterns) quand les 2 conditions de traçabilité sont remplies
-- `_decision-log-projet.md` : ajouter une ligne pour toute décision non-code (business, méthode, stratégie, outillage) quand les 2 conditions de traçabilité sont remplies
-- Opérations CRUD détaillées dans `technique/brain-operations.md`
+Toute modification dans `.agora-brain/` suit la grammaire définie dans `_BRAIN-RULES.md` (racine du brain). La grammaire couvre : nommage, frontmatter YAML obligatoire, enum `type:` fermé, wikilinks Obsidian, cycle de vie (création / archivage), règles de référencement.
+
+## Lecture systématique au démarrage de session
+
+- **Important** `_BRAIN-RULES.md` — grammaire
+- `_BRAIN-DEV.md` — état dev
+- `_BRAIN-PRODUCT.md` — état produit
+- `_LAST-SESSION.md` — dernière session
+- **Important** `_INDEX.md` — carte sémantique
+
+## Maintenance
+
+- `_BRAIN-DEV.md` : mettre à jour en fin de session significative
+- `_LAST-SESSION.md` : réécrire intégralement à chaque clôture de session (fichier éphémère, écrasé)
+- `_decision-log-code.md` : ajouter une entrée pour toute décision technique qui passe le filtre 2 conditions (voir règle en tête du fichier)
+- `_decision-log-projet.md` : idem pour décisions non-code
+
+## Garde-fou
+
+Alerter Killian avant toute modification de `_BRAIN-RULES.md` (fichier fondateur).
+
+Modifier un pilier (`pilier/*`) → alerter Killian avant d'exécuter.

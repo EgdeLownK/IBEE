@@ -1,11 +1,11 @@
 ---
 import { ArrowLeft } from 'lucide-static'
 import AppLayout from '../../../layouts/AppLayout.astro'
-import PublicationCard from '@agora/ui-server/src/components/PublicationCard.astro'
-import CommentsList from '@agora/ui-server/src/components/CommentsList.astro'
+import PublicationCard from '@ibee/ui-server/src/components/PublicationCard.astro'
+import CommentsList from '@ibee/ui-server/src/components/CommentsList.astro'
 import { supabase } from '../../../lib/supabase/client'
 import { createAuthClient } from '../../../lib/supabase/auth'
-import { getEntityBySlug, getPublicationByEntityAndSlug, getCommentsByPublication } from '@agora/supabase'
+import { getEntityBySlug, getPublicationByEntityAndSlug, getCommentsByPublication } from '@ibee/supabase'
 
 const { slug, publicationSlug } = Astro.params
 if (!slug || !publicationSlug) return new Response(null, { status: 404 })
@@ -94,6 +94,7 @@ Astro.response.headers.set('X-Robots-Tag', 'index, follow, max-snippet:-1, max-i
   type="article"
   user={user}
   profileUrl={profileUrl}
+  showSidebar={true}
 >
   <Fragment slot="head">
     <script type="application/ld+json" set:html={JSON.stringify(articleSchema)} />

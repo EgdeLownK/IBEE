@@ -13,4 +13,4 @@ paths:
 - Icônes : `lucide-react`
 - Toasts : `sonner` avec `<Toaster position="bottom-right" richColors />`
 - Navigation : 2 niveaux — Rail principal (`/dashboard/*`) + Sidebar contextuelle (`/dashboard/site/*`)
-- Composants interactifs → `@agora/ui-react`, composants statiques → `@agora/ui-server`
+- Composants interactifs → `@ibee/ui-react`, composants statiques → `@ibee/ui-server`

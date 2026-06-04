@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { getEntityByUserId, getPublicationById } from '@agora/supabase'
+import { getEntityByUserId, getPublicationById } from '@ibee/supabase'
 import { EditNewsEditor } from './EditNewsEditor'
 
 type Props = {

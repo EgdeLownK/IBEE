@@ -1,0 +1,83 @@
+---
+import { Pencil, EyeOff } from 'lucide-static'
+
+interface Props {
+  title: string
+  isOwner?: boolean
+  editHref?: string
+}
+
+const { title, isOwner = false, editHref } = Astro.props
+---
+<article class="widget">
+  <header class="widget__head">
+    <h3 class="widget__title">{title}</h3>
+    {isOwner && (
+      <div class="flex items-center gap-2">
+        <a href={editHref ?? '#'} class="widget__action">
+          <span class="flex h-3.5 w-3.5 items-center justify-center" set:html={Pencil} />
+          <span>Modifier</span>
+        </a>
+        <button type="button" class="widget__action" data-widget-hide>
+          <span class="flex h-3.5 w-3.5 items-center justify-center" set:html={EyeOff} />
+          <span>Masquer</span>
+        </button>
+      </div>
+    )}
+  </header>
+  <div class="widget__body">
+    <slot />
+  </div>
+</article>
+
+<style>
+  .widget {
+    background: var(--color-panel);
+    border-radius: 14px;
+    padding: 16px;
+    border: 1px solid transparent;
+    transition: border-color 160ms, box-shadow 160ms;
+  }
+  .widget:hover {
+    box-shadow: var(--shadow-card);
+  }
+  .widget__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .widget__title {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: 15px;
+    margin: 0;
+    color: var(--color-neutral-900);
+  }
+  .widget__body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .widget__action {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 28px;
+    padding: 0 12px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--color-neutral-700);
+    background: var(--color-surface);
+    border: 1px solid transparent;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 120ms, color 120ms;
+    font-family: inherit;
+  }
+  .widget__action:hover {
+    background: var(--color-panel-2);
+    color: var(--color-neutral-900);
+  }
+</style>

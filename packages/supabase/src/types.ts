@@ -346,6 +346,160 @@ export type Database = {
           },
         ]
       }
+      discount_code_categories: {
+        Row: {
+          category: string
+          code_id: string
+        }
+        Insert: {
+          category: string
+          code_id: string
+        }
+        Update: {
+          category?: string
+          code_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "discount_code_categories_code_id_fkey"
+            columns: ["code_id"]
+            isOneToOne: false
+            referencedRelation: "discount_codes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      discount_code_products: {
+        Row: {
+          code_id: string
+          product_id: string
+        }
+        Insert: {
+          code_id: string
+          product_id: string
+        }
+        Update: {
+          code_id?: string
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "discount_code_products_code_id_fkey"
+            columns: ["code_id"]
+            isOneToOne: false
+            referencedRelation: "discount_codes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "discount_code_products_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      discount_code_uses: {
+        Row: {
+          code_id: string
+          discount_amount_cents: number
+          id: string
+          order_id: string | null
+          used_at: string
+          user_id: string
+        }
+        Insert: {
+          code_id: string
+          discount_amount_cents: number
+          id?: string
+          order_id?: string | null
+          used_at?: string
+          user_id: string
+        }
+        Update: {
+          code_id?: string
+          discount_amount_cents?: number
+          id?: string
+          order_id?: string | null
+          used_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "discount_code_uses_code_id_fkey"
+            columns: ["code_id"]
+            isOneToOne: false
+            referencedRelation: "discount_codes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      discount_codes: {
+        Row: {
+          applies_to: Database["public"]["Enums"]["discount_applies_to"]
+          code: string
+          created_at: string
+          ends_at: string | null
+          entity_id: string
+          id: string
+          is_active: boolean
+          max_uses_per_user: number
+          max_uses_total: number | null
+          min_purchase_cents: number | null
+          starts_at: string | null
+          type: Database["public"]["Enums"]["discount_code_type"]
+          updated_at: string
+          value: number
+        }
+        Insert: {
+          applies_to?: Database["public"]["Enums"]["discount_applies_to"]
+          code: string
+          created_at?: string
+          ends_at?: string | null
+          entity_id: string
+          id?: string
+          is_active?: boolean
+          max_uses_per_user?: number
+          max_uses_total?: number | null
+          min_purchase_cents?: number | null
+          starts_at?: string | null
+          type: Database["public"]["Enums"]["discount_code_type"]
+          updated_at?: string
+          value: number
+        }
+        Update: {
+          applies_to?: Database["public"]["Enums"]["discount_applies_to"]
+          code?: string
+          created_at?: string
+          ends_at?: string | null
+          entity_id?: string
+          id?: string
+          is_active?: boolean
+          max_uses_per_user?: number
+          max_uses_total?: number | null
+          min_purchase_cents?: number | null
+          starts_at?: string | null
+          type?: Database["public"]["Enums"]["discount_code_type"]
+          updated_at?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "discount_codes_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entity"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "discount_codes_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "publication_comments_with_author"
+            referencedColumns: ["author_entity_id"]
+          },
+        ]
+      }
       entity: {
         Row: {
           avatar_url: string | null
@@ -577,6 +731,48 @@ export type Database = {
           },
         ]
       }
+      entity_product_categories: {
+        Row: {
+          created_at: string
+          entity_id: string
+          id: string
+          name: string
+          position: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          entity_id: string
+          id?: string
+          name: string
+          position?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          entity_id?: string
+          id?: string
+          name?: string
+          position?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entity_product_categories_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entity"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entity_product_categories_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "publication_comments_with_author"
+            referencedColumns: ["author_entity_id"]
+          },
+        ]
+      }
       follows: {
         Row: {
           created_at: string
@@ -662,6 +858,508 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "publications"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_answers: {
+        Row: {
+          answer_text: string
+          answerer_user_id: string
+          created_at: string
+          helpful_count: number
+          id: string
+          is_seller: boolean
+          question_id: string
+          status: Database["public"]["Enums"]["product_answer_status"]
+        }
+        Insert: {
+          answer_text: string
+          answerer_user_id: string
+          created_at?: string
+          helpful_count?: number
+          id?: string
+          is_seller?: boolean
+          question_id: string
+          status?: Database["public"]["Enums"]["product_answer_status"]
+        }
+        Update: {
+          answer_text?: string
+          answerer_user_id?: string
+          created_at?: string
+          helpful_count?: number
+          id?: string
+          is_seller?: boolean
+          question_id?: string
+          status?: Database["public"]["Enums"]["product_answer_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_answers_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "product_questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_media: {
+        Row: {
+          alt_text: string | null
+          created_at: string
+          display_order: number
+          id: string
+          media_type: Database["public"]["Enums"]["product_media_type"]
+          product_id: string
+          url: string
+        }
+        Insert: {
+          alt_text?: string | null
+          created_at?: string
+          display_order?: number
+          id?: string
+          media_type: Database["public"]["Enums"]["product_media_type"]
+          product_id: string
+          url: string
+        }
+        Update: {
+          alt_text?: string | null
+          created_at?: string
+          display_order?: number
+          id?: string
+          media_type?: Database["public"]["Enums"]["product_media_type"]
+          product_id?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_media_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_questions: {
+        Row: {
+          asker_user_id: string
+          created_at: string
+          helpful_count: number
+          id: string
+          product_id: string
+          question_text: string
+          status: Database["public"]["Enums"]["product_question_status"]
+        }
+        Insert: {
+          asker_user_id: string
+          created_at?: string
+          helpful_count?: number
+          id?: string
+          product_id: string
+          question_text: string
+          status?: Database["public"]["Enums"]["product_question_status"]
+        }
+        Update: {
+          asker_user_id?: string
+          created_at?: string
+          helpful_count?: number
+          id?: string
+          product_id?: string
+          question_text?: string
+          status?: Database["public"]["Enums"]["product_question_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_questions_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_review_photos: {
+        Row: {
+          created_at: string
+          display_order: number
+          id: string
+          review_id: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          review_id: string
+          url: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          review_id?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_review_photos_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "product_reviews"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_reviews: {
+        Row: {
+          buyer_user_id: string
+          content: string
+          created_at: string
+          helpful_count: number
+          id: string
+          is_verified_purchase: boolean
+          moderated_at: string | null
+          order_id: string | null
+          product_id: string
+          rating: number
+          seller_replied_at: string | null
+          seller_reply: string | null
+          status: Database["public"]["Enums"]["product_review_status"]
+          title: string | null
+          updated_at: string
+          variant_id: string | null
+        }
+        Insert: {
+          buyer_user_id: string
+          content: string
+          created_at?: string
+          helpful_count?: number
+          id?: string
+          is_verified_purchase?: boolean
+          moderated_at?: string | null
+          order_id?: string | null
+          product_id: string
+          rating: number
+          seller_replied_at?: string | null
+          seller_reply?: string | null
+          status?: Database["public"]["Enums"]["product_review_status"]
+          title?: string | null
+          updated_at?: string
+          variant_id?: string | null
+        }
+        Update: {
+          buyer_user_id?: string
+          content?: string
+          created_at?: string
+          helpful_count?: number
+          id?: string
+          is_verified_purchase?: boolean
+          moderated_at?: string | null
+          order_id?: string | null
+          product_id?: string
+          rating?: number
+          seller_replied_at?: string | null
+          seller_reply?: string | null
+          status?: Database["public"]["Enums"]["product_review_status"]
+          title?: string | null
+          updated_at?: string
+          variant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_reviews_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_reviews_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_slug_history: {
+        Row: {
+          changed_at: string
+          entity_id: string
+          id: string
+          new_slug: string
+          old_slug: string
+          product_id: string
+        }
+        Insert: {
+          changed_at?: string
+          entity_id: string
+          id?: string
+          new_slug: string
+          old_slug: string
+          product_id: string
+        }
+        Update: {
+          changed_at?: string
+          entity_id?: string
+          id?: string
+          new_slug?: string
+          old_slug?: string
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_slug_history_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entity"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_slug_history_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "publication_comments_with_author"
+            referencedColumns: ["author_entity_id"]
+          },
+          {
+            foreignKeyName: "product_slug_history_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_variants: {
+        Row: {
+          attributes: Json
+          created_at: string
+          id: string
+          is_active: boolean
+          price_cents_override: number | null
+          primary_image_url: string | null
+          product_id: string
+          sku: string | null
+          stock_quantity: number
+          updated_at: string
+        }
+        Insert: {
+          attributes: Json
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          price_cents_override?: number | null
+          primary_image_url?: string | null
+          product_id: string
+          sku?: string | null
+          stock_quantity?: number
+          updated_at?: string
+        }
+        Update: {
+          attributes?: Json
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          price_cents_override?: number | null
+          primary_image_url?: string | null
+          product_id?: string
+          sku?: string | null
+          stock_quantity?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_variants_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          archived_at: string | null
+          bullet_points: Json
+          category: string | null
+          category_id: string | null
+          content_blocks: Json
+          created_at: string
+          currency: string
+          delivery_enabled: boolean
+          description_long: string | null
+          description_short: string
+          digital_file_format:
+            | Database["public"]["Enums"]["digital_file_format"]
+            | null
+          digital_file_size_bytes: number | null
+          digital_file_url: string | null
+          digital_language: string | null
+          digital_license: Database["public"]["Enums"]["digital_license"] | null
+          digital_pages_or_duration: number | null
+          digital_preview_url: string | null
+          entity_id: string
+          id: string
+          og_image_url: string | null
+          physical_brand: string | null
+          physical_color: string | null
+          physical_condition:
+            | Database["public"]["Enums"]["physical_condition_t"]
+            | null
+          physical_dimensions_cm: Json | null
+          physical_material: string | null
+          physical_pickup_instructions: string | null
+          physical_pickup_location: string | null
+          physical_size: string | null
+          physical_stock_quantity: number | null
+          physical_stock_unlimited: boolean | null
+          physical_weight_grams: number | null
+          pickup_enabled: boolean
+          price_cents: number
+          published_at: string | null
+          sale_ends_at: string | null
+          sale_price_cents: number | null
+          seo_description: string | null
+          seo_title: string | null
+          slug: string
+          status: Database["public"]["Enums"]["product_status"]
+          tags: string[]
+          title: string
+          type: Database["public"]["Enums"]["product_type"]
+          updated_at: string
+          vat_included: boolean
+          vat_rate: number | null
+        }
+        Insert: {
+          archived_at?: string | null
+          bullet_points?: Json
+          category?: string | null
+          category_id?: string | null
+          content_blocks?: Json
+          created_at?: string
+          currency?: string
+          delivery_enabled?: boolean
+          description_long?: string | null
+          description_short: string
+          digital_file_format?:
+            | Database["public"]["Enums"]["digital_file_format"]
+            | null
+          digital_file_size_bytes?: number | null
+          digital_file_url?: string | null
+          digital_language?: string | null
+          digital_license?:
+            | Database["public"]["Enums"]["digital_license"]
+            | null
+          digital_pages_or_duration?: number | null
+          digital_preview_url?: string | null
+          entity_id: string
+          id?: string
+          og_image_url?: string | null
+          physical_brand?: string | null
+          physical_color?: string | null
+          physical_condition?:
+            | Database["public"]["Enums"]["physical_condition_t"]
+            | null
+          physical_dimensions_cm?: Json | null
+          physical_material?: string | null
+          physical_pickup_instructions?: string | null
+          physical_pickup_location?: string | null
+          physical_size?: string | null
+          physical_stock_quantity?: number | null
+          physical_stock_unlimited?: boolean | null
+          physical_weight_grams?: number | null
+          pickup_enabled?: boolean
+          price_cents: number
+          published_at?: string | null
+          sale_ends_at?: string | null
+          sale_price_cents?: number | null
+          seo_description?: string | null
+          seo_title?: string | null
+          slug: string
+          status?: Database["public"]["Enums"]["product_status"]
+          tags?: string[]
+          title: string
+          type: Database["public"]["Enums"]["product_type"]
+          updated_at?: string
+          vat_included?: boolean
+          vat_rate?: number | null
+        }
+        Update: {
+          archived_at?: string | null
+          bullet_points?: Json
+          category?: string | null
+          category_id?: string | null
+          content_blocks?: Json
+          created_at?: string
+          currency?: string
+          delivery_enabled?: boolean
+          description_long?: string | null
+          description_short?: string
+          digital_file_format?:
+            | Database["public"]["Enums"]["digital_file_format"]
+            | null
+          digital_file_size_bytes?: number | null
+          digital_file_url?: string | null
+          digital_language?: string | null
+          digital_license?:
+            | Database["public"]["Enums"]["digital_license"]
+            | null
+          digital_pages_or_duration?: number | null
+          digital_preview_url?: string | null
+          entity_id?: string
+          id?: string
+          og_image_url?: string | null
+          physical_brand?: string | null
+          physical_color?: string | null
+          physical_condition?:
+            | Database["public"]["Enums"]["physical_condition_t"]
+            | null
+          physical_dimensions_cm?: Json | null
+          physical_material?: string | null
+          physical_pickup_instructions?: string | null
+          physical_pickup_location?: string | null
+          physical_size?: string | null
+          physical_stock_quantity?: number | null
+          physical_stock_unlimited?: boolean | null
+          physical_weight_grams?: number | null
+          pickup_enabled?: boolean
+          price_cents?: number
+          published_at?: string | null
+          sale_ends_at?: string | null
+          sale_price_cents?: number | null
+          seo_description?: string | null
+          seo_title?: string | null
+          slug?: string
+          status?: Database["public"]["Enums"]["product_status"]
+          tags?: string[]
+          title?: string
+          type?: Database["public"]["Enums"]["product_type"]
+          updated_at?: string
+          vat_included?: boolean
+          vat_rate?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "entity_product_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entity"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "publication_comments_with_author"
+            referencedColumns: ["author_entity_id"]
           },
         ]
       }
@@ -801,6 +1499,51 @@ export type Database = {
           },
         ]
       }
+      wishlist_items: {
+        Row: {
+          added_at: string
+          id: string
+          note: string | null
+          price_cents_at_add: number | null
+          product_id: string
+          user_id: string
+          variant_id: string | null
+        }
+        Insert: {
+          added_at?: string
+          id?: string
+          note?: string | null
+          price_cents_at_add?: number | null
+          product_id: string
+          user_id: string
+          variant_id?: string | null
+        }
+        Update: {
+          added_at?: string
+          id?: string
+          note?: string | null
+          price_cents_at_add?: number | null
+          product_id?: string
+          user_id?: string
+          variant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wishlist_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wishlist_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       publication_comments_with_author: {
@@ -864,6 +1607,13 @@ export type Database = {
         | "cancelled"
         | "completed"
         | "no_show"
+      digital_file_format: "pdf" | "epub" | "mp4" | "mp3" | "zip" | "other"
+      digital_license: "personal" | "professional" | "commercial"
+      discount_applies_to:
+        | "all_products"
+        | "specific_products"
+        | "specific_categories"
+      discount_code_type: "percentage" | "fixed_amount" | "free_shipping"
       global_feature_type: "faq"
       home_widget_type:
         | "widget_news_feed"
@@ -880,7 +1630,21 @@ export type Database = {
         | "shop"
         | "links"
         | "appointments"
+        | "history"
+        | "faq"
       notification_type: "new_follower" | "new_publication" | "new_comment"
+      physical_condition_t:
+        | "new"
+        | "like_new"
+        | "very_good"
+        | "good"
+        | "acceptable"
+      product_answer_status: "pending" | "published" | "hidden"
+      product_media_type: "image" | "video"
+      product_question_status: "pending" | "published" | "hidden"
+      product_review_status: "pending" | "published" | "hidden" | "flagged"
+      product_status: "draft" | "published" | "archived"
+      product_type: "digital" | "physical"
       publication_media_type: "image"
       publication_status: "published" | "scheduled"
     }
@@ -1018,6 +1782,14 @@ export const Constants = {
         "completed",
         "no_show",
       ],
+      digital_file_format: ["pdf", "epub", "mp4", "mp3", "zip", "other"],
+      digital_license: ["personal", "professional", "commercial"],
+      discount_applies_to: [
+        "all_products",
+        "specific_products",
+        "specific_categories",
+      ],
+      discount_code_type: ["percentage", "fixed_amount", "free_shipping"],
       global_feature_type: ["faq"],
       home_widget_type: [
         "widget_news_feed",
@@ -1035,8 +1807,23 @@ export const Constants = {
         "shop",
         "links",
         "appointments",
+        "history",
+        "faq",
       ],
       notification_type: ["new_follower", "new_publication", "new_comment"],
+      physical_condition_t: [
+        "new",
+        "like_new",
+        "very_good",
+        "good",
+        "acceptable",
+      ],
+      product_answer_status: ["pending", "published", "hidden"],
+      product_media_type: ["image", "video"],
+      product_question_status: ["pending", "published", "hidden"],
+      product_review_status: ["pending", "published", "hidden", "flagged"],
+      product_status: ["draft", "published", "archived"],
+      product_type: ["digital", "physical"],
       publication_media_type: ["image"],
       publication_status: ["published", "scheduled"],
     },

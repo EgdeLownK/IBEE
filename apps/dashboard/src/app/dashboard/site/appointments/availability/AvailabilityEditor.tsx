@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Plus, Trash2, CalendarOff, Calendar } from 'lucide-react'
-import { Input } from '@agora/ui-react'
+import { Input } from '@ibee/ui-react'
 import { saveAvailabilityAction, addExceptionAction, removeExceptionAction } from '../actions'
 
 const DAYS = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi']

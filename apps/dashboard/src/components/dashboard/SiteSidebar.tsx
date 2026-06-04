@@ -13,7 +13,7 @@ const NAV_ITEMS = [
   { id: 'news', label: 'News', icon: Newspaper, href: '/dashboard/site/news', group: 'CONTENUS', available: true },
   { id: 'appointments', label: 'Rendez-vous', icon: CalendarClock, href: '/dashboard/site/appointments', group: 'CONTENUS', available: true },
   { id: 'clients', label: 'Clients', icon: Users, href: '/dashboard/site/clients', group: 'CONTENUS', available: true },
-  { id: 'shop', label: 'Boutique', icon: ShoppingBag, href: '/dashboard/site/shop', group: 'CONTENUS', available: false },
+  { id: 'shop', label: 'Produits', icon: ShoppingBag, href: '/dashboard/site/products', group: 'CONTENUS', available: true },
   { id: 'events', label: 'Événements', icon: Calendar, href: '/dashboard/site/events', group: 'CONTENUS', available: false },
   { id: 'videos', label: 'Vidéos', icon: Video, href: '/dashboard/site/videos', group: 'CONTENUS', available: false },
   { id: 'links', label: 'Liens', icon: Link, href: '/dashboard/site/links', group: 'ENGAGEMENT', available: false },

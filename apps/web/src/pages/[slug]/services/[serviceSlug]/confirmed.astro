@@ -1,11 +1,11 @@
 ---
 import { CheckCircle, ArrowRight, CalendarDays, Clock, MapPin, Video, Phone } from 'lucide-static'
 import AppLayout from '../../../../layouts/AppLayout.astro'
-import ProfileCard from '@agora/ui-server/src/components/ProfileCard.astro'
+import ProfileCard from '@ibee/ui-server/src/components/ProfileCard.astro'
 import { supabase } from '../../../../lib/supabase/client'
 import { createAuthClient } from '../../../../lib/supabase/auth'
-import { getEntityBySlug, getAppointmentTypeBySlug, getAppointmentTypesByEntity } from '@agora/supabase'
-import RecommendedServices from '@agora/ui-server/src/components/RecommendedServices.astro'
+import { getEntityBySlug, getAppointmentTypeBySlug, getAppointmentTypesByEntity } from '@ibee/supabase'
+import RecommendedServices from '@ibee/ui-server/src/components/RecommendedServices.astro'
 
 const { slug, serviceSlug } = Astro.params
 if (!slug || !serviceSlug) return new Response(null, { status: 404 })
@@ -46,6 +46,7 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
   user={user}
   profileUrl={profileUrl}
   robots="noindex, nofollow"
+  showSidebar={true}
 >
   <main class="md:py-8 sm:py-12">
     <ProfileCard>

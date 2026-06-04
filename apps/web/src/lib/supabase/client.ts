@@ -1,4 +1,4 @@
-import { createClient } from '@agora/supabase'
+import { createClient } from '@ibee/supabase'
 
 export const supabase = createClient(
   import.meta.env.PUBLIC_SUPABASE_URL,

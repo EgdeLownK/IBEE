@@ -8,7 +8,7 @@ import {
   getClientById,
   updateClient,
   deleteClient,
-} from '@agora/supabase'
+} from '@ibee/supabase'
 
 const updateClientSchema = z.object({
   name: z.string().max(200).trim().optional(),

@@ -1,7 +1,7 @@
 ---
 import AppLayout from '../layouts/AppLayout.astro'
-import ProfilePage from '@agora/ui-server/src/components/ProfilePage.astro'
-import SchemaJsonLd from '@agora/ui-server/src/components/SchemaJsonLd.astro'
+import ProfilePage from '@ibee/ui-server/src/components/ProfilePage.astro'
+import SchemaJsonLd from '@ibee/ui-server/src/components/SchemaJsonLd.astro'
 import { supabase } from '../lib/supabase/client'
 import { createAuthClient } from '../lib/supabase/auth'
 import {
@@ -11,8 +11,11 @@ import {
   getEntityFaq,
   getPublicationsByEntity,
   getAppointmentTypesByEntity,
+  listPublishedProductsByEntity,
+  listProductsByEntity,
+  listProductCategories,
   isFollowing as checkIsFollowing
-} from '@agora/supabase'
+} from '@ibee/supabase'
 
 const { slug } = Astro.params
 if (!slug) return new Response(null, { status: 404 })
@@ -23,22 +26,46 @@ if (slug.startsWith('__')) return new Response(null, { status: 404 })
 const entity = await getEntityBySlug(supabase, slug)
 if (!entity) return new Response(null, { status: 404 })
 
-const [menuSections, homeWidgets, faq, publications, appointmentTypes] = await Promise.all([
+// Résolution de l'utilisateur AVANT le fetch produits : l'owner voit ses
+// brouillons via le client authentifié (RLS), le public voit les publiés.
+const authClient = createAuthClient(Astro.request, Astro.cookies)
+const { data: { user } } = await authClient.auth.getUser()
+const isOwner = !!(user && entity.user_id && user.id === entity.user_id)
+
+const [menuSections, homeWidgets, faq, publications, appointmentTypes, products, productCategories] = await Promise.all([
   getEntityMenuSections(supabase, entity.id),
   getEntityHomeWidgets(supabase, entity.id),
   getEntityFaq(supabase, entity.id),
   getPublicationsByEntity(supabase, entity.id, { publicOnly: true }),
   getAppointmentTypesByEntity(supabase, entity.id, { activeOnly: true }),
+  isOwner
+    ? listProductsByEntity(authClient, entity.id, { limit: 6 })
+    : listPublishedProductsByEntity(supabase, entity.id, { limit: 6 }),
+  // Catégories "playlist" pour l'overlay de création (owner only, jamais exposées au public)
+  isOwner ? listProductCategories(authClient, entity.id) : Promise.resolve([]),
 ])
 
-const authClient = createAuthClient(Astro.request, Astro.cookies)
-const { data: { user } } = await authClient.auth.getUser()
+// Aplatissement pour l'overlay : {id, name} uniquement (props SSR, pas de route GET dédiée).
+const productCategoryOptions = productCategories.map((c) => ({ id: c.id, name: c.name }))
+
+// Aplatissement pour ShopWidget (preview home) : image principale + description courte.
+const shopProducts = products.map((p) => ({
+  id: p.id,
+  title: p.title,
+  slug: p.slug,
+  description: p.description_short,
+  price_cents: p.price_cents,
+  sale_price_cents: p.sale_price_cents,
+  sale_ends_at: p.sale_ends_at,
+  currency: p.currency,
+  image_url: p.product_media?.[0]?.url ?? null,
+  status: p.status,
+}))
 
 const siteUrl = import.meta.env.SITE_URL
 const profileUrl = `${siteUrl}/${entity.slug}`
 const faqItems = faq.isActive ? faq.items : []
 const dashboardUrl = import.meta.env.DASHBOARD_URL ?? 'http://localhost:3000'
-const isOwner = !!(user && entity.user_id && user.id === entity.user_id)
 const isAuthenticated = !!user
 
 let isFollowing = false
@@ -63,6 +90,7 @@ Astro.response.headers.set(
   type="profile"
   user={user}
   profileUrl={profileUrl}
+  showSidebar={true}
 >
   <SchemaJsonLd
     slot="head"
@@ -78,6 +106,8 @@ Astro.response.headers.set(
       faqItems={faqItems}
       publications={publications}
       appointmentTypes={appointmentTypes}
+      shopProducts={shopProducts}
+      productCategories={productCategoryOptions}
       isOwner={isOwner}
       isAuthenticated={isAuthenticated}
       isFollowing={isFollowing}

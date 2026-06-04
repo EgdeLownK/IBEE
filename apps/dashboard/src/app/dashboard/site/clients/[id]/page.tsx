@@ -4,7 +4,7 @@ import {
   getEntityByUserId,
   getClientById,
   getClientBookings,
-} from '@agora/supabase'
+} from '@ibee/supabase'
 import { ClientDetail } from './ClientDetail'
 
 export default async function ClientDetailPage({

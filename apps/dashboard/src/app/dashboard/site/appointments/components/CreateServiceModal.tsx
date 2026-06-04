@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { X, Check, Loader2, Pencil } from 'lucide-react'
 import { toast } from 'sonner'
-import { Input } from '@agora/ui-react'
+import { Input } from '@ibee/ui-react'
 import { createAppointmentTypeAction } from '../actions'
 
 type Props = {

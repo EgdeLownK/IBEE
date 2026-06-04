@@ -48,34 +48,31 @@ Les règles se chargent automatiquement — certaines toujours, d'autres au cont
 Toute tâche touchant 3+ fichiers ou introduisant un nouveau pattern : poser le plan d'abord (fichiers concernés, approche, risques), obtenir le "go" de Killian, puis implémenter. Les fix isolés d'un seul fichier peuvent être directs.
 
 ### 2. Orchestrer via sous-agents
-Dès qu'une tâche est complexe (multi-fichiers, multi-packages, recherche + implémentation), l'agent principal devient orchestrateur : il décompose, délègue à des sous-agents spécialisés, et garde son contexte clean. L'orchestrateur reste responsable du respect des garde-fous — les sous-agents n'héritent pas automatiquement des règles.
+L'agent principal devient orchestrateur : il décompose, délègue à des sous-agents spécialisés, et garde son contexte clean. L'orchestrateur reste responsable du respect des garde-fous — les sous-agents n'héritent pas automatiquement des règles.
 
 ### 3. Auto-amélioration
 Chaque erreur significative (bug introduit, mauvaise approche, oubli de vérification) est loguée dans la mémoire de session. La session suivante ne reproduira pas la même erreur. Les erreurs techniques runtime vont dans `pieges-claude-code.md` (technique/). Les erreurs de processus vont dans la mémoire Claude Code.
 
-### 4. Fix autonome des bugs
+### 4. Vérifier après chaque tâche
+Après chaque tâche d'implémentation, exécuter la chaîne de vérification :
+1. `pnpm type-check` — zéro erreurs TypeScript
+2. `pnpm build` — build complet passe
+3. Tests unitaires si existants
+Si un check échoue, diagnostiquer et corriger avant de présenter le résultat à Killian.
+
+### 5. Fix autonome des bugs
 Quand un test ou un build échoue, lire les logs, diagnostiquer, et corriger automatiquement. Si 2 tentatives échouent : stop, lister les hypothèses testées, escalader à Killian. Jamais plus de 2 tentatives aveugles.
 
-### 5. Workflow Git/GitHub
-Toute opération de commit/push/PR/sync passe **exclusivement** par les slash commands :
-- `/github:commit` — commit local avec vérifs (type-check + test)
-- `/github:push` — push + création PR + code-review
-- `/github:sync` — retour propre sur main après merge d'une PR
+### 6. Workflow PR
+Toute modification passe par une Pull Request sur `main` :
+1. Créer une branche depuis `main` : `feat/description`, `fix/description`, ou `chore/description`
+2. Committer les changements sur la branche (après revue Killian des fichiers modifiés)
+3. Pousser la branche et créer une PR via `gh pr create`
+4. CI (GitHub Actions) exécute type-check + build + tests automatiquement
+5. Killian demande `/code-review` pour une revue technique de la PR
+6. Killian valide et merge sur GitHub
 
-Voir `.claude/commands/github/` pour le détail.
-
-**Killian merge manuellement sur GitHub** après vérification de la CI verte.
-
-### 6. Commandes de recherche
-
-Pour toute recherche approfondie (web ou projet), utiliser :
-- `/research:web "<question>" [--standard] [--with-hn] [--type=fact|opinion|comparison|exploration]` — recherche internet, défaut approfondi + exploration
-
-Sortie systématique dans `.agora-brain/research/web/<DATE>_<TIME>_<SLUG>/` avec `_SUMMARY.md`, `_SOURCES.md`, `_METHODOLOGY.md`, et `raw/`.
-
-Voir `.claude/commands/research/` pour le détail des 11 phases et 7 principes.
-
-**NB** : `/research:project` n'est pas encore implémentée (prochaine itération).
+Exception : fix d'urgence d'un seul fichier peut aller directement sur `main` si Killian le demande.
 
 ## Brain
 
@@ -87,7 +84,6 @@ Le brain (`.agora-brain/`) est la mémoire long terme du projet.
 - `pilier/` — vision, non-négociable (`fondation-projet.md` = persona, modèle économique, promesse, différenciation)
 - `technique/` — règles tech, stack, pièges, opérations brain, guide entretiens, setup Claude Code, commandes gstack
 - `marche/` — intelligence marché, concurrents, entretiens
-- `to-do/` — matrice d'Eisenhower. Chantiers réels de Killian à mener.
 
 ## Règle d'or
 

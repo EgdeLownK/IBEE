@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { getEntityByUserId } from '@agora/supabase'
+import { getEntityByUserId } from '@ibee/supabase'
 
 export default async function ApercuPage() {
   const supabase = await createClient()

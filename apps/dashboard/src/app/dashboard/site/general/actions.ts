@@ -3,8 +3,8 @@
 import { z } from 'zod'
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
-import type { Database } from '@agora/supabase'
-import { getEntityByUserId, purgeEntityCache } from '@agora/supabase'
+import type { Database } from '@ibee/supabase'
+import { getEntityByUserId, purgeEntityCache } from '@ibee/supabase'
 
 type EntityUpdate = Database['public']['Tables']['entity']['Update']
 

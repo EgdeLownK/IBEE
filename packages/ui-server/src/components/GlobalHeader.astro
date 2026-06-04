@@ -1,5 +1,5 @@
 ---
-import { Menu, Link2, Clipboard, Check, Bell, UserCircle, Shield, HelpCircle, Settings } from 'lucide-static'
+import { Menu, ChevronDown, Sun, Bell, UserCircle, Settings, LogOut, Sparkles, BookOpen } from 'lucide-static'
 import { format, formatDistanceToNow } from 'date-fns'
 import { fr } from 'date-fns/locale'
 
@@ -14,6 +14,7 @@ interface NotificationData {
 }
 
 interface Props {
+  projectLabel?: string | null
   profileUrl?: string
   avatarUrl?: string | null
   displayName?: string | null
@@ -21,11 +22,20 @@ interface Props {
   isAuthenticated: boolean
   unreadCount?: number
   notifications?: NotificationData[]
+  currentUserSlug?: string | null
 }
 
-const { profileUrl, avatarUrl, displayName, dashboardUrl, isAuthenticated, unreadCount = 0, notifications = [] } = Astro.props
+const {
+  projectLabel,
+  avatarUrl,
+  displayName,
+  dashboardUrl,
+  isAuthenticated,
+  unreadCount = 0,
+  notifications = [],
+  currentUserSlug,
+} = Astro.props
 
-const displayUrl = profileUrl ? profileUrl.replace(/^https?:\/\//, '') : null
 const initial = displayName ? displayName.charAt(0).toUpperCase() : '?'
 const avatarMenuId = 'header-avatar-menu'
 const notifPopoverId = 'header-notif-popover'
@@ -61,68 +71,48 @@ function getNotifUrl(n: NotificationData): string {
   return '#'
 }
 ---
-<header class="sticky top-0 z-20 flex h-14 shrink-0 items-center justify-between border-b border-neutral-200 bg-neutral-0 px-4">
-  {/* Gauche — Hamburger (mobile) + URL profil (desktop) */}
+<header class="app-header">
+  {/* Gauche — Hamburger mobile + Project label */}
   <div class="flex items-center gap-2">
-    {/* Hamburger — mobile only */}
     <button
       type="button"
       onclick="document.documentElement.setAttribute('data-drawer-open', document.documentElement.getAttribute('data-drawer-open') === 'true' ? 'false' : 'true')"
-      class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-neutral-600 transition hover:bg-neutral-100 md:hidden"
+      class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-neutral-600 transition hover:bg-panel md:hidden"
       aria-label="Ouvrir le menu"
     >
       <span class="flex h-5 w-5 items-center justify-center" set:html={Menu} />
     </button>
 
-    {/* Copy URL — mobile: pill button, desktop: URL + icon */}
-    {displayUrl && (
-      <>
-        {/* Mobile — pill "Copier l'URL" */}
-        <button
-          type="button"
-          data-copy-url={profileUrl}
-          class="flex items-center gap-1.5 rounded-full bg-neutral-100 px-3 py-1.5 text-xs font-medium text-neutral-600 transition-colors hover:bg-neutral-200 md:hidden"
-          aria-label="Copier l'URL de mon profil public"
-        >
-          <span class="flex h-4 w-4 shrink-0 items-center justify-center" data-copy-icon-mobile set:html={Link2} />
-          <span data-copy-label-mobile>Copier l'URL</span>
-        </button>
-
-        {/* Desktop — URL + copy button */}
-        <div class="hidden items-center gap-2 md:flex">
-          <a href={profileUrl} class="truncate max-w-[300px] text-sm text-neutral-600 transition-colors hover:text-neutral-900">
-            {displayUrl}
-          </a>
-          <button
-            type="button"
-            data-copy-url={profileUrl}
-            class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-neutral-400 transition hover:bg-neutral-100 hover:text-neutral-600"
-            aria-label="Copier l'URL"
-          >
-            <span class="flex h-4 w-4 items-center justify-center" data-copy-icon set:html={Clipboard} />
-          </button>
-        </div>
-      </>
+    {projectLabel && (
+      <div class="app-header__project hidden md:flex">
+        <span class="truncate max-w-[200px]">{projectLabel}</span>
+        <span class="flex h-4 w-4 items-center justify-center text-neutral-500" set:html={ChevronDown} />
+      </div>
     )}
   </div>
 
-  {/* Droite — Cloche + Avatar */}
-  <div class="flex items-center gap-2">
+  {/* Centre absolu — Brand IBEE */}
+  <a href="/" class="app-header__brand" aria-label="Accueil IBEE">
+    IBEE<sup>v0.4</sup>
+  </a>
+
+  {/* Droite — météo + heure + notif + avatar */}
+  <div class="app-header__right">
+    {/* Météo (placeholder décoratif) */}
+    <div class="app-header__weather hidden md:inline-flex" aria-label="Météo">
+      <span class="flex h-4 w-4 items-center justify-center" set:html={Sun} />
+      <span class="app-header__weather-temp">21°</span>
+    </div>
+
+    {/* Heure — JS auto-update */}
+    <span class="app-header__time hidden md:inline" data-clock>--:--</span>
+
     {isAuthenticated && (
       <>
-        {/* Paramètres — lien à définir */}
-        <span
-          class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-neutral-400 cursor-default"
-          aria-label="Paramètres"
-          title="Paramètres"
-        >
-          <span class="flex h-5 w-5 items-center justify-center" set:html={Settings} />
-        </span>
-
-        {/* Notification bell — mobile: link, desktop: popover trigger */}
+        {/* Notif mobile : lien direct */}
         <a
           href="/notifications"
-          class="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-neutral-600 transition hover:bg-neutral-100 md:hidden"
+          class="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-neutral-600 transition hover:bg-panel md:hidden"
           aria-label="Notifications"
         >
           <span class="flex h-5 w-5 items-center justify-center" set:html={Bell} />
@@ -132,11 +122,12 @@ function getNotifUrl(n: NotificationData): string {
             </span>
           )}
         </a>
+        {/* Notif desktop : popover */}
         <button
           type="button"
           popovertarget={notifPopoverId}
           style={`anchor-name: --${notifPopoverId};`}
-          class="relative hidden h-9 w-9 shrink-0 items-center justify-center rounded-full text-neutral-600 transition hover:bg-neutral-100 md:flex"
+          class="relative hidden h-9 w-9 shrink-0 items-center justify-center rounded-full text-neutral-600 transition hover:bg-panel md:flex"
           aria-label="Notifications"
         >
           <span class="flex h-5 w-5 items-center justify-center" set:html={Bell} />
@@ -147,7 +138,6 @@ function getNotifUrl(n: NotificationData): string {
           )}
         </button>
 
-        {/* Notifications popover */}
         <div id={notifPopoverId} popover="auto" class="notif-popover" style={`position-anchor: --${notifPopoverId};`}>
           <div class="flex items-center justify-between px-4 py-3 border-b border-neutral-100">
             <h2 class="text-base font-semibold text-neutral-900">Notifications</h2>
@@ -160,7 +150,7 @@ function getNotifUrl(n: NotificationData): string {
 
           {notifications.length === 0 ? (
             <div class="flex flex-col items-center gap-2 px-4 py-8 text-center">
-              <span class="flex h-10 w-10 items-center justify-center rounded-full bg-neutral-100 text-neutral-400" set:html={Bell} />
+              <span class="flex h-10 w-10 items-center justify-center rounded-full bg-panel-2 text-neutral-400" set:html={Bell} />
               <p class="text-sm text-neutral-400">Pas de notifications</p>
             </div>
           ) : (
@@ -172,7 +162,7 @@ function getNotifUrl(n: NotificationData): string {
                     href={getNotifUrl(n)}
                     data-notif-id={n.id}
                     data-notif-read={n.read_at ? 'true' : 'false'}
-                    class="notif-item flex items-center gap-3 px-4 py-3 transition hover:bg-neutral-50"
+                    class="notif-item flex items-center gap-3 px-4 py-3 transition hover:bg-panel"
                   >
                     <div class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-accent-soft">
                       {n.actor_entity?.avatar_url ? (
@@ -203,102 +193,267 @@ function getNotifUrl(n: NotificationData): string {
           )}
         </div>
 
-        {/* Avatar menu button */}
+        {/* Avatar menu */}
         <button
           type="button"
           popovertarget={avatarMenuId}
           style={`anchor-name: --${avatarMenuId};`}
-          class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full overflow-hidden transition hover:ring-2 hover:ring-neutral-200"
+          class="app-header__avatar"
+          aria-label="Mon compte"
         >
           {avatarUrl ? (
-            <img src={avatarUrl} alt={displayName ?? ''} class="h-full w-full object-cover" />
+            <img src={avatarUrl} alt={displayName ?? ''} class="h-full w-full object-cover rounded-full" />
           ) : (
-            <span class="flex h-full w-full items-center justify-center bg-accent-soft text-sm font-semibold text-accent">
+            <span class="flex h-full w-full items-center justify-center rounded-full bg-accent-soft text-sm font-semibold text-accent">
               {initial}
             </span>
           )}
         </button>
 
-        <div id={avatarMenuId} popover="auto" class="avatar-menu" style={`position-anchor: --${avatarMenuId};`}>
-          <a href={`${dashboardUrl}/account`} class="avatar-menu-item">
-            <span class="flex h-5 w-5 shrink-0 items-center justify-center" set:html={UserCircle} />
-            <span>Mon compte</span>
+        <div id={avatarMenuId} popover="auto" class="app-menu" style={`position-anchor: --${avatarMenuId};`}>
+          {/* Profile header — avatar + nom + handle */}
+          <div class="app-menu__profile">
+            <div class="app-menu__avatar">
+              {avatarUrl ? (
+                <img src={avatarUrl} alt={displayName ?? ''} class="h-full w-full rounded-full object-cover" />
+              ) : (
+                <span class="flex h-full w-full items-center justify-center rounded-full bg-accent-soft text-base font-semibold text-accent">
+                  {initial}
+                </span>
+              )}
+            </div>
+            <div class="min-w-0 flex-1">
+              <p class="app-menu__name truncate">{displayName ?? 'Mon compte'}</p>
+              {currentUserSlug && (
+                <p class="app-menu__handle truncate text-xs text-neutral-500">@{currentUserSlug}</p>
+              )}
+            </div>
+          </div>
+
+          <hr class="app-menu__divider" />
+
+          {currentUserSlug && (
+            <a href={`/${currentUserSlug}`} class="app-menu__item">
+              <span class="flex h-5 w-5 shrink-0 items-center justify-center" set:html={UserCircle} />
+              <span>Voir mon profil</span>
+            </a>
+          )}
+          <a href={`${dashboardUrl}/account`} class="app-menu__item">
+            <span class="flex h-5 w-5 shrink-0 items-center justify-center" set:html={Settings} />
+            <span>Paramètres</span>
           </a>
-          <div class="avatar-menu-item avatar-menu-item--disabled">
-            <span class="flex h-5 w-5 shrink-0 items-center justify-center" set:html={Shield} />
-            <span class="flex-1">Confidentialité</span>
-            <span class="rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-400">Bientôt</span>
-          </div>
-          <div class="avatar-menu-item avatar-menu-item--disabled">
-            <span class="flex h-5 w-5 shrink-0 items-center justify-center" set:html={HelpCircle} />
-            <span class="flex-1">Aide</span>
-            <span class="rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-400">Bientôt</span>
-          </div>
+          <a href={`${dashboardUrl}/dashboard/site`} class="app-menu__item">
+            <span class="flex h-5 w-5 shrink-0 items-center justify-center" set:html={Sparkles} />
+            <span>Mon site (édition)</span>
+          </a>
+          <a href="/explore" class="app-menu__item app-menu__item--soft">
+            <span class="flex h-5 w-5 shrink-0 items-center justify-center" set:html={BookOpen} />
+            <span>Explorer</span>
+          </a>
+
+          <hr class="app-menu__divider" />
+
+          <form method="post" action={`${dashboardUrl}/api/auth/logout`}>
+            <button type="submit" class="app-menu__item app-menu__item--soft w-full text-left">
+              <span class="flex h-5 w-5 shrink-0 items-center justify-center" set:html={LogOut} />
+              <span>Se déconnecter</span>
+            </button>
+          </form>
         </div>
       </>
+    )}
+
+    {!isAuthenticated && (
+      <a
+        href={`${dashboardUrl}/login`}
+        class="inline-flex items-center rounded-full border border-neutral-200 bg-surface px-4 py-1.5 text-sm font-medium text-neutral-900 transition-colors hover:bg-panel-2"
+      >
+        Se connecter
+      </a>
     )}
   </div>
 </header>
 
 <style>
-  .avatar-menu, .notif-popover {
-    background: var(--color-neutral-0);
-    border: 1px solid var(--color-neutral-200);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-lg);
+  .app-header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    height: 65px;
+    padding: 0 24px;
+    background: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .app-header__project {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--color-neutral-900);
+    cursor: pointer;
+  }
+
+  .app-header__brand {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    font-family: var(--font-sans);
+    font-weight: 700;
+    font-size: 24px;
+    letter-spacing: 0.02em;
+    color: var(--color-neutral-900);
+    text-decoration: none;
+  }
+  .app-header__brand sup {
+    font-size: 11px;
+    color: var(--color-neutral-500);
+    font-weight: 500;
+    margin-left: 4px;
+    vertical-align: super;
+  }
+
+  .app-header__right {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .app-header__weather {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--color-neutral-500);
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 500;
+    padding: 4px 10px;
+    border-radius: var(--radius-pill);
+    background: var(--color-panel);
+    cursor: default;
+  }
+  .app-header__weather-temp {
+    font-variant-numeric: tabular-nums;
+    color: var(--color-neutral-900);
+  }
+
+  .app-header__time {
+    font-family: var(--font-display);
+    font-size: 18px;
+    color: var(--color-neutral-500);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
+  }
+
+  .app-header__avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--color-panel-2);
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: border-color 160ms ease, transform 80ms ease;
+    overflow: hidden;
+  }
+  .app-header__avatar:hover { border-color: var(--color-accent); }
+  .app-header__avatar:active { transform: scale(0.96); }
+
+  .app-menu, .notif-popover {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border-soft);
+    border-radius: 14px;
+    box-shadow: var(--shadow-pop);
     margin: 0;
-    margin-top: 4px;
+    margin-top: 10px;
     overflow: visible;
     position-area: bottom span-left;
     position-try-fallbacks: flip-block;
   }
-
-  .avatar-menu::backdrop, .notif-popover::backdrop {
+  .app-menu::backdrop, .notif-popover::backdrop {
     background: transparent;
   }
+  .app-menu { width: 260px; padding: 8px; }
+  .notif-popover {
+    width: calc(100vw - 2rem);
+    max-width: 400px;
+    padding: 0;
+    overflow: hidden;
+  }
 
-  .avatar-menu { width: 220px; padding: 6px; }
-  .notif-popover { width: calc(100vw - 2rem); max-width: 400px; padding: 0; overflow: hidden; }
-
-  .avatar-menu-item {
+  .app-menu__profile {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 8px 12px;
-    border-radius: var(--radius-sm);
-    font-size: 14px;
-    color: var(--color-neutral-600);
-    text-decoration: none;
-    transition: background-color 0.15s;
+    gap: 12px;
+    padding: 10px 10px 12px;
   }
-  .avatar-menu-item:hover { background: var(--color-neutral-50); }
-  .avatar-menu-item--disabled { color: var(--color-neutral-400); cursor: not-allowed; }
-  .avatar-menu-item--disabled:hover { background: transparent; }
+  .app-menu__avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: var(--color-panel-2);
+    flex-shrink: 0;
+  }
+  .app-menu__name {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: 14px;
+    color: var(--color-neutral-900);
+    margin: 0;
+  }
+  .app-menu__handle {
+    font-family: var(--font-mono);
+    margin: 0;
+  }
+  .app-menu__divider {
+    height: 1px;
+    background: var(--color-border-soft);
+    border: 0;
+    margin: 4px 0;
+  }
+  .app-menu__item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    text-align: left;
+    padding: 8px 10px;
+    border-radius: 8px;
+    font-size: 14px;
+    color: var(--color-neutral-900);
+    cursor: pointer;
+    transition: background 120ms ease;
+    text-decoration: none;
+    background: transparent;
+    border: none;
+    font-family: inherit;
+  }
+  .app-menu__item:hover { background: var(--color-panel); }
+  .app-menu__item--soft { color: var(--color-neutral-500); }
 
   .notif-item { text-decoration: none; }
 </style>
 
 <script is:inline>
-  // Copy URL (all buttons with data-copy-url)
-  var checkSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>'
-  document.querySelectorAll('[data-copy-url]').forEach(function(btn) {
-    var url = btn.dataset.copyUrl
-    var iconEl = btn.querySelector('[data-copy-icon], [data-copy-icon-mobile]')
-    var labelEl = btn.querySelector('[data-copy-label-mobile]')
-    var originalSvg = iconEl ? iconEl.innerHTML : ''
-    btn.addEventListener('click', function() {
-      navigator.clipboard.writeText(url).then(function() {
-        if (iconEl) {
-          iconEl.innerHTML = checkSvg
-          setTimeout(function() { iconEl.innerHTML = originalSvg }, 2000)
-        }
-        if (labelEl) {
-          labelEl.textContent = 'URL copiée !'
-          setTimeout(function() { labelEl.textContent = 'Copier l\'URL' }, 2000)
-        }
-      }).catch(function(err) { console.error('[copy]', err) })
-    })
-  })
+  // Clock — update every minute
+  (function() {
+    var el = document.querySelector('[data-clock]')
+    if (!el) return
+    function tick() {
+      var d = new Date()
+      var h = String(d.getHours()).padStart(2, '0')
+      var m = String(d.getMinutes()).padStart(2, '0')
+      el.textContent = h + ':' + m
+    }
+    tick()
+    setInterval(tick, 30000)
+  })()
 
   // Mark all read
   document.querySelector('[data-mark-all-read]')?.addEventListener('click', function() {

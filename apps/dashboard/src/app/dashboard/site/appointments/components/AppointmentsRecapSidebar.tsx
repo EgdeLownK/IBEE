@@ -1,5 +1,5 @@
 import { CloudSun } from 'lucide-react'
-import type { BookingExtendedStats } from '@agora/supabase'
+import type { BookingExtendedStats } from '@ibee/supabase'
 
 type Props = {
   recap: BookingExtendedStats['recap']

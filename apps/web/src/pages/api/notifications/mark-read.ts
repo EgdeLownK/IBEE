@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro'
 import { createAuthClient } from '../../../lib/supabase/auth'
-import { markAsRead } from '@agora/supabase'
+import { markAsRead } from '@ibee/supabase'
 
 export const POST: APIRoute = async ({ request, cookies }) => {
   const authClient = createAuthClient(request, cookies)

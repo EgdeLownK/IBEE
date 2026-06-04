@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  transpilePackages: ['@agora/ui-react'],
+  transpilePackages: ['@ibee/ui-react'],
 };
 
 export default nextConfig;

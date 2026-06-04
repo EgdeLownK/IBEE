@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro'
 import { supabase } from '../../../lib/supabase/client'
-import { createBooking } from '@agora/supabase'
+import { createBooking } from '@ibee/supabase'
 
 export const POST: APIRoute = async ({ request }) => {
   try {

@@ -1,7 +1,7 @@
 'use client'
 
-import type { Database } from '@agora/supabase'
-import { ProfileCardReact, ProfileHeroReact } from '@agora/ui-react'
+import type { Database } from '@ibee/supabase'
+import { ProfileCardReact, ProfileHeroReact } from '@ibee/ui-react'
 
 type Entity = Database['public']['Tables']['entity']['Row']
 

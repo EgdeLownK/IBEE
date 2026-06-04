@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { ArrowLeft, Send, Lock } from 'lucide-react'
 import { toast } from 'sonner'
-import { Textarea } from '@agora/ui-react'
+import { Textarea } from '@ibee/ui-react'
 import { updatePublicationAction } from '../../new/actions'
 
 type Publication = {

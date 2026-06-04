@@ -1,7 +1,7 @@
-import { createServerClient } from '@agora/supabase/auth/server'
+import { createServerClient } from '@ibee/supabase/auth/server'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
-import type { Database } from '@agora/supabase'
+import type { Database } from '@ibee/supabase'
 
 export async function createClient(): Promise<SupabaseClient<Database>> {
   const cookieStore = await cookies()

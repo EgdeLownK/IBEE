@@ -1,0 +1,107 @@
+---
+interface Props {
+  title?: string
+  description?: string
+  ctaLabel?: string
+  ctaHref?: string
+  secondaryLabel?: string
+  secondaryHref?: string
+  isOwner?: boolean
+}
+
+const {
+  title = 'Bienvenue',
+  description = '',
+  ctaLabel,
+  ctaHref,
+  secondaryLabel,
+  secondaryHref,
+} = Astro.props
+---
+<div class="banner-welcome">
+  <h4 class="banner-welcome__title">{title}</h4>
+  {description && (
+    <p class="banner-welcome__desc">{description}</p>
+  )}
+  {(ctaLabel || secondaryLabel) && (
+    <div class="banner-welcome__actions">
+      {ctaLabel && ctaHref && (
+        <a href={ctaHref} class="btn btn--accent">{ctaLabel}</a>
+      )}
+      {secondaryLabel && secondaryHref && (
+        <a href={secondaryHref} class="banner-welcome__link">{secondaryLabel}</a>
+      )}
+    </div>
+  )}
+</div>
+
+<style>
+  .banner-welcome {
+    background: var(--color-accent-soft);
+    border-radius: 12px;
+    padding: 20px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .banner-welcome__title {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 18px;
+    color: var(--color-neutral-900);
+    margin: 0;
+  }
+
+  .banner-welcome__desc {
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--color-neutral-700);
+    margin: 0;
+  }
+
+  .banner-welcome__actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 8px;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 36px;
+    padding: 0 18px;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 120ms, transform 80ms;
+    font-family: inherit;
+    border: 1px solid transparent;
+  }
+
+  .btn--accent {
+    background: var(--color-accent);
+    color: #FFFFFF;
+  }
+  .btn--accent:hover {
+    background: var(--color-accent-hover);
+  }
+  .btn--accent:active {
+    transform: scale(0.98);
+  }
+
+  .banner-welcome__link {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--color-neutral-900);
+    text-decoration: none;
+    transition: color 120ms;
+  }
+  .banner-welcome__link:hover {
+    color: var(--color-accent);
+  }
+</style>

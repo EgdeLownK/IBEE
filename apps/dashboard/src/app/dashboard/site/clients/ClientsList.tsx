@@ -3,8 +3,8 @@
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { Search, Users, Mail, Phone, Tag } from 'lucide-react'
-import type { Client } from '@agora/supabase'
-import { Input } from '@agora/ui-react'
+import type { Client } from '@ibee/supabase'
+import { Input } from '@ibee/ui-react'
 
 type Props = {
   clients: Client[]

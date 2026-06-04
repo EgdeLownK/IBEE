@@ -1,0 +1,302 @@
+---
+import { Star, Camera } from 'lucide-static'
+
+interface ReviewPhoto {
+  id: string
+  url: string
+  display_order?: number
+}
+
+interface Review {
+  id: string
+  buyer_user_id: string
+  rating: number
+  title: string | null
+  content: string
+  created_at: string
+  is_verified_purchase: boolean
+  helpful_count: number
+  seller_reply: string | null
+  seller_replied_at: string | null
+  product_review_photos?: ReviewPhoto[] | null
+}
+
+interface MyReview {
+  id: string
+  rating: number
+  title: string | null
+  content: string
+}
+
+interface Props {
+  productId: string
+  reviews: Review[]
+  aggregates: { count: number; average: number }
+  /** Distribution 1..5 → nombre (pré-calculé serveur). */
+  distribution: Record<number, number>
+  /** Avis du visiteur connecté (gate create vs edit). */
+  myReview?: MyReview | null
+  user: { id: string } | null
+  /** Filtres/tri actifs (query params), pour rendu serveur des liens. */
+  activeRating?: number | null
+  activeSort?: 'recent' | 'helpful'
+  /** Base path de la page (ex: /slug/shop/produit) pour les liens query. */
+  basePath: string
+  dashboardUrl?: string
+  loginUrl: string
+}
+
+const {
+  productId,
+  reviews,
+  aggregates,
+  distribution,
+  myReview = null,
+  user,
+  activeRating = null,
+  activeSort = 'recent',
+  basePath,
+  dashboardUrl = 'http://localhost:3000',
+  loginUrl,
+} = Astro.props
+
+function starRow(n: number) {
+  return Array.from({ length: 5 }, (_, i) => i < n)
+}
+
+function buildQuery(opts: { rating?: number | null; sort?: string }) {
+  const params = new URLSearchParams()
+  const r = opts.rating !== undefined ? opts.rating : activeRating
+  const s = opts.sort !== undefined ? opts.sort : activeSort
+  if (r) params.set('rating', String(r))
+  if (s && s !== 'recent') params.set('sort', s)
+  const qs = params.toString()
+  return qs ? `${basePath}?${qs}#avis` : `${basePath}#avis`
+}
+
+const maxDist = Math.max(1, ...Object.values(distribution))
+const fmtDate = (d: string) =>
+  new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(d))
+---
+<section id="avis" class="border-t border-neutral-200 px-6 py-8 sm:px-12">
+  <h2 class="text-lg font-semibold text-neutral-900">Avis clients</h2>
+
+  {/* Résumé + distribution */}
+  <div class="mt-4 flex flex-col gap-6 sm:flex-row sm:items-start">
+    <div class="text-center sm:w-40 sm:shrink-0">
+      <p class="text-4xl font-bold text-neutral-900">{aggregates.average.toFixed(1)}</p>
+      <div class="mt-1 flex justify-center gap-0.5">
+        {starRow(Math.round(aggregates.average)).map((on) => (
+          <span class:list={['flex h-4 w-4 items-center justify-center', on ? 'text-amber-400' : 'text-neutral-200']} set:html={Star} />
+        ))}
+      </div>
+      <p class="mt-1 text-xs text-neutral-500">{aggregates.count} avis</p>
+    </div>
+
+    <div class="flex-1 space-y-1.5">
+      {[5, 4, 3, 2, 1].map((n) => (
+        <a href={buildQuery({ rating: activeRating === n ? null : n })} class="flex items-center gap-2 text-xs">
+          <span class:list={['w-10 shrink-0 text-right', activeRating === n ? 'font-semibold text-accent' : 'text-neutral-600']}>{n} étoile{n > 1 ? 's' : ''}</span>
+          <span class="h-2 flex-1 overflow-hidden rounded-full bg-neutral-100">
+            <span class="block h-full rounded-full bg-amber-400" style={`width:${((distribution[n] ?? 0) / maxDist) * 100}%`}></span>
+          </span>
+          <span class="w-6 text-neutral-500">{distribution[n] ?? 0}</span>
+        </a>
+      ))}
+    </div>
+  </div>
+
+  {/* Filtres / tri (liens serveur) */}
+  <div class="mt-6 flex flex-wrap items-center gap-2">
+    {activeRating && (
+      <a href={buildQuery({ rating: null })} class="rounded-full bg-accent/10 px-3 py-1 text-xs font-medium text-accent">
+        {activeRating} étoile{activeRating > 1 ? 's' : ''} ✕
+      </a>
+    )}
+    <span class="ml-auto text-xs text-neutral-500">Trier :</span>
+    <a href={buildQuery({ sort: 'recent' })} class:list={['rounded-full px-3 py-1 text-xs font-medium', activeSort === 'recent' ? 'bg-neutral-900 text-white' : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200']}>Récents</a>
+    <a href={buildQuery({ sort: 'helpful' })} class:list={['rounded-full px-3 py-1 text-xs font-medium', activeSort === 'helpful' ? 'bg-neutral-900 text-white' : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200']}>Plus utiles</a>
+  </div>
+
+  {/* Formulaire de dépôt / édition d'avis */}
+  {user ? (
+    <div class="mt-6 rounded-xl border border-neutral-200 bg-neutral-50 p-4">
+      <h3 class="text-sm font-semibold text-neutral-900">{myReview ? 'Modifier votre avis' : 'Laisser un avis'}</h3>
+      <p id="review-confirm" class="mt-2 hidden rounded-lg bg-success/10 px-3 py-2 text-sm text-success"></p>
+      <form
+        id="review-form"
+        data-product-id={productId}
+        data-review-id={myReview?.id ?? ''}
+        class="mt-3 space-y-3"
+      >
+        <div>
+          <p class="mb-1 text-xs font-medium text-neutral-600">Votre note</p>
+          <div id="rating-input" class="flex gap-1" data-rating={myReview?.rating ?? 0}>
+            {[1, 2, 3, 4, 5].map((n) => (
+              <button type="button" data-star={n} aria-label={`${n} étoile${n > 1 ? 's' : ''}`} class="flex h-7 w-7 items-center justify-center text-neutral-300 transition hover:text-amber-400">
+                <span class="flex h-6 w-6 items-center justify-center" set:html={Star} />
+              </button>
+            ))}
+          </div>
+        </div>
+        <input
+          type="text"
+          name="title"
+          maxlength="80"
+          value={myReview?.title ?? ''}
+          placeholder="Titre (optionnel)"
+          class="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
+        />
+        <textarea
+          name="content"
+          rows="3"
+          minlength="20"
+          maxlength="5000"
+          required
+          placeholder="Votre avis (20 caractères minimum)..."
+          class="w-full resize-none rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
+        >{myReview?.content ?? ''}</textarea>
+        <p id="review-error" class="hidden text-sm text-error"></p>
+        <div class="flex items-center gap-2">
+          <button type="submit" class="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white transition hover:bg-accent-hover disabled:opacity-50">
+            {myReview ? 'Mettre à jour' : 'Publier mon avis'}
+          </button>
+          {myReview && (
+            <button type="button" id="review-delete" class="rounded-lg px-3 py-2 text-sm font-medium text-error hover:bg-error/10">
+              Supprimer
+            </button>
+          )}
+        </div>
+        <p class="text-xs text-neutral-400">Les avis sont publiés après validation.</p>
+      </form>
+    </div>
+  ) : (
+    <div class="mt-6 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-5 text-center">
+      <p class="text-sm text-neutral-500">Connectez-vous pour laisser un avis.</p>
+      <a href={loginUrl} class="mt-3 inline-flex items-center rounded-lg bg-accent px-5 py-2 text-sm font-medium text-white transition hover:bg-accent-hover">Se connecter</a>
+    </div>
+  )}
+
+  {/* Liste des avis */}
+  <div class="mt-6 space-y-5">
+    {reviews.length === 0 ? (
+      <p class="py-6 text-center text-sm text-neutral-400">Aucun avis pour le moment.</p>
+    ) : (
+      reviews.map((review) => (
+        <article class="border-b border-neutral-100 pb-5 last:border-0">
+          <div class="flex items-center gap-2">
+            <div class="flex gap-0.5">
+              {starRow(review.rating).map((on) => (
+                <span class:list={['flex h-3.5 w-3.5 items-center justify-center', on ? 'text-amber-400' : 'text-neutral-200']} set:html={Star} />
+              ))}
+            </div>
+            {review.is_verified_purchase && (
+              <span class="rounded-full bg-success/10 px-2 py-0.5 text-[11px] font-medium text-success">Achat vérifié</span>
+            )}
+            <time class="ml-auto text-xs text-neutral-400" datetime={review.created_at}>{fmtDate(review.created_at)}</time>
+          </div>
+          {review.title && <h3 class="mt-2 text-sm font-semibold text-neutral-900">{review.title}</h3>}
+          <p class="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-neutral-600">{review.content}</p>
+          {review.product_review_photos && review.product_review_photos.length > 0 && (
+            <div class="mt-3 flex gap-2">
+              {review.product_review_photos
+                .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))
+                .map((photo) => (
+                  <img src={photo.url} alt="Photo d'avis" class="h-16 w-16 rounded-lg object-cover" loading="lazy" />
+                ))}
+            </div>
+          )}
+          {review.seller_reply && (
+            <div class="mt-3 rounded-lg bg-neutral-50 p-3">
+              <p class="text-xs font-semibold text-neutral-900">Réponse du vendeur</p>
+              <p class="mt-1 whitespace-pre-wrap text-sm text-neutral-600">{review.seller_reply}</p>
+            </div>
+          )}
+        </article>
+      ))
+    )}
+  </div>
+</section>
+
+<script is:inline>
+(function() {
+  var form = document.getElementById('review-form')
+  if (!form) return
+
+  var errorEl = document.getElementById('review-error')
+  var confirmEl = document.getElementById('review-confirm')
+  var ratingInput = document.getElementById('rating-input')
+  var submitBtn = form.querySelector('button[type="submit"]')
+  var rating = parseInt(ratingInput.getAttribute('data-rating') || '0', 10)
+
+  function paintStars(n) {
+    ratingInput.querySelectorAll('[data-star]').forEach(function(btn) {
+      var v = parseInt(btn.getAttribute('data-star'), 10)
+      btn.className = 'flex h-7 w-7 items-center justify-center transition ' + (v <= n ? 'text-amber-400' : 'text-neutral-300 hover:text-amber-400')
+    })
+  }
+  paintStars(rating)
+
+  ratingInput.querySelectorAll('[data-star]').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      rating = parseInt(btn.getAttribute('data-star'), 10)
+      ratingInput.setAttribute('data-rating', String(rating))
+      paintStars(rating)
+    })
+  })
+
+  function showError(msg) {
+    errorEl.textContent = msg
+    errorEl.classList.remove('hidden')
+  }
+
+  form.addEventListener('submit', function(e) {
+    e.preventDefault()
+    errorEl.classList.add('hidden')
+    var content = form.querySelector('[name="content"]').value.trim()
+    var title = form.querySelector('[name="title"]').value.trim()
+    if (rating < 1) { showError('Sélectionnez une note.'); return }
+    if (content.length < 20) { showError('L’avis doit contenir au moins 20 caractères.'); return }
+
+    var reviewId = form.getAttribute('data-review-id')
+    var isEdit = !!reviewId
+    submitBtn.disabled = true
+
+    fetch('/api/product-reviews', {
+      method: isEdit ? 'PATCH' : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        productId: form.getAttribute('data-product-id'),
+        reviewId: reviewId || undefined,
+        rating: rating,
+        title: title || null,
+        content: content,
+      }),
+    })
+      .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d } }) })
+      .then(function(res) {
+        if (!res.ok) { showError(res.data.error || 'Erreur.'); submitBtn.disabled = false; return }
+        // status pending : pas de reload, message de confirmation
+        confirmEl.textContent = isEdit
+          ? 'Avis mis à jour. Il sera de nouveau visible après validation.'
+          : 'Merci ! Votre avis sera publié après validation.'
+        confirmEl.classList.remove('hidden')
+        form.style.display = 'none'
+      })
+      .catch(function() { showError('Erreur réseau.'); submitBtn.disabled = false })
+  })
+
+  var delBtn = document.getElementById('review-delete')
+  if (delBtn) {
+    delBtn.addEventListener('click', function() {
+      if (!confirm('Supprimer votre avis ?')) return
+      fetch('/api/product-reviews', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reviewId: form.getAttribute('data-review-id') }),
+      })
+        .then(function(r) { if (r.ok) window.location.reload() })
+    })
+  }
+})()
+</script>

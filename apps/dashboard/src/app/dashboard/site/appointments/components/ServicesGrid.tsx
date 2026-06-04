@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Search, MoreVertical, Package, Plus } from 'lucide-react'
-import { Input } from '@agora/ui-react'
+import { Input } from '@ibee/ui-react'
 
 type AppointmentType = {
   id: string

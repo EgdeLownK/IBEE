@@ -18,8 +18,8 @@ import {
   X,
 } from 'lucide-react'
 import { toast } from 'sonner'
-import type { Client } from '@agora/supabase'
-import { Input } from '@agora/ui-react'
+import type { Client } from '@ibee/supabase'
+import { Input } from '@ibee/ui-react'
 import { deleteClientAction, updateClientAction } from '../actions'
 
 type BookingRow = {

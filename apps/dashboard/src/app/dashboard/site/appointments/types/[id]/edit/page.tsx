@@ -1,6 +1,6 @@
 import { redirect, notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { getEntityByUserId, getAppointmentTypeById } from '@agora/supabase'
+import { getEntityByUserId, getAppointmentTypeById } from '@ibee/supabase'
 import { AppointmentTypeEditorFull } from '../../AppointmentTypeEditorFull'
 
 export default async function EditAppointmentTypePage({

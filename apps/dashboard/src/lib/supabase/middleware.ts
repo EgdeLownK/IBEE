@@ -1,4 +1,4 @@
-import { createServerClient } from '@agora/supabase/auth/middleware'
+import { createServerClient } from '@ibee/supabase/auth/middleware'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function updateSession(request: NextRequest) {

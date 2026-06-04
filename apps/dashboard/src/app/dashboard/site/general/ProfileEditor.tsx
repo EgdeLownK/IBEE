@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import type { Database } from '@agora/supabase'
+import type { Database } from '@ibee/supabase'
 import { ArrowLeft } from 'lucide-react'
 import { toast } from 'sonner'
 import { IdentityCard } from './IdentityCard'

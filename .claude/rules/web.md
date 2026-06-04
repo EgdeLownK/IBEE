@@ -6,11 +6,11 @@ paths:
 # Règles apps/web + ui-server
 
 - Astro 6 SSR, adapter Cloudflare, **zéro JS client** sur les pages profil
-- Aucun import depuis `@agora/ui-react` — uniquement `@agora/ui-server`
+- Aucun import depuis `@ibee/ui-react` — uniquement `@ibee/ui-server`
 - Exception JS documentée : `/explore` (recherche live, vanilla JS inline, noindex)
 - Toute nouvelle exception JS doit être justifiée en commentaire au-dessus de l'import
 - Sémantique HTML stricte (`<article>`, `<header>`, `<nav>`, `<main>`, `<section>`) — critique pour SEO/GEO/AEO
-- Import composants Astro : `@agora/ui-server/src/components/X.astro` (chemin direct, pas via index.ts)
+- Import composants Astro : `@ibee/ui-server/src/components/X.astro` (chemin direct, pas via index.ts)
 - Icônes : `lucide-static` (SVG strings, zéro JS)
 - Headers cache : `Cache-Control: s-maxage=86400, stale-while-revalidate=604800`
 - Variables env : préfixe `PUBLIC_` obligatoire côté Astro (sauf `SITE_URL` et `DASHBOARD_URL` serveur-only)

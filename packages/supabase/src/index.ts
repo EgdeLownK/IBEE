@@ -15,9 +15,77 @@ export type { Client } from './clients'
 export { purgeEntityCache, purgePublicationCache } from './cache'
 export type { Database } from './types'
 
+// Products
+export {
+  getPublishedProductBySlug,
+  listPublishedProductsByEntity,
+  lookupProductSlugHistory,
+  getProductById,
+  listProductsByEntity,
+  createProduct,
+  updateProduct,
+  deleteProduct,
+  addProductMedia,
+  removeProductMedia,
+  reorderProductMedia,
+  listProductVariants,
+  createProductVariant,
+  updateProductVariant,
+  deleteProductVariant,
+} from './products'
+
+export {
+  listPublishedReviews,
+  getReviewAggregates,
+  getMyReview,
+  createReview,
+  updateMyReview,
+  deleteMyReview,
+  addReviewPhotos,
+  removeReviewPhoto,
+  listReviewsForModeration,
+} from './product-reviews'
+export type { ReviewAggregates } from './product-reviews'
+
+export {
+  listPublishedQuestions,
+  askQuestion,
+  deleteMyQuestion,
+  answerQuestion,
+  deleteMyAnswer,
+  listQuestionsForModeration,
+  listAnswersForModeration,
+} from './product-qa'
+
+export {
+  listDiscountCodes,
+  getDiscountCodeById,
+  createDiscountCode,
+  updateDiscountCode,
+  deleteDiscountCode,
+  setDiscountCodeProducts,
+  setDiscountCodeCategories,
+  listDiscountCodeUses,
+} from './discount-codes'
+
+export {
+  listProductCategories,
+  getOrCreateProductCategory,
+  deleteProductCategory,
+} from './product-categories'
+
+export {
+  getMyWishlist,
+  isInWishlist,
+  addToWishlist,
+  removeFromWishlist,
+  toggleWishlist,
+  updateWishlistNote,
+} from './wishlist'
+
 export const AGORA_SYSTEM_SLUG = '__agora__'
 
-// Auth helpers (aussi accessibles via sub-path imports @agora/supabase/auth/*)
+// Auth helpers (aussi accessibles via sub-path imports @ibee/supabase/auth/*)
 export { createServerClient } from './auth/server'
 export { createBrowserClient } from './auth/browser'
 export { getSupabaseEnv } from './auth/env'
