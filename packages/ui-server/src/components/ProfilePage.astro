@@ -1,15 +1,21 @@
 ---
+import { CalendarDays, Zap, BookOpen, MessageCircleQuestion } from 'lucide-static'
 import ProfileCard from './ProfileCard.astro'
 import ProfileHero from './ProfileHero.astro'
+import ProfileStories from './ProfileStories.astro'
 import MenuTabs from './MenuTabs.astro'
 import ProfileEmptyState from './ProfileEmptyState.astro'
+import SectionEmptyState from './SectionEmptyState.astro'
 import PublicationsList from './PublicationsList.astro'
 import AppointmentBooking from './AppointmentBooking.astro'
 import SectionHeader from './SectionHeader.astro'
 import WidgetCard from './WidgetCard.astro'
 import BannerWelcomeWidget from './BannerWelcomeWidget.astro'
-import ShopWidget from './ShopWidget.astro'
+import ShopPlaylist from './ShopPlaylist.astro'
 import ProductCreateOverlay from './ProductCreateOverlay.astro'
+import ServiceCreateOverlay from './ServiceCreateOverlay.astro'
+import EventCreateOverlay from './EventCreateOverlay.astro'
+import EventCard from './EventCard.astro'
 
 interface Media {
   id: string
@@ -43,8 +49,9 @@ interface Props {
   homeWidgets?: unknown[]
   faqItems?: unknown[]
   publications?: Publication[]
-  appointmentTypes?: { id: string; title: string; slug: string; description: string | null; duration_minutes: number; location_type: string; price_cents: number | null; currency: string }[]
-  shopProducts?: { id: string; title: string; slug: string; description?: string | null; price_cents?: number | null; sale_price_cents?: number | null; sale_ends_at?: string | null; currency?: string; image_url?: string | null; status?: string | null }[]
+  appointmentTypes?: { id: string; title: string; slug: string; description: string | null; duration_minutes: number; location_type: string; price_cents: number | null; promo_price_cents?: number | null; currency: string; gallery_images?: string[] }[]
+  events?: { id: string; title: string; slug: string; description: string | null; start_at: string; end_at?: string | null; location_type: string; location_details?: string | null; price_cents: number | null; currency: string; capacity?: number | null; gallery_images?: string[]; registrations_count?: number }[]
+  shopProducts?: { id: string; title: string; slug: string; description?: string | null; price_cents?: number | null; sale_price_cents?: number | null; sale_ends_at?: string | null; currency?: string; image_url?: string | null; status?: string | null; category_id?: string | null; type?: string | null; physical_stock_quantity?: number | null }[]
   productCategories?: { id: string; name: string }[]
   isOwner?: boolean
   isAuthenticated?: boolean
@@ -52,12 +59,25 @@ interface Props {
   dashboardUrl?: string
 }
 
-const { entity, menuSections, isOwner, isAuthenticated, isFollowing, dashboardUrl, publications = [], appointmentTypes = [], shopProducts = [], productCategories = [], faqItems = [] } = Astro.props
+const { entity, menuSections, isOwner, isAuthenticated, isFollowing, dashboardUrl, publications = [], appointmentTypes = [], shopProducts = [], productCategories = [], faqItems = [], events = [] } = Astro.props
 const hasFaqItems = Array.isArray(faqItems) && faqItems.length > 0
 
 const hasNewsSection = menuSections.some(s => s.type === 'news')
 const hasAppointmentsSection = menuSections.some(s => s.type === 'appointments')
 const hasShopSection = menuSections.some(s => s.type === 'shop')
+const hasEventsSection = menuSections.some(s => s.type === 'events')
+const hasHistorySection = menuSections.some(s => s.type === 'history')
+const hasFaqSection = menuSections.some(s => s.type === 'faq') || hasFaqItems
+
+// Menu « Ajouter contenu » du hero (owner) : un item par type de section.
+// FAQ : active si la section existe OU si des items FAQ existent (même logique
+// que MenuTabs).
+const ALL_SECTION_TYPES = ['shop', 'appointments', 'events', 'news', 'history', 'faq'] as const
+const sectionTypeSet = new Set(menuSections.map(s => s.type))
+const addContentSections = ALL_SECTION_TYPES.map(type => ({
+  type,
+  active: sectionTypeSet.has(type) || (type === 'faq' && hasFaqItems),
+}))
 // La section "home" est implicite : toujours présente comme tab par défaut, même
 // si elle n'est pas dans entity_menu_sections (les widgets viennent de entity_home_widgets)
 const defaultActiveType = 'home'
@@ -77,7 +97,12 @@ const defaultActiveType = 'home'
     entitySlug={entity.slug}
     followersCount={entity.followers_count}
     dashboardUrl={dashboardUrl}
+    addContentSections={addContentSections}
   />
+
+  {/* Stories — juste sous les boutons du hero (backend à venir) */}
+  <ProfileStories isOwner={isOwner} />
+
   {(menuSections.length > 0 || isOwner) ? (
     <MenuTabs sections={menuSections} activeType={defaultActiveType} isOwner={isOwner} hasFaq={hasFaqItems} />
   ) : <ProfileEmptyState />}
@@ -109,35 +134,113 @@ const defaultActiveType = 'home'
         entitySlug={entity.slug}
         entityRole={entity.role}
         isOwner={isOwner}
-        dashboardUrl={dashboardUrl}
       />
     </div>
   )}
 
   {/* Section Rendez-vous */}
-  {hasAppointmentsSection && appointmentTypes.length > 0 && (
-    <div data-section="appointments" class="px-6 sm:px-12">
-      <AppointmentBooking
-        entityId={entity.id}
-        entitySlug={entity.slug}
-        appointmentTypes={appointmentTypes}
+  {hasAppointmentsSection && (
+    <div data-section="appointments" class="profile-section">
+      {appointmentTypes.length === 0 ? (
+        <SectionEmptyState
+          icon={CalendarDays}
+          title="Aucun service pour le moment"
+          description="Aucun service réservable pour l'instant."
+          ownerDescription="Propose ton premier service réservable."
+          ctaLabel="Ajouter un service"
+          ctaAction="data-open-service-overlay"
+          isOwner={isOwner}
+        />
+      ) : (
+        <AppointmentBooking
+          entityId={entity.id}
+          entitySlug={entity.slug}
+          appointmentTypes={appointmentTypes}
+        />
+      )}
+    </div>
+  )}
+
+  {/* Section Events — events publiés à venir uniquement */}
+  {hasEventsSection && (
+    <div data-section="events" class="profile-section">
+      {events.length === 0 ? (
+        <SectionEmptyState
+          icon={Zap}
+          title="Aucun event à venir"
+          description="Reviens bientôt pour découvrir les prochains events."
+          ownerDescription="Annonce ton prochain webinaire, atelier ou meetup."
+          ctaLabel="Ajouter un event"
+          ctaAction="data-open-event-overlay"
+          isOwner={isOwner}
+        />
+      ) : (
+        <div class="flex flex-col gap-2.5">
+          {events.map((ev) => (
+            <EventCard
+              id={ev.id}
+              title={ev.title}
+              slug={ev.slug}
+              description={ev.description}
+              startAt={ev.start_at}
+              endAt={ev.end_at ?? null}
+              locationType={ev.location_type}
+              locationDetails={ev.location_details ?? null}
+              priceCents={ev.price_cents}
+              currency={ev.currency}
+              capacity={ev.capacity ?? null}
+              registrationsCount={ev.registrations_count ?? 0}
+              coverImageUrl={ev.gallery_images?.[0] ?? null}
+              entitySlug={entity.slug}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  )}
+
+  {/* Section Shop — pattern Playlist (recherche + catégories + tuiles) */}
+  {hasShopSection && (
+    <div data-section="shop" class="profile-section">
+      <ShopPlaylist products={shopProducts} categories={productCategories} isOwner={isOwner} entitySlug={entity.slug} />
+    </div>
+  )}
+
+  {/* Section Histoire — affichage à venir, état vide en attendant */}
+  {hasHistorySection && (
+    <div data-section="history" class="profile-section">
+      <SectionEmptyState
+        icon={BookOpen}
+        title="Aucune histoire pour le moment"
+        description="L'histoire arrive bientôt."
+        ownerDescription="Raconte ton parcours et ce qui t'anime."
+        ctaLabel="Ajouter votre histoire"
+        ctaAction="data-open-history-overlay"
+        isOwner={isOwner}
       />
     </div>
   )}
 
-  {/* Section Shop — aperçu (max 6) ; le tab "Shop" navigue vers /[slug]/shop */}
-  {hasShopSection && (
-    <div data-section="shop" class="profile-section">
-      <ShopWidget products={shopProducts} isOwner={isOwner} entitySlug={entity.slug} />
-      <div class="profile-section__shop-more">
-        <a href={`/${entity.slug}/shop`} class="profile-section__shop-link">
-          Voir toute la boutique
-        </a>
-      </div>
+  {/* Section FAQ — affichage des questions à venir, état vide en attendant */}
+  {hasFaqSection && (
+    <div data-section="faq" class="profile-section">
+      {!hasFaqItems && (
+        <SectionEmptyState
+          icon={MessageCircleQuestion}
+          title="Aucune question pour le moment"
+          description="Pas encore de FAQ par ici."
+          ownerDescription="Réponds aux questions les plus fréquentes de tes clients."
+          ctaLabel="Ajouter une question"
+          ctaAction="data-open-faq-overlay"
+          isOwner={isOwner}
+        />
+      )}
     </div>
   )}
 
   {isOwner && <ProductCreateOverlay entitySlug={entity.slug} categories={productCategories} />}
+  {isOwner && <ServiceCreateOverlay entitySlug={entity.slug} />}
+  {isOwner && <EventCreateOverlay entitySlug={entity.slug} />}
 
   {/* Tab switching — affiche uniquement la section active */}
   <script is:inline>
@@ -152,11 +255,7 @@ const defaultActiveType = 'home'
         });
         tabs.forEach(function(a) {
           var t = a.dataset.sectionTab || a.getAttribute('href').slice(1);
-          if (t === type) {
-            a.classList.add('is-active');
-          } else {
-            a.classList.remove('is-active');
-          }
+          a.classList.toggle('is-active', t === type);
         });
       }
 
@@ -189,33 +288,11 @@ const defaultActiveType = 'home'
 
 <style>
   .profile-section {
-    padding: 0 27px 24px;
+    padding: 4px 22px 28px;
   }
   .profile-section__widgets {
     display: flex;
     flex-direction: column;
     gap: 14px;
-  }
-  .profile-section__shop-more {
-    display: flex;
-    justify-content: center;
-    padding: 4px 27px 0;
-  }
-  .profile-section__shop-link {
-    display: inline-flex;
-    align-items: center;
-    height: 38px;
-    padding: 0 20px;
-    border-radius: 999px;
-    border: 1px solid var(--color-border);
-    color: var(--color-neutral-700);
-    font-size: 13px;
-    font-weight: 500;
-    text-decoration: none;
-    transition: border-color 120ms, color 120ms;
-  }
-  .profile-section__shop-link:hover {
-    border-color: var(--color-accent);
-    color: var(--color-accent);
   }
 </style>

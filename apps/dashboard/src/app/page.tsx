@@ -13,7 +13,11 @@ export default async function Home() {
   const entity = await getEntityByUserId(supabase, user.id)
 
   if (!entity) {
+    // Cas anormal (le trigger handle_new_user garantit une entity par user).
+    // signOut obligatoire avant /login : le middleware renvoie les connectés
+    // de /login vers / — sans déconnexion, redirect('/login') bouclerait.
     console.error(`[page /] Entity introuvable pour user_id=${user.id}`)
+    await supabase.auth.signOut()
     redirect('/login')
   }
 

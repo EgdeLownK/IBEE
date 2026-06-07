@@ -1,10 +1,10 @@
 ---
 paths:
-  - ".agora-brain/**"
+  - ".ibee-brain/**"
 ---
-# Règle brain (.agora-brain/)
+# Règle brain (.ibee-brain/)
 
-Toute modification dans `.agora-brain/` suit la grammaire définie dans `_BRAIN-RULES.md` (racine du brain). La grammaire couvre : nommage, frontmatter YAML obligatoire, enum `type:` fermé, wikilinks Obsidian, cycle de vie (création / archivage), règles de référencement.
+Toute modification dans `.ibee-brain/` suit la grammaire définie dans `_BRAIN-RULES.md` (racine du brain). La grammaire couvre : nommage, frontmatter YAML obligatoire, enum `type:` fermé, wikilinks Obsidian, cycle de vie (création / archivage), règles de référencement.
 
 ## Lecture systématique au démarrage de session
 

@@ -59,6 +59,11 @@ const hasAvatar = !!entity.avatar_url
           aria-label="Modifier la bannière"
         >
           <div class="infos-banner__placeholder" aria-hidden="true"></div>
+          {/* Hint visible par défaut sur la page de modification */}
+          <span class="banner-edit-hint is-visible" aria-hidden="true">
+            <span class="flex h-4 w-4 items-center justify-center" set:html={ImageIcon} />
+            Modifier
+          </span>
         </button>
         <button
           type="button"
@@ -72,6 +77,10 @@ const hasAvatar = !!entity.avatar_url
           ) : (
             <span class="font-display text-3xl font-medium text-neutral-500">{initials}</span>
           )}
+          {/* Hint visible par défaut sur la page de modification */}
+          <span class="avatar-edit-hint is-visible" aria-hidden="true">
+            <span class="flex h-4 w-4 items-center justify-center" set:html={ImageIcon} />
+          </span>
         </button>
       </div>
 
@@ -157,7 +166,7 @@ const hasAvatar = !!entity.avatar_url
   </main>
 
   {/* Popover banner (mode owner) */}
-  <div id={bannerMenuId} popover="auto" class="image-action-menu" style={`position-anchor: --${bannerMenuId};`}>
+  <div id={bannerMenuId} popover="auto" class="image-action-menu image-action-menu--banner" style={`position-anchor: --${bannerMenuId};`}>
     <button type="button" class="image-action-menu__item" data-banner-action="change">
       <span class="flex h-4 w-4 items-center justify-center" set:html={ImageIcon} />
       <span>Changer l'image</span>
@@ -265,6 +274,8 @@ const hasAvatar = !!entity.avatar_url
     padding: 0;
     display: block;
     cursor: default;
+    /* Ancre le hint d'édition (.banner-edit-hint) en bas à droite */
+    position: relative;
   }
   .infos-banner--editable {
     cursor: pointer;
@@ -322,6 +333,12 @@ const hasAvatar = !!entity.avatar_url
     overflow: visible;
     position-area: bottom span-right;
     position-try-fallbacks: flip-block;
+  }
+  /* Menu bannière : ancré au bord droit de la cover, écarté du bord
+     (même comportement que sur le profil) */
+  .image-action-menu--banner {
+    position-area: bottom span-left;
+    margin-right: 22px;
   }
   .image-action-menu::backdrop {
     background: transparent;

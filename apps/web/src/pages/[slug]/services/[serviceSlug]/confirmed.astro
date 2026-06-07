@@ -30,7 +30,7 @@ const bookerName = url.searchParams.get('name') ?? ''
 const dateRecap = url.searchParams.get('date') ?? ''
 
 function formatPrice(cents: number | null, currency: string) {
-  if (cents === null || cents === 0) return 'Gratuit'
+  if (cents === null || cents === 0) return '0€'
   return new Intl.NumberFormat('fr-FR', { style: 'currency', currency }).format(cents / 100)
 }
 
@@ -42,7 +42,7 @@ const loc = locationLabels[service.location_type] ?? locationLabels.video
 Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
 ---
 <AppLayout
-  title={`Rendez-vous confirme — ${entity.display_name} — Agora`}
+  title={`Rendez-vous confirme — ${entity.display_name} — IBEE`}
   user={user}
   profileUrl={profileUrl}
   robots="noindex, nofollow"

@@ -43,7 +43,7 @@ const { entitySlug, categories = [] } = Astro.props
     {/* Indicateur d'étapes */}
     <nav class="pco__steps" aria-label="Étapes de création" data-pco-steps>
       <span class="pco__step" data-pco-step-indicator="1"><span class="pco__step-num">1</span><span class="pco__step-label">L'essentiel</span></span>
-      <span class="pco__step" data-pco-step-indicator="2" data-pco-step-physical><span class="pco__step-num">2</span><span class="pco__step-label">Stock & variantes</span></span>
+      <span class="pco__step" data-pco-step-indicator="2"><span class="pco__step-num">2</span><span class="pco__step-label" data-pco-step2-label>Stock & variantes</span></span>
       <span class="pco__step" data-pco-step-indicator="3"><span class="pco__step-num">3</span><span class="pco__step-label">Description</span></span>
     </nav>
 
@@ -61,8 +61,8 @@ const { entitySlug, categories = [] } = Astro.props
           </button>
           <button type="button" class="pco__type-card" data-pco-type-card="digital">
             <span class="pco__type-icon" set:html={Download} />
-            <span class="pco__type-name">Produit numérique</span>
-            <span class="pco__type-desc">Livré par lien de téléchargement</span>
+            <span class="pco__type-name">Produit digital</span>
+            <span class="pco__type-desc">Fichier livré par téléchargement</span>
           </button>
         </div>
         <input type="hidden" name="type" data-pco-type-input value="" />
@@ -147,38 +147,6 @@ const { entitySlug, categories = [] } = Astro.props
           <p class="pco__error" data-pco-field-error="new_category_name" hidden></p>
         </div>
 
-        {/* Bloc digital (étape 1) */}
-        <div class="pco__conditional" data-pco-digital hidden>
-          <div class="pco__field">
-            <label class="pco__label" for="pco-file-url">URL du fichier <span class="pco__req">*</span></label>
-            <input type="url" id="pco-file-url" name="digital_file_url" class="pco__input" placeholder="https://..." />
-            <p class="pco__error" data-pco-field-error="digital_file_url" hidden></p>
-          </div>
-          <div class="pco__row">
-            <div class="pco__field">
-              <label class="pco__label" for="pco-format">Format</label>
-              <select id="pco-format" name="digital_file_format" class="pco__input">
-                <option value="pdf">PDF</option>
-                <option value="epub">EPUB</option>
-                <option value="mp4">MP4</option>
-                <option value="mp3">MP3</option>
-                <option value="zip">ZIP</option>
-                <option value="other">Autre</option>
-              </select>
-              <p class="pco__error" data-pco-field-error="digital_file_format" hidden></p>
-            </div>
-            <div class="pco__field">
-              <label class="pco__label" for="pco-license">Licence</label>
-              <select id="pco-license" name="digital_license" class="pco__input">
-                <option value="personal">Personnelle</option>
-                <option value="professional">Professionnelle</option>
-                <option value="commercial">Commerciale</option>
-              </select>
-              <p class="pco__error" data-pco-field-error="digital_license" hidden></p>
-            </div>
-          </div>
-        </div>
-
         {/* Bloc physical (modes de remise — étape 1) */}
         <div class="pco__conditional" data-pco-physical-delivery hidden>
           <span class="pco__label">Modes de remise <span class="pco__req">*</span></span>
@@ -199,34 +167,78 @@ const { entitySlug, categories = [] } = Astro.props
         </div>
       </section>
 
-      {/* ============ ÉTAPE 2 — Stock & variantes (physical only) ============ */}
+      {/* ============ ÉTAPE 2 — physical : Stock & variantes / digital : Fichier & détails ============ */}
       <section class="pco__stage" data-pco-stage="2" hidden>
-        <div class="pco__row">
-          <div class="pco__field">
-            <label class="pco__label" for="pco-stock">Quantité en stock</label>
-            <input type="number" id="pco-stock" name="physical_stock_quantity" min="0" step="1" value="1" class="pco__input" />
-            <p class="pco__error" data-pco-field-error="physical_stock_quantity" hidden></p>
+        <div data-pco-stage2-physical hidden>
+          <div class="pco__row">
+            <div class="pco__field">
+              <label class="pco__label" for="pco-stock">Quantité en stock</label>
+              <input type="number" id="pco-stock" name="physical_stock_quantity" min="0" step="1" value="1" class="pco__input" />
+              <p class="pco__error" data-pco-field-error="physical_stock_quantity" hidden></p>
+            </div>
+            <div class="pco__field">
+              <label class="pco__label" for="pco-condition">État</label>
+              <select id="pco-condition" name="physical_condition" class="pco__input">
+                <option value="new">Neuf</option>
+                <option value="like_new">Comme neuf</option>
+                <option value="very_good">Très bon état</option>
+                <option value="good">Bon état</option>
+                <option value="acceptable">Correct</option>
+              </select>
+              <p class="pco__error" data-pco-field-error="physical_condition" hidden></p>
+            </div>
           </div>
+
           <div class="pco__field">
-            <label class="pco__label" for="pco-condition">État</label>
-            <select id="pco-condition" name="physical_condition" class="pco__input">
-              <option value="new">Neuf</option>
-              <option value="like_new">Comme neuf</option>
-              <option value="very_good">Très bon état</option>
-              <option value="good">Bon état</option>
-              <option value="acceptable">Correct</option>
-            </select>
-            <p class="pco__error" data-pco-field-error="physical_condition" hidden></p>
+            <span class="pco__label">Variantes <span class="pco__hint">(max 20, optionnel)</span></span>
+            <div class="pco__variants" data-pco-variants></div>
+            <button type="button" class="pco__add-btn" data-pco-variant-add>
+              <span class="pco__icon-sm" set:html={Plus} /> Ajouter une variante
+            </button>
+            <p class="pco__error" data-pco-field-error="variants" hidden></p>
           </div>
         </div>
 
-        <div class="pco__field">
-          <span class="pco__label">Variantes <span class="pco__hint">(max 20, optionnel)</span></span>
-          <div class="pco__variants" data-pco-variants></div>
-          <button type="button" class="pco__add-btn" data-pco-variant-add>
-            <span class="pco__icon-sm" set:html={Plus} /> Ajouter une variante
-          </button>
-          <p class="pco__error" data-pco-field-error="variants" hidden></p>
+        <div data-pco-stage2-digital hidden>
+          <div class="pco__field">
+            <span class="pco__label">Fichier livré <span class="pco__req">*</span></span>
+            <div class="pco__file-selected" data-pco-file-selected hidden>
+              <span class="pco__icon-sm" set:html={Download} />
+              <span class="pco__file-selected-name" data-pco-file-selected-name></span>
+              <span class="pco__file-selected-size" data-pco-file-selected-size></span>
+              <button type="button" class="pco__file-remove" data-pco-file-remove aria-label="Retirer le fichier">&times;</button>
+            </div>
+            <button type="button" class="pco__add-btn" data-pco-file-upload-btn>
+              <span class="pco__icon-sm" set:html={Plus} /> <span data-pco-file-upload-label>Téléverser un fichier</span>
+            </button>
+            <input type="file" data-pco-file-input hidden />
+            <p class="pco__hint-block">Jusqu'à 200 Mo. Stocké en privé — livré à l'acheteur après l'achat.</p>
+            <input type="hidden" name="digital_file_id" data-pco-file-id value="" />
+            <p class="pco__error" data-pco-field-error="digital_file_id" hidden></p>
+          </div>
+
+          <div class="pco__field" data-pco-myfiles hidden>
+            <span class="pco__label">Mes fichiers <span class="pco__hint">(réutiliser un fichier déjà envoyé)</span></span>
+            <div class="pco__myfiles-list" data-pco-myfiles-list></div>
+          </div>
+
+          <div class="pco__field">
+            <span class="pco__label">Détails personnalisés <span class="pco__hint">(max 8 — ex : Licence, Mises à jour…)</span> <span class="pco__counter" data-pco-details-count>0/8</span></span>
+            <div class="pco__attr-pairs" data-pco-details></div>
+            <button type="button" class="pco__add-btn" data-pco-detail-add>
+              <span class="pco__icon-sm" set:html={Plus} /> Ajouter un détail
+            </button>
+            <p class="pco__error" data-pco-field-error="custom_details" hidden></p>
+          </div>
+
+          <div class="pco__field">
+            <span class="pco__label">Familles de détails <span class="pco__hint">(max 6 — regroupent des détails, ex : Caractéristiques)</span></span>
+            <div class="pco__variants" data-pco-detail-families></div>
+            <button type="button" class="pco__add-btn" data-pco-family-add>
+              <span class="pco__icon-sm" set:html={Plus} /> Ajouter une famille
+            </button>
+            <p class="pco__error" data-pco-field-error="custom_details_families" hidden></p>
+          </div>
         </div>
       </section>
 
@@ -243,6 +255,16 @@ const { entitySlug, categories = [] } = Astro.props
           </button>
         </div>
         <p class="pco__error" data-pco-field-error="content_blocks" hidden></p>
+
+        {/* FAQ produit (physique et digital) */}
+        <div class="pco__field">
+          <span class="pco__label">FAQ <span class="pco__hint">(max 10 — questions fréquentes de tes clients)</span> <span class="pco__counter" data-pco-faq-count>0/10</span></span>
+          <div class="pco__attr-pairs" data-pco-faq></div>
+          <button type="button" class="pco__add-btn" data-pco-faq-add>
+            <span class="pco__icon-sm" set:html={Plus} /> Ajouter une question
+          </button>
+          <p class="pco__error" data-pco-field-error="faq" hidden></p>
+        </div>
 
         <div class="pco__field pco__publish">
           <label class="pco__switch">
@@ -344,13 +366,27 @@ const { entitySlug, categories = [] } = Astro.props
   }
   .pco__icon {
     display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
     width: 18px;
     height: 18px;
   }
   .pco__icon-sm {
     display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
     width: 15px;
     height: 15px;
+  }
+  /* Les SVG lucide (24×24 natif) sont injectés via set:html → hors scope Astro,
+     d'où :global(). Sans cette contrainte ils débordent du wrapper et se
+     désalignent du texte. */
+  .pco__icon :global(svg),
+  .pco__icon-sm :global(svg) {
+    width: 100%;
+    height: 100%;
   }
 
   /* Steps indicator */
@@ -447,6 +483,87 @@ const { entitySlug, categories = [] } = Astro.props
   }
   .pco__hint {
     font-weight: 400;
+    color: var(--color-neutral-400);
+    font-size: 12px;
+  }
+  .pco__hint-block {
+    margin: 6px 0 0;
+    color: var(--color-neutral-400);
+    font-size: 12px;
+  }
+  /* Étape 2 digital — fichier sélectionné + liste "Mes fichiers" */
+  .pco__file-selected {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    background: var(--color-neutral-50, #fafafa);
+    font-size: 13px;
+    color: var(--color-neutral-700);
+  }
+  .pco__file-selected-name {
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+  }
+  .pco__file-selected-size {
+    color: var(--color-neutral-400);
+    font-size: 12px;
+    flex-shrink: 0;
+  }
+  .pco__file-remove {
+    margin-left: auto;
+    border: none;
+    background: transparent;
+    color: var(--color-neutral-400);
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 2px 6px;
+  }
+  .pco__file-remove:hover { color: var(--color-neutral-700); }
+  .pco__myfiles-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 180px;
+    overflow-y: auto;
+  }
+  .pco__file-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    background: transparent;
+    font-family: inherit;
+    font-size: 13px;
+    color: var(--color-neutral-700);
+    cursor: pointer;
+    text-align: left;
+    transition: border-color 120ms, background 120ms;
+  }
+  .pco__file-item:hover { border-color: var(--color-neutral-400); }
+  .pco__file-item.is-selected {
+    border-color: var(--color-accent, #2563eb);
+    background: color-mix(in srgb, var(--color-accent, #2563eb) 6%, transparent);
+  }
+  .pco__file-item-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+  }
+  .pco__file-item-meta {
+    margin-left: auto;
+    flex-shrink: 0;
     color: var(--color-neutral-400);
     font-size: 12px;
   }
@@ -963,6 +1080,10 @@ const { entitySlug, categories = [] } = Astro.props
       bullets: [],       // strings
       variants: [],      // { id, pairs:[{key,value}], sku, price, stock }
       blocks: [],        // { id, type:'text'|'image', content, url, uploading, previewUrl }
+      details: [],       // { label, value } — détails personnalisés libres (digital, étape 2)
+      detailFamilies: [], // { id, name, items: [{label, value}] } — familles de détails
+      faq: [],           // { question, answer } — FAQ produit (étape 3)
+      fileUploading: false, // upload du fichier digital (étape 2) en cours
     }
     var uid = 0
     function nextId() { uid += 1; return 'i' + uid }
@@ -1009,6 +1130,9 @@ const { entitySlug, categories = [] } = Astro.props
       state.bullets = []
       state.variants = []
       state.blocks = []
+      state.details = []
+      state.detailFamilies = []
+      state.faq = []
       submitting = false
       form.reset()
       clearErrors()
@@ -1020,7 +1144,13 @@ const { entitySlug, categories = [] } = Astro.props
       renderBullets()
       renderVariants()
       renderBlocks()
+      renderDetails()
+      renderDetailFamilies()
+      renderFaq()
       populateCategories()
+      // Fichier digital : désélection + bouton d'upload restauré
+      setSelectedFile(null)
+      setFileUploading(false)
       showStep(0)
     }
 
@@ -1075,6 +1205,13 @@ const { entitySlug, categories = [] } = Astro.props
       }
       return false
     }
+    function clearFieldError(field) {
+      var el = dialog.querySelector('[data-pco-field-error="' + field + '"]')
+      if (el) {
+        el.hidden = true
+        el.textContent = ''
+      }
+    }
     function showGlobalError(message) {
       if (globalError) {
         globalError.textContent = message
@@ -1097,11 +1234,14 @@ const { entitySlug, categories = [] } = Astro.props
 
     function applyTypeVisibility() {
       var isPhysical = state.type === 'physical'
-      dialog.querySelector('[data-pco-digital]').hidden = isPhysical
       dialog.querySelector('[data-pco-physical-delivery]').hidden = !isPhysical
-      // Étape 2 dans l'indicateur : visible seulement pour physical
-      var stepPhys = dialog.querySelector('[data-pco-step-physical]')
-      if (stepPhys) stepPhys.style.display = isPhysical ? '' : 'none'
+      // Étape 2 : même numéro pour les deux types, contenu et label adaptés
+      dialog.querySelector('[data-pco-stage2-physical]').hidden = !isPhysical
+      dialog.querySelector('[data-pco-stage2-digital]').hidden = isPhysical
+      var step2Label = dialog.querySelector('[data-pco-step2-label]')
+      if (step2Label) step2Label.textContent = isPhysical ? 'Stock & variantes' : 'Fichier & détails'
+      // Digital : précharge la liste "Mes fichiers" pour l'étape 2
+      if (state.type === 'digital') loadMyFiles()
     }
 
     // ===================================================================
@@ -1497,6 +1637,403 @@ const { entitySlug, categories = [] } = Astro.props
     }
 
     // ===================================================================
+    // Étape 2 (digital) — Fichier livré : upload direct + "Mes fichiers"
+    // ===================================================================
+    var fileIdInput = dialog.querySelector('[data-pco-file-id]')
+    var fileInput = dialog.querySelector('[data-pco-file-input]')
+    var fileUploadBtn = dialog.querySelector('[data-pco-file-upload-btn]')
+    var fileUploadLabel = dialog.querySelector('[data-pco-file-upload-label]')
+    var fileSelectedBox = dialog.querySelector('[data-pco-file-selected]')
+    var fileSelectedName = dialog.querySelector('[data-pco-file-selected-name]')
+    var fileSelectedSize = dialog.querySelector('[data-pco-file-selected-size]')
+    var myFilesBox = dialog.querySelector('[data-pco-myfiles]')
+    var myFilesList = dialog.querySelector('[data-pco-myfiles-list]')
+    var MAX_DIGITAL_FILE_BYTES = 200 * 1024 * 1024
+    var myFilesLoaded = false
+
+    function formatBytes(bytes) {
+      if (bytes >= 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1).replace('.', ',') + ' Mo'
+      if (bytes >= 1024) return Math.round(bytes / 1024) + ' Ko'
+      return bytes + ' o'
+    }
+
+    // file : { id, name, size_bytes } | null
+    function setSelectedFile(file) {
+      fileIdInput.value = file ? file.id : ''
+      fileSelectedBox.hidden = !file
+      if (file) {
+        fileSelectedName.textContent = file.name
+        fileSelectedSize.textContent = formatBytes(file.size_bytes)
+      }
+      myFilesList.querySelectorAll('.pco__file-item').forEach(function (item) {
+        item.classList.toggle('is-selected', !!file && item.getAttribute('data-file-id') === file.id)
+      })
+    }
+
+    function renderMyFileItem(file, prepend) {
+      var btn = document.createElement('button')
+      btn.type = 'button'
+      btn.className = 'pco__file-item'
+      btn.setAttribute('data-file-id', file.id)
+      var name = document.createElement('span')
+      name.className = 'pco__file-item-name'
+      name.textContent = file.name
+      var meta = document.createElement('span')
+      meta.className = 'pco__file-item-meta'
+      meta.textContent = formatBytes(file.size_bytes)
+      btn.appendChild(name)
+      btn.appendChild(meta)
+      btn.addEventListener('click', function () {
+        setSelectedFile(file)
+      })
+      if (prepend && myFilesList.firstChild) myFilesList.insertBefore(btn, myFilesList.firstChild)
+      else myFilesList.appendChild(btn)
+      myFilesBox.hidden = false
+    }
+
+    function loadMyFiles() {
+      if (myFilesLoaded) return
+      myFilesLoaded = true
+      fetch('/api/entity-files')
+        .then(function (res) { return res.json() })
+        .then(function (data) {
+          var files = (data && data.files) || []
+          files.forEach(function (f) { renderMyFileItem(f, false) })
+        })
+        .catch(function () {
+          myFilesLoaded = false // retentera à la prochaine ouverture digital
+        })
+    }
+
+    function setFileUploading(uploading) {
+      state.fileUploading = uploading
+      fileUploadBtn.disabled = uploading
+      if (fileUploadLabel) fileUploadLabel.textContent = uploading ? 'Envoi en cours...' : 'Téléverser un fichier'
+    }
+
+    fileUploadBtn.addEventListener('click', function () { fileInput.click() })
+
+    fileInput.addEventListener('change', function () {
+      var f = fileInput.files && fileInput.files[0]
+      if (!f) return
+      clearFieldError('digital_file_id')
+      if (f.size > MAX_DIGITAL_FILE_BYTES) {
+        showFieldError('digital_file_id', 'Le fichier ne doit pas dépasser 200 Mo.')
+        fileInput.value = ''
+        return
+      }
+      setFileUploading(true)
+      var fd = new FormData()
+      fd.append('file', f)
+      fetch('/api/entity-files', { method: 'POST', body: fd })
+        .then(function (res) { return res.json().then(function (d) { return { ok: res.ok, data: d } }) })
+        .then(function (result) {
+          setFileUploading(false)
+          fileInput.value = ''
+          if (result.ok && result.data && result.data.success && result.data.file) {
+            renderMyFileItem(result.data.file, true)
+            setSelectedFile(result.data.file)
+          } else {
+            showFieldError('digital_file_id', (result.data && result.data.error) || 'Erreur lors de l\'envoi du fichier.')
+          }
+        })
+        .catch(function () {
+          setFileUploading(false)
+          fileInput.value = ''
+          showFieldError('digital_file_id', 'Erreur réseau pendant l\'envoi. Réessaie.')
+        })
+    })
+
+    dialog.querySelector('[data-pco-file-remove]').addEventListener('click', function () {
+      setSelectedFile(null)
+    })
+
+    function validateStep2Digital() {
+      var ok = true
+      if (state.fileUploading) {
+        showFieldError('digital_file_id', 'Patiente, le fichier est en cours d\'envoi.')
+        ok = false
+      }
+      if (!fileIdInput.value) {
+        showFieldError('digital_file_id', 'Choisis ou téléverse un fichier.')
+        ok = false
+      }
+      // Détails personnalisés : lignes entièrement vides ignorées,
+      // ligne à moitié remplie = erreur (même logique que les variantes).
+      if (state.details.length > 8) {
+        showFieldError('custom_details', 'Maximum 8 détails.')
+        ok = false
+      }
+      var totalDetails = 0
+      for (var i = 0; i < state.details.length; i++) {
+        var dl = (state.details[i].label || '').trim()
+        var dv = (state.details[i].value || '').trim()
+        if (dl === '' && dv === '') continue
+        if (dl.length < 1 || dl.length > 40 || dv.length < 1 || dv.length > 100) {
+          showFieldError('custom_details', 'Chaque détail : libellé 1-40 caractères, valeur 1-100 caractères.')
+          ok = false
+          break
+        }
+        totalDetails++
+      }
+      // Familles : nom requis (1-40), au moins un détail valide par famille,
+      // familles entièrement vides ignorées.
+      if (state.detailFamilies.length > 6) {
+        showFieldError('custom_details_families', 'Maximum 6 familles.')
+        ok = false
+      }
+      for (var f = 0; f < state.detailFamilies.length; f++) {
+        var fam = state.detailFamilies[f]
+        var famName = (fam.name || '').trim()
+        var validItems = 0
+        var itemBad = false
+        for (var it = 0; it < fam.items.length; it++) {
+          var il = (fam.items[it].label || '').trim()
+          var iv = (fam.items[it].value || '').trim()
+          if (il === '' && iv === '') continue
+          if (il.length < 1 || il.length > 40 || iv.length < 1 || iv.length > 100) {
+            itemBad = true
+            break
+          }
+          validItems++
+        }
+        if (famName === '' && validItems === 0 && !itemBad) continue // famille vide ignorée
+        if (itemBad) {
+          showFieldError('custom_details_families', 'Chaque détail : libellé 1-40 caractères, valeur 1-100 caractères.')
+          ok = false
+          break
+        }
+        if (famName.length < 1 || famName.length > 40) {
+          showFieldError('custom_details_families', 'Chaque famille doit avoir un nom (1-40 caractères).')
+          ok = false
+          break
+        }
+        if (validItems === 0) {
+          showFieldError('custom_details_families', 'Ajoute au moins un détail dans la famille « ' + famName + ' » ou supprime-la.')
+          ok = false
+          break
+        }
+        totalDetails += validItems
+      }
+      if (totalDetails > 30) {
+        showFieldError('custom_details_families', 'Maximum 30 détails au total (libres + familles).')
+        ok = false
+      }
+      return ok
+    }
+
+    // ===================================================================
+    // Étape 2 (digital) — Détails personnalisés (label/valeur)
+    // ===================================================================
+    var detailsWrap = dialog.querySelector('[data-pco-details]')
+    var detailAddBtn = dialog.querySelector('[data-pco-detail-add]')
+    var detailsCount = dialog.querySelector('[data-pco-details-count]')
+
+    detailAddBtn.addEventListener('click', function () {
+      if (state.details.length >= 8) return
+      state.details.push({ label: '', value: '' })
+      renderDetails()
+    })
+
+    function renderDetails() {
+      detailsWrap.innerHTML = ''
+      state.details.forEach(function (detail, i) {
+        var row = document.createElement('div')
+        row.className = 'pco__attr-pair'
+
+        var labelInput = document.createElement('input')
+        labelInput.type = 'text'
+        labelInput.className = 'pco__input'
+        labelInput.maxLength = 40
+        labelInput.placeholder = 'Libellé (ex : Licence)'
+        labelInput.value = detail.label
+        labelInput.addEventListener('input', function () { detail.label = labelInput.value })
+        row.appendChild(labelInput)
+
+        var valueInput = document.createElement('input')
+        valueInput.type = 'text'
+        valueInput.className = 'pco__input'
+        valueInput.maxLength = 100
+        valueInput.placeholder = 'Valeur (ex : usage pro illimité)'
+        valueInput.value = detail.value
+        valueInput.addEventListener('input', function () { detail.value = valueInput.value })
+        row.appendChild(valueInput)
+
+        var del = document.createElement('button')
+        del.type = 'button'
+        del.className = 'pco__mini-btn pco__mini-btn--danger'
+        del.appendChild(icon('trash'))
+        del.addEventListener('click', function () {
+          state.details.splice(i, 1)
+          renderDetails()
+        })
+        row.appendChild(del)
+
+        detailsWrap.appendChild(row)
+      })
+      if (detailsCount) detailsCount.textContent = state.details.length + '/8'
+      detailAddBtn.style.display = state.details.length >= 8 ? 'none' : ''
+    }
+
+    // ===================================================================
+    // Étape 2 (digital) — Familles de détails (nom + détails groupés)
+    // ===================================================================
+    var familiesWrap = dialog.querySelector('[data-pco-detail-families]')
+    var familyAddBtn = dialog.querySelector('[data-pco-family-add]')
+
+    familyAddBtn.addEventListener('click', function () {
+      if (state.detailFamilies.length >= 6) return
+      state.detailFamilies.push({ id: nextId(), name: '', items: [{ label: '', value: '' }] })
+      renderDetailFamilies()
+    })
+
+    function renderDetailFamilies() {
+      familiesWrap.innerHTML = ''
+      state.detailFamilies.forEach(function (family, fi) {
+        var box = document.createElement('div')
+        box.className = 'pco__variant'
+
+        var head = document.createElement('div')
+        head.className = 'pco__variant-head'
+        var nameInput = document.createElement('input')
+        nameInput.type = 'text'
+        nameInput.className = 'pco__input'
+        nameInput.maxLength = 40
+        nameInput.placeholder = 'Nom de la famille (ex : Caractéristiques)'
+        nameInput.value = family.name
+        nameInput.style.flex = '1'
+        nameInput.style.marginRight = '8px'
+        nameInput.addEventListener('input', function () { family.name = nameInput.value })
+        head.appendChild(nameInput)
+        var delF = document.createElement('button')
+        delF.type = 'button'
+        delF.className = 'pco__mini-btn pco__mini-btn--danger'
+        delF.appendChild(icon('trash'))
+        delF.addEventListener('click', function () {
+          state.detailFamilies.splice(fi, 1)
+          renderDetailFamilies()
+        })
+        head.appendChild(delF)
+        box.appendChild(head)
+
+        var pairsWrap = document.createElement('div')
+        pairsWrap.className = 'pco__attr-pairs'
+        family.items.forEach(function (item, ii) {
+          var row = document.createElement('div')
+          row.className = 'pco__attr-pair'
+
+          var labelInput = document.createElement('input')
+          labelInput.type = 'text'
+          labelInput.className = 'pco__input'
+          labelInput.maxLength = 40
+          labelInput.placeholder = 'Libellé (ex : Pages)'
+          labelInput.value = item.label
+          labelInput.addEventListener('input', function () { item.label = labelInput.value })
+          row.appendChild(labelInput)
+
+          var valueInput = document.createElement('input')
+          valueInput.type = 'text'
+          valueInput.className = 'pco__input'
+          valueInput.maxLength = 100
+          valueInput.placeholder = 'Valeur (ex : 120)'
+          valueInput.value = item.value
+          valueInput.addEventListener('input', function () { item.value = valueInput.value })
+          row.appendChild(valueInput)
+
+          var delI = document.createElement('button')
+          delI.type = 'button'
+          delI.className = 'pco__mini-btn pco__mini-btn--danger'
+          delI.disabled = family.items.length <= 1
+          delI.appendChild(icon('trash'))
+          delI.addEventListener('click', function () {
+            family.items.splice(ii, 1)
+            renderDetailFamilies()
+          })
+          row.appendChild(delI)
+
+          pairsWrap.appendChild(row)
+        })
+        box.appendChild(pairsWrap)
+
+        if (family.items.length < 10) {
+          var addItem = document.createElement('button')
+          addItem.type = 'button'
+          addItem.className = 'pco__add-btn'
+          addItem.appendChild(icon('plus'))
+          addItem.appendChild(document.createTextNode(' Ajouter un détail'))
+          addItem.addEventListener('click', function () {
+            family.items.push({ label: '', value: '' })
+            renderDetailFamilies()
+          })
+          box.appendChild(addItem)
+        }
+
+        familiesWrap.appendChild(box)
+      })
+      familyAddBtn.style.display = state.detailFamilies.length >= 6 ? 'none' : ''
+    }
+
+    // ===================================================================
+    // Étape 3 — FAQ (question/réponse, les deux types)
+    // ===================================================================
+    var faqWrap = dialog.querySelector('[data-pco-faq]')
+    var faqAddBtn = dialog.querySelector('[data-pco-faq-add]')
+    var faqCount = dialog.querySelector('[data-pco-faq-count]')
+
+    faqAddBtn.addEventListener('click', function () {
+      if (state.faq.length >= 10) return
+      state.faq.push({ question: '', answer: '' })
+      renderFaq()
+    })
+
+    function renderFaq() {
+      faqWrap.innerHTML = ''
+      state.faq.forEach(function (item, i) {
+        var box = document.createElement('div')
+        box.className = 'pco__variant'
+
+        var head = document.createElement('div')
+        head.className = 'pco__variant-head'
+        var ttl = document.createElement('span')
+        ttl.className = 'pco__variant-title'
+        ttl.textContent = 'Question ' + (i + 1)
+        head.appendChild(ttl)
+        var del = document.createElement('button')
+        del.type = 'button'
+        del.className = 'pco__mini-btn pco__mini-btn--danger'
+        del.appendChild(icon('trash'))
+        del.addEventListener('click', function () {
+          state.faq.splice(i, 1)
+          renderFaq()
+        })
+        head.appendChild(del)
+        box.appendChild(head)
+
+        var qInput = document.createElement('input')
+        qInput.type = 'text'
+        qInput.className = 'pco__input'
+        qInput.maxLength = 200
+        qInput.placeholder = 'Question (ex : Le fichier est-il imprimable ?)'
+        qInput.value = item.question
+        qInput.addEventListener('input', function () { item.question = qInput.value })
+        box.appendChild(qInput)
+
+        var aInput = document.createElement('textarea')
+        aInput.className = 'pco__input'
+        aInput.rows = 3
+        aInput.maxLength = 1000
+        aInput.placeholder = 'Réponse...'
+        aInput.value = item.answer
+        aInput.addEventListener('input', function () { item.answer = aInput.value })
+        box.appendChild(aInput)
+
+        faqWrap.appendChild(box)
+      })
+      if (faqCount) faqCount.textContent = state.faq.length + '/10'
+      faqAddBtn.style.display = state.faq.length >= 10 ? 'none' : ''
+    }
+
+    // ===================================================================
     // Étape 3 — Blocs de description
     // ===================================================================
     var blocksWrap = dialog.querySelector('[data-pco-blocks]')
@@ -1641,9 +2178,10 @@ const { entitySlug, categories = [] } = Astro.props
 
     function isPhysical() { return state.type === 'physical' }
 
-    // Étapes actives selon le type (l'étape 2 est sautée pour digital)
+    // Les deux types parcourent les mêmes étapes — seul le contenu de
+    // l'étape 2 diffère (physical : stock/variantes, digital : fichier/détails)
     function stepSequence() {
-      return isPhysical() ? [0, 1, 2, 3] : [0, 1, 3]
+      return [0, 1, 2, 3]
     }
     function nextStepOf(current) {
       var seq = stepSequence()
@@ -1770,20 +2308,8 @@ const { entitySlug, categories = [] } = Astro.props
           ok = false
         }
       }
-      // Digital
-      if (!isPhysical()) {
-        var fileUrl = (dialog.querySelector('[name="digital_file_url"]').value || '').trim()
-        if (fileUrl.length < 1) {
-          showFieldError('digital_file_url', 'Le lien du fichier est obligatoire.')
-          ok = false
-        } else {
-          try { new URL(fileUrl) } catch (e) {
-            showFieldError('digital_file_url', 'Le lien doit être une URL valide.')
-            ok = false
-          }
-        }
-      } else {
-        // Physical : modes de remise
+      // Physical : modes de remise (le digital n'a plus de champ propre en étape 1)
+      if (isPhysical()) {
         var pickup = pickupCheck.checked
         var delivery = dialog.querySelector('[data-pco-delivery]').checked
         if (!pickup && !delivery) {
@@ -1805,6 +2331,7 @@ const { entitySlug, categories = [] } = Astro.props
     }
 
     function validateStep2() {
+      if (!isPhysical()) return validateStep2Digital()
       var ok = true
       var stock = dialog.querySelector('[name="physical_stock_quantity"]').value
       var sn = Number(stock)
@@ -1894,6 +2421,21 @@ const { entitySlug, categories = [] } = Astro.props
           }
         }
       }
+      // FAQ : entrées entièrement vides ignorées, entrée à moitié remplie = erreur.
+      if (state.faq.length > 10) {
+        showFieldError('faq', 'Maximum 10 questions.')
+        ok = false
+      }
+      for (var f = 0; f < state.faq.length; f++) {
+        var fq = (state.faq[f].question || '').trim()
+        var fa = (state.faq[f].answer || '').trim()
+        if (fq === '' && fa === '') continue
+        if (fq.length < 1 || fq.length > 200 || fa.length < 1 || fa.length > 1000) {
+          showFieldError('faq', 'Chaque entrée : question 1-200 caractères, réponse 1-1000 caractères.')
+          ok = false
+          break
+        }
+      }
       return ok
     }
 
@@ -1955,11 +2497,35 @@ const { entitySlug, categories = [] } = Astro.props
       })
       if (blocks.length > 0) payload.content_blocks = blocks
 
+      // FAQ (entrées entièrement vides ignorées)
+      var faq = []
+      state.faq.forEach(function (item) {
+        var q = (item.question || '').trim()
+        var a = (item.answer || '').trim()
+        if (q.length > 0 && a.length > 0) faq.push({ question: q, answer: a })
+      })
+      if (faq.length > 0) payload.faq = faq
+
       // Champs par type
       if (state.type === 'digital') {
-        payload.digital_file_url = (dialog.querySelector('[name="digital_file_url"]').value || '').trim()
-        payload.digital_file_format = dialog.querySelector('[name="digital_file_format"]').value
-        payload.digital_license = dialog.querySelector('[name="digital_license"]').value
+        payload.digital_file_id = fileIdInput.value
+        // Détails personnalisés : libres puis familles (aplaties avec champ family)
+        var details = []
+        state.details.forEach(function (detail) {
+          var l = (detail.label || '').trim()
+          var v = (detail.value || '').trim()
+          if (l.length > 0 && v.length > 0) details.push({ label: l, value: v })
+        })
+        state.detailFamilies.forEach(function (family) {
+          var famName = (family.name || '').trim()
+          if (famName.length === 0) return
+          family.items.forEach(function (item) {
+            var l = (item.label || '').trim()
+            var v = (item.value || '').trim()
+            if (l.length > 0 && v.length > 0) details.push({ label: l, value: v, family: famName })
+          })
+        })
+        if (details.length > 0) payload.custom_details = details
       } else {
         payload.physical_condition = dialog.querySelector('[name="physical_condition"]').value
         payload.pickup_enabled = pickupCheck.checked
@@ -2011,7 +2577,8 @@ const { entitySlug, categories = [] } = Astro.props
       if (field === 'physical_stock_quantity' || field === 'physical_condition' || field === 'variants' || field.indexOf('variants') === 0) {
         return 2
       }
-      if (field === 'content_blocks') return 3
+      if (field === 'digital_file_id' || field === 'custom_details') return 2
+      if (field === 'content_blocks' || field === 'faq') return 3
       return 1
     }
 
@@ -2030,8 +2597,6 @@ const { entitySlug, categories = [] } = Astro.props
         if (firstStep === null || st < firstStep) firstStep = st
       })
       if (firstStep !== null) {
-        // Si l'étape 2 n'existe pas (digital), retomber sur 1
-        if (firstStep === 2 && !isPhysical()) firstStep = 1
         showStep(firstStep)
       }
     }

@@ -1,14 +1,14 @@
 import type { APIRoute } from 'astro'
 
 export const GET: APIRoute = () => {
-  const body = `# Agora
+  const body = `# IBEE
 Plateforme de profils professionnels pour solopreneurs (coachs, consultants, formateurs, infopreneurs, praticiens, cr\u00e9ateurs).
 
-## Qu'est-ce qu'Agora
-Agora est un profil public unique par solopreneur, optimis\u00e9 pour le r\u00e9f\u00e9rencement et la citabilit\u00e9 par les moteurs de recherche et les LLMs. Chaque profil contient : identit\u00e9 (nom, r\u00f4le, localisation), biographie, publications (news), et sections activables selon le profil.
+## Qu'est-ce qu'IBEE
+IBEE est un profil public unique par solopreneur, optimis\u00e9 pour le r\u00e9f\u00e9rencement et la citabilit\u00e9 par les moteurs de recherche et les LLMs. Chaque profil contient : identit\u00e9 (nom, r\u00f4le, localisation), biographie, publications (news), et sections activables selon le profil.
 
 ## Routes canoniques
-- / : profil officiel Agora
+- / : profil officiel IBEE
 - /[slug] : profil public d'un solopreneur
 - /[slug]/news/[publicationSlug] : permalien d'une publication
 - /[slug]/services/[serviceSlug] : page d\u00e9di\u00e9e d'un service de rendez-vous
@@ -32,7 +32,7 @@ Chaque profil /[slug] contient :
 - Service sur les pages services de rendez-vous
 
 ## Contact
-admin@agora.example.com`
+admin@ibee.example.com`
 
   return new Response(body, {
     headers: {

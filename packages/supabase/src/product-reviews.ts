@@ -23,7 +23,9 @@ export async function listPublishedReviews(
   productId: string,
   opts: {
     rating?: number
-    sortBy?: 'recent' | 'helpful'
+    /** Multi-sélection d'étoiles (prioritaire sur rating si non vide). */
+    ratings?: number[]
+    sortBy?: 'recent' | 'oldest' | 'helpful'
     limit?: number
     offset?: number
   } = {}
@@ -37,12 +39,16 @@ export async function listPublishedReviews(
     .eq('status', 'published')
     .range(offset, offset + limit - 1)
 
-  if (opts.rating) query = query.eq('rating', opts.rating)
+  if (opts.ratings && opts.ratings.length > 0) {
+    query = query.in('rating', opts.ratings)
+  } else if (opts.rating) {
+    query = query.eq('rating', opts.rating)
+  }
 
   if (sortBy === 'helpful') {
     query = query.order('helpful_count', { ascending: false })
   } else {
-    query = query.order('created_at', { ascending: false })
+    query = query.order('created_at', { ascending: sortBy === 'oldest' })
   }
 
   const { data, error } = await query

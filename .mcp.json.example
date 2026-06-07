@@ -20,7 +20,7 @@
       "args": ["/c", "npx", "-y", "@playwright/mcp@latest"]
     },
     "obsidian": {
-      "command": "C:\\Users\\KillianLQ\\Agora\\.agora-brain\\.obsidian\\plugins\\mcp-tools\\bin\\mcp-server.exe",
+      "command": "C:\\Users\\KillianLQ\\IBEE\\.ibee-brain\\.obsidian\\plugins\\mcp-tools\\bin\\mcp-server.exe",
       "env": {
         "OBSIDIAN_API_KEY": "your_obsidian_api_key_here"
       }

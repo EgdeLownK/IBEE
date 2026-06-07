@@ -15,10 +15,10 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Agora \u2014 Dashboard",
-    template: "%s \u2014 Agora",
+    default: "IBEE \u2014 Dashboard",
+    template: "%s \u2014 IBEE",
   },
-  description: "\u00c9ditez votre profil Agora",
+  description: "\u00c9ditez votre profil IBEE",
 };
 
 export default function RootLayout({

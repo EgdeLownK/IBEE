@@ -10,7 +10,9 @@ interface AppointmentType {
   duration_minutes: number
   location_type: string
   price_cents: number | null
+  promo_price_cents?: number | null
   currency: string
+  gallery_images?: string[]
 }
 
 interface Props {
@@ -22,7 +24,7 @@ interface Props {
 
 const { entityId, entitySlug, appointmentTypes, autoBookTypeId } = Astro.props
 ---
-<section id="appointments" class="py-8">
+<section id="appointments">
   {appointmentTypes.length === 0 ? (
     <div class="flex flex-col items-center justify-center py-16 text-center">
       <span class="flex h-12 w-12 items-center justify-center rounded-full bg-neutral-100 text-neutral-400" set:html={CalendarClock} />
@@ -32,8 +34,7 @@ const { entityId, entitySlug, appointmentTypes, autoBookTypeId } = Astro.props
     <div>
       {/* Step 1: Type selection */}
       <div id="booking-step-types">
-        <h2 class="mb-4 text-lg font-semibold text-neutral-900">Prendre rendez-vous</h2>
-        <div class="space-y-3">
+        <div class="flex flex-col gap-2.5">
           {appointmentTypes.map(type => (
             <AppointmentTypeCard
               id={type.id}
@@ -43,7 +44,9 @@ const { entityId, entitySlug, appointmentTypes, autoBookTypeId } = Astro.props
               durationMinutes={type.duration_minutes}
               locationType={type.location_type}
               priceCents={type.price_cents}
+              promoPriceCents={type.promo_price_cents ?? null}
               currency={type.currency}
+              coverImageUrl={type.gallery_images?.[0] ?? null}
               entitySlug={entitySlug}
             />
           ))}

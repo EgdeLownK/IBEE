@@ -1,5 +1,5 @@
 ---
-import { Plus, X } from 'lucide-static'
+import { House, ShoppingBag, CalendarDays, Zap, Newspaper, BookOpen, MessageCircleQuestion } from 'lucide-static'
 
 interface Section {
   type: string
@@ -11,11 +11,16 @@ interface Props {
   activeType?: string
   isOwner?: boolean
   hasFaq?: boolean
+  /** Préfixe des liens (ex : "/slug" depuis une page produit). Vide = ancres
+      locales "#type" gérées par le script de tab-switching du profil. */
+  baseHref?: string
 }
 
-const { sections, activeType = 'home', isOwner = false, hasFaq = false } = Astro.props
+const { sections, activeType = 'home', hasFaq = false, baseHref = '' } = Astro.props
 
 // 7 types canoniques (sans "Informations" qui devient une page dédiée /:slug/informations).
+// La gestion activation/désactivation des sections vit dans le menu
+// « Ajouter contenu » du hero (owner) — plus de bouton "+" ici.
 const labels: Record<string, string> = {
   home: 'Accueil',
   shop: 'Shop',
@@ -28,7 +33,17 @@ const labels: Record<string, string> = {
 
 const allTypes = ['home', 'shop', 'appointments', 'events', 'news', 'history', 'faq'] as const
 
-const sectionByType = new Map(sections.map(s => [s.type, s] as const))
+// Icônes par type
+const icons: Record<string, string> = {
+  home: House,
+  shop: ShoppingBag,
+  appointments: CalendarDays,
+  events: Zap,
+  news: Newspaper,
+  history: BookOpen,
+  faq: MessageCircleQuestion,
+}
+
 const activeTypes = new Set<string>(sections.map(s => s.type))
 // La section "home" est implicite — toujours présente sur tout profile
 activeTypes.add('home')
@@ -39,248 +54,34 @@ const visibleTabs = allTypes
   .map(type => ({
     type,
     label: labels[type] ?? type,
-    is_configured: sectionByType.get(type)?.is_configured ?? null,
+    icon: icons[type],
   }))
-
-const addableTabs = allTypes
-  .filter(t => !activeTypes.has(t))
-  .map(type => ({ type, label: labels[type] ?? type }))
-
-const addMenuId = 'menu-tabs-add'
 ---
-<nav aria-label="Navigation du profil" class="profile-tabs">
-  {visibleTabs.map((tab) => {
-    const isActive = tab.type === activeType
-    const showDot = !!tab.is_configured && !isActive
-    const canRemove = isOwner && tab.type !== 'home'
-    return (
-      <span class="profile-tab-wrap">
+{/* Tabs icône + texte, alignés à gauche, scroll horizontal si dépassement
+    (même pattern que les stories). L'onglet actif est signalé par sa couleur.
+    Pas de sticky : le profil vit sous le header global de l'app. */}
+<nav aria-label="Navigation du profil" class="profile-tabs-wrap">
+  <div class="segtabs no-scrollbar">
+    {visibleTabs.map((tab) => {
+      const isActive = tab.type === activeType
+      return (
         <a
-          href={`#${tab.type}`}
+          href={`${baseHref}#${tab.type}`}
           data-section-tab={tab.type}
-          class:list={['profile-tab', isActive && 'is-active']}
+          class:list={['segtab', isActive && 'is-active']}
         >
+          <span class="flex h-4 w-4 items-center justify-center" set:html={tab.icon} />
           <span>{tab.label}</span>
-          {showDot && <span class="profile-tab__dot" aria-hidden="true" />}
         </a>
-        {canRemove && (
-          <button
-            type="button"
-            class="profile-tab__remove"
-            data-remove-section-type={tab.type}
-            aria-label={`Retirer ${tab.label}`}
-          >
-            <span class="flex h-3 w-3 items-center justify-center" set:html={X} />
-          </button>
-        )}
-      </span>
-    )
-  })}
-
-  {isOwner && addableTabs.length > 0 && (
-    <button
-      type="button"
-      class="profile-tab__add"
-      popovertarget={addMenuId}
-      style={`anchor-name: --${addMenuId};`}
-      aria-label="Ajouter une section"
-    >
-      <span class="flex h-4 w-4 items-center justify-center" set:html={Plus} />
-    </button>
-  )}
+      )
+    })}
+  </div>
 </nav>
 
-{isOwner && addableTabs.length > 0 && (
-  <div id={addMenuId} popover="auto" class="tabs-add-menu" style={`position-anchor: --${addMenuId};`}>
-    <p class="tabs-add-menu__label">Ajouter une section</p>
-    {addableTabs.map((tab) => (
-      <button
-        type="button"
-        class="tabs-add-menu__item"
-        data-add-section-type={tab.type}
-      >
-        <span class="flex h-4 w-4 items-center justify-center text-neutral-500" set:html={Plus} />
-        <span>{tab.label}</span>
-      </button>
-    ))}
-  </div>
-)}
-
 <style>
-  .profile-tabs {
-    display: flex;
-    align-items: center;
-    gap: 33px;
-    padding: 6px 27px 18px;
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
-  .profile-tabs::-webkit-scrollbar { display: none; }
-
-  .profile-tab {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    white-space: nowrap;
-    color: var(--color-neutral-500);
-    font-family: var(--font-display);
-    font-size: 15px;
-    font-weight: 500;
-    text-decoration: none;
-    cursor: pointer;
-    padding: 4px 0;
-    transition: color 120ms ease;
-  }
-  .profile-tab:hover {
-    color: var(--color-neutral-900);
-  }
-  .profile-tab.is-active {
-    color: var(--color-accent);
-  }
-
-  .profile-tab__dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--color-accent);
-  }
-
-  .profile-tab-wrap {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    position: relative;
-  }
-
-  .profile-tab__remove {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    background: transparent;
-    border: none;
-    color: var(--color-neutral-400);
-    cursor: pointer;
-    opacity: 0;
-    transition: opacity 120ms, background 120ms, color 120ms;
-  }
-  .profile-tab-wrap:hover .profile-tab__remove,
-  .profile-tab__remove:focus {
-    opacity: 1;
-  }
-  .profile-tab__remove:hover {
-    background: var(--color-panel-2);
-    color: var(--color-error);
-  }
-
-  .profile-tab__add {
-    flex-shrink: 0;
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    background: var(--color-panel);
-    color: var(--color-neutral-500);
-    border: none;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    transition: background 120ms, color 120ms;
-  }
-  .profile-tab__add:hover {
-    background: var(--color-accent-soft);
-    color: var(--color-accent);
-  }
-
-  .tabs-add-menu {
-    background: var(--color-surface);
-    border: 1px solid var(--color-border-soft);
-    border-radius: 14px;
-    box-shadow: var(--shadow-pop);
-    margin: 0;
-    margin-top: 6px;
-    padding: 8px;
-    width: 220px;
-    overflow: visible;
-    position-area: bottom span-right;
-    position-try-fallbacks: flip-block;
-  }
-  .tabs-add-menu::backdrop {
-    background: transparent;
-  }
-
-  .tabs-add-menu__label {
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--color-neutral-500);
-    padding: 6px 10px 8px;
-    margin: 0;
-  }
-
-  .tabs-add-menu__item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    width: 100%;
-    padding: 8px 10px;
-    border-radius: 8px;
-    font-size: 14px;
-    color: var(--color-neutral-900);
-    cursor: pointer;
-    background: transparent;
-    border: none;
-    text-align: left;
-    transition: background 120ms;
-    font-family: inherit;
-  }
-  .tabs-add-menu__item:hover {
-    background: var(--color-panel);
+  /* Le padding horizontal vit sur .segtabs (élément scrollable) pour que
+     le dernier onglet ne soit pas coupé en fin de scroll. */
+  .profile-tabs-wrap {
+    padding: 20px 0 16px;
   }
 </style>
-
-<script is:inline>
-  (function() {
-    async function callApi(method, type) {
-      try {
-        var res = await fetch('/api/menu-sections', {
-          method: method,
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ type: type }),
-        })
-        if (!res.ok) {
-          var data = await res.json().catch(function() { return {} })
-          alert('Erreur : ' + (data.error || res.status))
-          return false
-        }
-        return true
-      } catch (err) {
-        console.error('[menu-tabs]', err)
-        alert('Erreur réseau')
-        return false
-      }
-    }
-
-    document.querySelectorAll('[data-add-section-type]').forEach(function(btn) {
-      btn.addEventListener('click', async function() {
-        var type = btn.dataset.addSectionType
-        var ok = await callApi('POST', type)
-        if (ok) location.reload()
-      })
-    })
-
-    document.querySelectorAll('[data-remove-section-type]').forEach(function(btn) {
-      btn.addEventListener('click', async function(e) {
-        e.preventDefault()
-        e.stopPropagation()
-        var type = btn.dataset.removeSectionType
-        if (!confirm('Retirer la section ' + type + ' ?')) return
-        var ok = await callApi('DELETE', type)
-        if (ok) location.reload()
-      })
-    })
-  })()
-</script>

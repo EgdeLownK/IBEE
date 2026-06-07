@@ -1,6 +1,4 @@
 ---
-import { Eye, EyeOff } from 'lucide-static'
-
 interface Props {
   title: string
   sectionType: string
@@ -21,13 +19,13 @@ const toggleId = `section-vis-${sectionType}`
       id={toggleId}
       data-section-type={sectionType}
       aria-pressed={isVisible ? 'true' : 'false'}
+      title="Affiche ou masque cette section sur votre profil public"
     >
-      <span class="visibility-toggle__icon">
-        <span class="flex h-4 w-4 items-center justify-center" set:html={isVisible ? Eye : EyeOff} />
-      </span>
-      <span class="visibility-toggle__text">
-        <span class="visibility-toggle__title">Section visible</span>
-        <span class="visibility-toggle__sub">Affiche sur votre profil public</span>
+      {/* Les deux libellés vivent dans le DOM ; le CSS affiche celui qui
+          correspond à l'état — un futur JS n'aura qu'à basculer .is-on */}
+      <span class="visibility-toggle__label">
+        <span class="visibility-toggle__label-on">Menu visible</span>
+        <span class="visibility-toggle__label-off">Menu masqué</span>
       </span>
       <span class="visibility-toggle__switch">
         <span class="visibility-toggle__thumb"></span>
@@ -53,70 +51,42 @@ const toggleId = `section-vis-${sectionType}`
     margin: 0;
   }
 
+  /* Toggle discret : label 12px + mini switch, sans carte ni bordure */
   .visibility-toggle {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 8px 14px 8px 10px;
-    border-radius: 12px;
-    border: 1px solid var(--color-border);
-    background: var(--color-surface);
-    cursor: pointer;
-    font-family: inherit;
-    color: var(--color-neutral-900);
-    transition: background 120ms, border-color 120ms;
-  }
-
-  .visibility-toggle:hover {
-    background: var(--color-panel-2);
-  }
-
-  .visibility-toggle__icon {
     display: inline-flex;
     align-items: center;
-    justify-content: center;
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    background: var(--color-panel-2);
+    gap: 8px;
+    padding: 4px 0;
+    background: none;
+    border: 0;
+    cursor: pointer;
+    font-family: inherit;
+  }
+
+  .visibility-toggle__label {
+    font-size: 12px;
+    font-weight: 500;
     color: var(--color-neutral-500);
-    flex-shrink: 0;
-    transition: background 120ms, color 120ms;
+    transition: color 120ms;
   }
 
-  .visibility-toggle.is-on .visibility-toggle__icon {
-    background: rgba(44, 141, 74, 0.14);
-    color: #2C8D4A;
+  .visibility-toggle:hover .visibility-toggle__label {
+    color: var(--color-neutral-700);
   }
 
-  .visibility-toggle__text {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    line-height: 1.15;
-    text-align: left;
-  }
-
-  .visibility-toggle__title {
-    font-size: 13px;
-    font-weight: 600;
-  }
-
-  .visibility-toggle__sub {
-    font-size: 11px;
-    color: var(--color-neutral-500);
-    margin-top: 2px;
-  }
+  .visibility-toggle .visibility-toggle__label-on { display: none; }
+  .visibility-toggle .visibility-toggle__label-off { display: inline; }
+  .visibility-toggle.is-on .visibility-toggle__label-on { display: inline; }
+  .visibility-toggle.is-on .visibility-toggle__label-off { display: none; }
 
   .visibility-toggle__switch {
     position: relative;
-    width: 36px;
-    height: 20px;
+    width: 32px;
+    height: 18px;
     border-radius: 999px;
     background: var(--color-border);
     transition: background 160ms;
     flex-shrink: 0;
-    margin-left: auto;
     display: inline-block;
   }
 
@@ -124,8 +94,8 @@ const toggleId = `section-vis-${sectionType}`
     position: absolute;
     top: 2px;
     left: 2px;
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
     border-radius: 50%;
     background: var(--color-surface);
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
@@ -133,10 +103,10 @@ const toggleId = `section-vis-${sectionType}`
   }
 
   .visibility-toggle.is-on .visibility-toggle__switch {
-    background: #2C8D4A;
+    background: var(--color-success);
   }
 
   .visibility-toggle.is-on .visibility-toggle__thumb {
-    left: 18px;
+    left: 16px;
   }
 </style>

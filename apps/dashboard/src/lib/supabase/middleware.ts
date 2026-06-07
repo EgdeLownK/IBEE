@@ -25,15 +25,10 @@ export async function updateSession(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname
 
-  if (pathname.startsWith('/dashboard') && !user) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/login'
-    return NextResponse.redirect(url)
-  }
-
+  // Déjà connecté → la racine renvoie vers le profil web (surface unique)
   if (pathname === '/login' && user) {
     const url = request.nextUrl.clone()
-    url.pathname = '/dashboard/site'
+    url.pathname = '/'
     return NextResponse.redirect(url)
   }
 

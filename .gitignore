@@ -96,6 +96,9 @@ Thumbs.db
 *.bak
 *-backup-*/
 
+# Extraction locale du prototype IBEE Profile (standalone) — référence design
+.proto-extract/
+
 # Exceptions : on veut versionner les templates .env.example
 !apps/*/.env.example
 !packages/*/.env.example

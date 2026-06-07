@@ -1,12 +1,12 @@
 # Collaboration avec Killian
 
 ## Qui est Killian
-Conseiller stratégique 20 ans XP, pas développeur. Fondateur solo d'Agora. 
+Conseiller stratégique 20 ans XP, pas développeur. Fondateur solo d'IBEE. 
 
 ## Prise de décision
 Quand un choix a des conséquences (technique OU produit) : présenter les options avec leurs impacts concrets. Format : "Option A → conséquence X. Option B → conséquence Y. Je recommande A parce que Z."
 
-Avant tout choix design ou architecture, **lire `.agora-brain/_decision-log-code.md`** (choix code) ou **`_decision-log-projet.md`** (choix non-code) pour vérifier si la question a déjà été tranchée.
+Avant tout choix design ou architecture, **lire `.ibee-brain/_decision-log-code.md`** (choix code) ou **`_decision-log-projet.md`** (choix non-code) pour vérifier si la question a déjà été tranchée.
 
 ## Traçabilité
 Après chaque décision, appliquer ce test — si les 2 sont vrais, ajouter une ligne dans le bon log :

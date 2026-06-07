@@ -1,6 +1,6 @@
 ---
-import { ArrowLeft } from 'lucide-static'
 import AppLayout from '../../../layouts/AppLayout.astro'
+import DetailTopBar from '@ibee/ui-server/src/components/DetailTopBar.astro'
 import PublicationCard from '@ibee/ui-server/src/components/PublicationCard.astro'
 import CommentsList from '@ibee/ui-server/src/components/CommentsList.astro'
 import { supabase } from '../../../lib/supabase/client'
@@ -35,7 +35,7 @@ const dashboardUrl = import.meta.env.DASHBOARD_URL ?? 'http://localhost:3000'
 
 const description = publication.content
   ? publication.content.slice(0, 160) + (publication.content.length > 160 ? '…' : '')
-  : `Publication par ${entity.display_name} sur Agora`
+  : `Publication par ${entity.display_name} sur IBEE`
 
 const ogImage = publication.publication_media?.[0]?.url ?? entity.avatar_url ?? undefined
 
@@ -73,7 +73,7 @@ const articleSchema = {
       },
       publisher: {
         '@type': 'Organization',
-        name: 'Agora',
+        name: 'IBEE',
         url: siteUrl,
       },
       ...(publication.publication_media?.length > 0 && {
@@ -87,7 +87,7 @@ Astro.response.headers.set('Cache-Control', 's-maxage=86400, stale-while-revalid
 Astro.response.headers.set('X-Robots-Tag', 'index, follow, max-snippet:-1, max-image-preview:large')
 ---
 <AppLayout
-  title={`${publication.title} — ${entity.display_name} — Agora`}
+  title={`${publication.title} — ${entity.display_name} — IBEE`}
   description={description}
   image={ogImage}
   url={publicationUrl}
@@ -101,12 +101,9 @@ Astro.response.headers.set('X-Robots-Tag', 'index, follow, max-snippet:-1, max-i
   </Fragment>
 
   <main class="py-8 sm:py-12">
-    <div class="mx-auto max-w-[800px] px-4">
-      <a href={`/${entity.slug}`} class="mb-6 inline-flex items-center gap-1.5 text-sm text-neutral-400 transition-colors hover:text-neutral-900">
-        <span class="flex h-4 w-4 items-center justify-center" set:html={ArrowLeft} />
-        Retour au profil de {entity.display_name}
-      </a>
+    <DetailTopBar backHref={`/${entity.slug}#news`} title={publication.title} />
 
+    <div class="mx-auto max-w-[800px] px-4">
       <PublicationCard
         id={publication.id}
         title={publication.title}
@@ -120,7 +117,6 @@ Astro.response.headers.set('X-Robots-Tag', 'index, follow, max-snippet:-1, max-i
         permalinkUrl={`/${entity.slug}/news/${publication.slug}`}
         commentsCount={publication.comments_count ?? 0}
         isOwner={!!(user && entity.user_id && user.id === entity.user_id)}
-        dashboardEditUrl={`${dashboardUrl}/dashboard/site/news/${publication.id}/edit`}
       />
 
       <CommentsList

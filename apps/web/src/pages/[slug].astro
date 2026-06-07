@@ -14,6 +14,8 @@ import {
   listPublishedProductsByEntity,
   listProductsByEntity,
   listProductCategories,
+  listUpcomingEvents,
+  countEventRegistrations,
   isFollowing as checkIsFollowing
 } from '@ibee/supabase'
 
@@ -32,23 +34,37 @@ const authClient = createAuthClient(Astro.request, Astro.cookies)
 const { data: { user } } = await authClient.auth.getUser()
 const isOwner = !!(user && entity.user_id && user.id === entity.user_id)
 
-const [menuSections, homeWidgets, faq, publications, appointmentTypes, products, productCategories] = await Promise.all([
+const [menuSections, homeWidgets, faq, publications, appointmentTypes, products, productCategories, upcomingEvents] = await Promise.all([
   getEntityMenuSections(supabase, entity.id),
   getEntityHomeWidgets(supabase, entity.id),
   getEntityFaq(supabase, entity.id),
   getPublicationsByEntity(supabase, entity.id, { publicOnly: true }),
   getAppointmentTypesByEntity(supabase, entity.id, { activeOnly: true }),
   isOwner
-    ? listProductsByEntity(authClient, entity.id, { limit: 6 })
-    : listPublishedProductsByEntity(supabase, entity.id, { limit: 6 }),
-  // Catégories "playlist" pour l'overlay de création (owner only, jamais exposées au public)
-  isOwner ? listProductCategories(authClient, entity.id) : Promise.resolve([]),
+    ? listProductsByEntity(authClient, entity.id, { limit: 60 })
+    : listPublishedProductsByEntity(supabase, entity.id, { limit: 60 }),
+  // Catégories "playlist" : groupes de la section shop (lecture publique RLS)
+  // + options de l'overlay de création pour l'owner
+  listProductCategories(supabase, entity.id),
+  // Events publiés à venir (les passés ne s'affichent pas)
+  listUpcomingEvents(supabase, entity.id),
 ])
+
+// Jauge par event ("X places restantes") — RPC SECURITY DEFINER, une par event
+const eventRegistrationCounts = await Promise.all(
+  upcomingEvents.map((ev) =>
+    ev.capacity != null ? countEventRegistrations(supabase, ev.id).catch(() => 0) : Promise.resolve(0)
+  )
+)
+const events = upcomingEvents.map((ev, i) => ({
+  ...ev,
+  registrations_count: eventRegistrationCounts[i],
+}))
 
 // Aplatissement pour l'overlay : {id, name} uniquement (props SSR, pas de route GET dédiée).
 const productCategoryOptions = productCategories.map((c) => ({ id: c.id, name: c.name }))
 
-// Aplatissement pour ShopWidget (preview home) : image principale + description courte.
+// Aplatissement pour ShopPlaylist : image principale + dispo + groupe catégorie.
 const shopProducts = products.map((p) => ({
   id: p.id,
   title: p.title,
@@ -60,6 +76,9 @@ const shopProducts = products.map((p) => ({
   currency: p.currency,
   image_url: p.product_media?.[0]?.url ?? null,
   status: p.status,
+  category_id: p.category_id,
+  type: p.type,
+  physical_stock_quantity: p.physical_stock_quantity,
 }))
 
 const siteUrl = import.meta.env.SITE_URL
@@ -83,8 +102,8 @@ Astro.response.headers.set(
 )
 ---
 <AppLayout
-  title={`${entity.display_name} — Agora`}
-  description={entity.bio ?? `${entity.display_name} sur Agora`}
+  title={`${entity.display_name} — IBEE`}
+  description={entity.bio ?? `${entity.display_name} sur IBEE`}
   image={entity.avatar_url ?? undefined}
   url={profileUrl}
   type="profile"
@@ -108,6 +127,7 @@ Astro.response.headers.set(
       appointmentTypes={appointmentTypes}
       shopProducts={shopProducts}
       productCategories={productCategoryOptions}
+      events={events}
       isOwner={isOwner}
       isAuthenticated={isAuthenticated}
       isFollowing={isFollowing}

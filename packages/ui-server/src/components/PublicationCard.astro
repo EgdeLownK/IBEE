@@ -1,5 +1,5 @@
 ---
-import { Heart, MessageCircle, BarChart3, Share2, Ellipsis } from 'lucide-static'
+import { Heart, MessageCircle, BarChart3, Share2 } from 'lucide-static'
 import { formatDistanceToNow, format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import AuthPromptOverlay from './AuthPromptOverlay.astro'
@@ -27,13 +27,11 @@ interface Props {
   permalinkUrl: string
   commentsCount?: number
   isOwner?: boolean
-  dashboardEditUrl?: string
 }
 
 const {
   id, title, content, publishedAt, entityDisplayName, entityAvatarUrl,
   entitySlug, entityRole, media, permalinkUrl, commentsCount = 0,
-  isOwner = false, dashboardEditUrl,
 } = Astro.props
 
 const relativeDate = formatDistanceToNow(new Date(publishedAt), { addSuffix: true, locale: fr })
@@ -69,20 +67,8 @@ const shareOverlayId = `pub-share-${id}`
         <p class="truncate text-xs text-neutral-400">{entityRole}</p>
       )}
     </div>
-    {/* ••• Menu (owner only) */}
-    {isOwner && (
-      <details class="relative" data-pub-menu>
-        <summary class="flex h-8 w-8 items-center justify-center rounded-full text-neutral-400 transition hover:bg-neutral-100 hover:text-neutral-600" aria-label="Actions de la publication">
-          <span class="flex h-4 w-4 items-center justify-center" set:html={Ellipsis} />
-        </summary>
-        <div class="absolute right-0 top-full z-10 mt-1 w-44 rounded-lg border border-neutral-200 bg-neutral-0 py-1 shadow-lg">
-          {dashboardEditUrl && (
-            <a href={dashboardEditUrl} class="block px-4 py-2 text-sm text-neutral-600 hover:bg-neutral-50 transition-colors">Modifier</a>
-          )}
-          <a href={`${dashboardEditUrl ? dashboardEditUrl.replace(/\/edit\/.*/, '') : '#'}`} class="block px-4 py-2 text-sm text-error hover:bg-error/5 transition-colors">Supprimer</a>
-        </div>
-      </details>
-    )}
+    {/* Menu d'actions owner retiré avec l'ancienne vue dashboard — l'édition
+        in-place reviendra sur le profil web (surface unique) */}
   </div>
 
   {/* Zone 2 — Title */}

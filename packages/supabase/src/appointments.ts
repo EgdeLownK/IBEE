@@ -16,6 +16,8 @@ export type ServiceContentBlock =
   | { type: 'image'; url: string; alt?: string }
   | { type: 'list'; items: string[] }
 
+export type ServiceFaqItem = { question: string; answer: string }
+
 type AppointmentType = {
   id: string
   entity_id: string
@@ -39,6 +41,7 @@ type AppointmentType = {
   highlights: string[]
   gallery_images: string[]
   content_blocks: ServiceContentBlock[]
+  faq: ServiceFaqItem[]
   created_at: string
   updated_at: string
 }
@@ -116,6 +119,7 @@ export async function createAppointmentType(
     highlights?: string[]
     gallery_images?: string[]
     content_blocks?: ServiceContentBlock[]
+    faq?: ServiceFaqItem[]
     is_active?: boolean
     auto_accept_bookings?: boolean
   }
@@ -139,6 +143,7 @@ export async function createAppointmentType(
     highlights: data.highlights ?? [],
     gallery_images: data.gallery_images ?? [],
     content_blocks: data.content_blocks ?? [],
+    faq: data.faq ?? [],
     is_active: data.is_active ?? true,
     auto_accept_bookings: data.auto_accept_bookings ?? true,
   }
@@ -175,6 +180,7 @@ export async function updateAppointmentType(
     highlights: string[]
     gallery_images: string[]
     content_blocks: ServiceContentBlock[]
+    faq: ServiceFaqItem[]
   }>
 ) {
   const { data: result, error } = await client

@@ -25,7 +25,7 @@ export default function LoginPage() {
     <main className="flex min-h-screen items-center justify-center bg-background p-4">
       <div className="w-full max-w-md rounded-xl bg-neutral-0 p-8 shadow-md">
         <h1 className="text-center text-2xl font-semibold tracking-tight text-neutral-900">
-          Agora
+          IBEE
         </h1>
 
         <div className="mt-6 flex rounded-lg bg-neutral-100 p-1">

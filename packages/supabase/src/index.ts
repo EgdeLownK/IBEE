@@ -7,6 +7,10 @@ export { getCommentsByPublication, createComment, updateComment, deleteComment }
 export type { CommentWithAuthor } from './comments'
 export { getAppointmentTypesByEntity, getAppointmentTypeById, getAppointmentTypeBySlug, createAppointmentType, updateAppointmentType, deleteAppointmentType } from './appointments'
 export type { ServiceContentBlock } from './appointments'
+export { listPublishedServiceReviews, getServiceReviewAggregates } from './service-reviews'
+export type { ServiceReviewAggregates } from './service-reviews'
+export { listUpcomingEvents, getEventBySlug, countEventRegistrations, createEvent, createEventRegistration, listEventRegistrations } from './events'
+export type { EventRecord, EventContentBlock, EventFaqItem } from './events'
 export { getAvailabilitySchedule, setAvailabilitySchedule, getAvailabilityExceptions, addAvailabilityException, removeAvailabilityException, getAvailableSlots } from './availability'
 export { getBookingsByEntity, getBookingById, createBooking, updateBookingStatus, updateBookingNotes, getBookingStats, getBookingExtendedStats } from './bookings'
 export type { BookingAggregates, BookingExtendedStats } from './bookings'
@@ -75,6 +79,12 @@ export {
 } from './product-categories'
 
 export {
+  listEntityFiles,
+  getEntityFileById,
+  createEntityFile,
+} from './entity-files'
+
+export {
   getMyWishlist,
   isInWishlist,
   addToWishlist,
@@ -83,7 +93,7 @@ export {
   updateWishlistNote,
 } from './wishlist'
 
-export const AGORA_SYSTEM_SLUG = '__agora__'
+export const IBEE_SYSTEM_SLUG = '__ibee__'
 
 // Auth helpers (aussi accessibles via sub-path imports @ibee/supabase/auth/*)
 export { createServerClient } from './auth/server'

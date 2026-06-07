@@ -1,0 +1,1095 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Mockup — Profil IBEE (Shop / Service / Event)</title>
+
+<!-- Polices identiques au site (Roboto = sans, Poppins = display, Roboto Mono = labels placeholders) -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Poppins:wght@400;500;600;700&family=Roboto+Mono:wght@400&display=swap" rel="stylesheet" />
+
+<!-- Tailwind Play (copie locale, pas de dépendance CDN) + tokens IBEE (mêmes valeurs que global.css @theme) -->
+<script src="./tailwind-play.js"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        accent: { DEFAULT: '#D95525', hover: '#C44A1E', soft: '#FCEBE2' },
+        'cta-primary': { DEFAULT: '#2A2A2A' },
+        surface: '#FFFFFF',
+        panel: '#F9FAFB',
+        'panel-2': '#F3F4F6',
+        neutral: { 0:'#FFFFFF', 50:'#F9FAFB', 100:'#F3F4F6', 200:'#E5E7EB', 300:'#D1D5DB', 400:'#979FAB', 500:'#6B7280', 600:'#4B5563', 700:'#374151', 900:'#2A2A2A' },
+        success: '#16A34A',
+        error: '#DC2626',
+      },
+      /* @theme IBEE : --radius-sm 6 / md 12 / lg 16 / xl 24 */
+      borderRadius: { sm:'6px', md:'12px', lg:'16px', xl:'24px' },
+      fontFamily: {
+        sans: ['Roboto', 'Inter', 'system-ui', 'sans-serif'],
+        display: ['Poppins', 'Roboto', 'sans-serif'],
+        mono: ['Roboto Mono', 'ui-monospace', 'monospace'],
+      },
+      boxShadow: {
+        card: '0 2px 8px rgb(0 0 0 / 0.08)',
+        sm: '0 1px 2px rgb(0 0 0 / 0.04)',
+      },
+    },
+  },
+}
+</script>
+
+<style>
+:root {
+  --color-accent: #D95525;
+  --color-accent-hover: #C44A1E;
+  --color-accent-soft: #FCEBE2;
+  --color-background: #FAFAFA;
+  --color-surface: #FFFFFF;
+  --color-panel: #F9FAFB;
+  --color-panel-2: #F3F4F6;
+  --color-border: #E5E7EB;
+  --color-border-soft: #F3F4F6;
+  --color-neutral-400: #979FAB;
+  --color-neutral-500: #6B7280;
+  --color-neutral-900: #2A2A2A;
+  --color-success: #16A34A;
+  --font-display: "Poppins", "Roboto", sans-serif;
+  --font-mono: "Roboto Mono", ui-monospace, monospace;
+  --radius-pill: 50px;
+}
+
+html {
+  font-family: "Roboto", "Inter", system-ui, sans-serif;
+  color: var(--color-neutral-900);
+  background: var(--color-background);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+body { margin: 0; }
+button, a[href] { cursor: pointer; }
+[hidden] { display: none !important; }
+
+/* ===== ProfileHero (copié de ProfileHero.astro) ===== */
+.profile-banner {
+  width: 100%;
+  height: 240px;
+  overflow: hidden;
+  background: var(--color-panel);
+}
+.profile-banner__placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-image: repeating-linear-gradient(
+    135deg,
+    var(--color-panel-2) 0,
+    var(--color-panel-2) 4px,
+    var(--color-panel) 4px,
+    var(--color-panel) 10px
+  );
+}
+.profile-banner__label {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  letter-spacing: 0.05em;
+  color: var(--color-neutral-400);
+  background: var(--color-surface);
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-border);
+}
+.profile-avatar {
+  width: 69px;
+  height: 69px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--color-panel-2);
+  border: 3px solid var(--color-surface);
+  margin-top: -38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ===== MenuTabs (copié de MenuTabs.astro) ===== */
+.profile-tabs {
+  display: flex;
+  align-items: center;
+  gap: 33px;
+  padding: 6px 27px 18px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.profile-tabs::-webkit-scrollbar { display: none; }
+.profile-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  color: var(--color-neutral-500);
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  padding: 4px 0;
+  transition: color 120ms ease;
+}
+.profile-tab:hover { color: var(--color-neutral-900); }
+.profile-tab.is-active { color: var(--color-accent); }
+
+.profile-section { padding: 0 27px 24px; }
+
+/* ===== ShopPlaylist (copié de ShopPlaylist.astro) ===== */
+.spl { padding: 0 27px 24px; }
+.spl__inner { display: flex; flex-direction: column; gap: 18px; }
+.spl__bar { display: flex; align-items: center; gap: 8px; min-height: 36px; }
+.spl__bar-spacer { flex: 1; }
+.spl__bar-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.spl__icon-btn {
+  display: flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px;
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--color-neutral-500);
+  cursor: pointer;
+  transition: border-color 120ms, color 120ms, background 120ms;
+}
+.spl__icon-btn:hover { border-color: var(--color-accent); color: var(--color-accent); }
+.spl__icon { display: flex; align-items: center; justify-content: center; width: 16px; height: 16px; }
+.spl__section { display: flex; flex-direction: column; gap: 10px; }
+.spl__grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+@media (max-width: 640px) { .spl__grid { grid-template-columns: repeat(2, 1fr); } }
+.spl__tile {
+  display: block;
+  background: var(--color-panel);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+.spl__tile:hover { transform: translateY(-2px); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); }
+.spl__tile-img { width: 100%; aspect-ratio: 1; background: var(--color-panel-2); }
+.spl__tile-placeholder {
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--color-neutral-400);
+  background-image: repeating-linear-gradient(
+    135deg,
+    var(--color-panel) 0,
+    var(--color-panel) 4px,
+    var(--color-surface) 4px,
+    var(--color-surface) 10px
+  );
+}
+.spl__tile-body { padding: 12px 14px 16px; }
+.spl__tile-title { font-weight: 500; font-size: 15px; color: var(--color-neutral-900); }
+.spl__tile-meta { font-size: 13px; color: var(--color-neutral-500); margin-top: 4px; }
+.spl__tile-price {
+  font-family: var(--font-display);
+  font-weight: 600; font-size: 16px;
+  color: var(--color-neutral-900);
+  margin-top: 8px;
+  display: flex; align-items: baseline; gap: 8px;
+}
+.spl__tile-price-sale { color: var(--color-accent); }
+.spl__tile-price-old { font-size: 13px; font-weight: 400; color: var(--color-neutral-400); }
+</style>
+</head>
+
+<body>
+
+<!-- SVG sprite — icônes lucide utilisées (stroke 24×24) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-user-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+    <symbol id="i-shopping-bag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></symbol>
+    <symbol id="i-map-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></symbol>
+    <symbol id="i-video" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5"/><rect x="2" y="6" width="14" height="12" rx="2"/></symbol>
+    <symbol id="i-calendar-days" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/><path d="M16 18h.01"/></symbol>
+    <symbol id="i-calendar-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 7.5V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h3.9"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h5"/><path d="M17.5 17.5 16 16.3V14"/><circle cx="16" cy="16" r="6"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="i-arrow-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></symbol>
+    <symbol id="i-arrow-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></symbol>
+    <symbol id="i-chevron-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="i-message-circle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></symbol>
+    <symbol id="i-message-circle-question" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></symbol>
+    <symbol id="i-file-text" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></symbol>
+    <symbol id="i-log-in" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m10 17 5-5-5-5"/><path d="M15 12H3"/><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/></symbol>
+    <symbol id="i-chevron-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"/></symbol>
+    <symbol id="i-globe-lang" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></symbol>
+    <symbol id="i-arrow-down-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/></symbol>
+  </defs>
+</svg>
+
+<!-- ================================================================
+     VUE 1 — PROFIL (Shop / Service / Event)
+================================================================= -->
+<main data-view="profile" class="md:py-8">
+
+  <article class="overflow-hidden bg-surface md:mx-auto md:max-w-[800px] md:rounded-[20px] md:shadow-card">
+
+    <!-- ===== Hero ===== -->
+    <header>
+      <div class="profile-banner">
+        <div class="profile-banner__placeholder" aria-hidden="true">
+          <span class="profile-banner__label">BANNER IMAGE 800×240</span>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-[22px] px-[27px] pt-5 pb-[18px]">
+        <div class="flex shrink-0 items-center">
+          <div class="profile-avatar">
+            <span class="font-display text-2xl font-medium text-neutral-500">ML</span>
+          </div>
+        </div>
+
+        <div class="min-w-0 flex-1">
+          <h1 class="font-display text-[24px] font-medium leading-tight text-neutral-900 truncate">Marie Lambert</h1>
+          <p class="mt-2 text-base text-neutral-500">1,2 k abonnés</p>
+        </div>
+
+        <div class="flex shrink-0 items-center gap-2">
+          <button type="button" class="inline-flex items-center rounded-full border border-neutral-200 bg-surface px-5 py-2 text-sm font-medium text-neutral-900 transition-colors hover:bg-panel-2">
+            S'abonner
+          </button>
+          <button type="button" class="inline-flex items-center gap-2 rounded-full bg-cta-primary px-6 py-2 text-sm font-semibold text-white transition-colors duration-200 hover:bg-accent">
+            <svg class="h-4 w-4"><use href="#i-user-plus"/></svg>
+            Suivre
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- ===== Tabs ===== -->
+    <nav aria-label="Navigation du profil" class="profile-tabs">
+      <a href="#shop" data-section-tab="shop" class="profile-tab is-active"><span>Shop</span></a>
+      <a href="#appointments" data-section-tab="appointments" class="profile-tab"><span>Service</span></a>
+      <a href="#events" data-section-tab="events" class="profile-tab"><span>Event</span></a>
+    </nav>
+
+    <!-- ===== Section Shop ===== -->
+    <div data-section="shop">
+      <section class="spl">
+        <div class="spl__inner">
+          <div class="spl__bar">
+            <div class="spl__bar-spacer" aria-hidden="true"></div>
+            <div class="spl__bar-actions">
+              <button type="button" class="spl__icon-btn" aria-label="Rechercher">
+                <span class="spl__icon"><svg class="h-4 w-4"><use href="#i-search"/></svg></span>
+              </button>
+            </div>
+          </div>
+
+          <section class="spl__section">
+            <div class="spl__grid">
+
+              <a href="#" data-nav="product" class="spl__tile">
+                <div class="spl__tile-img">
+                  <div class="spl__tile-placeholder" aria-hidden="true">
+                    <svg class="h-6 w-6"><use href="#i-shopping-bag"/></svg>
+                  </div>
+                </div>
+                <div class="spl__tile-body">
+                  <div class="spl__tile-title">Guide « Pitcher avec impact »</div>
+                  <div class="spl__tile-meta">Numérique</div>
+                  <div class="spl__tile-price">
+                    <span class="spl__tile-price-sale">19,00 €</span>
+                    <s class="spl__tile-price-old">29,00 €</s>
+                  </div>
+                </div>
+              </a>
+
+              <a href="#" data-nav="product" class="spl__tile">
+                <div class="spl__tile-img">
+                  <div class="spl__tile-placeholder" aria-hidden="true">
+                    <svg class="h-6 w-6"><use href="#i-shopping-bag"/></svg>
+                  </div>
+                </div>
+                <div class="spl__tile-body">
+                  <div class="spl__tile-title">Template Kit LinkedIn</div>
+                  <div class="spl__tile-meta">Numérique</div>
+                  <div class="spl__tile-price">49,00 €</div>
+                </div>
+              </a>
+
+              <a href="#" data-nav="product" class="spl__tile">
+                <div class="spl__tile-img">
+                  <div class="spl__tile-placeholder" aria-hidden="true">
+                    <svg class="h-6 w-6"><use href="#i-shopping-bag"/></svg>
+                  </div>
+                </div>
+                <div class="spl__tile-body">
+                  <div class="spl__tile-title">Carnet d'exercices voix</div>
+                  <div class="spl__tile-meta">Plus que 3</div>
+                  <div class="spl__tile-price">24,00 €</div>
+                </div>
+              </a>
+
+            </div>
+          </section>
+        </div>
+      </section>
+    </div>
+
+    <!-- ===== Section Service (rendez-vous) ===== -->
+    <div data-section="appointments" hidden>
+      <div class="px-6 sm:px-12">
+        <section class="py-8">
+          <h2 class="mb-4 text-lg font-semibold text-neutral-900">Prendre rendez-vous</h2>
+          <div class="space-y-3">
+
+            <a href="#" data-nav="service" class="group flex gap-4 rounded-xl border border-neutral-200 bg-neutral-0 p-4 transition hover:border-accent hover:shadow-sm">
+              <div class="h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-neutral-100">
+                <div class="flex h-full w-full items-center justify-center text-neutral-300">
+                  <svg class="h-8 w-8"><use href="#i-calendar-clock"/></svg>
+                </div>
+              </div>
+              <div class="min-w-0 flex-1">
+                <h3 class="text-base font-semibold text-neutral-900 group-hover:text-accent transition-colors">Séance découverte</h3>
+                <p class="mt-0.5 text-sm text-neutral-500">Un premier échange pour faire le point sur tes besoins en communication orale.</p>
+                <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-neutral-400">
+                  <span class="inline-flex items-center gap-1"><svg class="h-3.5 w-3.5"><use href="#i-clock"/></svg>30 min</span>
+                  <span class="inline-flex items-center gap-1"><svg class="h-3.5 w-3.5"><use href="#i-video"/></svg>Visioconférence</span>
+                </div>
+              </div>
+              <div class="flex shrink-0 flex-col items-end justify-between gap-2">
+                <span class="text-base font-semibold text-success">Gratuit</span>
+                <span class="hidden rounded-full border border-neutral-200 px-3.5 py-1.5 text-xs font-medium text-neutral-700 transition group-hover:border-accent group-hover:bg-accent group-hover:text-white sm:inline-flex">Réserver</span>
+              </div>
+            </a>
+
+            <a href="#" data-nav="service" class="group flex gap-4 rounded-xl border border-neutral-200 bg-neutral-0 p-4 transition hover:border-accent hover:shadow-sm">
+              <div class="h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-neutral-100">
+                <div class="flex h-full w-full items-center justify-center text-neutral-300">
+                  <svg class="h-8 w-8"><use href="#i-calendar-clock"/></svg>
+                </div>
+              </div>
+              <div class="min-w-0 flex-1">
+                <h3 class="text-base font-semibold text-neutral-900 group-hover:text-accent transition-colors">Coaching pitch individuel</h3>
+                <p class="mt-0.5 text-sm text-neutral-500">Travaille ton pitch en 1:1 : structure, storytelling et présence. Repars avec un pitch prêt à l'emploi.</p>
+                <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-neutral-400">
+                  <span class="inline-flex items-center gap-1"><svg class="h-3.5 w-3.5"><use href="#i-clock"/></svg>60 min</span>
+                  <span class="inline-flex items-center gap-1"><svg class="h-3.5 w-3.5"><use href="#i-video"/></svg>Visioconférence</span>
+                </div>
+              </div>
+              <div class="flex shrink-0 flex-col items-end justify-between gap-2">
+                <span class="text-base font-semibold text-neutral-900">90,00 €</span>
+                <span class="hidden rounded-full border border-neutral-200 px-3.5 py-1.5 text-xs font-medium text-neutral-700 transition group-hover:border-accent group-hover:bg-accent group-hover:text-white sm:inline-flex">Réserver</span>
+              </div>
+            </a>
+
+            <a href="#" data-nav="service" class="group flex gap-4 rounded-xl border border-neutral-200 bg-neutral-0 p-4 transition hover:border-accent hover:shadow-sm">
+              <div class="h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-neutral-100">
+                <div class="flex h-full w-full items-center justify-center text-neutral-300">
+                  <svg class="h-8 w-8"><use href="#i-calendar-clock"/></svg>
+                </div>
+              </div>
+              <div class="min-w-0 flex-1">
+                <h3 class="text-base font-semibold text-neutral-900 group-hover:text-accent transition-colors">Atelier prise de parole</h3>
+                <p class="mt-0.5 text-sm text-neutral-500">Atelier intensif en présentiel : exercices de voix, gestion du trac et mises en situation filmées.</p>
+                <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-neutral-400">
+                  <span class="inline-flex items-center gap-1"><svg class="h-3.5 w-3.5"><use href="#i-clock"/></svg>120 min</span>
+                  <span class="inline-flex items-center gap-1"><svg class="h-3.5 w-3.5"><use href="#i-map-pin"/></svg>Sur place</span>
+                </div>
+              </div>
+              <div class="flex shrink-0 flex-col items-end justify-between gap-2">
+                <span class="flex items-baseline gap-1.5">
+                  <span class="text-base font-semibold text-accent">150,00 €</span>
+                  <s class="text-xs text-neutral-400">180,00 €</s>
+                </span>
+                <span class="hidden rounded-full border border-neutral-200 px-3.5 py-1.5 text-xs font-medium text-neutral-700 transition group-hover:border-accent group-hover:bg-accent group-hover:text-white sm:inline-flex">Réserver</span>
+              </div>
+            </a>
+
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <!-- ===== Section Event ===== -->
+    <div data-section="events" class="profile-section" hidden>
+      <h2 class="mb-4 text-lg font-semibold text-neutral-900">Events à venir</h2>
+      <div class="space-y-3">
+
+        <a href="#" data-nav="event" class="group flex gap-4 rounded-xl border border-neutral-200 bg-neutral-0 p-4 transition hover:border-accent hover:shadow-sm">
+          <div class="relative h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-neutral-100">
+            <div class="flex h-full w-full items-center justify-center text-neutral-300">
+              <svg class="h-8 w-8"><use href="#i-calendar-days"/></svg>
+            </div>
+            <span class="absolute left-1 top-1 flex flex-col items-center rounded-md bg-surface px-1.5 py-0.5 shadow-sm">
+              <span class="text-sm font-bold leading-tight text-neutral-900">12</span>
+              <span class="text-[10px] font-semibold uppercase leading-tight text-accent">juin</span>
+            </span>
+          </div>
+          <div class="min-w-0 flex-1">
+            <h3 class="text-base font-semibold text-neutral-900 group-hover:text-accent transition-colors">Webinaire « Vaincre le trac »</h3>
+            <p class="mt-0.5 text-sm text-neutral-500 line-clamp-2">1 h 30 pour comprendre les mécanismes du trac et repartir avec 5 techniques concrètes.</p>
+            <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-neutral-400">
+              <span class="inline-flex items-center gap-1"><svg class="h-3.5 w-3.5"><use href="#i-clock"/></svg><span class="capitalize">vendredi 12 juin</span> · 18:00</span>
+              <span class="inline-flex items-center gap-1"><svg class="h-3.5 w-3.5"><use href="#i-globe"/></svg>En ligne</span>
+              <span class="inline-flex items-center gap-1 text-accent"><svg class="h-3.5 w-3.5"><use href="#i-users"/></svg>12 places restantes</span>
+            </div>
+          </div>
+          <div class="flex shrink-0 flex-col items-end justify-between gap-2">
+            <span class="text-base font-semibold text-success">Gratuit</span>
+            <span class="hidden rounded-full border border-neutral-200 px-3.5 py-1.5 text-xs font-medium text-neutral-700 transition group-hover:border-accent group-hover:bg-accent group-hover:text-white sm:inline-flex">S'inscrire</span>
+          </div>
+        </a>
+
+        <a href="#" data-nav="event" class="group flex gap-4 rounded-xl border border-neutral-200 bg-neutral-0 p-4 transition hover:border-accent hover:shadow-sm">
+          <div class="relative h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-neutral-100">
+            <div class="flex h-full w-full items-center justify-center text-neutral-300">
+              <svg class="h-8 w-8"><use href="#i-calendar-days"/></svg>
+            </div>
+            <span class="absolute left-1 top-1 flex flex-col items-center rounded-md bg-surface px-1.5 py-0.5 shadow-sm">
+              <span class="text-sm font-bold leading-tight text-neutral-900">25</span>
+              <span class="text-[10px] font-semibold uppercase leading-tight text-accent">juin</span>
+            </span>
+          </div>
+          <div class="min-w-0 flex-1">
+            <h3 class="text-base font-semibold text-neutral-900 group-hover:text-accent transition-colors">Atelier « Pitch &amp; café »</h3>
+            <p class="mt-0.5 text-sm text-neutral-500 line-clamp-2">Un petit-déjeuner networking où chacun pitche son projet en 2 minutes, feedback bienveillant garanti.</p>
+            <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-neutral-400">
+              <span class="inline-flex items-center gap-1"><svg class="h-3.5 w-3.5"><use href="#i-clock"/></svg><span class="capitalize">jeudi 25 juin</span> · 09:00</span>
+              <span class="inline-flex items-center gap-1"><svg class="h-3.5 w-3.5"><use href="#i-map-pin"/></svg>Sur place</span>
+              <span class="inline-flex items-center gap-1 text-accent"><svg class="h-3.5 w-3.5"><use href="#i-users"/></svg>5 places restantes</span>
+            </div>
+          </div>
+          <div class="flex shrink-0 flex-col items-end justify-between gap-2">
+            <span class="text-base font-semibold text-neutral-900">15,00 €</span>
+            <span class="hidden rounded-full border border-neutral-200 px-3.5 py-1.5 text-xs font-medium text-neutral-700 transition group-hover:border-accent group-hover:bg-accent group-hover:text-white sm:inline-flex">S'inscrire</span>
+          </div>
+        </a>
+
+        <a href="#" data-nav="event" class="group flex gap-4 rounded-xl border border-neutral-200 bg-neutral-0 p-4 transition hover:border-accent hover:shadow-sm">
+          <div class="relative h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-neutral-100">
+            <div class="flex h-full w-full items-center justify-center text-neutral-300">
+              <svg class="h-8 w-8"><use href="#i-calendar-days"/></svg>
+            </div>
+            <span class="absolute left-1 top-1 flex flex-col items-center rounded-md bg-surface px-1.5 py-0.5 shadow-sm">
+              <span class="text-sm font-bold leading-tight text-neutral-900">8</span>
+              <span class="text-[10px] font-semibold uppercase leading-tight text-accent">juil</span>
+            </span>
+          </div>
+          <div class="min-w-0 flex-1">
+            <h3 class="text-base font-semibold text-neutral-900 group-hover:text-accent transition-colors">Masterclass Storytelling</h3>
+            <p class="mt-0.5 text-sm text-neutral-500 line-clamp-2">2 heures pour apprendre à structurer un récit qui captive : arc narratif, tension, chute.</p>
+            <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-neutral-400">
+              <span class="inline-flex items-center gap-1"><svg class="h-3.5 w-3.5"><use href="#i-clock"/></svg><span class="capitalize">mercredi 8 juillet</span> · 18:30</span>
+              <span class="inline-flex items-center gap-1"><svg class="h-3.5 w-3.5"><use href="#i-globe"/></svg>En ligne</span>
+            </div>
+          </div>
+          <div class="flex shrink-0 flex-col items-end justify-between gap-2">
+            <span class="text-base font-semibold text-neutral-900">45,00 €</span>
+            <span class="hidden rounded-full border border-neutral-200 px-3.5 py-1.5 text-xs font-medium text-neutral-700 transition group-hover:border-accent group-hover:bg-accent group-hover:text-white sm:inline-flex">S'inscrire</span>
+          </div>
+        </a>
+
+      </div>
+    </div>
+
+  </article>
+</main>
+
+<!-- ================================================================
+     VUE 2 — DÉTAIL PRODUIT (Guide « Pitcher avec impact »)
+================================================================= -->
+<main data-view="product" class="md:py-8" hidden>
+
+  <div class="mx-auto max-w-[800px] px-4 mb-3 md:px-0">
+    <a href="#" data-nav="profile" class="inline-flex items-center gap-1.5 text-sm text-neutral-500 transition hover:text-neutral-900">
+      <svg class="h-4 w-4"><use href="#i-arrow-left"/></svg>
+      Marie Lambert
+    </a>
+  </div>
+
+  <article class="overflow-hidden bg-surface md:mx-auto md:max-w-[800px] md:rounded-[20px] md:shadow-card">
+    <div class="flex flex-col md:flex-row">
+
+      <!-- Galerie -->
+      <div class="md:w-[48%] md:border-r md:border-neutral-200">
+        <div class="relative aspect-square w-full overflow-hidden bg-neutral-100">
+          <div class="flex h-full w-full items-center justify-center text-neutral-300" style="background-image: repeating-linear-gradient(135deg, #F9FAFB 0, #F9FAFB 4px, #FFFFFF 4px, #FFFFFF 10px);">
+            <svg class="h-16 w-16"><use href="#i-shopping-bag"/></svg>
+          </div>
+        </div>
+        <div class="relative px-6 py-4">
+          <div class="flex gap-2 overflow-x-auto">
+            <button type="button" class="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border-2 border-accent">
+              <div class="flex h-full w-full items-center justify-center bg-panel-2 text-neutral-400"><svg class="h-5 w-5"><use href="#i-shopping-bag"/></svg></div>
+            </button>
+            <button type="button" class="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border-2 border-transparent hover:border-neutral-300">
+              <div class="flex h-full w-full items-center justify-center bg-panel-2 text-neutral-400"><svg class="h-5 w-5"><use href="#i-file-text"/></svg></div>
+            </button>
+            <button type="button" class="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border-2 border-transparent hover:border-neutral-300">
+              <div class="flex h-full w-full items-center justify-center bg-panel-2 text-neutral-400"><svg class="h-5 w-5"><use href="#i-download"/></svg></div>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Infos -->
+      <div class="md:w-[52%] px-6 py-6 sm:px-8">
+        <div>
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="inline-flex items-center gap-1.5 rounded-lg bg-neutral-100 px-2.5 py-1 text-xs font-medium text-neutral-600">
+              <svg class="h-3.5 w-3.5"><use href="#i-download"/></svg>
+              Produit numérique
+            </span>
+            <span class="inline-flex items-center rounded-lg bg-accent/10 px-2.5 py-1 text-xs font-medium text-accent">Guides</span>
+          </div>
+          <h1 class="mt-3 text-2xl font-semibold text-neutral-900">Guide « Pitcher avec impact »</h1>
+        </div>
+
+        <ul class="mt-3 space-y-1.5">
+          <li class="flex items-start gap-2 text-sm text-neutral-700"><span class="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-accent" aria-hidden="true"></span><span>Méthode pas à pas en 7 étapes</span></li>
+          <li class="flex items-start gap-2 text-sm text-neutral-700"><span class="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-accent" aria-hidden="true"></span><span>12 exemples de pitchs commentés</span></li>
+          <li class="flex items-start gap-2 text-sm text-neutral-700"><span class="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-accent" aria-hidden="true"></span><span>Trames prêtes à remplir</span></li>
+        </ul>
+
+        <p class="mt-3 text-sm text-neutral-600">Le guide complet pour construire un pitch clair et mémorable, que ce soit pour un investisseur, un client ou un recruteur.</p>
+
+        <!-- Prix promo -->
+        <div class="mt-4 flex flex-wrap items-baseline gap-2">
+          <span class="text-base font-medium text-neutral-400 line-through">29,00 €</span>
+          <span class="text-2xl font-bold text-accent">19,00 €</span>
+          <span class="rounded-md bg-accent/10 px-2 py-0.5 text-xs font-semibold text-accent">-34 %</span>
+        </div>
+        <p class="mt-1 text-xs text-accent">Jusqu'au 30 juin 2026</p>
+        <p class="mt-1 text-xs text-success">En stock</p>
+
+        <!-- CTA achat (désactivé) -->
+        <button type="button" disabled class="mt-6 w-full cursor-not-allowed rounded-xl bg-neutral-200 py-3.5 text-sm font-semibold text-neutral-500" title="L'achat en ligne arrive prochainement">
+          Bientôt disponible
+        </button>
+        <p class="mt-2 text-center text-xs text-neutral-400">L'achat en ligne sera bientôt activé. Contactez le vendeur pour commander.</p>
+
+        <!-- Détails du fichier -->
+        <div class="mt-6 space-y-2 rounded-xl border border-neutral-200 bg-neutral-50 p-4">
+          <h2 class="text-sm font-semibold text-neutral-900">Détails du fichier</h2>
+          <ul class="space-y-1.5 text-sm text-neutral-600">
+            <li class="flex items-center gap-2"><svg class="h-4 w-4 shrink-0 text-neutral-400"><use href="#i-file-text"/></svg>Format : PDF</li>
+            <li class="flex items-center gap-2"><svg class="h-4 w-4 shrink-0 text-neutral-400"><use href="#i-globe-lang"/></svg>Langue : FR</li>
+            <li class="flex items-center gap-2"><svg class="h-4 w-4 shrink-0 text-neutral-400"><use href="#i-clock"/></svg>64 pages</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Description pleine largeur -->
+    <section class="border-t border-neutral-200 px-6 py-8 sm:px-12">
+      <h2 class="mb-3 text-lg font-semibold text-neutral-900">Description</h2>
+      <div class="space-y-4">
+        <p class="whitespace-pre-wrap text-sm leading-relaxed text-neutral-600">Pitcher, ce n'est pas réciter. C'est raconter une histoire qui donne envie d'en savoir plus. Ce guide condense 10 ans d'accompagnement de fondateurs et d'indépendants en une méthode simple, applicable dès la première lecture.</p>
+        <p class="whitespace-pre-wrap text-sm leading-relaxed text-neutral-600">Tu y trouveras la structure en 7 étapes, les erreurs qui tuent un pitch en 30 secondes, et 12 exemples réels décortiqués ligne par ligne. Chaque chapitre se termine par un exercice pratique avec sa trame à remplir.</p>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="border-t border-neutral-200 px-6 py-8 sm:px-12">
+      <h2 class="flex items-center gap-2 text-lg font-semibold text-neutral-900">
+        <svg class="h-5 w-5 text-neutral-500"><use href="#i-message-circle-question"/></svg>
+        FAQ
+      </h2>
+      <div class="mt-4 space-y-2">
+        <details class="group rounded-xl border border-neutral-200 bg-white">
+          <summary class="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-medium text-neutral-900 [&::-webkit-details-marker]:hidden">
+            Le guide convient-il aux débutants ?
+            <svg class="h-4 w-4 shrink-0 text-neutral-400 transition-transform group-open:rotate-180"><use href="#i-chevron-down"/></svg>
+          </summary>
+          <p class="whitespace-pre-wrap border-t border-neutral-100 px-4 py-3 text-sm leading-relaxed text-neutral-600">Oui, le guide part de zéro. Aucune expérience en prise de parole n'est nécessaire : la méthode est progressive et chaque étape est illustrée.</p>
+        </details>
+        <details class="group rounded-xl border border-neutral-200 bg-white">
+          <summary class="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-medium text-neutral-900 [&::-webkit-details-marker]:hidden">
+            Comment je reçois le fichier après l'achat ?
+            <svg class="h-4 w-4 shrink-0 text-neutral-400 transition-transform group-open:rotate-180"><use href="#i-chevron-down"/></svg>
+          </summary>
+          <p class="whitespace-pre-wrap border-t border-neutral-100 px-4 py-3 text-sm leading-relaxed text-neutral-600">Tu reçois un lien de téléchargement par email immédiatement après le paiement. Le lien reste valable sans limite de durée.</p>
+        </details>
+        <details class="group rounded-xl border border-neutral-200 bg-white">
+          <summary class="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-medium text-neutral-900 [&::-webkit-details-marker]:hidden">
+            Puis-je l'utiliser pour former mon équipe ?
+            <svg class="h-4 w-4 shrink-0 text-neutral-400 transition-transform group-open:rotate-180"><use href="#i-chevron-down"/></svg>
+          </summary>
+          <p class="whitespace-pre-wrap border-t border-neutral-100 px-4 py-3 text-sm leading-relaxed text-neutral-600">La licence couvre un usage personnel. Pour un usage en équipe ou en formation, contacte-moi pour une licence adaptée.</p>
+        </details>
+      </div>
+    </section>
+  </article>
+</main>
+
+<!-- ================================================================
+     VUE 3 — DÉTAIL SERVICE (Coaching pitch individuel)
+================================================================= -->
+<main data-view="service" class="md:py-8" hidden>
+
+  <div class="mx-auto max-w-[800px] px-4 mb-3 md:px-0">
+    <a href="#" data-nav="profile" class="inline-flex items-center gap-1.5 text-sm text-neutral-500 transition hover:text-neutral-900">
+      <svg class="h-4 w-4"><use href="#i-arrow-left"/></svg>
+      Marie Lambert
+    </a>
+  </div>
+
+  <article class="overflow-hidden bg-surface md:mx-auto md:max-w-[800px] md:rounded-[20px] md:shadow-card">
+    <div class="flex flex-col md:flex-row md:min-h-[500px]">
+
+      <!-- Panneau gauche -->
+      <div class="md:w-[40%] md:border-r md:border-neutral-200">
+        <a href="#" data-nav="profile" class="relative block">
+          <div class="flex aspect-square w-full items-center justify-center bg-accent-soft">
+            <span class="text-5xl font-bold text-accent">M</span>
+          </div>
+          <div class="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-white to-transparent"></div>
+        </a>
+        <div class="px-6 py-5">
+          <a href="#" data-nav="profile" class="text-sm font-semibold text-neutral-900 hover:text-accent transition">Marie Lambert</a>
+          <p class="text-xs text-neutral-500">Coach en communication</p>
+          <h1 class="mt-4 text-xl font-semibold text-neutral-900">Coaching pitch individuel</h1>
+          <div class="mt-3 flex flex-wrap gap-2">
+            <span class="inline-flex items-center gap-1.5 rounded-lg bg-neutral-100 px-2.5 py-1 text-xs font-medium text-neutral-600">
+              <svg class="h-3.5 w-3.5"><use href="#i-clock"/></svg>60 min
+            </span>
+            <span class="inline-flex items-center gap-1.5 rounded-lg bg-neutral-100 px-2.5 py-1 text-xs font-medium text-neutral-600">
+              <svg class="h-3.5 w-3.5"><use href="#i-video"/></svg>Visioconférence
+            </span>
+            <span class="inline-flex items-center rounded-lg bg-accent/10 px-2.5 py-1 text-xs font-semibold text-accent">90,00 €</span>
+          </div>
+        </div>
+        <div class="border-t border-neutral-200 px-6 py-4 md:hidden">
+          <button type="button" class="w-full rounded-xl bg-accent py-3 text-sm font-semibold text-white transition hover:bg-accent-hover">Voir les disponibilités</button>
+        </div>
+      </div>
+
+      <!-- Panneau droit : étape « Vos informations » -->
+      <div class="md:w-[60%]">
+        <div class="px-6 py-6">
+          <div class="mb-4 flex items-center justify-between">
+            <h2 class="text-base font-semibold text-neutral-900">Vos informations</h2>
+            <div class="flex items-center gap-1.5">
+              <span class="flex h-2 w-2 rounded-full bg-accent"></span>
+              <span class="flex h-2 w-2 rounded-full bg-neutral-200"></span>
+              <span class="flex h-2 w-2 rounded-full bg-neutral-200"></span>
+            </div>
+          </div>
+
+          <a href="#" class="mb-5 flex items-center gap-3 rounded-xl border border-neutral-200 px-4 py-3 transition hover:border-accent hover:bg-accent/5 group">
+            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent">
+              <svg class="h-4 w-4"><use href="#i-log-in"/></svg>
+            </span>
+            <div class="flex-1">
+              <p class="text-sm font-medium text-neutral-900 group-hover:text-accent transition">Se connecter / Créer un compte</p>
+              <p class="text-xs text-neutral-500">Réservez plus rapidement avec votre compte IBEE.</p>
+            </div>
+          </a>
+
+          <div class="mb-4 flex items-center gap-3">
+            <div class="h-px flex-1 bg-neutral-200"></div>
+            <span class="text-xs text-neutral-400">ou remplissez vos coordonnées</span>
+            <div class="h-px flex-1 bg-neutral-200"></div>
+          </div>
+
+          <div class="space-y-3">
+            <div>
+              <label class="mb-1 block text-xs font-medium text-neutral-600">Nom complet *</label>
+              <input type="text" class="w-full rounded-lg border border-neutral-200 px-3.5 py-2.5 text-sm transition focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20" placeholder="Jean Dupont" />
+            </div>
+            <div>
+              <label class="mb-1 block text-xs font-medium text-neutral-600">Email *</label>
+              <input type="email" class="w-full rounded-lg border border-neutral-200 px-3.5 py-2.5 text-sm transition focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20" placeholder="jean@exemple.com" />
+            </div>
+            <div>
+              <label class="mb-1 block text-xs font-medium text-neutral-600">Téléphone</label>
+              <input type="tel" class="w-full rounded-lg border border-neutral-200 px-3.5 py-2.5 text-sm transition focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20" placeholder="06 12 34 56 78" />
+            </div>
+            <button type="button" class="w-full rounded-xl bg-accent py-3 text-sm font-semibold text-white transition hover:bg-accent-hover mt-1">
+              Choisir un créneau
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- À propos -->
+    <div class="border-t border-neutral-200 px-6 sm:px-12 py-6">
+      <h2 class="text-sm font-semibold text-neutral-900 mb-4">À propos de ce service</h2>
+      <section class="space-y-4">
+        <p class="text-sm leading-relaxed text-neutral-600 whitespace-pre-wrap">Une heure de travail intensif sur ton pitch. On part de ta version actuelle, on identifie ce qui bloque (structure, longueur, jargon), et on reconstruit ensemble un pitch qui tient en 90 secondes.</p>
+        <ul class="space-y-1.5 text-sm text-neutral-600">
+          <li class="flex items-start gap-2"><span class="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-accent"></span>Audit de ton pitch actuel</li>
+          <li class="flex items-start gap-2"><span class="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-accent"></span>Reconstruction en direct avec la méthode en 7 étapes</li>
+          <li class="flex items-start gap-2"><span class="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-accent"></span>Enregistrement de la séance + plan d'entraînement</li>
+        </ul>
+      </section>
+    </div>
+
+    <!-- Autres services -->
+    <div class="border-t border-neutral-200 px-6 sm:px-12 py-6">
+      <div>
+        <h2 class="text-sm font-semibold text-neutral-900 mb-3">Autres services</h2>
+        <div class="space-y-2">
+          <a href="#" data-nav="service" class="flex items-center gap-3 rounded-xl border border-neutral-200 bg-neutral-0 px-4 py-3 transition hover:border-accent hover:shadow-sm group">
+            <div class="min-w-0 flex-1">
+              <p class="text-sm font-medium text-neutral-900 group-hover:text-accent transition truncate">Séance découverte</p>
+              <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-neutral-500">
+                <span class="inline-flex items-center gap-1"><svg class="h-3 w-3"><use href="#i-clock"/></svg>30 min</span>
+                <span class="inline-flex items-center gap-1"><svg class="h-3 w-3"><use href="#i-video"/></svg>Visio</span>
+              </div>
+            </div>
+            <div class="shrink-0 text-right"><span class="text-sm font-semibold text-neutral-900">Gratuit</span></div>
+            <svg class="h-4 w-4 shrink-0 text-neutral-300 group-hover:text-accent transition"><use href="#i-arrow-right"/></svg>
+          </a>
+          <a href="#" data-nav="service" class="flex items-center gap-3 rounded-xl border border-neutral-200 bg-neutral-0 px-4 py-3 transition hover:border-accent hover:shadow-sm group">
+            <div class="min-w-0 flex-1">
+              <p class="text-sm font-medium text-neutral-900 group-hover:text-accent transition truncate">Atelier prise de parole</p>
+              <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-neutral-500">
+                <span class="inline-flex items-center gap-1"><svg class="h-3 w-3"><use href="#i-clock"/></svg>120 min</span>
+                <span class="inline-flex items-center gap-1"><svg class="h-3 w-3"><use href="#i-map-pin"/></svg>Sur place</span>
+              </div>
+            </div>
+            <div class="shrink-0 text-right"><span class="text-sm font-semibold text-neutral-900">180,00 €</span></div>
+            <svg class="h-4 w-4 shrink-0 text-neutral-300 group-hover:text-accent transition"><use href="#i-arrow-right"/></svg>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- FAQ -->
+    <section class="border-t border-neutral-200 px-6 py-8 sm:px-12">
+      <h2 class="flex items-center gap-2 text-lg font-semibold text-neutral-900">
+        <svg class="h-5 w-5 text-neutral-500"><use href="#i-message-circle-question"/></svg>
+        FAQ
+      </h2>
+      <div class="mt-4 space-y-2">
+        <details class="group rounded-xl border border-neutral-200 bg-white">
+          <summary class="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-medium text-neutral-900 [&::-webkit-details-marker]:hidden">
+            Faut-il préparer quelque chose avant la séance ?
+            <svg class="h-4 w-4 shrink-0 text-neutral-400 transition-transform group-open:rotate-180"><use href="#i-chevron-down"/></svg>
+          </summary>
+          <p class="whitespace-pre-wrap border-t border-neutral-100 px-4 py-3 text-sm leading-relaxed text-neutral-600">Idéalement, viens avec ta version actuelle de pitch (même imparfaite) et une idée du contexte où tu vas l'utiliser. Si tu pars de zéro, ce n'est pas bloquant.</p>
+        </details>
+        <details class="group rounded-xl border border-neutral-200 bg-white">
+          <summary class="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-medium text-neutral-900 [&::-webkit-details-marker]:hidden">
+            Que se passe-t-il si je dois annuler ?
+            <svg class="h-4 w-4 shrink-0 text-neutral-400 transition-transform group-open:rotate-180"><use href="#i-chevron-down"/></svg>
+          </summary>
+          <p class="whitespace-pre-wrap border-t border-neutral-100 px-4 py-3 text-sm leading-relaxed text-neutral-600">Tu peux annuler ou reporter sans frais jusqu'à 24 h avant la séance. En dessous de 24 h, la séance est due.</p>
+        </details>
+      </div>
+    </section>
+
+    <!-- Avis clients -->
+    <section class="border-t border-neutral-200 px-6 py-8 sm:px-12">
+      <h2 class="text-lg font-semibold text-neutral-900">Avis clients</h2>
+
+      <div class="mt-4 flex flex-col gap-6 sm:flex-row sm:items-start">
+        <div class="text-center sm:w-40 sm:shrink-0">
+          <p class="text-4xl font-bold text-neutral-900">4,8</p>
+          <div class="mt-1 flex justify-center gap-0.5">
+            <svg class="h-4 w-4 text-amber-400"><use href="#i-star"/></svg>
+            <svg class="h-4 w-4 text-amber-400"><use href="#i-star"/></svg>
+            <svg class="h-4 w-4 text-amber-400"><use href="#i-star"/></svg>
+            <svg class="h-4 w-4 text-amber-400"><use href="#i-star"/></svg>
+            <svg class="h-4 w-4 text-amber-400"><use href="#i-star"/></svg>
+          </div>
+          <p class="mt-1 text-xs text-neutral-500">12 avis</p>
+        </div>
+        <div class="flex-1 space-y-1.5">
+          <div class="flex items-center gap-2 rounded-lg px-1 py-0.5 text-xs">
+            <span class="w-10 shrink-0 text-right text-neutral-600">5 étoiles</span>
+            <span class="h-2 flex-1 overflow-hidden rounded-full bg-neutral-100"><span class="block h-full rounded-full bg-amber-400" style="width:100%"></span></span>
+            <span class="w-6 text-neutral-500">9</span>
+          </div>
+          <div class="flex items-center gap-2 rounded-lg px-1 py-0.5 text-xs">
+            <span class="w-10 shrink-0 text-right text-neutral-600">4 étoiles</span>
+            <span class="h-2 flex-1 overflow-hidden rounded-full bg-neutral-100"><span class="block h-full rounded-full bg-amber-400" style="width:22%"></span></span>
+            <span class="w-6 text-neutral-500">2</span>
+          </div>
+          <div class="flex items-center gap-2 rounded-lg px-1 py-0.5 text-xs">
+            <span class="w-10 shrink-0 text-right text-neutral-600">3 étoiles</span>
+            <span class="h-2 flex-1 overflow-hidden rounded-full bg-neutral-100"><span class="block h-full rounded-full bg-amber-400" style="width:11%"></span></span>
+            <span class="w-6 text-neutral-500">1</span>
+          </div>
+          <div class="flex items-center gap-2 rounded-lg px-1 py-0.5 text-xs">
+            <span class="w-10 shrink-0 text-right text-neutral-600">2 étoiles</span>
+            <span class="h-2 flex-1 overflow-hidden rounded-full bg-neutral-100"><span class="block h-full rounded-full bg-amber-400" style="width:0%"></span></span>
+            <span class="w-6 text-neutral-500">0</span>
+          </div>
+          <div class="flex items-center gap-2 rounded-lg px-1 py-0.5 text-xs">
+            <span class="w-10 shrink-0 text-right text-neutral-600">1 étoile</span>
+            <span class="h-2 flex-1 overflow-hidden rounded-full bg-neutral-100"><span class="block h-full rounded-full bg-amber-400" style="width:0%"></span></span>
+            <span class="w-6 text-neutral-500">0</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-6 flex flex-wrap items-center gap-2">
+        <span class="ml-auto inline-flex items-center gap-1.5 rounded-full bg-neutral-100 px-3 py-1 text-xs font-medium text-neutral-600">
+          <svg class="h-3.5 w-3.5"><use href="#i-arrow-down-up"/></svg>
+          Plus récents d'abord
+        </span>
+      </div>
+
+      <div class="mt-6 space-y-5">
+        <article class="border-b border-neutral-100 pb-5">
+          <div class="flex items-center gap-2">
+            <div class="flex gap-0.5">
+              <svg class="h-3.5 w-3.5 text-amber-400"><use href="#i-star"/></svg>
+              <svg class="h-3.5 w-3.5 text-amber-400"><use href="#i-star"/></svg>
+              <svg class="h-3.5 w-3.5 text-amber-400"><use href="#i-star"/></svg>
+              <svg class="h-3.5 w-3.5 text-amber-400"><use href="#i-star"/></svg>
+              <svg class="h-3.5 w-3.5 text-amber-400"><use href="#i-star"/></svg>
+            </div>
+            <span class="rounded-full bg-success/10 px-2 py-0.5 text-[11px] font-medium text-success">Achat vérifié</span>
+            <time class="ml-auto text-xs text-neutral-400">18 mai 2026</time>
+          </div>
+          <h3 class="mt-2 text-sm font-semibold text-neutral-900">Mon pitch a enfin du punch</h3>
+          <p class="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-neutral-600">En une heure, Marie a vu exactement ce qui n'allait pas. J'ai utilisé le nouveau pitch deux jours après en rendez-vous client : signé.</p>
+          <div class="mt-3 rounded-lg bg-neutral-50 p-3">
+            <p class="text-xs font-semibold text-neutral-900">Réponse du vendeur</p>
+            <p class="mt-1 whitespace-pre-wrap text-sm text-neutral-600">Bravo pour la signature, c'est ton travail qui a payé !</p>
+          </div>
+        </article>
+        <article class="border-b border-neutral-100 pb-5 last:border-0">
+          <div class="flex items-center gap-2">
+            <div class="flex gap-0.5">
+              <svg class="h-3.5 w-3.5 text-amber-400"><use href="#i-star"/></svg>
+              <svg class="h-3.5 w-3.5 text-amber-400"><use href="#i-star"/></svg>
+              <svg class="h-3.5 w-3.5 text-amber-400"><use href="#i-star"/></svg>
+              <svg class="h-3.5 w-3.5 text-amber-400"><use href="#i-star"/></svg>
+              <svg class="h-3.5 w-3.5 text-neutral-200"><use href="#i-star"/></svg>
+            </div>
+            <span class="rounded-full bg-success/10 px-2 py-0.5 text-[11px] font-medium text-success">Achat vérifié</span>
+            <time class="ml-auto text-xs text-neutral-400">2 mai 2026</time>
+          </div>
+          <h3 class="mt-2 text-sm font-semibold text-neutral-900">Très concret</h3>
+          <p class="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-neutral-600">Séance dense et bien structurée. J'aurais aimé un peu plus de temps pour les mises en situation, d'où la 4e étoile.</p>
+        </article>
+      </div>
+    </section>
+  </article>
+</main>
+
+<!-- ================================================================
+     VUE 4 — DÉTAIL EVENT (Webinaire « Vaincre le trac ») — 1 colonne
+================================================================= -->
+<main data-view="event" class="md:py-8" hidden>
+
+  <div class="mx-auto max-w-[800px] px-4 mb-3 md:px-0">
+    <a href="#" data-nav="profile" class="inline-flex items-center gap-1.5 text-sm text-neutral-500 transition hover:text-neutral-900">
+      <svg class="h-4 w-4"><use href="#i-arrow-left"/></svg>
+      Marie Lambert
+    </a>
+  </div>
+
+  <article class="overflow-hidden bg-surface md:mx-auto md:max-w-[800px] md:rounded-[20px] md:shadow-card">
+    <div>
+      <!-- Cover + infos -->
+      <div>
+        <div class="aspect-[3/2] w-full overflow-hidden bg-neutral-100">
+          <div class="flex h-full w-full items-center justify-center text-neutral-300" style="background-image: repeating-linear-gradient(135deg, #F9FAFB 0, #F9FAFB 4px, #FFFFFF 4px, #FFFFFF 10px);">
+            <svg class="h-16 w-16"><use href="#i-calendar-days"/></svg>
+          </div>
+        </div>
+        <div class="px-6 py-5">
+          <a href="#" data-nav="profile" class="text-sm font-semibold text-neutral-900 hover:text-accent transition">Marie Lambert</a>
+          <p class="text-xs text-neutral-500">Coach en communication</p>
+          <h1 class="mt-4 text-xl font-semibold text-neutral-900">Webinaire « Vaincre le trac »</h1>
+          <p class="mt-2 text-sm text-neutral-600">1 h 30 pour comprendre les mécanismes du trac et repartir avec 5 techniques concrètes, applicables dès ta prochaine prise de parole.</p>
+
+          <ul class="mt-4 space-y-2 text-sm text-neutral-600">
+            <li class="flex items-center gap-2.5">
+              <svg class="h-4 w-4 shrink-0 text-accent"><use href="#i-calendar-days"/></svg>
+              <span class="capitalize">vendredi 12 juin 2026</span>
+            </li>
+            <li class="flex items-center gap-2.5">
+              <svg class="h-4 w-4 shrink-0 text-accent"><use href="#i-clock"/></svg>
+              18:00 — 19:30
+            </li>
+            <li class="flex items-center gap-2.5">
+              <svg class="h-4 w-4 shrink-0 text-accent"><use href="#i-globe"/></svg>
+              En ligne · Lien envoyé après inscription
+            </li>
+            <li class="flex items-center gap-2.5">
+              <svg class="h-4 w-4 shrink-0 text-accent"><use href="#i-users"/></svg>
+              12 places restantes
+            </li>
+          </ul>
+
+          <div class="mt-4">
+            <span class="inline-flex items-center rounded-lg bg-success/10 px-2.5 py-1 text-sm font-semibold text-success">Gratuit</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Participation -->
+      <div class="border-t border-neutral-200 px-6 py-6 sm:px-8">
+        <div>
+          <h2 class="text-base font-semibold text-neutral-900">Participer</h2>
+          <p class="mt-1 text-sm text-neutral-500">Participation gratuite — tu recevras les détails par email.</p>
+
+          <form class="mt-5 space-y-3" onsubmit="return false">
+            <div>
+              <label class="mb-1 block text-xs font-medium text-neutral-600">Nom complet *</label>
+              <input name="name" type="text" class="w-full rounded-lg border border-neutral-200 px-3.5 py-2.5 text-sm transition focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20" placeholder="Jean Dupont" />
+            </div>
+            <div>
+              <label class="mb-1 block text-xs font-medium text-neutral-600">Email *</label>
+              <input name="email" type="email" class="w-full rounded-lg border border-neutral-200 px-3.5 py-2.5 text-sm transition focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20" placeholder="jean@exemple.com" />
+            </div>
+            <div id="mock-message-wrapper" hidden>
+              <label class="mb-1 block text-xs font-medium text-neutral-600">Ta question <span class="text-neutral-400">(envoyée avec ta participation)</span></label>
+              <textarea rows="2" class="w-full resize-none rounded-lg border border-neutral-200 px-3.5 py-2.5 text-sm transition focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20" placeholder="Une question pour l'organisateur ?"></textarea>
+            </div>
+            <div class="flex gap-2">
+              <button type="submit" class="flex-1 rounded-xl bg-accent py-3 text-sm font-semibold text-white transition hover:bg-accent-hover">
+                Participer
+              </button>
+              <button type="button" id="mock-message-toggle" aria-label="Poser une question" aria-expanded="false" class="flex w-12 items-center justify-center rounded-xl border border-neutral-200 text-neutral-500 transition hover:border-accent hover:text-accent">
+                <svg class="h-5 w-5"><use href="#i-message-circle"/></svg>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Points forts -->
+      <div class="border-t border-neutral-200 px-6 sm:px-12 py-6">
+        <h2 class="mb-3 text-lg font-semibold text-neutral-900">Ce qui t'attend</h2>
+        <ul class="grid gap-2 sm:grid-cols-2">
+          <li class="flex items-start gap-2 text-sm text-neutral-700"><svg class="mt-0.5 h-4 w-4 shrink-0 text-accent"><use href="#i-check"/></svg>Comprendre d'où vient le trac</li>
+          <li class="flex items-start gap-2 text-sm text-neutral-700"><svg class="mt-0.5 h-4 w-4 shrink-0 text-accent"><use href="#i-check"/></svg>5 techniques de respiration et d'ancrage</li>
+          <li class="flex items-start gap-2 text-sm text-neutral-700"><svg class="mt-0.5 h-4 w-4 shrink-0 text-accent"><use href="#i-check"/></svg>Session questions-réponses en direct</li>
+          <li class="flex items-start gap-2 text-sm text-neutral-700"><svg class="mt-0.5 h-4 w-4 shrink-0 text-accent"><use href="#i-check"/></svg>Replay disponible 30 jours</li>
+        </ul>
+      </div>
+
+      <!-- Contenu détaillé -->
+      <div class="border-t border-neutral-200 px-6 sm:px-12 py-6">
+        <h2 class="mb-4 text-lg font-semibold text-neutral-900">À propos de cet event</h2>
+        <section class="space-y-4">
+          <p class="whitespace-pre-wrap text-sm leading-relaxed text-neutral-600">Le trac n'est pas une fatalité. C'est une réaction physiologique normale — et comme toute réaction, elle s'apprivoise. Pendant ce webinaire, on décortique ce qui se passe dans ton corps avant une prise de parole, et surtout, on pratique ensemble les techniques qui fonctionnent.</p>
+          <p class="whitespace-pre-wrap text-sm leading-relaxed text-neutral-600">Format interactif : apporte une situation réelle (réunion, pitch, présentation) et on l'utilisera comme cas pratique pendant la session de questions-réponses.</p>
+        </section>
+      </div>
+
+      <!-- Autres événements à venir -->
+      <section class="border-t border-neutral-200 px-6 sm:px-12 py-6">
+        <h2 class="mb-3 text-lg font-semibold text-neutral-900">Autres événements à venir</h2>
+        <div class="grid gap-2 sm:grid-cols-2">
+
+          <a href="#" data-nav="event" class="group flex items-center gap-3 rounded-xl border border-neutral-200 bg-neutral-0 p-3 transition hover:border-accent hover:shadow-sm">
+            <span class="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-lg bg-neutral-100">
+              <span class="text-sm font-bold leading-tight text-neutral-900">25</span>
+              <span class="text-[10px] font-semibold uppercase leading-tight text-accent">juin</span>
+            </span>
+            <span class="min-w-0 flex-1">
+              <span class="block truncate text-sm font-semibold text-neutral-900 transition-colors group-hover:text-accent">Atelier « Pitch &amp; café »</span>
+              <span class="mt-0.5 flex items-center gap-x-3 text-xs text-neutral-400">
+                <span class="inline-flex items-center gap-1"><svg class="h-3.5 w-3.5"><use href="#i-clock"/></svg>09:00</span>
+                <span class="inline-flex items-center gap-1"><svg class="h-3.5 w-3.5"><use href="#i-map-pin"/></svg>Sur place</span>
+              </span>
+            </span>
+            <span class="shrink-0 text-sm font-semibold text-neutral-900">15,00 €</span>
+          </a>
+
+          <a href="#" data-nav="event" class="group flex items-center gap-3 rounded-xl border border-neutral-200 bg-neutral-0 p-3 transition hover:border-accent hover:shadow-sm">
+            <span class="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-lg bg-neutral-100">
+              <span class="text-sm font-bold leading-tight text-neutral-900">8</span>
+              <span class="text-[10px] font-semibold uppercase leading-tight text-accent">juil</span>
+            </span>
+            <span class="min-w-0 flex-1">
+              <span class="block truncate text-sm font-semibold text-neutral-900 transition-colors group-hover:text-accent">Masterclass Storytelling</span>
+              <span class="mt-0.5 flex items-center gap-x-3 text-xs text-neutral-400">
+                <span class="inline-flex items-center gap-1"><svg class="h-3.5 w-3.5"><use href="#i-clock"/></svg>18:30</span>
+                <span class="inline-flex items-center gap-1"><svg class="h-3.5 w-3.5"><use href="#i-globe"/></svg>En ligne</span>
+              </span>
+            </span>
+            <span class="shrink-0 text-sm font-semibold text-neutral-900">45,00 €</span>
+          </a>
+
+        </div>
+      </section>
+
+      <!-- FAQ -->
+      <section class="border-t border-neutral-200 px-6 py-8 sm:px-12">
+        <h2 class="flex items-center gap-2 text-lg font-semibold text-neutral-900">
+          <svg class="h-5 w-5 text-neutral-500"><use href="#i-message-circle-question"/></svg>
+          FAQ
+        </h2>
+        <div class="mt-4 space-y-2">
+          <details class="group rounded-xl border border-neutral-200 bg-white">
+            <summary class="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-medium text-neutral-900 [&::-webkit-details-marker]:hidden">
+              Le webinaire est-il enregistré ?
+              <svg class="h-4 w-4 shrink-0 text-neutral-400 transition-transform group-open:rotate-180"><use href="#i-chevron-down"/></svg>
+            </summary>
+            <p class="whitespace-pre-wrap border-t border-neutral-100 px-4 py-3 text-sm leading-relaxed text-neutral-600">Oui, le replay est envoyé à tous les inscrits et reste disponible 30 jours.</p>
+          </details>
+          <details class="group rounded-xl border border-neutral-200 bg-white">
+            <summary class="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-medium text-neutral-900 [&::-webkit-details-marker]:hidden">
+              Faut-il une caméra pour participer ?
+              <svg class="h-4 w-4 shrink-0 text-neutral-400 transition-transform group-open:rotate-180"><use href="#i-chevron-down"/></svg>
+            </summary>
+            <p class="whitespace-pre-wrap border-t border-neutral-100 px-4 py-3 text-sm leading-relaxed text-neutral-600">Non, tu peux suivre en simple spectateur. La caméra est utile seulement si tu veux participer aux exercices en direct.</p>
+          </details>
+        </div>
+      </section>
+    </div>
+  </article>
+</main>
+
+<script>
+// Navigation entre les vues (profil ↔ pages détails)
+document.querySelectorAll('[data-nav]').forEach(function (el) {
+  el.addEventListener('click', function (e) {
+    e.preventDefault()
+    var target = el.getAttribute('data-nav')
+    document.querySelectorAll('main[data-view]').forEach(function (v) {
+      v.hidden = v.getAttribute('data-view') !== target
+    })
+    window.scrollTo(0, 0)
+  })
+})
+
+// Tabs du profil (même pattern que ProfilePage.astro)
+var tabs = document.querySelectorAll('nav[aria-label="Navigation du profil"] a')
+var sections = document.querySelectorAll('[data-section]')
+tabs.forEach(function (a) {
+  a.addEventListener('click', function (e) {
+    e.preventDefault()
+    var type = a.getAttribute('data-section-tab')
+    sections.forEach(function (s) { s.hidden = s.getAttribute('data-section') !== type })
+    tabs.forEach(function (t) { t.classList.toggle('is-active', t === a) })
+  })
+})
+
+// Toggle du champ question (page event)
+var msgToggle = document.getElementById('mock-message-toggle')
+var msgWrapper = document.getElementById('mock-message-wrapper')
+if (msgToggle && msgWrapper) {
+  msgToggle.addEventListener('click', function () {
+    msgWrapper.hidden = !msgWrapper.hidden
+    msgToggle.setAttribute('aria-expanded', msgWrapper.hidden ? 'false' : 'true')
+  })
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1525 @@
+---
+import {
+  X,
+  ImagePlus,
+  Loader2,
+  Plus,
+  Trash2,
+  ArrowLeft,
+  ArrowRight,
+  ChevronUp,
+  ChevronDown,
+  Type as TypeIcon,
+  Image as ImageIcon,
+} from 'lucide-static'
+
+interface Props {
+  /** Slug de l'entity — contexte d'affichage uniquement. */
+  entitySlug?: string
+}
+
+const { entitySlug } = Astro.props
+---
+<dialog
+  id="event-create-overlay"
+  class="evo"
+  aria-modal="true"
+  aria-labelledby="evo-title"
+  data-entity-slug={entitySlug}
+>
+  <div class="evo__panel">
+    <header class="evo__header">
+      <h2 id="evo-title" class="evo__title">Ajouter un event</h2>
+      <button type="button" class="evo__close" data-evo-close aria-label="Fermer">
+        <span class="evo__icon" set:html={X} />
+      </button>
+    </header>
+
+    {/* Indicateur d'étapes */}
+    <nav class="evo__steps" aria-label="Étapes de création">
+      <span class="evo__step" data-evo-step-indicator="1"><span class="evo__step-num">1</span><span class="evo__step-label">L'essentiel</span></span>
+      <span class="evo__step" data-evo-step-indicator="2"><span class="evo__step-num">2</span><span class="evo__step-label">Présentation</span></span>
+    </nav>
+
+    <form class="evo__form" data-evo-form novalidate>
+      <p class="evo__error-global" data-evo-error-global hidden></p>
+
+      {/* ============ ÉTAPE 1 — L'essentiel ============ */}
+      <section class="evo__stage" data-evo-stage="1">
+        <div class="evo__field">
+          <label class="evo__label" for="evo-title-input">Titre <span class="evo__req">*</span></label>
+          <input type="text" id="evo-title-input" name="title" maxlength="120" class="evo__input" placeholder="Ex : Atelier branding en ligne" />
+          <p class="evo__error" data-evo-field-error="title" hidden></p>
+        </div>
+
+        <div class="evo__field">
+          <label class="evo__label" for="evo-description">Description courte</label>
+          <textarea id="evo-description" name="description" rows="3" maxlength="500" class="evo__input" placeholder="Ce que les participants vont vivre / apprendre"></textarea>
+          <p class="evo__error" data-evo-field-error="description" hidden></p>
+        </div>
+
+        <div class="evo__row">
+          <div class="evo__field">
+            <label class="evo__label" for="evo-start">Début <span class="evo__req">*</span></label>
+            <input type="datetime-local" id="evo-start" name="start_at" class="evo__input" />
+            <p class="evo__error" data-evo-field-error="start_at" hidden></p>
+          </div>
+          <div class="evo__field">
+            <label class="evo__label" for="evo-end">Fin <span class="evo__hint">(optionnel)</span></label>
+            <input type="datetime-local" id="evo-end" name="end_at" class="evo__input" />
+            <p class="evo__error" data-evo-field-error="end_at" hidden></p>
+          </div>
+        </div>
+
+        <div class="evo__row">
+          <div class="evo__field">
+            <label class="evo__label" for="evo-location">Lieu <span class="evo__req">*</span></label>
+            <select id="evo-location" name="location_type" class="evo__input" data-evo-location>
+              <option value="online">En ligne</option>
+              <option value="in_person">Sur place</option>
+            </select>
+            <p class="evo__error" data-evo-field-error="location_type" hidden></p>
+          </div>
+          <div class="evo__field">
+            <label class="evo__label" for="evo-capacity">Places <span class="evo__hint">(vide = illimité)</span></label>
+            <input type="number" id="evo-capacity" name="capacity" min="1" step="1" class="evo__input" placeholder="Ex : 20" />
+            <p class="evo__error" data-evo-field-error="capacity" hidden></p>
+          </div>
+        </div>
+
+        <div class="evo__field">
+          <label class="evo__label" for="evo-location-details" data-evo-location-details-label>Lien visio <span class="evo__hint">(communiqué sur la page de l'event)</span></label>
+          <input type="text" id="evo-location-details" name="location_details" maxlength="300" class="evo__input" placeholder="https://meet…" data-evo-location-details />
+          <p class="evo__error" data-evo-field-error="location_details" hidden></p>
+        </div>
+
+        <div class="evo__field">
+          <label class="evo__label" for="evo-price">Prix (€) <span class="evo__hint">(vide = gratuit)</span></label>
+          <input type="number" id="evo-price" name="price" min="0" step="0.01" class="evo__input" placeholder="0,00" />
+          <p class="evo__error" data-evo-field-error="price_cents" hidden></p>
+        </div>
+      </section>
+
+      {/* ============ ÉTAPE 2 — Présentation ============ */}
+      <section class="evo__stage" data-evo-stage="2" hidden>
+        {/* Points forts */}
+        <div class="evo__field">
+          <span class="evo__label">Points forts <span class="evo__hint">(max 4, 80 car. chacun)</span> <span class="evo__counter" data-evo-highlights-count>0/4</span></span>
+          <div class="evo__highlights" data-evo-highlights></div>
+          <button type="button" class="evo__add-btn" data-evo-highlight-add>
+            <span class="evo__icon-sm" set:html={Plus} /> Ajouter un point fort
+          </button>
+          <p class="evo__error" data-evo-field-error="highlights" hidden></p>
+        </div>
+
+        {/* Galerie */}
+        <div class="evo__field">
+          <span class="evo__label">Galerie <span class="evo__hint">(jusqu'à 6 images, la première sert de couverture)</span></span>
+          <div class="evo__media-grid" data-evo-gallery-grid></div>
+          <label class="evo__upload" data-evo-gallery-add>
+            <input type="file" accept="image/*" class="evo__upload-input" data-evo-gallery-input />
+            <span class="evo__upload-empty">
+              <span class="evo__icon" set:html={ImagePlus} />
+              <span>Ajouter une image</span>
+            </span>
+          </label>
+          <p class="evo__error" data-evo-field-error="gallery_images" hidden></p>
+        </div>
+
+        {/* Contenu détaillé */}
+        <div class="evo__field">
+          <span class="evo__label">Contenu détaillé <span class="evo__hint">(max 20 blocs)</span></span>
+          <div class="evo__blocks" data-evo-blocks></div>
+          <div class="evo__block-add-row">
+            <button type="button" class="evo__add-btn" data-evo-block-add="text">
+              <span class="evo__icon-sm" set:html={TypeIcon} /> Texte
+            </button>
+            <button type="button" class="evo__add-btn" data-evo-block-add="image">
+              <span class="evo__icon-sm" set:html={ImageIcon} /> Image
+            </button>
+          </div>
+          <p class="evo__error" data-evo-field-error="content_blocks" hidden></p>
+        </div>
+
+        {/* FAQ */}
+        <div class="evo__field">
+          <span class="evo__label">FAQ <span class="evo__hint">(max 10 — questions fréquentes des participants)</span> <span class="evo__counter" data-evo-faq-count>0/10</span></span>
+          <div class="evo__faq" data-evo-faq></div>
+          <button type="button" class="evo__add-btn" data-evo-faq-add>
+            <span class="evo__icon-sm" set:html={Plus} /> Ajouter une question
+          </button>
+          <p class="evo__error" data-evo-field-error="faq" hidden></p>
+        </div>
+
+        <div class="evo__field evo__publish">
+          <label class="evo__switch">
+            <input type="checkbox" name="is_published" data-evo-published checked />
+            <span class="evo__switch-track" aria-hidden="true"><span class="evo__switch-thumb"></span></span>
+            <span class="evo__switch-label">Publier immédiatement <span class="evo__switch-hint">(sinon brouillon, invisible des visiteurs)</span></span>
+          </label>
+        </div>
+      </section>
+
+      {/* Actions de navigation */}
+      <footer class="evo__actions">
+        <button type="button" class="evo__btn evo__btn--ghost" data-evo-prev hidden>
+          <span class="evo__icon-sm" set:html={ArrowLeft} /> Précédent
+        </button>
+        <button type="button" class="evo__btn evo__btn--primary" data-evo-next>
+          Suivant <span class="evo__icon-sm" set:html={ArrowRight} />
+        </button>
+        <button type="submit" class="evo__btn evo__btn--primary" data-evo-submit hidden>
+          <span class="evo__spinner" data-evo-spinner hidden set:html={Loader2} />
+          <span data-evo-submit-text>Créer l'event</span>
+        </button>
+      </footer>
+    </form>
+  </div>
+
+  {/* Templates icônes pour le JS (clonés en vanilla) */}
+  <template data-evo-tpl-trash><span class="evo__icon-sm" set:html={Trash2} /></template>
+  <template data-evo-tpl-up><span class="evo__icon-sm" set:html={ChevronUp} /></template>
+  <template data-evo-tpl-down><span class="evo__icon-sm" set:html={ChevronDown} /></template>
+</dialog>
+
+<style>
+  .evo {
+    border: none;
+    padding: 0;
+    background: transparent;
+    max-width: none;
+    max-height: none;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    inset: 0;
+    overflow: auto;
+  }
+  .evo::backdrop {
+    background: rgba(15, 15, 20, 0.45);
+    backdrop-filter: blur(2px);
+  }
+  .evo[open] {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+  }
+
+  .evo__panel {
+    width: 100%;
+    max-width: 600px;
+    margin: 48px 16px;
+    background: var(--color-surface);
+    border-radius: 18px;
+    box-shadow: var(--shadow-lg, 0 20px 60px rgba(0, 0, 0, 0.25));
+    overflow: hidden;
+  }
+
+  .evo__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--color-border);
+  }
+  .evo__title {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: 18px;
+    color: var(--color-neutral-900);
+    margin: 0;
+  }
+  .evo__close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: none;
+    background: var(--color-panel);
+    color: var(--color-neutral-500);
+    cursor: pointer;
+    transition: background 120ms, color 120ms;
+  }
+  .evo__close:hover {
+    background: var(--color-panel-2);
+    color: var(--color-neutral-900);
+  }
+  .evo__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+  }
+  .evo__icon-sm {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 15px;
+    height: 15px;
+  }
+  /* Les SVG lucide (24×24 natif) sont injectés via set:html → hors scope Astro,
+     d'où :global(). Sans cette contrainte ils débordent du wrapper. */
+  .evo__icon :global(svg),
+  .evo__icon-sm :global(svg) {
+    width: 100%;
+    height: 100%;
+  }
+
+  /* Steps indicator */
+  .evo__steps {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--color-border);
+  }
+  .evo__step {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--color-neutral-400);
+  }
+  .evo__step:not(:last-child)::after {
+    content: '';
+    width: 18px;
+    height: 1px;
+    background: var(--color-border);
+    margin-left: 8px;
+  }
+  .evo__step-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 1.5px solid var(--color-border);
+    font-size: 12px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+  .evo__step.is-active {
+    color: var(--color-neutral-900);
+  }
+  .evo__step.is-active .evo__step-num {
+    border-color: var(--color-accent);
+    background: var(--color-accent);
+    color: #ffffff;
+  }
+  .evo__step.is-done .evo__step-num {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+  }
+
+  .evo__form {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding: 24px;
+  }
+  .evo__stage {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .evo__field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    border: none;
+    padding: 0;
+    margin: 0;
+    min-width: 0;
+  }
+  .evo__row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .evo__label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--color-neutral-700);
+  }
+  .evo__req {
+    color: var(--color-accent);
+  }
+  .evo__hint {
+    font-weight: 400;
+    color: var(--color-neutral-400);
+    font-size: 12px;
+  }
+  .evo__counter {
+    font-weight: 400;
+    color: var(--color-neutral-400);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+  }
+  .evo__counter--inline {
+    flex-shrink: 0;
+    min-width: 44px;
+    text-align: right;
+  }
+
+  .evo__input {
+    width: 100%;
+    height: 42px;
+    padding: 0 14px;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    background: var(--color-neutral-0, var(--color-surface));
+    color: var(--color-neutral-900);
+    font-family: inherit;
+    font-size: 14px;
+    transition: border-color 120ms, box-shadow 120ms;
+  }
+  .evo__input:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px var(--color-accent-soft, rgba(99, 102, 241, 0.15));
+  }
+  textarea.evo__input {
+    height: auto;
+    padding: 12px 14px;
+    resize: vertical;
+    line-height: 1.5;
+  }
+  select.evo__input {
+    appearance: none;
+    cursor: pointer;
+  }
+
+  /* Points forts */
+  .evo__highlights {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .evo__highlights:empty {
+    display: none;
+  }
+  .evo__highlight-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .evo__highlight-row .evo__input {
+    flex: 1;
+  }
+
+  /* FAQ */
+  .evo__faq {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .evo__faq:empty {
+    display: none;
+  }
+  .evo__faq-item {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 14px;
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    background: var(--color-panel);
+  }
+  .evo__faq-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .evo__faq-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-neutral-700);
+  }
+
+  /* Galerie */
+  .evo__media-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+    gap: 10px;
+  }
+  .evo__media-grid:empty {
+    display: none;
+  }
+  .evo__media-item {
+    position: relative;
+    aspect-ratio: 1;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+    background: var(--color-panel);
+  }
+  .evo__media-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .evo__media-uploading {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.4);
+    color: #fff;
+    font-size: 11px;
+  }
+  .evo__media-controls {
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
+    display: flex;
+    gap: 3px;
+  }
+  .evo__mini-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    border: none;
+    background: rgba(255, 255, 255, 0.92);
+    color: var(--color-neutral-700);
+    cursor: pointer;
+  }
+  .evo__mini-btn:hover {
+    background: #fff;
+    color: var(--color-accent);
+  }
+  .evo__mini-btn--danger:hover {
+    color: var(--color-error, rgb(181, 51, 51));
+  }
+  .evo__mini-btn[disabled] {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  /* Upload tile */
+  .evo__upload {
+    display: block;
+    cursor: pointer;
+  }
+  .evo__upload-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    overflow: hidden;
+  }
+  .evo__upload-empty {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px;
+    border: 1.5px dashed var(--color-border);
+    border-radius: 12px;
+    color: var(--color-neutral-500);
+    font-size: 13px;
+    transition: border-color 120ms, color 120ms;
+  }
+  .evo__upload:hover .evo__upload-empty {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+  }
+  .evo__upload-empty .evo__icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  /* Add buttons */
+  .evo__add-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    align-self: flex-start;
+    padding: 8px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--color-border);
+    background: transparent;
+    color: var(--color-neutral-700);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: border-color 120ms, color 120ms;
+  }
+  .evo__add-btn:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+  }
+  .evo__block-add-row {
+    display: flex;
+    gap: 10px;
+  }
+
+  /* Content blocks */
+  .evo__blocks {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .evo__blocks:empty {
+    display: none;
+  }
+  .evo__block {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 14px;
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    background: var(--color-panel);
+  }
+  .evo__block-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .evo__block-type {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-neutral-500);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .evo__block-ctrls {
+    display: flex;
+    gap: 4px;
+  }
+  .evo__block-img-preview {
+    max-height: 160px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+  }
+  .evo__block-img-preview img {
+    width: 100%;
+    max-height: 160px;
+    object-fit: cover;
+    display: block;
+  }
+
+  /* Switch */
+  .evo__publish {
+    padding-top: 4px;
+  }
+  .evo__switch {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+  }
+  .evo__switch input {
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+  }
+  .evo__switch-track {
+    position: relative;
+    flex-shrink: 0;
+    width: 42px;
+    height: 24px;
+    border-radius: 999px;
+    background: var(--color-panel-2);
+    transition: background 160ms;
+  }
+  .evo__switch-thumb {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--color-surface);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    transition: transform 160ms;
+  }
+  .evo__switch input:checked + .evo__switch-track {
+    background: var(--color-accent);
+  }
+  .evo__switch input:checked + .evo__switch-track .evo__switch-thumb {
+    transform: translateX(18px);
+  }
+  .evo__switch input:focus-visible + .evo__switch-track {
+    box-shadow: 0 0 0 3px var(--color-accent-soft, rgba(99, 102, 241, 0.15));
+  }
+  .evo__switch-label {
+    font-size: 14px;
+    color: var(--color-neutral-700);
+  }
+  .evo__switch-hint {
+    color: var(--color-neutral-400);
+    font-size: 12px;
+  }
+
+  /* Actions */
+  .evo__actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    padding-top: 6px;
+    border-top: 1px solid var(--color-border);
+    margin-top: 4px;
+  }
+  .evo__actions [data-evo-next],
+  .evo__actions [data-evo-submit] {
+    margin-left: auto;
+  }
+  .evo__btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 42px;
+    padding: 0 22px;
+    border-radius: 999px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    transition: background 120ms, opacity 120ms;
+  }
+  .evo__btn--ghost {
+    background: transparent;
+    border: 1px solid var(--color-border);
+    color: var(--color-neutral-700);
+  }
+  .evo__btn--ghost:hover {
+    background: var(--color-panel);
+  }
+  .evo__btn--primary {
+    background: var(--color-accent);
+    color: #ffffff;
+  }
+  .evo__btn--primary:hover {
+    background: var(--color-accent-hover, var(--color-accent));
+  }
+  .evo__btn[disabled] {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .evo__spinner {
+    display: inline-flex;
+    width: 16px;
+    height: 16px;
+    animation: evo-spin 0.8s linear infinite;
+  }
+  @keyframes evo-spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .evo__error {
+    font-size: 12px;
+    color: var(--color-error, rgb(181, 51, 51));
+    margin: 0;
+  }
+  .evo__error-global {
+    font-size: 13px;
+    color: var(--color-error, rgb(181, 51, 51));
+    background: rgba(181, 51, 51, 0.08);
+    padding: 10px 14px;
+    border-radius: 10px;
+    margin: 0;
+  }
+
+  @media (max-width: 520px) {
+    .evo__row {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+{/* Vanilla JS pur (is:inline, ZÉRO TypeScript : aucune annotation, aucun cast, aucun generic). */}
+<script is:inline>
+  (function () {
+    var dialog = document.getElementById('event-create-overlay')
+    if (!dialog) return
+    var form = dialog.querySelector('[data-evo-form]')
+    var globalError = dialog.querySelector('[data-evo-error-global]')
+
+    // --- État central ---
+    var state = {
+      step: 1,           // 1..2
+      highlights: [],    // strings
+      gallery: [],       // { id, url, uploading, previewUrl }
+      blocks: [],        // { id, type:'text'|'image', content, url, uploading, previewUrl }
+      faq: [],           // { question, answer }
+    }
+    var uid = 0
+    function nextId() { uid += 1; return 'e' + uid }
+
+    var submitting = false
+
+    function icon(name) {
+      var tpl = dialog.querySelector('[data-evo-tpl-' + name + ']')
+      if (!tpl) return null
+      return tpl.content.firstElementChild.cloneNode(true)
+    }
+
+    // ===================================================================
+    // Ouverture / fermeture
+    // ===================================================================
+    function openOverlay() {
+      resetAll()
+      if (typeof dialog.showModal === 'function') dialog.showModal()
+      else dialog.setAttribute('open', '')
+    }
+    function closeOverlay() {
+      if (typeof dialog.close === 'function') dialog.close()
+      else dialog.removeAttribute('open')
+    }
+
+    document.querySelectorAll('[data-open-event-overlay]').forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.preventDefault()
+        openOverlay()
+      })
+    })
+    dialog.querySelectorAll('[data-evo-close]').forEach(function (btn) {
+      btn.addEventListener('click', closeOverlay)
+    })
+    dialog.addEventListener('click', function (e) {
+      if (e.target === dialog) closeOverlay()
+    })
+
+    function resetAll() {
+      state.step = 1
+      state.highlights = []
+      state.gallery = []
+      state.blocks = []
+      state.faq = []
+      submitting = false
+      form.reset()
+      clearErrors()
+      updateLocationLabel()
+      renderHighlights()
+      renderGallery()
+      renderBlocks()
+      renderFaq()
+      showStep(1)
+    }
+
+    // ===================================================================
+    // Erreurs
+    // ===================================================================
+    function clearErrors() {
+      if (globalError) { globalError.hidden = true; globalError.textContent = '' }
+      dialog.querySelectorAll('[data-evo-field-error]').forEach(function (el) {
+        el.hidden = true
+        el.textContent = ''
+      })
+    }
+    function showFieldError(field, message) {
+      var el = dialog.querySelector('[data-evo-field-error="' + field + '"]')
+      if (el) {
+        el.textContent = message
+        el.hidden = false
+        return true
+      }
+      return false
+    }
+    function showGlobalError(message) {
+      if (globalError) {
+        globalError.textContent = message
+        globalError.hidden = false
+      }
+    }
+
+    // ===================================================================
+    // Étape 1 — lieu : label/placeholder dynamiques
+    // ===================================================================
+    var locationSelect = dialog.querySelector('[data-evo-location]')
+    var locationDetailsInput = dialog.querySelector('[data-evo-location-details]')
+    var locationDetailsLabel = dialog.querySelector('[data-evo-location-details-label]')
+
+    function updateLocationLabel() {
+      var online = locationSelect.value === 'online'
+      locationDetailsLabel.innerHTML = online
+        ? 'Lien visio <span class="evo__hint">(communiqué sur la page de l\'event)</span>'
+        : 'Adresse <span class="evo__hint">(affichée sur la page de l\'event)</span>'
+      locationDetailsInput.placeholder = online ? 'https://meet…' : 'Ex : 12 rue des Lilas, Nantes'
+    }
+    locationSelect.addEventListener('change', updateLocationLabel)
+
+    // ===================================================================
+    // Étape 2 — Points forts
+    // ===================================================================
+    var highlightsWrap = dialog.querySelector('[data-evo-highlights]')
+    var highlightAddBtn = dialog.querySelector('[data-evo-highlight-add]')
+    var highlightsCount = dialog.querySelector('[data-evo-highlights-count]')
+
+    highlightAddBtn.addEventListener('click', function () {
+      if (state.highlights.length >= 4) return
+      state.highlights.push('')
+      renderHighlights()
+    })
+
+    function renderHighlights() {
+      highlightsWrap.innerHTML = ''
+      state.highlights.forEach(function (val, i) {
+        var row = document.createElement('div')
+        row.className = 'evo__highlight-row'
+
+        var input = document.createElement('input')
+        input.type = 'text'
+        input.className = 'evo__input'
+        input.maxLength = 80
+        input.value = val
+        input.placeholder = 'Point fort ' + (i + 1)
+
+        var charCount = document.createElement('span')
+        charCount.className = 'evo__counter evo__counter--inline'
+        charCount.textContent = (val || '').length + '/80'
+
+        input.addEventListener('input', function () {
+          state.highlights[i] = input.value
+          charCount.textContent = input.value.length + '/80'
+        })
+        row.appendChild(input)
+        row.appendChild(charCount)
+
+        var del = document.createElement('button')
+        del.type = 'button'
+        del.className = 'evo__mini-btn evo__mini-btn--danger'
+        del.appendChild(icon('trash'))
+        del.addEventListener('click', function () {
+          state.highlights.splice(i, 1)
+          renderHighlights()
+        })
+        row.appendChild(del)
+
+        highlightsWrap.appendChild(row)
+      })
+      if (highlightsCount) highlightsCount.textContent = state.highlights.length + '/4'
+      highlightAddBtn.style.display = state.highlights.length >= 4 ? 'none' : ''
+    }
+
+    // ===================================================================
+    // Étape 2 — Galerie (upload via /api/product-upload, images uniquement)
+    // ===================================================================
+    var galleryGrid = dialog.querySelector('[data-evo-gallery-grid]')
+    var galleryInput = dialog.querySelector('[data-evo-gallery-input]')
+    var galleryAddLabel = dialog.querySelector('[data-evo-gallery-add]')
+
+    galleryInput.addEventListener('change', function () {
+      var file = galleryInput.files && galleryInput.files[0]
+      galleryInput.value = ''
+      if (!file) return
+      if (state.gallery.length >= 6) {
+        showFieldError('gallery_images', 'Maximum 6 images.')
+        return
+      }
+      if (file.type.indexOf('image/') !== 0) {
+        showFieldError('gallery_images', 'Seules les images sont acceptées.')
+        return
+      }
+      var errEl = dialog.querySelector('[data-evo-field-error="gallery_images"]')
+      if (errEl) { errEl.hidden = true; errEl.textContent = '' }
+
+      var item = {
+        id: nextId(),
+        url: null,
+        uploading: true,
+        previewUrl: URL.createObjectURL(file),
+      }
+      state.gallery.push(item)
+      renderGallery()
+
+      var fd = new FormData()
+      fd.append('file', file)
+      fetch('/api/product-upload', { method: 'POST', body: fd })
+        .then(function (res) { return res.json().then(function (d) { return { ok: res.ok, data: d } }) })
+        .then(function (result) {
+          if (result.ok && result.data && result.data.url && result.data.type === 'image') {
+            item.url = result.data.url
+            item.uploading = false
+          } else {
+            removeGalleryById(item.id)
+            showFieldError('gallery_images', (result.data && result.data.error) || 'Erreur lors de l\'envoi de l\'image.')
+          }
+          renderGallery()
+        })
+        .catch(function () {
+          removeGalleryById(item.id)
+          showFieldError('gallery_images', 'Erreur réseau lors de l\'envoi de l\'image.')
+          renderGallery()
+        })
+    })
+
+    function removeGalleryById(id) {
+      state.gallery = state.gallery.filter(function (m) {
+        if (m.id === id && m.previewUrl) { try { URL.revokeObjectURL(m.previewUrl) } catch (e) {} }
+        return m.id !== id
+      })
+    }
+
+    function moveGallery(index, delta) {
+      var target = index + delta
+      if (target < 0 || target >= state.gallery.length) return
+      var tmp = state.gallery[index]
+      state.gallery[index] = state.gallery[target]
+      state.gallery[target] = tmp
+      renderGallery()
+    }
+
+    function renderGallery() {
+      galleryGrid.innerHTML = ''
+      state.gallery.forEach(function (m, i) {
+        var tile = document.createElement('div')
+        tile.className = 'evo__media-item'
+
+        var preview = document.createElement('img')
+        preview.src = m.previewUrl || m.url
+        preview.alt = ''
+        tile.appendChild(preview)
+
+        if (m.uploading) {
+          var ov = document.createElement('span')
+          ov.className = 'evo__media-uploading'
+          ov.textContent = 'Envoi...'
+          tile.appendChild(ov)
+        }
+
+        var ctrls = document.createElement('div')
+        ctrls.className = 'evo__media-controls'
+
+        var up = document.createElement('button')
+        up.type = 'button'
+        up.className = 'evo__mini-btn'
+        up.disabled = i === 0
+        up.appendChild(icon('up'))
+        up.addEventListener('click', function () { moveGallery(i, -1) })
+        ctrls.appendChild(up)
+
+        var down = document.createElement('button')
+        down.type = 'button'
+        down.className = 'evo__mini-btn'
+        down.disabled = i === state.gallery.length - 1
+        down.appendChild(icon('down'))
+        down.addEventListener('click', function () { moveGallery(i, 1) })
+        ctrls.appendChild(down)
+
+        var del = document.createElement('button')
+        del.type = 'button'
+        del.className = 'evo__mini-btn evo__mini-btn--danger'
+        del.appendChild(icon('trash'))
+        del.addEventListener('click', function () { removeGalleryById(m.id); renderGallery() })
+        ctrls.appendChild(del)
+
+        tile.appendChild(ctrls)
+        galleryGrid.appendChild(tile)
+      })
+      galleryAddLabel.style.display = state.gallery.length >= 6 ? 'none' : ''
+    }
+
+    // ===================================================================
+    // Étape 2 — Blocs de contenu
+    // ===================================================================
+    var blocksWrap = dialog.querySelector('[data-evo-blocks]')
+    dialog.querySelectorAll('[data-evo-block-add]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        if (state.blocks.length >= 20) return
+        var kind = btn.getAttribute('data-evo-block-add')
+        state.blocks.push({ id: nextId(), type: kind, content: '', url: null, uploading: false, previewUrl: null })
+        renderBlocks()
+      })
+    })
+
+    function moveBlock(index, delta) {
+      var target = index + delta
+      if (target < 0 || target >= state.blocks.length) return
+      var tmp = state.blocks[index]
+      state.blocks[index] = state.blocks[target]
+      state.blocks[target] = tmp
+      renderBlocks()
+    }
+
+    function uploadBlockImage(block, file) {
+      block.uploading = true
+      block.previewUrl = URL.createObjectURL(file)
+      renderBlocks()
+      var fd = new FormData()
+      fd.append('file', file)
+      fetch('/api/product-upload', { method: 'POST', body: fd })
+        .then(function (res) { return res.json().then(function (d) { return { ok: res.ok, data: d } }) })
+        .then(function (result) {
+          block.uploading = false
+          if (result.ok && result.data && result.data.url && result.data.type === 'image') {
+            block.url = result.data.url
+          } else {
+            block.url = null
+            showFieldError('content_blocks', (result.data && result.data.error) || 'Erreur lors de l\'envoi de l\'image.')
+          }
+          renderBlocks()
+        })
+        .catch(function () {
+          block.uploading = false
+          block.url = null
+          showFieldError('content_blocks', 'Erreur réseau lors de l\'envoi de l\'image.')
+          renderBlocks()
+        })
+    }
+
+    function renderBlocks() {
+      blocksWrap.innerHTML = ''
+      state.blocks.forEach(function (block, i) {
+        var box = document.createElement('div')
+        box.className = 'evo__block'
+
+        var head = document.createElement('div')
+        head.className = 'evo__block-head'
+        var tag = document.createElement('span')
+        tag.className = 'evo__block-type'
+        tag.textContent = block.type === 'text' ? 'Texte' : 'Image'
+        head.appendChild(tag)
+
+        var ctrls = document.createElement('div')
+        ctrls.className = 'evo__block-ctrls'
+        var up = document.createElement('button')
+        up.type = 'button'
+        up.className = 'evo__mini-btn'
+        up.disabled = i === 0
+        up.appendChild(icon('up'))
+        up.addEventListener('click', function () { moveBlock(i, -1) })
+        ctrls.appendChild(up)
+        var down = document.createElement('button')
+        down.type = 'button'
+        down.className = 'evo__mini-btn'
+        down.disabled = i === state.blocks.length - 1
+        down.appendChild(icon('down'))
+        down.addEventListener('click', function () { moveBlock(i, 1) })
+        ctrls.appendChild(down)
+        var del = document.createElement('button')
+        del.type = 'button'
+        del.className = 'evo__mini-btn evo__mini-btn--danger'
+        del.appendChild(icon('trash'))
+        del.addEventListener('click', function () {
+          if (block.previewUrl) { try { URL.revokeObjectURL(block.previewUrl) } catch (e) {} }
+          state.blocks.splice(i, 1)
+          renderBlocks()
+        })
+        ctrls.appendChild(del)
+        head.appendChild(ctrls)
+        box.appendChild(head)
+
+        if (block.type === 'text') {
+          var ta = document.createElement('textarea')
+          ta.className = 'evo__input'
+          ta.rows = 4
+          ta.maxLength = 2000
+          ta.placeholder = 'Texte du paragraphe...'
+          ta.value = block.content
+          ta.addEventListener('input', function () { block.content = ta.value })
+          box.appendChild(ta)
+        } else {
+          if (block.previewUrl || block.url) {
+            var prev = document.createElement('div')
+            prev.className = 'evo__block-img-preview'
+            var img = document.createElement('img')
+            img.src = block.previewUrl || block.url
+            img.alt = ''
+            prev.appendChild(img)
+            box.appendChild(prev)
+          }
+          var label = document.createElement('label')
+          label.className = 'evo__upload'
+          var fInput = document.createElement('input')
+          fInput.type = 'file'
+          fInput.accept = 'image/*'
+          fInput.className = 'evo__upload-input'
+          fInput.addEventListener('change', function () {
+            var f = fInput.files && fInput.files[0]
+            fInput.value = ''
+            if (f) uploadBlockImage(block, f)
+          })
+          var empty = document.createElement('span')
+          empty.className = 'evo__upload-empty'
+          empty.textContent = block.uploading ? 'Envoi...' : (block.url ? 'Changer l\'image' : 'Choisir une image')
+          label.appendChild(fInput)
+          label.appendChild(empty)
+          box.appendChild(label)
+        }
+
+        blocksWrap.appendChild(box)
+      })
+    }
+
+    // ===================================================================
+    // Étape 2 — FAQ
+    // ===================================================================
+    var faqWrap = dialog.querySelector('[data-evo-faq]')
+    var faqAddBtn = dialog.querySelector('[data-evo-faq-add]')
+    var faqCount = dialog.querySelector('[data-evo-faq-count]')
+
+    faqAddBtn.addEventListener('click', function () {
+      if (state.faq.length >= 10) return
+      state.faq.push({ question: '', answer: '' })
+      renderFaq()
+    })
+
+    function renderFaq() {
+      faqWrap.innerHTML = ''
+      state.faq.forEach(function (item, i) {
+        var box = document.createElement('div')
+        box.className = 'evo__faq-item'
+
+        var head = document.createElement('div')
+        head.className = 'evo__faq-head'
+        var ttl = document.createElement('span')
+        ttl.className = 'evo__faq-title'
+        ttl.textContent = 'Question ' + (i + 1)
+        head.appendChild(ttl)
+        var del = document.createElement('button')
+        del.type = 'button'
+        del.className = 'evo__mini-btn evo__mini-btn--danger'
+        del.appendChild(icon('trash'))
+        del.addEventListener('click', function () {
+          state.faq.splice(i, 1)
+          renderFaq()
+        })
+        head.appendChild(del)
+        box.appendChild(head)
+
+        var qInput = document.createElement('input')
+        qInput.type = 'text'
+        qInput.className = 'evo__input'
+        qInput.maxLength = 200
+        qInput.placeholder = 'Question (ex : Y aura-t-il un replay ?)'
+        qInput.value = item.question
+        qInput.addEventListener('input', function () { item.question = qInput.value })
+        box.appendChild(qInput)
+
+        var aInput = document.createElement('textarea')
+        aInput.className = 'evo__input'
+        aInput.rows = 3
+        aInput.maxLength = 1000
+        aInput.placeholder = 'Réponse...'
+        aInput.value = item.answer
+        aInput.addEventListener('input', function () { item.answer = aInput.value })
+        box.appendChild(aInput)
+
+        faqWrap.appendChild(box)
+      })
+      if (faqCount) faqCount.textContent = state.faq.length + '/10'
+      faqAddBtn.style.display = state.faq.length >= 10 ? 'none' : ''
+    }
+
+    // ===================================================================
+    // Navigation entre étapes
+    // ===================================================================
+    var prevBtn = dialog.querySelector('[data-evo-prev]')
+    var nextBtn = dialog.querySelector('[data-evo-next]')
+    var submitBtn = dialog.querySelector('[data-evo-submit]')
+
+    function showStep(step) {
+      state.step = step
+      dialog.querySelectorAll('[data-evo-stage]').forEach(function (s) {
+        s.hidden = s.getAttribute('data-evo-stage') !== String(step)
+      })
+      dialog.querySelectorAll('[data-evo-step-indicator]').forEach(function (ind) {
+        var n = parseInt(ind.getAttribute('data-evo-step-indicator'), 10)
+        ind.classList.remove('is-active', 'is-done')
+        if (n === step) ind.classList.add('is-active')
+        else if (n < step) ind.classList.add('is-done')
+      })
+      prevBtn.hidden = step === 1
+      nextBtn.hidden = step === 2
+      submitBtn.hidden = step !== 2
+    }
+
+    prevBtn.addEventListener('click', function () {
+      clearErrors()
+      showStep(1)
+    })
+    nextBtn.addEventListener('click', function () {
+      if (validateStep(1)) {
+        clearErrors()
+        showStep(2)
+      }
+    })
+
+    // ===================================================================
+    // Validation par étape (client)
+    // ===================================================================
+    function priceToCents(raw) {
+      if (raw === '' || raw === null || raw === undefined) return null
+      var normalized = String(raw).replace(',', '.').trim()
+      var euros = parseFloat(normalized)
+      if (isNaN(euros)) return null
+      return Math.round(euros * 100)
+    }
+
+    function validateStep(step) {
+      clearErrors()
+      if (step === 1) return validateStep1()
+      if (step === 2) return validateStep2()
+      return true
+    }
+
+    function validateStep1() {
+      var ok = true
+      var title = (dialog.querySelector('[name="title"]').value || '').trim()
+      if (title.length < 1) { showFieldError('title', 'Le titre est obligatoire.'); ok = false }
+      else if (title.length > 120) { showFieldError('title', 'Maximum 120 caractères.'); ok = false }
+
+      var desc = (dialog.querySelector('[name="description"]').value || '').trim()
+      if (desc.length > 500) { showFieldError('description', 'Maximum 500 caractères.'); ok = false }
+
+      var startRaw = dialog.querySelector('[name="start_at"]').value
+      var startDate = startRaw ? new Date(startRaw) : null
+      if (!startDate || isNaN(startDate.getTime())) {
+        showFieldError('start_at', 'La date de début est obligatoire.')
+        ok = false
+      } else if (startDate.getTime() <= Date.now()) {
+        showFieldError('start_at', 'La date de début doit être dans le futur.')
+        ok = false
+      }
+
+      var endRaw = dialog.querySelector('[name="end_at"]').value
+      if (endRaw) {
+        var endDate = new Date(endRaw)
+        if (isNaN(endDate.getTime())) {
+          showFieldError('end_at', 'Date de fin invalide.')
+          ok = false
+        } else if (startDate && !isNaN(startDate.getTime()) && endDate.getTime() <= startDate.getTime()) {
+          showFieldError('end_at', 'La fin doit être après le début.')
+          ok = false
+        }
+      }
+
+      var capRaw = dialog.querySelector('[name="capacity"]').value
+      if (capRaw !== '') {
+        var cap = Number(capRaw)
+        if (!Number.isInteger(cap) || cap < 1) {
+          showFieldError('capacity', 'Le nombre de places doit être un entier supérieur à 0.')
+          ok = false
+        }
+      }
+
+      var details = (dialog.querySelector('[name="location_details"]').value || '').trim()
+      if (details.length > 300) { showFieldError('location_details', 'Maximum 300 caractères.'); ok = false }
+
+      var priceCents = priceToCents(dialog.querySelector('[name="price"]').value)
+      if (priceCents !== null && !(Number.isInteger(priceCents) && priceCents >= 0)) {
+        showFieldError('price_cents', 'Indique un prix valide (ou laisse vide pour gratuit).')
+        ok = false
+      }
+      return ok
+    }
+
+    function validateStep2() {
+      var ok = true
+      for (var i = 0; i < state.highlights.length; i++) {
+        var h = (state.highlights[i] || '').trim()
+        if (h.length < 1 || h.length > 80) {
+          showFieldError('highlights', 'Chaque point fort doit faire entre 1 et 80 caractères.')
+          ok = false
+          break
+        }
+      }
+      if (state.highlights.length > 4) { showFieldError('highlights', 'Maximum 4 points forts.'); ok = false }
+
+      if (state.gallery.some(function (m) { return m.uploading })) {
+        showFieldError('gallery_images', 'Patiente, une image est en cours d\'envoi.')
+        ok = false
+      }
+      if (state.blocks.some(function (b) { return b.uploading })) {
+        showFieldError('content_blocks', 'Patiente, une image est en cours d\'envoi.')
+        ok = false
+      }
+      if (state.blocks.length > 20) {
+        showFieldError('content_blocks', 'Maximum 20 blocs.')
+        ok = false
+      }
+      for (var b = 0; b < state.blocks.length; b++) {
+        var block = state.blocks[b]
+        if (block.type === 'text') {
+          var c = (block.content || '').trim()
+          if (c.length < 1 || c.length > 2000) {
+            showFieldError('content_blocks', 'Chaque bloc texte doit faire entre 1 et 2000 caractères.')
+            ok = false
+            break
+          }
+        } else if (!block.url) {
+          showFieldError('content_blocks', 'Chaque bloc image doit contenir une image envoyée.')
+          ok = false
+          break
+        }
+      }
+      if (state.faq.length > 10) {
+        showFieldError('faq', 'Maximum 10 questions.')
+        ok = false
+      }
+      for (var f = 0; f < state.faq.length; f++) {
+        var fq = (state.faq[f].question || '').trim()
+        var fa = (state.faq[f].answer || '').trim()
+        if (fq === '' && fa === '') continue
+        if (fq.length < 1 || fq.length > 200 || fa.length < 1 || fa.length > 1000) {
+          showFieldError('faq', 'Chaque entrée : question 1-200 caractères, réponse 1-1000 caractères.')
+          ok = false
+          break
+        }
+      }
+      return ok
+    }
+
+    // ===================================================================
+    // Construction du payload + soumission
+    // ===================================================================
+    function buildPayload() {
+      var payload = {
+        title: (dialog.querySelector('[name="title"]').value || '').trim(),
+        start_at: new Date(dialog.querySelector('[name="start_at"]').value).toISOString(),
+        location_type: locationSelect.value,
+        is_published: dialog.querySelector('[data-evo-published]').checked,
+      }
+
+      var desc = (dialog.querySelector('[name="description"]').value || '').trim()
+      if (desc.length > 0) payload.description = desc
+
+      var endRaw = dialog.querySelector('[name="end_at"]').value
+      if (endRaw) {
+        var endDate = new Date(endRaw)
+        if (!isNaN(endDate.getTime())) payload.end_at = endDate.toISOString()
+      }
+
+      var details = (dialog.querySelector('[name="location_details"]').value || '').trim()
+      if (details.length > 0) payload.location_details = details
+
+      var priceCents = priceToCents(dialog.querySelector('[name="price"]').value)
+      if (priceCents !== null) payload.price_cents = priceCents
+
+      var capRaw = dialog.querySelector('[name="capacity"]').value
+      if (capRaw !== '') {
+        var cap = Number(capRaw)
+        if (Number.isInteger(cap) && cap >= 1) payload.capacity = cap
+      }
+
+      var highlights = []
+      state.highlights.forEach(function (h) {
+        var t = (h || '').trim()
+        if (t.length > 0) highlights.push(t)
+      })
+      if (highlights.length > 0) payload.highlights = highlights
+
+      var gallery = []
+      state.gallery.forEach(function (m) {
+        if (m.url) gallery.push(m.url)
+      })
+      if (gallery.length > 0) payload.gallery_images = gallery
+
+      var blocks = []
+      state.blocks.forEach(function (b) {
+        if (b.type === 'text') {
+          var c = (b.content || '').trim()
+          if (c.length > 0) blocks.push({ type: 'text', content: c })
+        } else if (b.url) {
+          blocks.push({ type: 'image', url: b.url })
+        }
+      })
+      if (blocks.length > 0) payload.content_blocks = blocks
+
+      var faq = []
+      state.faq.forEach(function (item) {
+        var q = (item.question || '').trim()
+        var a = (item.answer || '').trim()
+        if (q.length > 0 && a.length > 0) faq.push({ question: q, answer: a })
+      })
+      if (faq.length > 0) payload.faq = faq
+
+      return payload
+    }
+
+    function setLoading(loadingState) {
+      submitting = loadingState
+      submitBtn.disabled = loadingState
+      var spinner = dialog.querySelector('[data-evo-spinner]')
+      var text = dialog.querySelector('[data-evo-submit-text]')
+      if (spinner) spinner.hidden = !loadingState
+      if (text) text.textContent = loadingState ? 'Création...' : 'Créer l\'event'
+    }
+
+    // Mapping fieldErrors serveur → étape concernée
+    function stepForField(field) {
+      if (field === 'highlights' || field === 'gallery_images' || field === 'content_blocks' || field === 'faq') return 2
+      return 1
+    }
+
+    function applyServerErrors(fieldErrors) {
+      var firstStep = null
+      Object.keys(fieldErrors).forEach(function (field) {
+        var msg = fieldErrors[field]
+        if (!showFieldError(field, msg)) {
+          showGlobalError(msg)
+        }
+        var st = stepForField(field)
+        if (firstStep === null || st < firstStep) firstStep = st
+      })
+      if (firstStep !== null) {
+        showStep(firstStep)
+      }
+    }
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault()
+      if (submitting) return
+      if (state.step !== 2) return
+
+      clearErrors()
+      for (var s = 1; s <= 2; s++) {
+        if (!validateStep(s)) {
+          showStep(s)
+          return
+        }
+      }
+      clearErrors()
+
+      var payload = buildPayload()
+      setLoading(true)
+
+      fetch('/api/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+        .then(function (res) { return res.json().then(function (d) { return { ok: res.ok, data: d } }) })
+        .then(function (result) {
+          if (result.ok && result.data && result.data.success) {
+            window.location.reload()
+            return
+          }
+          setLoading(false)
+          var data = result.data || {}
+          if (data.fieldErrors) {
+            applyServerErrors(data.fieldErrors)
+          } else if (data.error) {
+            showGlobalError(data.error)
+          }
+        })
+        .catch(function () {
+          setLoading(false)
+          showGlobalError('Erreur réseau. Réessaie.')
+        })
+    })
+
+    // Init
+    showStep(1)
+  })()
+</script>

@@ -1,5 +1,7 @@
 ---
+import { Newspaper } from 'lucide-static'
 import PublicationCard from './PublicationCard.astro'
+import SectionEmptyState from './SectionEmptyState.astro'
 
 interface Media {
   id: string
@@ -27,14 +29,23 @@ interface Props {
   entitySlug: string
   entityRole?: string | null
   isOwner?: boolean
-  dashboardUrl?: string
 }
 
-const { publications, entityDisplayName, entityAvatarUrl, entitySlug, entityRole, isOwner = false, dashboardUrl } = Astro.props
+const { publications, entityDisplayName, entityAvatarUrl, entitySlug, entityRole, isOwner = false } = Astro.props
 ---
 <section id="news" class="pt-4 pb-4">
   {publications.length === 0 ? (
-    <p class="text-center text-sm text-neutral-400 py-8">Aucune publication pour le moment.</p>
+    <div class="px-[22px]">
+      <SectionEmptyState
+        icon={Newspaper}
+        title="Aucune publication pour le moment"
+        description="Pas encore d'actus par ici."
+        ownerDescription="Partage tes actus avec ta communauté."
+        ctaLabel="Ajouter une publication"
+        ctaAction="data-open-publication-overlay"
+        isOwner={isOwner}
+      />
+    </div>
   ) : (
     <div class="divide-y divide-neutral-200">
       {publications.map((pub) => (
@@ -51,7 +62,6 @@ const { publications, entityDisplayName, entityAvatarUrl, entitySlug, entityRole
           permalinkUrl={`/${entitySlug}/news/${pub.slug}`}
           commentsCount={pub.comments_count ?? 0}
           isOwner={isOwner}
-          dashboardEditUrl={dashboardUrl ? `${dashboardUrl}/dashboard/site/news/${pub.id}/edit` : undefined}
         />
       ))}
     </div>

@@ -28,10 +28,10 @@ const { title, description, image, imageAlt, url, type = 'website', robots = 'in
     <meta property="og:title" content={title} />
     {description && <meta property="og:description" content={description} />}
     {image && <meta property="og:image" content={image} />}
-    {image && <meta property="og:image:alt" content={imageAlt ?? "Agora \u2014 La plateforme des solopreneurs"} />}
+    {image && <meta property="og:image:alt" content={imageAlt ?? "IBEE \u2014 La plateforme des solopreneurs"} />}
     <meta property="og:type" content={type} />
     {url && <meta property="og:url" content={url} />}
-    <meta property="og:site_name" content="Agora" />
+    <meta property="og:site_name" content="IBEE" />
     <meta property="og:locale" content="fr_FR" />
 
     {/* Twitter Cards */}
@@ -39,7 +39,7 @@ const { title, description, image, imageAlt, url, type = 'website', robots = 'in
     <meta name="twitter:title" content={title} />
     {description && <meta name="twitter:description" content={description} />}
     {image && <meta name="twitter:image" content={image} />}
-    <meta name="twitter:site" content="@agora" />
+    <meta name="twitter:site" content="@ibee" />
 
     <slot name="head" />
   </head>

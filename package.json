@@ -1,5 +1,5 @@
 {
-  "name": "agora",
+  "name": "ibee",
   "private": true,
   "scripts": {
     "dev": "turbo run dev",

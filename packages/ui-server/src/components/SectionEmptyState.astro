@@ -1,0 +1,93 @@
+---
+import { Plus } from 'lucide-static'
+
+interface Props {
+  /** SVG lucide-static du type de contenu */
+  icon: string
+  title: string
+  /** Texte visiteur */
+  description: string
+  /** Texte owner (invitation à créer) — fallback : description */
+  ownerDescription?: string
+  /** Libellé du CTA owner (ex : "Ajouter un service") */
+  ctaLabel?: string
+  /** Attribut data-* posé sur le bouton CTA (ex : "data-open-service-overlay").
+      Les overlays pas encore câblés gardent leur attribut — le bouton sera
+      branché quand la création existera. */
+  ctaAction?: string
+  isOwner?: boolean
+}
+
+const { icon, title, description, ownerDescription, ctaLabel, ctaAction, isOwner = false } = Astro.props
+const ctaAttrs = ctaAction ? { [ctaAction]: true } : {}
+---
+{/* Interface d'état vide d'une section du profil : icône + titre + invitation,
+    CTA de création pour l'owner. Pattern repris du shop (.spl__empty). */}
+<div class="section-empty">
+  <span class="section-empty__icon" set:html={icon} />
+  <h3 class="section-empty__title">{title}</h3>
+  <p class="section-empty__desc">{isOwner ? (ownerDescription ?? description) : description}</p>
+  {isOwner && ctaLabel && (
+    <button type="button" class="section-empty__cta" {...ctaAttrs}>
+      <span class="flex h-4 w-4 items-center justify-center" set:html={Plus} />
+      {ctaLabel}
+    </button>
+  )}
+</div>
+
+<style>
+  .section-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 48px 24px;
+    background: var(--color-panel);
+    border-radius: var(--radius-tile);
+    text-align: center;
+  }
+  .section-empty__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--color-surface);
+    color: var(--color-neutral-400);
+  }
+  .section-empty__title {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: 16px;
+    color: var(--color-neutral-900);
+    margin: 8px 0 0;
+  }
+  .section-empty__desc {
+    font-size: 13px;
+    color: var(--color-neutral-500);
+    margin: 0 0 12px;
+    max-width: 360px;
+  }
+  .section-empty__cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 36px;
+    padding: 0 16px;
+    border-radius: 999px;
+    background: transparent;
+    border: 1.5px dashed var(--color-border);
+    color: var(--color-neutral-500);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: inherit;
+    transition: border-color 120ms, color 120ms;
+  }
+  .section-empty__cta:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+  }
+</style>

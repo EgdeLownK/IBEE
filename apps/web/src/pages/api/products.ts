@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro'
 import { createAuthClient } from '../../lib/supabase/auth'
 import {
   getEntityByUserId,
+  getEntityFileById,
   createProduct,
   addProductMedia,
   createProductVariant,
@@ -15,7 +16,6 @@ import {
 // ---------------------------------------------------------------------------
 
 const DIGITAL_FORMATS = ['pdf', 'epub', 'mp4', 'mp3', 'zip', 'other']
-const DIGITAL_LICENSES = ['personal', 'professional', 'commercial']
 const PHYSICAL_CONDITIONS = ['new', 'like_new', 'very_good', 'good', 'acceptable']
 
 function slugify(input: string): string {
@@ -26,6 +26,12 @@ function slugify(input: string): string {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
     .slice(0, 80)
+}
+
+/** Format enum (DIGITAL_FORMATS) déduit de l'extension du nom de fichier. */
+function digitalFormatFromName(name: string): string {
+  const ext = (name.split('.').pop() || '').toLowerCase()
+  return DIGITAL_FORMATS.includes(ext) ? ext : 'other'
 }
 
 function isUniqueViolation(err: unknown): boolean {
@@ -190,6 +196,73 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     }
   }
 
+  // --- FAQ (faq) ---
+  // Array optionnel de {question 1-200, answer 1-1000}. Max 10. Les deux types.
+  type FaqItem = { question: string; answer: string }
+  let faqItems: FaqItem[] = []
+  if (body?.faq !== undefined && body?.faq !== null) {
+    if (!Array.isArray(body.faq)) {
+      fieldErrors.faq = 'La FAQ doit être une liste.'
+    } else if (body.faq.length > 10) {
+      fieldErrors.faq = 'Maximum 10 questions dans la FAQ.'
+    } else {
+      const cleaned: FaqItem[] = []
+      for (const raw of body.faq) {
+        const question = typeof raw?.question === 'string' ? raw.question.trim() : ''
+        const answer = typeof raw?.answer === 'string' ? raw.answer.trim() : ''
+        if (question.length < 1 || question.length > 200) {
+          fieldErrors.faq = 'Chaque question doit faire entre 1 et 200 caractères.'
+          break
+        }
+        if (answer.length < 1 || answer.length > 1000) {
+          fieldErrors.faq = 'Chaque réponse doit faire entre 1 et 1000 caractères.'
+          break
+        }
+        cleaned.push({ question, answer })
+      }
+      if (!fieldErrors.faq) faqItems = cleaned
+    }
+  }
+
+  // --- Détails personnalisés (custom_details) ---
+  // Array optionnel de {label 1-40, value 1-100, family? 1-40}. Max 30 au total
+  // (libres + familles). family optionnel : regroupe les détails par famille
+  // à l'affichage. Remplace digital_license (dépréciée).
+  type CustomDetail = { label: string; value: string; family?: string }
+  let customDetails: CustomDetail[] = []
+  if (body?.custom_details !== undefined && body?.custom_details !== null) {
+    if (!Array.isArray(body.custom_details)) {
+      fieldErrors.custom_details = 'Les détails doivent être une liste.'
+    } else if (body.custom_details.length > 30) {
+      fieldErrors.custom_details = 'Maximum 30 détails au total.'
+    } else {
+      const cleaned: CustomDetail[] = []
+      for (const raw of body.custom_details) {
+        const label = typeof raw?.label === 'string' ? raw.label.trim() : ''
+        const value = typeof raw?.value === 'string' ? raw.value.trim() : ''
+        if (label.length < 1 || label.length > 40) {
+          fieldErrors.custom_details = 'Chaque libellé doit faire entre 1 et 40 caractères.'
+          break
+        }
+        if (value.length < 1 || value.length > 100) {
+          fieldErrors.custom_details = 'Chaque valeur doit faire entre 1 et 100 caractères.'
+          break
+        }
+        let family: string | undefined
+        if (raw?.family !== undefined && raw?.family !== null && `${raw.family}`.length > 0) {
+          const fam = typeof raw.family === 'string' ? raw.family.trim() : ''
+          if (fam.length < 1 || fam.length > 40) {
+            fieldErrors.custom_details = 'Chaque nom de famille doit faire entre 1 et 40 caractères.'
+            break
+          }
+          family = fam
+        }
+        cleaned.push(family ? { label, value, family } : { label, value })
+      }
+      if (!fieldErrors.custom_details) customDetails = cleaned
+    }
+  }
+
   // --- Médias (remplace image_url) ---
   // Array jusqu'à 10 items {url, type:'image'|'video'}, MAX 1 vidéo.
   // Rétro-compat : si image_url fourni et pas de media[], on le traite comme media[0] image.
@@ -321,9 +394,8 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
   // --- Champs conditionnels par type ---
   let digitalFields: {
-    digital_file_url: string
+    digital_file_id: string
     digital_file_format: string
-    digital_license: string
   } | null = null
   let physicalFields: {
     physical_condition: string
@@ -334,33 +406,34 @@ export const POST: APIRoute = async ({ request, cookies }) => {
   } | null = null
 
   if (type === 'digital') {
-    const fileUrl = typeof body?.digital_file_url === 'string' ? body.digital_file_url.trim() : ''
-    if (fileUrl.length < 1) {
-      fieldErrors.digital_file_url = 'Le lien du fichier est obligatoire.'
+    // Le fichier vient du catalogue entity_files (upload direct ou fichier
+    // réutilisé). RLS owner-only sur entity_files : un id valide mais
+    // appartenant à un autre vendeur ressort en null → "Fichier introuvable."
+    const fileId = typeof body?.digital_file_id === 'string' ? body.digital_file_id.trim() : ''
+    let fileName: string | null = null
+    if (fileId.length < 1) {
+      fieldErrors.digital_file_id = 'Choisis ou téléverse un fichier.'
     } else {
       try {
-        // eslint-disable-next-line no-new
-        new URL(fileUrl)
-      } catch {
-        fieldErrors.digital_file_url = 'Le lien du fichier doit être une URL valide.'
+        const entityFile = await getEntityFileById(authClient, fileId)
+        if (!entityFile || entityFile.entity_id !== entity.id) {
+          fieldErrors.digital_file_id = 'Fichier introuvable.'
+        } else {
+          fileName = entityFile.name
+        }
+      } catch (err) {
+        console.error('[api/products] getEntityFileById', err)
+        return new Response(JSON.stringify({ success: false, error: 'Erreur lors de la vérification du fichier.' }), { status: 500 })
       }
     }
 
-    const format = body?.digital_file_format
-    if (!DIGITAL_FORMATS.includes(format)) {
-      fieldErrors.digital_file_format = 'Format invalide.'
-    }
-
-    const license = body?.digital_license
-    if (!DIGITAL_LICENSES.includes(license)) {
-      fieldErrors.digital_license = 'Licence invalide.'
-    }
-
-    if (!fieldErrors.digital_file_url && !fieldErrors.digital_file_format && !fieldErrors.digital_license) {
+    // digital_license dépréciée : plus saisie dans le formulaire (custom_details
+    // la remplace). La colonne reste lisible pour les anciens produits.
+    if (!fieldErrors.digital_file_id && fileName) {
       digitalFields = {
-        digital_file_url: fileUrl,
-        digital_file_format: format,
-        digital_license: license,
+        digital_file_id: fileId,
+        // Le format n'est plus saisi : déduit de l'extension du fichier.
+        digital_file_format: digitalFormatFromName(fileName),
       }
     }
   } else {
@@ -459,16 +532,21 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     price_cents: priceCents,
     currency: 'EUR',
     status: status as 'draft' | 'published',
-    // V2 : points, promo, catégorie, blocs
+    // V2 : points, promo, catégorie, blocs, FAQ, détails personnalisés
     bullet_points: bulletPoints,
     sale_price_cents: salePriceCents,
     sale_ends_at: saleEndsAt,
     category_id: resolvedCategoryId,
     content_blocks: contentBlocks,
-    // digital
-    digital_file_url: digitalFields ? digitalFields.digital_file_url : null,
+    faq: faqItems,
+    custom_details: customDetails,
+    // digital — digital_file_url déprécié (les nouveaux produits passent par
+    // digital_file_id ; le CHECK products_digital_requires_file accepte les deux)
+    // digital_license dépréciée : plus jamais écrite (custom_details la remplace)
+    digital_file_url: null,
+    digital_file_id: digitalFields ? digitalFields.digital_file_id : null,
     digital_file_format: (digitalFields ? digitalFields.digital_file_format : null) as never,
-    digital_license: (digitalFields ? digitalFields.digital_license : null) as never,
+    digital_license: null as never,
     // physical
     physical_condition: (physicalFields ? physicalFields.physical_condition : null) as never,
     physical_pickup_location: physicalFields ? physicalFields.physical_pickup_location : null,

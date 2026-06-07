@@ -1,22 +1,29 @@
 ---
-import { ArrowLeft } from 'lucide-static'
 import AppLayout from '../../../layouts/AppLayout.astro'
+import DetailTopBar from '@ibee/ui-server/src/components/DetailTopBar.astro'
 import ProfileCard from '@ibee/ui-server/src/components/ProfileCard.astro'
+import ProfileHero from '@ibee/ui-server/src/components/ProfileHero.astro'
+import MenuTabs from '@ibee/ui-server/src/components/MenuTabs.astro'
 import ProductDetail from '@ibee/ui-server/src/components/ProductDetail.astro'
+import ProductCreateOverlay from '@ibee/ui-server/src/components/ProductCreateOverlay.astro'
+import ServiceCreateOverlay from '@ibee/ui-server/src/components/ServiceCreateOverlay.astro'
+import EventCreateOverlay from '@ibee/ui-server/src/components/EventCreateOverlay.astro'
 import ProductReviewsList from '@ibee/ui-server/src/components/ProductReviewsList.astro'
-import ProductQAList from '@ibee/ui-server/src/components/ProductQAList.astro'
+import ProductFaq from '@ibee/ui-server/src/components/ProductFaq.astro'
 import ProductSchemaJsonLd from '@ibee/ui-server/src/components/ProductSchemaJsonLd.astro'
 import { supabase } from '../../../lib/supabase/client'
 import { createAuthClient } from '../../../lib/supabase/auth'
 import {
   getEntityBySlug,
+  getEntityMenuSections,
+  getEntityFaq,
   getPublishedProductBySlug,
   lookupProductSlugHistory,
   listPublishedReviews,
   getReviewAggregates,
-  listPublishedQuestions,
-  getMyReview,
-  isInWishlist,
+  listQuestionsForModeration,
+  listProductCategories,
+  isFollowing as checkIsFollowing,
 } from '@ibee/supabase'
 
 const { slug, productSlug } = Astro.params
@@ -41,21 +48,45 @@ if (!product) {
 
 const authClient = createAuthClient(Astro.request, Astro.cookies)
 const { data: { user } } = await authClient.auth.getUser()
+const isOwner = !!(user && entity.user_id && user.id === entity.user_id)
 
 // Filtres/tri avis depuis query params (rendu serveur)
+// rating : multi-sélection "4,5" → [5, 4] ; sort : recent (défaut) | oldest
 const ratingParam = Astro.url.searchParams.get('rating')
-const activeRating = ratingParam ? Math.min(5, Math.max(1, parseInt(ratingParam, 10))) || null : null
+const activeRatings = ratingParam
+  ? Array.from(
+      new Set(
+        ratingParam
+          .split(',')
+          .map((r) => parseInt(r, 10))
+          .filter((n) => Number.isInteger(n) && n >= 1 && n <= 5)
+      )
+    ).sort((a, b) => b - a)
+  : []
 const sortParam = Astro.url.searchParams.get('sort')
-const activeSort: 'recent' | 'helpful' = sortParam === 'helpful' ? 'helpful' : 'recent'
+const activeSort: 'recent' | 'oldest' = sortParam === 'oldest' ? 'oldest' : 'recent'
 
-// Lectures publiques (anon) — avis, agrégats, distribution, questions
-const [reviews, aggregates, questions, allRatings] = await Promise.all([
-  listPublishedReviews(supabase, product.id, { rating: activeRating ?? undefined, sortBy: activeSort, limit: 50 }),
+// Lectures publiques (anon) — avis, agrégats, distribution + entête profil (desktop)
+const [reviews, aggregates, allRatings, menuSections, profileFaqItems, productCategories] = await Promise.all([
+  listPublishedReviews(supabase, product.id, { ratings: activeRatings, sortBy: activeSort, limit: 50 }),
   getReviewAggregates(supabase, product.id),
-  listPublishedQuestions(supabase, product.id, { limit: 50 }),
   // Distribution : on relit toutes les notes publiées (helper agrégats ne renvoie que count/average)
   listPublishedReviews(supabase, product.id, { limit: 500 }),
+  getEntityMenuSections(supabase, entity.id),
+  getEntityFaq(supabase, entity.id),
+  // Options de l'overlay de création (bouton « Ajouter contenu » du hero)
+  listProductCategories(supabase, entity.id),
 ])
+const productCategoryOptions = productCategories.map((c) => ({ id: c.id, name: c.name }))
+
+// Menu « Ajouter contenu » du hero (même logique que ProfilePage)
+const ALL_SECTION_TYPES = ['shop', 'appointments', 'events', 'news', 'history', 'faq'] as const
+const sectionTypeSet = new Set(menuSections.map((s) => s.type))
+const hasProfileFaqItems = Array.isArray(profileFaqItems) && profileFaqItems.length > 0
+const addContentSections = ALL_SECTION_TYPES.map((type) => ({
+  type,
+  active: sectionTypeSet.has(type) || (type === 'faq' && hasProfileFaqItems),
+}))
 
 const distribution: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
 for (const r of allRatings) {
@@ -63,13 +94,20 @@ for (const r of allRatings) {
 }
 
 // Lectures buyer-spécifiques (client authentifié) — uniquement si connecté
-let myReview = null
-let inWishlist = false
-if (user) {
-  ;[myReview, inWishlist] = await Promise.all([
-    getMyReview(authClient, product.id, user.id),
-    isInWishlist(authClient, product.id, null),
-  ])
+let isFollowingEntity = false
+if (user && !isOwner) {
+  isFollowingEntity = await checkIsFollowing(supabase, user.id, entity.id)
+}
+
+// Questions reçues (owner only — policy RLS product_questions_owner_select).
+// Privées : affichées uniquement au vendeur pour alimenter sa FAQ.
+let receivedQuestions: { id: string; question_text: string; created_at: string }[] = []
+if (isOwner) {
+  try {
+    receivedQuestions = await listQuestionsForModeration(authClient, product.id, { limit: 50 })
+  } catch {
+    receivedQuestions = []
+  }
 }
 
 const siteUrl = import.meta.env.SITE_URL
@@ -77,7 +115,6 @@ const profileUrl = `${siteUrl}/${entity.slug}`
 const productUrl = `${siteUrl}/${entity.slug}/shop/${product.slug}`
 const basePath = `/${entity.slug}/shop/${product.slug}`
 const dashboardUrl = import.meta.env.DASHBOARD_URL ?? 'http://localhost:3000'
-const loginUrl = `${dashboardUrl}/login?redirect=${encodeURIComponent(productUrl)}`
 
 // Méta SEO depuis le produit
 const metaTitle = product.seo_title ?? `${product.title} — ${entity.display_name}`
@@ -125,9 +162,58 @@ const contentBlocks: ContentBlock[] = Array.isArray(product.content_blocks)
     })
   : []
 
+// faq : Json → {question, answer}[] (entrées valides uniquement)
+const faq = Array.isArray((product as { faq?: unknown }).faq)
+  ? ((product as { faq?: unknown }).faq as unknown[]).flatMap((f): { question: string; answer: string }[] => {
+      if (!f || typeof f !== 'object') return []
+      const item = f as Record<string, unknown>
+      if (typeof item.question === 'string' && typeof item.answer === 'string') {
+        return [{ question: item.question, answer: item.answer }]
+      }
+      return []
+    })
+  : []
+
+// custom_details : Json → {label, value, family?}[] (entrées valides uniquement)
+const customDetails = Array.isArray((product as { custom_details?: unknown }).custom_details)
+  ? ((product as { custom_details?: unknown }).custom_details as unknown[]).flatMap(
+      (d): { label: string; value: string; family: string | null }[] => {
+        if (!d || typeof d !== 'object') return []
+        const item = d as Record<string, unknown>
+        if (typeof item.label === 'string' && typeof item.value === 'string') {
+          return [{ label: item.label, value: item.value, family: typeof item.family === 'string' ? item.family : null }]
+        }
+        return []
+      }
+    )
+  : []
+
 // Vidéo produit (exclue des images du JSON-LD ; surfacée dans la galerie)
 const videoMedia = (product.product_media ?? []).find((m) => m.media_type === 'video') ?? null
 const video = videoMedia ? { url: videoMedia.url, name: product.title } : null
+
+// --- Prix pour l'actionbar sticky (mêmes IDs que le JS variantes de ProductDetail) ---
+function formatPrice(cents: number, currency: string): string {
+  if (cents === 0) return '0€'
+  try {
+    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency }).format(cents / 100)
+  } catch {
+    return `${(cents / 100).toFixed(2)} €`
+  }
+}
+const activeVariants = (product.product_variants ?? []).filter((v) => v.is_active)
+const variantPrices = activeVariants.map((v) => v.price_cents_override ?? product.price_cents)
+const minCents = variantPrices.length > 0 ? Math.min(...variantPrices) : product.price_cents
+const maxCents = variantPrices.length > 0 ? Math.max(...variantPrices) : product.price_cents
+const isMultiPrice = activeVariants.length > 0 && minCents !== maxCents
+const showSalePrice = saleActive && product.sale_price_cents != null
+const salePriceText = showSalePrice ? formatPrice(product.sale_price_cents as number, product.currency) : null
+const baseOriginalText = formatPrice(product.price_cents, product.currency)
+const initialPriceText = formatPrice(minCents, product.currency)
+const salePercentValue =
+  showSalePrice && product.price_cents > 0
+    ? Math.round((1 - (product.sale_price_cents as number) / product.price_cents) * 100)
+    : 0
 
 // Échantillon d'avis pour le JSON-LD (max 5, avec nom anonymisé faute de jointure auteur publique)
 const reviewSamples = reviews.slice(0, 5).map((r) => ({
@@ -142,7 +228,7 @@ Astro.response.headers.set('Cache-Control', 's-maxage=86400, stale-while-revalid
 Astro.response.headers.set('X-Robots-Tag', 'index, follow, max-snippet:-1, max-image-preview:large')
 ---
 <AppLayout
-  title={`${metaTitle} — Agora`}
+  title={`${metaTitle} — IBEE`}
   description={metaDescription}
   image={ogImage}
   url={productUrl}
@@ -169,47 +255,81 @@ Astro.response.headers.set('X-Robots-Tag', 'index, follow, max-snippet:-1, max-i
   </Fragment>
 
   <main class="md:py-8 sm:py-12">
-    <div class="mx-auto max-w-[1000px] px-4 mb-3 md:px-0">
-      <a href={`/${entity.slug}/shop`} class="inline-flex items-center gap-1.5 text-sm text-neutral-500 transition hover:text-neutral-900">
-        <span class="flex h-4 w-4 items-center justify-center" set:html={ArrowLeft} />
-        Boutique de {entity.display_name}
-      </a>
-    </div>
+    <DetailTopBar backHref={`/${entity.slug}#shop`} title={product.title} />
 
     <ProfileCard>
+      {/* Entête profil (hero + menu) — desktop uniquement, le mobile garde la
+          fiche produit telle quelle. Les onglets renvoient vers le profil. */}
+      <div class="hidden md:block">
+        <ProfileHero
+          displayName={entity.display_name}
+          role={entity.role}
+          location={entity.location}
+          bio={entity.bio}
+          avatarUrl={entity.avatar_url}
+          createdAt={entity.created_at}
+          isOwner={isOwner}
+          isAuthenticated={!!user}
+          isFollowing={isFollowingEntity}
+          entityId={entity.id}
+          entitySlug={entity.slug}
+          followersCount={entity.followers_count}
+          dashboardUrl={dashboardUrl}
+          addContentSections={addContentSections}
+        />
+        <MenuTabs
+          sections={menuSections}
+          activeType="shop"
+          isOwner={isOwner}
+          hasFaq={hasProfileFaqItems}
+          baseHref={`/${entity.slug}`}
+        />
+      </div>
+
       <ProductDetail
         product={product}
-        inWishlist={inWishlist}
-        isAuthenticated={!!user}
-        dashboardUrl={dashboardUrl}
-        productUrl={productUrl}
         categoryName={categoryName}
         bulletPoints={bulletPoints}
         contentBlocks={contentBlocks}
         saleActive={saleActive}
+        customDetails={customDetails}
+        aggregates={aggregates}
+      />
+
+      <ProductFaq
+        faq={faq}
+        isOwner={isOwner}
+        receivedQuestions={receivedQuestions}
       />
 
       <ProductReviewsList
-        productId={product.id}
         reviews={reviews}
         aggregates={aggregates}
         distribution={distribution}
-        myReview={myReview}
-        user={user}
-        activeRating={activeRating}
+        activeRatings={activeRatings}
         activeSort={activeSort}
         basePath={basePath}
-        dashboardUrl={dashboardUrl}
-        loginUrl={loginUrl}
-      />
-
-      <ProductQAList
-        productId={product.id}
-        questions={questions}
-        user={user}
-        ownerUserId={entity.user_id ?? null}
-        loginUrl={loginUrl}
       />
     </ProfileCard>
+
+    {/* Actionbar sticky : prix (mis à jour par le JS variantes via les IDs) + CTA achat */}
+    <div class="actionbar mx-auto max-w-[800px] md:rounded-t-[18px]">
+      <div class="actionbar__price">
+        {salePriceText && salePercentValue > 0 && <span id="product-price-promo-label" class="label">Promo · -{salePercentValue}%</span>}
+        <span class="flex items-baseline gap-2">
+          <span id="product-price" class:list={['now', salePriceText && 'is-sale']}>{salePriceText ?? initialPriceText}</span>
+          {salePriceText && <span id="product-price-original" class="was">{baseOriginalText}</span>}
+          {isMultiPrice && <span id="product-price-from" class="text-xs text-neutral-500">à partir de</span>}
+        </span>
+      </div>
+      <button type="button" disabled class="btn btn--lg flex-1" style="margin-left:auto;" title="L'achat en ligne arrive prochainement">
+        Bientôt disponible
+      </button>
+    </div>
+
+    {/* Overlays de création — déclenchés par « Ajouter contenu » du hero */}
+    {isOwner && <ProductCreateOverlay entitySlug={entity.slug} categories={productCategoryOptions} />}
+    {isOwner && <ServiceCreateOverlay entitySlug={entity.slug} />}
+    {isOwner && <EventCreateOverlay entitySlug={entity.slug} />}
   </main>
 </AppLayout>

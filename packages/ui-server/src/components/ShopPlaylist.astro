@@ -1,0 +1,319 @@
+---
+import { Search, ShoppingBag, X } from 'lucide-static'
+import SectionEmptyState from './SectionEmptyState.astro'
+
+interface Product {
+  id: string
+  title: string
+  slug?: string
+  price_cents?: number | null
+  sale_price_cents?: number | null
+  sale_ends_at?: string | null
+  currency?: string
+  image_url?: string | null
+  status?: string | null
+  category_id?: string | null
+  type?: string | null
+  physical_stock_quantity?: number | null
+}
+
+interface Category {
+  id: string
+  name: string
+}
+
+interface Props {
+  products?: Product[]
+  /** Toujours accepté (les pages le passent) mais plus affiché — les filtres
+      par catégorie ont été retirés du shop. */
+  categories?: Category[]
+  isOwner?: boolean
+  entitySlug?: string
+}
+
+const { products = [], isOwner = false, entitySlug } = Astro.props
+
+const STATUS_LABELS: Record<string, string> = {
+  draft: 'Brouillon',
+  archived: 'Archivé',
+}
+
+function formatPrice(cents: number | null | undefined, currency: string | undefined): string {
+  if (cents == null || cents === 0) return '0€'
+  const value = cents / 100
+  try {
+    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: currency || 'EUR' }).format(value)
+  } catch {
+    return `${value.toFixed(2)} €`
+  }
+}
+
+/** Promo active : prix barré tant que la date de fin n'est pas passée. */
+function saleActive(p: Product): boolean {
+  if (p.sale_price_cents == null) return false
+  if (!p.sale_ends_at) return true
+  return new Date(p.sale_ends_at).getTime() > Date.now()
+}
+
+/** Pourcentage de remise pour le badge promo. */
+function salePercent(p: Product): number {
+  if (!saleActive(p) || p.price_cents == null || p.price_cents <= 0) return 0
+  return Math.round((1 - (p.sale_price_cents as number) / p.price_cents) * 100)
+}
+
+/** Meta sous le titre : type du produit. */
+function typeLabel(p: Product): string {
+  return p.type === 'digital' ? 'Numérique' : 'Physique'
+}
+
+/** Badge stock overlay : "Plus que X" / "Épuisé" (physique uniquement). */
+function stockBadge(p: Product): string | null {
+  if (p.type === 'digital') return null
+  const q = p.physical_stock_quantity
+  if (q == null) return null
+  if (q === 0) return 'Épuisé'
+  if (q <= 5) return `Plus que ${q}`
+  return null
+}
+
+---
+<section class="spl">
+  {products.length === 0 ? (
+    <SectionEmptyState
+      icon={ShoppingBag}
+      title="Aucun produit pour le moment"
+      description="Cette boutique ne propose pas encore de produits."
+      ownerDescription="Ajoute ton premier produit pour démarrer ta boutique."
+      ctaLabel="Ajouter un produit"
+      ctaAction="data-open-product-overlay"
+      isOwner={isOwner}
+    />
+  ) : (
+    <div class="spl__inner" data-spl>
+      {/* Barre : compteur à gauche, recherche expansible à droite */}
+      <div class="spl__bar">
+        <span class="spl__count"><b data-spl-count>{products.length}</b> produit{products.length > 1 ? 's' : ''}</span>
+        <div class="spl__searchwrap" data-spl-search-wrap>
+          <button type="button" class="spl__search-btn" data-spl-search-toggle aria-expanded="false" aria-label="Rechercher">
+            <span class="spl__icon" data-spl-icon-search set:html={Search} />
+            <span class="spl__icon" data-spl-icon-close hidden set:html={X} />
+          </button>
+          <input
+            type="search"
+            class="spl__search-input"
+            placeholder="Rechercher un produit…"
+            aria-label="Rechercher un produit"
+            data-spl-search
+          />
+        </div>
+      </div>
+
+      {/* Grille plate */}
+      <div class="grid-tiles">
+        {products.map((p) => {
+          const href = entitySlug && p.slug ? `/${entitySlug}/shop/${p.slug}` : null
+          const statusBadge = isOwner && p.status && p.status !== 'published' ? STATUS_LABELS[p.status] : null
+          const onSale = saleActive(p)
+          const percent = salePercent(p)
+          const stock = stockBadge(p)
+          const Tag = href ? 'a' : 'div'
+          return (
+            <Tag
+              class="tile"
+              href={href ?? undefined}
+              data-spl-item
+              data-spl-name={p.title.toLowerCase()}
+            >
+              <div class="tile__media">
+                {onSale && percent > 0 ? (
+                  <span class="tile__badge">-{percent}%</span>
+                ) : stock ? (
+                  <span class="tile__badge tile__badge--dark">{stock}</span>
+                ) : null}
+                {p.image_url ? (
+                  <img src={p.image_url} alt={p.title} loading="lazy" />
+                ) : (
+                  <div class="ph" aria-hidden="true">
+                    <span class="flex h-6 w-6 items-center justify-center" set:html={ShoppingBag} />
+                  </div>
+                )}
+              </div>
+              <div class="tile__body">
+                <div class="tile__title">
+                  {p.title}
+                  {statusBadge && <span class="tile__status">{statusBadge}</span>}
+                </div>
+                <div class="tile__meta">{typeLabel(p)}</div>
+                {p.price_cents != null && (
+                  <div class="tile__price">
+                    {onSale ? (
+                      <>
+                        <span class="sale">{formatPrice(p.sale_price_cents, p.currency)}</span>
+                        <span class="old">{formatPrice(p.price_cents, p.currency)}</span>
+                      </>
+                    ) : (
+                      formatPrice(p.price_cents, p.currency)
+                    )}
+                  </div>
+                )}
+              </div>
+            </Tag>
+          )
+        })}
+      </div>
+
+      {/* État vide de recherche */}
+      <p class="spl__noresults" data-spl-noresults hidden>Aucun produit ne correspond.</p>
+    </div>
+  )}
+</section>
+
+{/* Exception JS justifiée : recherche live de la section shop. Tout le
+    contenu est rendu côté serveur (SEO intact) — ce script ne fait que
+    masquer/afficher des tuiles. */}
+<script is:inline>
+  (function () {
+    var root = document.querySelector('[data-spl]')
+    if (!root) return
+    var searchInput = root.querySelector('[data-spl-search]')
+    var searchWrap = root.querySelector('[data-spl-search-wrap]')
+    var searchToggle = root.querySelector('[data-spl-search-toggle]')
+    var iconSearch = root.querySelector('[data-spl-icon-search]')
+    var iconClose = root.querySelector('[data-spl-icon-close]')
+    var items = root.querySelectorAll('[data-spl-item]')
+    var noResults = root.querySelector('[data-spl-noresults]')
+    var countEl = root.querySelector('[data-spl-count]')
+
+    function apply() {
+      var q = (searchInput.value || '').trim().toLowerCase()
+      var visible = 0
+      items.forEach(function (item) {
+        var show = !q || (item.getAttribute('data-spl-name') || '').indexOf(q) !== -1
+        item.hidden = !show
+        if (show) visible++
+      })
+      if (noResults) noResults.hidden = visible > 0
+      if (countEl) countEl.textContent = String(visible)
+    }
+
+    function setSearchOpen(open) {
+      if (searchWrap) searchWrap.classList.toggle('is-open', open)
+      if (iconSearch) iconSearch.hidden = open
+      if (iconClose) iconClose.hidden = !open
+      if (searchToggle) {
+        searchToggle.setAttribute('aria-expanded', open ? 'true' : 'false')
+        searchToggle.setAttribute('aria-label', open ? 'Fermer la recherche' : 'Rechercher')
+      }
+      if (open) {
+        searchInput.focus()
+      } else {
+        searchInput.value = ''
+        apply()
+      }
+    }
+
+    if (searchInput) searchInput.addEventListener('input', apply)
+    if (searchInput) searchInput.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') setSearchOpen(false)
+    })
+    if (searchToggle) searchToggle.addEventListener('click', function () {
+      setSearchOpen(!searchWrap.classList.contains('is-open'))
+    })
+  })()
+</script>
+
+<style>
+  .spl {
+    padding: 4px 22px 28px;
+  }
+  .spl__inner {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  /* Barre : compteur + recherche expansible (largeur animée, pattern du design) */
+  .spl__bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 38px;
+  }
+  .spl__count {
+    font-size: 13px;
+    color: var(--color-neutral-500);
+  }
+  .spl__count b {
+    color: var(--color-neutral-900);
+    font-weight: 600;
+  }
+  .spl__searchwrap {
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    width: 38px;
+    overflow: hidden;
+    transition: width .25s ease;
+  }
+  .spl__searchwrap.is-open {
+    width: 100%;
+    max-width: 320px;
+  }
+  .spl__search-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: 0;
+    background: none;
+    color: var(--color-neutral-500);
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: color 120ms;
+  }
+  .spl__search-btn:hover { color: var(--color-accent); }
+  .spl__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 15px;
+    height: 15px;
+  }
+  .spl__search-input {
+    border: 0;
+    outline: none;
+    font-size: 13px;
+    font-family: inherit;
+    width: 100%;
+    min-width: 0;
+    background: none;
+    padding: 9px 12px 9px 0;
+    color: var(--color-neutral-900);
+  }
+  .spl__search-input::-webkit-search-cancel-button { display: none; }
+
+  /* Badge statut owner (brouillon / archivé) */
+  .tile__status {
+    display: inline-block;
+    margin-left: 8px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--color-panel-2);
+    color: var(--color-neutral-500);
+    font-size: 11px;
+    font-weight: 500;
+    vertical-align: middle;
+  }
+
+  /* États vides */
+  .spl__noresults {
+    text-align: center;
+    color: var(--color-neutral-400);
+    font-size: 13px;
+    padding: 28px 0;
+    margin: 0;
+  }
+</style>

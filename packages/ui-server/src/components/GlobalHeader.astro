@@ -1,5 +1,5 @@
 ---
-import { Menu, ChevronDown, Sun, Bell, UserCircle, Settings, LogOut, Sparkles, BookOpen } from 'lucide-static'
+import { Menu, ChevronDown, Sun, Bell, UserCircle, LogOut, BookOpen } from 'lucide-static'
 import { format, formatDistanceToNow } from 'date-fns'
 import { fr } from 'date-fns/locale'
 
@@ -238,14 +238,6 @@ function getNotifUrl(n: NotificationData): string {
               <span>Voir mon profil</span>
             </a>
           )}
-          <a href={`${dashboardUrl}/account`} class="app-menu__item">
-            <span class="flex h-5 w-5 shrink-0 items-center justify-center" set:html={Settings} />
-            <span>Paramètres</span>
-          </a>
-          <a href={`${dashboardUrl}/dashboard/site`} class="app-menu__item">
-            <span class="flex h-5 w-5 shrink-0 items-center justify-center" set:html={Sparkles} />
-            <span>Mon site (édition)</span>
-          </a>
           <a href="/explore" class="app-menu__item app-menu__item--soft">
             <span class="flex h-5 w-5 shrink-0 items-center justify-center" set:html={BookOpen} />
             <span>Explorer</span>
@@ -253,7 +245,7 @@ function getNotifUrl(n: NotificationData): string {
 
           <hr class="app-menu__divider" />
 
-          <form method="post" action={`${dashboardUrl}/api/auth/logout`}>
+          <form method="post" action="/api/auth/logout">
             <button type="submit" class="app-menu__item app-menu__item--soft w-full text-left">
               <span class="flex h-5 w-5 shrink-0 items-center justify-center" set:html={LogOut} />
               <span>Se déconnecter</span>

@@ -30,13 +30,13 @@ const isConnected = !!user && !!currentUserEntity
 
 // Profile web : 3 états selon l'utilisateur
 //  - pas connecté → login dashboard
-//  - connecté sans entity → dashboard site (créer/configurer son profile)
+//  - connecté sans entity → racine dashboard (résout l'entity et redirige)
 //  - connecté avec entity → son profile public
 const profileWebHref = !user
   ? `${dashboardUrl}/login`
   : currentUserEntity
     ? `/${currentUserEntity.slug}`
-    : `${dashboardUrl}/dashboard/site`
+    : `${dashboardUrl}/`
 
 const espaceItems: SidebarItem[] = [
   {

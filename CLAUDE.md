@@ -1,11 +1,11 @@
-# CLAUDE.md — Agora
+# CLAUDE.md — IBEE
 
 Plateforme de profils web pour solopreneurs, optimisée SEO/GEO/AEO.
-Un profil Agora = un mini-site web pro indexable et citable par les LLMs (ChatGPT, Perplexity).
+Un profil IBEE = un mini-site web pro indexable et citable par les LLMs (ChatGPT, Perplexity).
 
 ## En début de session
 
-Lire `.agora-brain/_BRAIN-STATE.md` — statut projet, prochains chantiers, blocages (~30 secondes).
+Lire `.ibee-brain/_BRAIN-STATE.md` — statut projet, prochains chantiers, blocages (~30 secondes).
 
 ## Commandes
 
@@ -25,7 +25,7 @@ packages/ui-server/    Composants Astro + Tailwind v4 (zéro React)
 packages/ui-react/     Composants React + Radix UI
 packages/supabase/     Client Supabase + types + helpers
 supabase/migrations/   Migrations SQL
-.agora-brain/          Second brain du projet (vision, décisions, features, marché)
+.ibee-brain/          Second brain du projet (vision, décisions, features, marché)
 ```
 
 ## Environnement
@@ -76,7 +76,7 @@ Exception : fix d'urgence d'un seul fichier peut aller directement sur `main` si
 
 ## Brain
 
-Le brain (`.agora-brain/`) est la mémoire long terme du projet.
+Le brain (`.ibee-brain/`) est la mémoire long terme du projet.
 - `DIGEST.md` — résumé stratégique pour onboarding externe
 - `_BRAIN-STATE.md` — tableau de bord (lu en début de session)
 - `_decision-log-code.md` — décisions techniques (code, stack, UI, patterns) — lu avant un choix code
@@ -87,4 +87,4 @@ Le brain (`.agora-brain/`) est la mémoire long terme du projet.
 
 ## Règle d'or
 
-Si une décision contredit `.agora-brain/pilier/`, alerter Killian avant d'exécuter.
+Si une décision contredit `.ibee-brain/pilier/`, alerter Killian avant d'exécuter.

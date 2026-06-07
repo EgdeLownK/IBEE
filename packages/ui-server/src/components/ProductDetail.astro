@@ -1,5 +1,5 @@
 ---
-import { Heart, ShoppingBag, Download, Package, MapPin, FileText, Globe, Clock, ShieldCheck, Truck, Store, PlayCircle } from 'lucide-static'
+import { ShoppingBag, Download, Package, MapPin, FileText, Globe, Clock, ShieldCheck, Truck, Store, PlayCircle, Info, ChevronDown, Star, Check } from 'lucide-static'
 
 type Json = unknown
 
@@ -52,11 +52,6 @@ interface Props {
     physical_stock_quantity: number | null
     physical_stock_unlimited: boolean | null
   }
-  /** État initial wishlist (calculé serveur via isInWishlist si user connecté). */
-  inWishlist?: boolean
-  isAuthenticated?: boolean
-  dashboardUrl?: string
-  productUrl: string
   /** Nom de catégorie résolu côté page (embed entity_product_categories ou legacy). */
   categoryName?: string | null
   /** Points principaux (bullet_points V2), narrowés côté page en string[]. */
@@ -65,19 +60,24 @@ interface Props {
   contentBlocks?: ContentBlock[]
   /** Promo active calculée côté SSR (sale_price_cents valide ET non expirée). */
   saleActive?: boolean
+  /** Détails personnalisés (custom_details V2), narrowés côté page.
+      family optionnelle : regroupe les détails dans "Tous les détails". */
+  customDetails?: { label: string; value: string; family?: string | null }[]
+  /** Agrégats d'avis (étoiles sous le titre, design Claude). */
+  aggregates?: { count: number; average: number } | null
 }
 
 const {
   product,
-  inWishlist = false,
-  isAuthenticated = false,
-  dashboardUrl = 'http://localhost:3000',
-  productUrl,
   categoryName = null,
   bulletPoints = [],
   contentBlocks = [],
   saleActive = false,
+  customDetails = [],
+  aggregates = null,
 } = Astro.props
+
+const starRow = (n: number) => Array.from({ length: 5 }, (_, i) => i < n)
 
 const allMedia = (product.product_media ?? [])
   .slice()
@@ -182,273 +182,301 @@ const formatLabels: Record<string, string> = {
   pdf: 'PDF', epub: 'EPUB', mp4: 'MP4', mp3: 'MP3', zip: 'ZIP', other: 'Fichier',
 }
 
-const loginUrl = `${dashboardUrl}/login?redirect=${encodeURIComponent(productUrl)}`
+// Lignes du bloc "Détails du fichier" (digital) : champs legacy + détails
+// personnalisés (libres puis familles). Au-delà de 3 lignes : 3 affichées +
+// "Voir plus" (ancre vers la section "Tous les détails" sous la Description).
+type DetailLine = { icon: string; text: string }
+const ungroupedLines: DetailLine[] = []
+if (product.type === 'digital') {
+  if (product.digital_file_format) {
+    ungroupedLines.push({ icon: FileText, text: `Format : ${formatLabels[product.digital_file_format] ?? product.digital_file_format}` })
+  }
+  if (product.digital_license) {
+    // Legacy : licence des anciens produits (plus jamais écrite, custom_details la remplace)
+    ungroupedLines.push({ icon: ShieldCheck, text: licenseLabels[product.digital_license] ?? product.digital_license })
+  }
+  if (product.digital_language) {
+    ungroupedLines.push({ icon: Globe, text: `Langue : ${product.digital_language.toUpperCase()}` })
+  }
+  if (product.digital_pages_or_duration != null) {
+    ungroupedLines.push({
+      icon: Clock,
+      text: `${product.digital_pages_or_duration} ${product.digital_file_format === 'mp4' || product.digital_file_format === 'mp3' ? 'min' : 'pages'}`,
+    })
+  }
+  for (const d of customDetails) {
+    if (!d.family) ungroupedLines.push({ icon: Info, text: `${d.label} : ${d.value}` })
+  }
+}
+
+// Familles : groupées dans l'ordre de première apparition
+const familyGroups: { name: string; lines: DetailLine[] }[] = []
+if (product.type === 'digital') {
+  for (const d of customDetails) {
+    if (!d.family) continue
+    let group = familyGroups.find((g) => g.name === d.family)
+    if (!group) {
+      group = { name: d.family, lines: [] }
+      familyGroups.push(group)
+    }
+    group.lines.push({ icon: Info, text: `${d.label} : ${d.value}` })
+  }
+}
+
+// Vue aplatie pour le bloc compact (3 lignes max) et le compteur
+const detailLines: DetailLine[] = [...ungroupedLines, ...familyGroups.flatMap((g) => g.lines)]
+const visibleDetailLines = detailLines.slice(0, 3)
+const hasMoreDetails = detailLines.length > 3
 ---
-<div class="flex flex-col md:flex-row">
-  {/* ===== GALERIE ===== */}
-  <div class="md:w-[48%] md:border-r md:border-neutral-200">
-    <div class="relative aspect-square w-full overflow-hidden bg-neutral-100">
-      {mainImage ? (
-        <img id="product-main-image" src={mainImage} alt={product.title} class="h-full w-full object-cover" />
-      ) : (
-        <div id="product-main-image-empty" class="flex h-full w-full items-center justify-center text-neutral-300">
-          <span class="flex h-16 w-16 items-center justify-center" set:html={ShoppingBag} />
-        </div>
-      )}
-      {/* Viewer vidéo : masqué par défaut, affiché au clic sur la vignette vidéo. Pas d'autoplay. */}
-      {video && (
-        <video
-          id="product-main-video"
-          src={video.url}
-          controls
-          preload="metadata"
-          playsinline
-          class="absolute inset-0 hidden h-full w-full bg-black object-contain"
-        ></video>
-      )}
-    </div>
-    {(galleryMedia.length > 1 || (video && images.length === 0)) && (
-      <div class="flex gap-2 overflow-x-auto px-6 py-4">
-        {galleryMedia.map((m, i) => {
-          const isVideo = m.media_type === 'video'
-          return (
-            <button
-              type="button"
-              data-thumb={m.url}
-              data-media-type={isVideo ? 'video' : 'image'}
-              class:list={[
-                'relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border-2 transition',
-                i === 0 ? 'border-accent' : 'border-transparent hover:border-neutral-300',
-              ]}
-              aria-label={isVideo ? 'Voir la vidéo' : `Voir l'image ${i + 1}`}
-            >
-              {isVideo ? (
-                <>
-                  <video src={m.url} preload="metadata" muted class="h-full w-full object-cover"></video>
-                  <span class="absolute inset-0 flex items-center justify-center bg-black/30 text-white">
-                    <span class="flex h-6 w-6 items-center justify-center" set:html={PlayCircle} />
-                  </span>
-                </>
-              ) : (
-                <img src={m.url} alt={m.alt_text ?? product.title} class="h-full w-full object-cover" loading="lazy" />
-              )}
-            </button>
-          )
-        })}
+{/* ===== GALERIE pleine largeur ===== */}
+<div>
+  <div class="relative aspect-[4/3] w-full overflow-hidden bg-neutral-100">
+    {mainImage ? (
+      <img id="product-main-image" src={mainImage} alt={product.title} class="h-full w-full object-cover" />
+    ) : (
+      <div id="product-main-image-empty" class="ph" aria-hidden="true">
+        <span class="flex h-14 w-14 items-center justify-center" set:html={ShoppingBag} />
       </div>
     )}
+    {/* Viewer vidéo : masqué par défaut, affiché au clic sur la vignette vidéo. Pas d'autoplay. */}
+    {video && (
+      <video
+        id="product-main-video"
+        src={video.url}
+        controls
+        preload="metadata"
+        playsinline
+        class="absolute inset-0 hidden h-full w-full bg-black object-contain"
+      ></video>
+    )}
   </div>
-
-  {/* ===== INFOS ===== */}
-  <div class="md:w-[52%] px-6 py-6 sm:px-8">
-    <div class="flex items-start justify-between gap-3">
-      <div>
-        <div class="flex flex-wrap items-center gap-2">
-          <span class="inline-flex items-center gap-1.5 rounded-lg bg-neutral-100 px-2.5 py-1 text-xs font-medium text-neutral-600">
-            <span class="flex h-3.5 w-3.5 items-center justify-center" set:html={product.type === 'digital' ? Download : Package} />
-            {product.type === 'digital' ? 'Produit numérique' : 'Click & collect'}
-          </span>
-          {categoryName && (
-            <span class="inline-flex items-center rounded-lg bg-accent/10 px-2.5 py-1 text-xs font-medium text-accent">
-              {categoryName}
-            </span>
-          )}
-        </div>
-        <h1 class="mt-3 text-2xl font-semibold text-neutral-900">{product.title}</h1>
-      </div>
-      {/* Bouton wishlist */}
-      <button
-        type="button"
-        id="wishlist-btn"
-        data-product-id={product.id}
-        data-in-wishlist={inWishlist ? 'true' : 'false'}
-        data-price-cents={minCents}
-        data-authenticated={isAuthenticated ? 'true' : 'false'}
-        data-login-url={loginUrl}
-        aria-pressed={inWishlist ? 'true' : 'false'}
-        aria-label="Ajouter à ma liste de souhaits"
-        class:list={[
-          'flex h-10 w-10 shrink-0 items-center justify-center rounded-full border transition',
-          inWishlist
-            ? 'border-accent bg-accent/10 text-accent'
-            : 'border-neutral-200 text-neutral-400 hover:border-accent hover:text-accent',
-        ]}
-      >
-        <span class="flex h-5 w-5 items-center justify-center" set:html={Heart} />
-      </button>
+  {(galleryMedia.length > 1 || (video && images.length === 0)) && (
+    <div class="gallery-strip flex gap-2 overflow-x-auto px-[22px] pt-3" data-gallery-strip>
+      {galleryMedia.map((m, i) => {
+        const isVideo = m.media_type === 'video'
+        return (
+          <button
+            type="button"
+            data-thumb={m.url}
+            data-media-type={isVideo ? 'video' : 'image'}
+            class:list={[
+              'relative h-14 w-14 shrink-0 overflow-hidden rounded-[10px] border-2 transition',
+              i === 0 ? 'border-accent' : 'border-transparent hover:border-neutral-300',
+            ]}
+            aria-label={isVideo ? 'Voir la vidéo' : `Voir l'image ${i + 1}`}
+          >
+            {isVideo ? (
+              <>
+                <video src={m.url} preload="metadata" muted class="h-full w-full object-cover"></video>
+                <span class="absolute inset-0 flex items-center justify-center bg-black/30 text-white">
+                  <span class="flex h-6 w-6 items-center justify-center" set:html={PlayCircle} />
+                </span>
+              </>
+            ) : (
+              <img src={m.url} alt={m.alt_text ?? product.title} class="h-full w-full object-cover" loading="lazy" />
+            )}
+          </button>
+        )
+      })}
     </div>
+  )}
+</div>
 
-    {/* Points principaux (bullet_points) */}
-    {bulletPoints.length > 0 && (
-      <ul class="mt-3 space-y-1.5">
-        {bulletPoints.map((point) => (
-          <li class="flex items-start gap-2 text-sm text-neutral-700">
-            <span class="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-accent" aria-hidden="true"></span>
-            <span>{point}</span>
+{/* ===== INFOS ===== */}
+<div class="px-[22px] pt-[18px] pb-1.5">
+  <div class="flex flex-wrap items-center gap-2">
+    <span class="pill">
+      <span class="flex h-3.5 w-3.5 items-center justify-center" set:html={product.type === 'digital' ? Download : Package} />
+      {product.type === 'digital' ? 'Produit numérique' : 'Click & collect'}
+    </span>
+    {categoryName && <span class="pill pill--accent">{categoryName}</span>}
+  </div>
+  <h1 class="mt-3 mb-0 font-display text-[23px] font-semibold leading-tight text-neutral-900">{product.title}</h1>
+
+  {/* Note moyenne (si avis publiés) */}
+  {aggregates && aggregates.count > 0 && (
+    <div class="mt-2 flex items-center gap-2">
+      <span class="stars text-amber-500">
+        {starRow(Math.round(aggregates.average)).map((on) => (
+          <span class:list={['flex items-center justify-center', !on && 'text-neutral-200']} set:html={Star} />
+        ))}
+      </span>
+      <span class="text-[13px] text-neutral-500">{aggregates.average.toFixed(1).replace('.', ',')} · {aggregates.count} avis</span>
+    </div>
+  )}
+
+  {/* Points principaux (bullet_points) — checklist accent */}
+  {bulletPoints.length > 0 && (
+    <ul class="mt-4 mb-0 flex list-none flex-col gap-2 p-0">
+      {bulletPoints.map((point) => (
+        <li class="flex items-start gap-2.5 text-sm text-neutral-700">
+          <span class="mt-0.5 flex h-[17px] w-[17px] shrink-0 items-center justify-center text-accent" set:html={Check} />
+          <span>{point}</span>
+        </li>
+      ))}
+    </ul>
+  )}
+
+  <p class="mt-3 mb-0 text-sm leading-normal text-neutral-600">{product.description_short}</p>
+
+  {/* Disponibilité (le prix vit dans l'actionbar sticky, mis à jour par le JS variantes) */}
+  <p id="product-stock" class="mt-3 mb-0 text-xs" class:list={[initialInStock ? 'text-success' : 'text-error']}>
+    {initialInStock ? 'En stock' : 'Indisponible'}
+  </p>
+  {saleEndsLabel && (
+    <p id="product-sale-ends" class="mt-1 mb-0 text-xs text-accent">Promo jusqu'au {saleEndsLabel}</p>
+  )}
+
+  {/* Sélecteur de variantes */}
+  {hasVariants && (
+    <div class="mt-5 space-y-4" id="variant-selector" data-variants={JSON.stringify(variantData)}>
+      {attrKeys.map((key) => (
+        <div data-attr-group={key}>
+          <p class="mb-1.5 text-xs font-medium uppercase tracking-wider text-neutral-500">{key}</p>
+          <div class="flex flex-wrap gap-2">
+            {attrOptions[key].map((value) => (
+              <button
+                type="button"
+                data-attr-key={key}
+                data-attr-value={value}
+                class="rounded-[10px] border border-neutral-200 px-3 py-1.5 text-sm font-medium text-neutral-700 transition hover:border-accent hover:text-accent data-[selected=true]:border-accent data-[selected=true]:bg-accent/10 data-[selected=true]:text-accent"
+              >
+                {value}
+              </button>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  )}
+
+  {/* Bloc digital : détails du fichier en cartes (3 max + "Voir plus" si davantage) */}
+  {product.type === 'digital' && detailLines.length > 0 && (
+    <div class="mt-5">
+      <div class="flex gap-2.5">
+        {visibleDetailLines.map((line) => (
+          <div class="flex flex-1 flex-col items-center gap-1 rounded-[12px] border border-[var(--color-border)] px-1.5 py-3 text-center">
+            <span class="flex h-[18px] w-[18px] items-center justify-center text-neutral-400" set:html={line.icon} />
+            <span class="text-[12.5px] font-medium text-neutral-900">{line.text}</span>
+          </div>
+        ))}
+      </div>
+      {hasMoreDetails && (
+        <a href="#tous-les-details" class="mt-2 inline-flex items-center gap-1 text-sm font-medium text-accent hover:underline">
+          Voir plus
+          <span class="flex h-4 w-4 items-center justify-center" set:html={ChevronDown} />
+        </a>
+      )}
+    </div>
+  )}
+
+  {/* Bloc physical : modes de remise (retrait / livraison, cumulables) + état */}
+  {product.type === 'physical' && (
+    <div class="mt-5 space-y-3 rounded-[14px] border border-[var(--color-border)] bg-neutral-50 p-4">
+      <h2 class="m-0 text-sm font-semibold text-neutral-900">Modes de remise</h2>
+      <div class="space-y-3">
+        {product.pickup_enabled && (
+          <div class="flex items-start gap-2.5">
+            <span class="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center text-accent" set:html={Store} />
+            <div>
+              <p class="m-0 text-sm font-medium text-neutral-900">Retrait sur place</p>
+              {product.physical_pickup_location && (
+                <p class="m-0 text-sm text-neutral-600">Lieu de retrait : {product.physical_pickup_location}</p>
+              )}
+              {product.physical_pickup_instructions && (
+                <p class="m-0 text-sm text-neutral-500">{product.physical_pickup_instructions}</p>
+              )}
+            </div>
+          </div>
+        )}
+        {product.delivery_enabled && (
+          <div class="flex items-start gap-2.5">
+            <span class="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center text-accent" set:html={Truck} />
+            <div>
+              <p class="m-0 text-sm font-medium text-neutral-900">Livraison possible</p>
+              <p class="m-0 text-sm text-neutral-500">Modalités communiquées par le vendeur.</p>
+            </div>
+          </div>
+        )}
+        {!product.pickup_enabled && !product.delivery_enabled && (
+          <p class="m-0 flex items-start gap-2.5 text-sm text-neutral-500">
+            <span class="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center text-neutral-400" set:html={MapPin} />
+            Modalités de remise communiquées par le vendeur.
+          </p>
+        )}
+      </div>
+      {product.physical_condition && (
+        <p class="m-0 border-t border-[var(--color-border)] pt-3 text-sm text-neutral-600">
+          État : {conditionLabels[product.physical_condition] ?? product.physical_condition}
+        </p>
+      )}
+    </div>
+  )}
+</div>
+
+{/* Description : content_blocks (V2) dans l'ordre, fallback description_long (V1) */}
+{(hasContentBlocks || product.description_long) && (
+  <section class="sec" style="margin-top:22px;">
+    <h2 class="sec-h mt-0 mb-2">Description</h2>
+    {hasContentBlocks ? (
+      <div class="space-y-3">
+        {contentBlocks.map((block) =>
+          block.type === 'text' ? (
+            <p class="m-0 whitespace-pre-wrap text-sm leading-relaxed text-neutral-600">{block.content}</p>
+          ) : (
+            <figure class="m-0">
+              <img src={block.url} alt={block.alt ?? ''} class="w-full rounded-[14px]" loading="lazy" />
+            </figure>
+          )
+        )}
+      </div>
+    ) : (
+      <p class="m-0 whitespace-pre-wrap text-sm leading-relaxed text-neutral-600">{product.description_long}</p>
+    )}
+  </section>
+)}
+
+{/* Tous les détails — toujours affichée dès qu'il y a au moins un détail
+    (cible de l'ancre "Voir plus" du bloc fichier quand il y en a plus de 3).
+    Détails libres d'abord, puis chaque famille sous son intitulé. */}
+{detailLines.length > 0 && (
+  <section id="tous-les-details" class="sec scroll-mt-20">
+    <h2 class="sec-h mt-0 mb-3">Tous les détails</h2>
+    {ungroupedLines.length > 0 && (
+      <ul class="m-0 flex list-none flex-col gap-1.5 p-0 text-sm text-neutral-600">
+        {ungroupedLines.map((line) => (
+          <li class="flex items-center gap-2">
+            <span class="flex h-4 w-4 shrink-0 items-center justify-center text-neutral-400" set:html={line.icon} />
+            {line.text}
           </li>
         ))}
       </ul>
     )}
-
-    <p class="mt-3 text-sm text-neutral-600">{product.description_short}</p>
-
-    {/* Prix */}
-    <div class="mt-4 flex flex-wrap items-baseline gap-2">
-      {/* Prix promo : prix barré + prix promo + badge -X%. Le JS variante n'affiche pas la promo (prime sur la ligne variante). */}
-      {salePriceText && <span id="product-price-original" class="text-base font-medium text-neutral-400 line-through">{baseOriginalText}</span>}
-      <span id="product-price" class:list={['text-2xl font-bold', salePriceText ? 'text-accent' : 'text-neutral-900']}>
-        {salePriceText ?? initialPriceText}
-      </span>
-      {salePriceText && salePercent > 0 && (
-        <span id="product-price-discount" class="rounded-md bg-accent/10 px-2 py-0.5 text-xs font-semibold text-accent">-{salePercent} %</span>
-      )}
-      {isMultiPrice && <span id="product-price-from" class="text-xs text-neutral-500">à partir de</span>}
-    </div>
-    {saleEndsLabel && (
-      <p id="product-sale-ends" class="mt-1 text-xs text-accent">Jusqu'au {saleEndsLabel}</p>
-    )}
-    <p id="product-stock" class="mt-1 text-xs" class:list={[initialInStock ? 'text-success' : 'text-error']}>
-      {initialInStock ? 'En stock' : 'Indisponible'}
-    </p>
-
-    {/* Sélecteur de variantes */}
-    {hasVariants && (
-      <div class="mt-5 space-y-4" id="variant-selector" data-variants={JSON.stringify(variantData)}>
-        {attrKeys.map((key) => (
-          <div data-attr-group={key}>
-            <p class="mb-1.5 text-xs font-medium uppercase tracking-wider text-neutral-500">{key}</p>
-            <div class="flex flex-wrap gap-2">
-              {attrOptions[key].map((value) => (
-                <button
-                  type="button"
-                  data-attr-key={key}
-                  data-attr-value={value}
-                  class="rounded-lg border border-neutral-200 px-3 py-1.5 text-sm font-medium text-neutral-700 transition hover:border-accent hover:text-accent data-[selected=true]:border-accent data-[selected=true]:bg-accent/10 data-[selected=true]:text-accent"
-                >
-                  {value}
-                </button>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-    )}
-
-    {/* CTA achat (désactivé — Stripe phase ultérieure) */}
-    <button
-      type="button"
-      disabled
-      class="mt-6 w-full cursor-not-allowed rounded-xl bg-neutral-200 py-3.5 text-sm font-semibold text-neutral-500"
-      title="L'achat en ligne arrive prochainement"
-    >
-      Bientôt disponible
-    </button>
-    <p class="mt-2 text-center text-xs text-neutral-400">
-      L'achat en ligne sera bientôt activé. Contactez le vendeur pour commander.
-    </p>
-
-    {/* Bloc digital : format / licence */}
-    {product.type === 'digital' && (
-      <div class="mt-6 space-y-2 rounded-xl border border-neutral-200 bg-neutral-50 p-4">
-        <h2 class="text-sm font-semibold text-neutral-900">Détails du fichier</h2>
-        <ul class="space-y-1.5 text-sm text-neutral-600">
-          {product.digital_file_format && (
+    {familyGroups.map((group) => (
+      <div class="mt-5 first:mt-0">
+        <h3 class="mb-2 text-xs font-semibold uppercase tracking-wider text-neutral-500">{group.name}</h3>
+        <ul class="m-0 flex list-none flex-col gap-1.5 p-0 text-sm text-neutral-600">
+          {group.lines.map((line) => (
             <li class="flex items-center gap-2">
-              <span class="flex h-4 w-4 items-center justify-center text-neutral-400" set:html={FileText} />
-              Format : {formatLabels[product.digital_file_format] ?? product.digital_file_format}
+              <span class="flex h-4 w-4 shrink-0 items-center justify-center text-neutral-400" set:html={line.icon} />
+              {line.text}
             </li>
-          )}
-          {product.digital_license && (
-            <li class="flex items-center gap-2">
-              <span class="flex h-4 w-4 items-center justify-center text-neutral-400" set:html={ShieldCheck} />
-              {licenseLabels[product.digital_license] ?? product.digital_license}
-            </li>
-          )}
-          {product.digital_language && (
-            <li class="flex items-center gap-2">
-              <span class="flex h-4 w-4 items-center justify-center text-neutral-400" set:html={Globe} />
-              Langue : {product.digital_language.toUpperCase()}
-            </li>
-          )}
-          {product.digital_pages_or_duration != null && (
-            <li class="flex items-center gap-2">
-              <span class="flex h-4 w-4 items-center justify-center text-neutral-400" set:html={Clock} />
-              {product.digital_pages_or_duration} {product.digital_file_format === 'mp4' || product.digital_file_format === 'mp3' ? 'min' : 'pages'}
-            </li>
-          )}
+          ))}
         </ul>
       </div>
-    )}
+    ))}
+  </section>
+)}
 
-    {/* Bloc physical : modes de remise (retrait / livraison, cumulables) + état */}
-    {product.type === 'physical' && (
-      <div class="mt-6 space-y-3 rounded-xl border border-neutral-200 bg-neutral-50 p-4">
-        <h2 class="text-sm font-semibold text-neutral-900">Modes de remise</h2>
-        <div class="space-y-3">
-          {product.pickup_enabled && (
-            <div class="flex items-start gap-2.5">
-              <span class="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center text-accent" set:html={Store} />
-              <div>
-                <p class="text-sm font-medium text-neutral-900">Retrait sur place</p>
-                {product.physical_pickup_location && (
-                  <p class="text-sm text-neutral-600">Lieu de retrait : {product.physical_pickup_location}</p>
-                )}
-                {product.physical_pickup_instructions && (
-                  <p class="text-sm text-neutral-500">{product.physical_pickup_instructions}</p>
-                )}
-              </div>
-            </div>
-          )}
-          {product.delivery_enabled && (
-            <div class="flex items-start gap-2.5">
-              <span class="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center text-accent" set:html={Truck} />
-              <div>
-                <p class="text-sm font-medium text-neutral-900">Livraison possible</p>
-                <p class="text-sm text-neutral-500">Modalités communiquées par le vendeur.</p>
-              </div>
-            </div>
-          )}
-          {!product.pickup_enabled && !product.delivery_enabled && (
-            <p class="flex items-start gap-2.5 text-sm text-neutral-500">
-              <span class="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center text-neutral-400" set:html={MapPin} />
-              Modalités de remise communiquées par le vendeur.
-            </p>
-          )}
-        </div>
-        {product.physical_condition && (
-          <p class="border-t border-neutral-200 pt-3 text-sm text-neutral-600">
-            État : {conditionLabels[product.physical_condition] ?? product.physical_condition}
-          </p>
-        )}
-      </div>
-    )}
-
-    {/* Description riche : content_blocks (V2) dans l'ordre, fallback description_long (V1) */}
-    {hasContentBlocks ? (
-      <div class="mt-6 border-t border-neutral-200 pt-6">
-        <h2 class="mb-3 text-sm font-semibold text-neutral-900">Description</h2>
-        <div class="space-y-4">
-          {contentBlocks.map((block) =>
-            block.type === 'text' ? (
-              <p class="whitespace-pre-wrap text-sm leading-relaxed text-neutral-600">{block.content}</p>
-            ) : (
-              <figure>
-                <img src={block.url} alt={block.alt ?? ''} class="w-full rounded-lg" loading="lazy" />
-              </figure>
-            )
-          )}
-        </div>
-      </div>
-    ) : (
-      product.description_long && (
-        <div class="mt-6 border-t border-neutral-200 pt-6">
-          <h2 class="mb-3 text-sm font-semibold text-neutral-900">Description</h2>
-          <p class="whitespace-pre-wrap text-sm leading-relaxed text-neutral-600">{product.description_long}</p>
-        </div>
-      )
-    )}
-  </div>
-</div>
+<style>
+  /* Miniatures : défilement horizontal sans scrollbar */
+  .gallery-strip {
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+  .gallery-strip::-webkit-scrollbar { display: none; }
+</style>
 
 <script is:inline define:vars={{ productId: product.id, currency: product.currency, initialInStock }}>
 (function() {
@@ -478,6 +506,29 @@ const loginUrl = `${dashboardUrl}/login?redirect=${encodeURIComponent(productUrl
       btn.className = btn.className.replace('border-transparent', 'border-accent')
     })
   })
+
+  // --- Miniatures : flèches de défilement (visibles seulement si overflow) ---
+  var strip = document.querySelector('[data-gallery-strip]')
+  if (strip) {
+    var arrows = document.querySelectorAll('[data-gallery-scroll]')
+    var updateArrows = function() {
+      var max = strip.scrollWidth - strip.clientWidth
+      arrows.forEach(function(btn) {
+        var dir = parseInt(btn.getAttribute('data-gallery-scroll'), 10)
+        if (max <= 1) { btn.hidden = true; return }
+        btn.hidden = dir === -1 ? strip.scrollLeft <= 0 : strip.scrollLeft >= max - 1
+      })
+    }
+    arrows.forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var dir = parseInt(btn.getAttribute('data-gallery-scroll'), 10)
+        strip.scrollBy({ left: dir * Math.round(strip.clientWidth * 0.8), behavior: 'smooth' })
+      })
+    })
+    strip.addEventListener('scroll', updateArrows)
+    window.addEventListener('resize', updateArrows)
+    updateArrows()
+  }
 
   function formatPrice(cents) {
     try {
@@ -511,7 +562,6 @@ const loginUrl = `${dashboardUrl}/login?redirect=${encodeURIComponent(productUrl
       var priceEl = document.getElementById('product-price')
       var stockEl = document.getElementById('product-stock')
       var fromEl = document.getElementById('product-price-from')
-      var wishBtn = document.getElementById('wishlist-btn')
 
       var complete = allKeys().every(function(k) { return selected[k] != null })
       if (!complete) return
@@ -530,7 +580,7 @@ const loginUrl = `${dashboardUrl}/login?redirect=${encodeURIComponent(productUrl
       if (fromEl) fromEl.style.display = 'none'
       // Masque les éléments de promo (prix barré, badge -X%, date de fin) car ils
       // concernent le prix de BASE, pas le prix de la variante sélectionnée.
-      ;['product-price-original', 'product-price-discount', 'product-sale-ends'].forEach(function(id) {
+      ;['product-price-original', 'product-price-discount', 'product-sale-ends', 'product-price-promo-label'].forEach(function(id) {
         var el = document.getElementById(id)
         if (el) el.style.display = 'none'
       })
@@ -541,11 +591,6 @@ const loginUrl = `${dashboardUrl}/login?redirect=${encodeURIComponent(productUrl
       }
       // photo de la variante : repasse en vue image si la vidéo était affichée
       if (v.image && mainImg) showImageView(v.image)
-      // maj snapshot prix + variantId pour wishlist
-      if (wishBtn) {
-        wishBtn.setAttribute('data-price-cents', String(v.priceCents))
-        wishBtn.setAttribute('data-variant-id', v.id)
-      }
     }
 
     selector.querySelectorAll('[data-attr-key]').forEach(function(btn) {
@@ -562,47 +607,5 @@ const loginUrl = `${dashboardUrl}/login?redirect=${encodeURIComponent(productUrl
     })
   }
 
-  // --- Wishlist (optimistic) ---
-  var wishBtn = document.getElementById('wishlist-btn')
-  if (wishBtn) {
-    wishBtn.addEventListener('click', function() {
-      if (wishBtn.getAttribute('data-authenticated') !== 'true') {
-        window.location.href = wishBtn.getAttribute('data-login-url')
-        return
-      }
-      var wasIn = wishBtn.getAttribute('data-in-wishlist') === 'true'
-      var nextIn = !wasIn
-      // optimistic
-      setHeart(nextIn)
-      wishBtn.disabled = true
-
-      fetch('/api/wishlist', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          productId: wishBtn.getAttribute('data-product-id'),
-          variantId: wishBtn.getAttribute('data-variant-id') || null,
-          priceCents: parseInt(wishBtn.getAttribute('data-price-cents') || '0', 10),
-        }),
-      })
-        .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d } }) })
-        .then(function(res) {
-          if (!res.ok) { setHeart(wasIn); return }
-          setHeart(!!res.data.in_wishlist)
-        })
-        .catch(function() { setHeart(wasIn) })
-        .finally(function() { wishBtn.disabled = false })
-    })
-
-    function setHeart(on) {
-      wishBtn.setAttribute('data-in-wishlist', on ? 'true' : 'false')
-      wishBtn.setAttribute('aria-pressed', on ? 'true' : 'false')
-      if (on) {
-        wishBtn.className = 'flex h-10 w-10 shrink-0 items-center justify-center rounded-full border transition border-accent bg-accent/10 text-accent'
-      } else {
-        wishBtn.className = 'flex h-10 w-10 shrink-0 items-center justify-center rounded-full border transition border-neutral-200 text-neutral-400 hover:border-accent hover:text-accent'
-      }
-    }
-  }
 })()
 </script>

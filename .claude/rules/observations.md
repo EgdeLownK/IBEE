@@ -16,7 +16,7 @@ Les Claudes sont sur le terrain. Killian ne l'est pas. Les observations doivent 
 
 Deux actions, dans cet ordre :
 1. **Dans le chat** : signaler à Killian au moment où c'est détecté (court, factuel)
-2. **Dans `.agora-brain/_observations.md`** : ajouter une entrée en fin de session, après go de Killian
+2. **Dans `.ibee-brain/_observations.md`** : ajouter une entrée en fin de session, après go de Killian
 
 ## Ton
 

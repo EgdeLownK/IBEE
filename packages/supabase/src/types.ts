@@ -26,6 +26,7 @@ export type Database = {
           description: string | null
           duration_minutes: number
           entity_id: string
+          faq: Json
           gallery_images: string[]
           highlights: Json
           id: string
@@ -52,6 +53,7 @@ export type Database = {
           description?: string | null
           duration_minutes: number
           entity_id: string
+          faq?: Json
           gallery_images?: string[]
           highlights?: Json
           id?: string
@@ -78,6 +80,7 @@ export type Database = {
           description?: string | null
           duration_minutes?: number
           entity_id?: string
+          faq?: Json
           gallery_images?: string[]
           highlights?: Json
           id?: string
@@ -590,6 +593,51 @@ export type Database = {
           },
         ]
       }
+      entity_files: {
+        Row: {
+          created_at: string
+          entity_id: string
+          id: string
+          mime_type: string | null
+          name: string
+          size_bytes: number
+          storage_path: string
+        }
+        Insert: {
+          created_at?: string
+          entity_id: string
+          id?: string
+          mime_type?: string | null
+          name: string
+          size_bytes: number
+          storage_path: string
+        }
+        Update: {
+          created_at?: string
+          entity_id?: string
+          id?: string
+          mime_type?: string | null
+          name?: string
+          size_bytes?: number
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entity_files_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entity"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entity_files_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "publication_comments_with_author"
+            referencedColumns: ["author_entity_id"]
+          },
+        ]
+      }
       entity_global_features: {
         Row: {
           created_at: string
@@ -766,6 +814,148 @@ export type Database = {
           },
           {
             foreignKeyName: "entity_product_categories_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "publication_comments_with_author"
+            referencedColumns: ["author_entity_id"]
+          },
+        ]
+      }
+      event_registrations: {
+        Row: {
+          attendee_email: string
+          attendee_name: string
+          attendee_phone: string | null
+          created_at: string
+          entity_id: string
+          event_id: string
+          id: string
+          message: string | null
+          status: Database["public"]["Enums"]["event_registration_status"]
+        }
+        Insert: {
+          attendee_email: string
+          attendee_name: string
+          attendee_phone?: string | null
+          created_at?: string
+          entity_id: string
+          event_id: string
+          id?: string
+          message?: string | null
+          status?: Database["public"]["Enums"]["event_registration_status"]
+        }
+        Update: {
+          attendee_email?: string
+          attendee_name?: string
+          attendee_phone?: string | null
+          created_at?: string
+          entity_id?: string
+          event_id?: string
+          id?: string
+          message?: string | null
+          status?: Database["public"]["Enums"]["event_registration_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_registrations_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entity"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_registrations_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "publication_comments_with_author"
+            referencedColumns: ["author_entity_id"]
+          },
+          {
+            foreignKeyName: "event_registrations_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      events: {
+        Row: {
+          capacity: number | null
+          content_blocks: Json
+          created_at: string
+          currency: string
+          description: string | null
+          end_at: string | null
+          entity_id: string
+          faq: Json
+          gallery_images: string[]
+          highlights: Json
+          id: string
+          is_published: boolean
+          location_details: string | null
+          location_type: Database["public"]["Enums"]["event_location_type"]
+          position: number
+          price_cents: number | null
+          slug: string
+          start_at: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          capacity?: number | null
+          content_blocks?: Json
+          created_at?: string
+          currency?: string
+          description?: string | null
+          end_at?: string | null
+          entity_id: string
+          faq?: Json
+          gallery_images?: string[]
+          highlights?: Json
+          id?: string
+          is_published?: boolean
+          location_details?: string | null
+          location_type?: Database["public"]["Enums"]["event_location_type"]
+          position?: number
+          price_cents?: number | null
+          slug: string
+          start_at: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          capacity?: number | null
+          content_blocks?: Json
+          created_at?: string
+          currency?: string
+          description?: string | null
+          end_at?: string | null
+          entity_id?: string
+          faq?: Json
+          gallery_images?: string[]
+          highlights?: Json
+          id?: string
+          is_published?: boolean
+          location_details?: string | null
+          location_type?: Database["public"]["Enums"]["event_location_type"]
+          position?: number
+          price_cents?: number | null
+          slug?: string
+          start_at?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "events_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entity"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "events_entity_id_fkey"
             columns: ["entity_id"]
             isOneToOne: false
             referencedRelation: "publication_comments_with_author"
@@ -1187,12 +1377,14 @@ export type Database = {
           content_blocks: Json
           created_at: string
           currency: string
+          custom_details: Json
           delivery_enabled: boolean
           description_long: string | null
           description_short: string
           digital_file_format:
             | Database["public"]["Enums"]["digital_file_format"]
             | null
+          digital_file_id: string | null
           digital_file_size_bytes: number | null
           digital_file_url: string | null
           digital_language: string | null
@@ -1200,6 +1392,7 @@ export type Database = {
           digital_pages_or_duration: number | null
           digital_preview_url: string | null
           entity_id: string
+          faq: Json
           id: string
           og_image_url: string | null
           physical_brand: string | null
@@ -1239,12 +1432,14 @@ export type Database = {
           content_blocks?: Json
           created_at?: string
           currency?: string
+          custom_details?: Json
           delivery_enabled?: boolean
           description_long?: string | null
           description_short: string
           digital_file_format?:
             | Database["public"]["Enums"]["digital_file_format"]
             | null
+          digital_file_id?: string | null
           digital_file_size_bytes?: number | null
           digital_file_url?: string | null
           digital_language?: string | null
@@ -1254,6 +1449,7 @@ export type Database = {
           digital_pages_or_duration?: number | null
           digital_preview_url?: string | null
           entity_id: string
+          faq?: Json
           id?: string
           og_image_url?: string | null
           physical_brand?: string | null
@@ -1293,12 +1489,14 @@ export type Database = {
           content_blocks?: Json
           created_at?: string
           currency?: string
+          custom_details?: Json
           delivery_enabled?: boolean
           description_long?: string | null
           description_short?: string
           digital_file_format?:
             | Database["public"]["Enums"]["digital_file_format"]
             | null
+          digital_file_id?: string | null
           digital_file_size_bytes?: number | null
           digital_file_url?: string | null
           digital_language?: string | null
@@ -1308,6 +1506,7 @@ export type Database = {
           digital_pages_or_duration?: number | null
           digital_preview_url?: string | null
           entity_id?: string
+          faq?: Json
           id?: string
           og_image_url?: string | null
           physical_brand?: string | null
@@ -1345,6 +1544,13 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "entity_product_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_digital_file_id_fkey"
+            columns: ["digital_file_id"]
+            isOneToOne: false
+            referencedRelation: "entity_files"
             referencedColumns: ["id"]
           },
           {
@@ -1499,6 +1705,92 @@ export type Database = {
           },
         ]
       }
+      service_reviews: {
+        Row: {
+          appointment_type_id: string
+          booking_id: string | null
+          buyer_user_id: string
+          content: string
+          created_at: string
+          entity_id: string
+          helpful_count: number
+          id: string
+          is_verified_purchase: boolean
+          moderated_at: string | null
+          rating: number
+          seller_replied_at: string | null
+          seller_reply: string | null
+          status: Database["public"]["Enums"]["product_review_status"]
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          appointment_type_id: string
+          booking_id?: string | null
+          buyer_user_id: string
+          content: string
+          created_at?: string
+          entity_id: string
+          helpful_count?: number
+          id?: string
+          is_verified_purchase?: boolean
+          moderated_at?: string | null
+          rating: number
+          seller_replied_at?: string | null
+          seller_reply?: string | null
+          status?: Database["public"]["Enums"]["product_review_status"]
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          appointment_type_id?: string
+          booking_id?: string | null
+          buyer_user_id?: string
+          content?: string
+          created_at?: string
+          entity_id?: string
+          helpful_count?: number
+          id?: string
+          is_verified_purchase?: boolean
+          moderated_at?: string | null
+          rating?: number
+          seller_replied_at?: string | null
+          seller_reply?: string | null
+          status?: Database["public"]["Enums"]["product_review_status"]
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_reviews_appointment_type_id_fkey"
+            columns: ["appointment_type_id"]
+            isOneToOne: false
+            referencedRelation: "appointment_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_reviews_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_reviews_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entity"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_reviews_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "publication_comments_with_author"
+            referencedColumns: ["author_entity_id"]
+          },
+        ]
+      }
       wishlist_items: {
         Row: {
           added_at: string
@@ -1575,6 +1867,10 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: boolean
       }
+      count_event_registrations: {
+        Args: { p_event_id: string }
+        Returns: number
+      }
       generate_unique_appointment_slug: {
         Args: { p_entity_id: string; p_title: string }
         Returns: string
@@ -1614,6 +1910,8 @@ export type Database = {
         | "specific_products"
         | "specific_categories"
       discount_code_type: "percentage" | "fixed_amount" | "free_shipping"
+      event_location_type: "online" | "in_person"
+      event_registration_status: "confirmed" | "cancelled"
       global_feature_type: "faq"
       home_widget_type:
         | "widget_news_feed"
@@ -1790,6 +2088,8 @@ export const Constants = {
         "specific_categories",
       ],
       discount_code_type: ["percentage", "fixed_amount", "free_shipping"],
+      event_location_type: ["online", "in_person"],
+      event_registration_status: ["confirmed", "cancelled"],
       global_feature_type: ["faq"],
       home_widget_type: [
         "widget_news_feed",
