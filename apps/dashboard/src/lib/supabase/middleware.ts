@@ -25,7 +25,6 @@ export async function updateSession(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname
 
-  // Déjà connecté → la racine renvoie vers le profil web (surface unique)
   if (pathname === '/login' && user) {
     const url = request.nextUrl.clone()
     url.pathname = '/'

@@ -2,6 +2,11 @@
 
 App Next.js déployée sur Vercel. Dashboard de gestion pour les solopreneurs.
 
+**Studio profil** (`/dashboard/site`) : surface d'édition owner (phase 9+).
+- Hero, onglets, widgets, news, wizards produit/service/event, histoire, FAQ.
+- Server Actions dans `src/app/dashboard/site/*-actions.ts`.
+- Aperçu public : lien `?preview=1` vers Astro (`publicProfileUrl`).
+
 ## Structure
 - `src/app/dashboard/site/` — pages CMS (general, news, appointments, apercu)
 - `src/app/dashboard/layout.tsx` — layout avec MainRail + GlobalHeader

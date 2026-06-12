@@ -1,5 +1,7 @@
 ---
-import { ShoppingBag, Download, Package, MapPin, FileText, Globe, Clock, ShieldCheck, Truck, Store, PlayCircle, Info, ChevronDown, Star, Check } from 'lucide-static'
+import { ShoppingBag, FileText, Globe, Clock, ShieldCheck, PlayCircle, Info, Star, ChevronRight, ChevronLeft, Truck, Store, Handshake, Download } from 'lucide-static'
+import EntityMoreDetails from './EntityMoreDetails.astro'
+import NewsWidget from './NewsWidget.astro'
 
 type Json = unknown
 
@@ -65,6 +67,12 @@ interface Props {
   customDetails?: { label: string; value: string; family?: string | null }[]
   /** Agrégats d'avis (étoiles sous le titre, design Claude). */
   aggregates?: { count: number; average: number } | null
+  /** Lien d'édition (dashboard) du produit pour le CTA "Modifier". */
+  editHref?: string
+  /** Slug du profil — lien widget Actualités. */
+  entitySlug?: string
+  /** Section news active dans le menu du profil → widget Actualités. */
+  hasNews?: boolean
 }
 
 const {
@@ -75,6 +83,9 @@ const {
   saleActive = false,
   customDetails = [],
   aggregates = null,
+  editHref = undefined,
+  entitySlug = '',
+  hasNews = false,
 } = Astro.props
 
 const starRow = (n: number) => Array.from({ length: 5 }, (_, i) => i < n)
@@ -84,9 +95,8 @@ const allMedia = (product.product_media ?? [])
   .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))
 const images = allMedia.filter((m) => !m.media_type || m.media_type === 'image')
 const video = allMedia.find((m) => m.media_type === 'video') ?? null
-// Galerie : médias visibles = images + éventuelle vidéo (la vidéo apparaît en vignette).
+// Galerie : médias visibles = images + éventuelle vidéo (carrousel 9:16).
 const galleryMedia = [...images, ...(video ? [video] : [])]
-const mainImage = images[0]?.url ?? null
 
 const variants = (product.product_variants ?? []).filter((v) => v.is_active)
 const hasVariants = variants.length > 0
@@ -128,9 +138,6 @@ if (showSalePrice && product.sale_ends_at) {
   }
 }
 
-// Description riche : content_blocks si non vide, sinon fallback description_long (V1)
-const hasContentBlocks = contentBlocks.length > 0
-
 // Disponibilité initiale (sans variante sélectionnée)
 let initialInStock: boolean
 if (hasVariants) {
@@ -140,6 +147,19 @@ if (hasVariants) {
 } else {
   initialInStock = !!product.physical_stock_unlimited || (product.physical_stock_quantity ?? 0) > 0
 }
+
+// Modes de remise/livraison disponibles, affichés dans les caractéristiques.
+// Physique : Main propre (par défaut), Click & collect (pickup_enabled), Livraison
+// (delivery_enabled). NB : « Main propre » n'a pas encore de champ dédié en base.
+// Numérique : téléchargement immédiat (pas de remise physique).
+const deliveryTags: { label: string; icon: string }[] =
+  product.type === 'physical'
+    ? ([
+        { label: 'Main propre', icon: Handshake },
+        product.pickup_enabled ? { label: 'Click & collect', icon: Store } : null,
+        product.delivery_enabled ? { label: 'Livraison', icon: Truck } : null,
+      ].filter(Boolean) as { label: string; icon: string }[])
+    : [{ label: 'Téléchargement', icon: Download }]
 
 // Attributs : on dérive l'ensemble des clés et valeurs depuis variants[].attributes
 type AttrMap = Record<string, string>
@@ -166,13 +186,6 @@ const variantData = variants.map((v, i) => ({
   image: v.primary_image_url,
 }))
 
-const conditionLabels: Record<string, string> = {
-  new: 'Neuf',
-  like_new: 'Comme neuf',
-  very_good: 'Très bon état',
-  good: 'Bon état',
-  acceptable: 'État correct',
-}
 const licenseLabels: Record<string, string> = {
   personal: 'Licence personnelle',
   professional: 'Licence professionnelle',
@@ -186,6 +199,7 @@ const formatLabels: Record<string, string> = {
 // personnalisés (libres puis familles). Au-delà de 3 lignes : 3 affichées +
 // "Voir plus" (ancre vers la section "Tous les détails" sous la Description).
 type DetailLine = { icon: string; text: string }
+type DetailRow = { label: string; value: string }
 const ungroupedLines: DetailLine[] = []
 if (product.type === 'digital') {
   if (product.digital_file_format) {
@@ -225,251 +239,605 @@ if (product.type === 'digital') {
 
 // Vue aplatie pour le bloc compact (3 lignes max) et le compteur
 const detailLines: DetailLine[] = [...ungroupedLines, ...familyGroups.flatMap((g) => g.lines)]
-const visibleDetailLines = detailLines.slice(0, 3)
-const hasMoreDetails = detailLines.length > 3
+
+function splitDetailText(text: string): DetailRow {
+  const idx = text.indexOf(' : ')
+  if (idx === -1) return { label: 'Information', value: text }
+  return { label: text.slice(0, idx), value: text.slice(idx + 3) }
+}
+
+const detailRows: DetailRow[] = [
+  ...ungroupedLines.map((line) => splitDetailText(line.text)),
+  ...familyGroups.flatMap((group) =>
+    group.lines.map((line) => {
+      const row = splitDetailText(line.text)
+      return {
+        label: row.label === 'Information' ? group.name : row.label,
+        value: row.value,
+      }
+    })
+  ),
+]
+
+const formatLabel = product.digital_file_format
+  ? formatLabels[product.digital_file_format] ?? product.digital_file_format.toUpperCase()
+  : null
+const stockLabel = initialInStock ? 'En stock' : 'Indisponible'
+const reviewCount = aggregates?.count ?? 0
+const reviewAverage = aggregates?.average ?? 0
 ---
-{/* ===== GALERIE pleine largeur ===== */}
-<div>
-  <div class="relative aspect-[4/3] w-full overflow-hidden bg-neutral-100">
-    {mainImage ? (
-      <img id="product-main-image" src={mainImage} alt={product.title} class="h-full w-full object-cover" />
-    ) : (
-      <div id="product-main-image-empty" class="ph" aria-hidden="true">
-        <span class="flex h-14 w-14 items-center justify-center" set:html={ShoppingBag} />
-      </div>
-    )}
-    {/* Viewer vidéo : masqué par défaut, affiché au clic sur la vignette vidéo. Pas d'autoplay. */}
-    {video && (
-      <video
-        id="product-main-video"
-        src={video.url}
-        controls
-        preload="metadata"
-        playsinline
-        class="absolute inset-0 hidden h-full w-full bg-black object-contain"
-      ></video>
-    )}
+<div class="product-detail">
+{/* ===== Caractéristiques : Avis · Prix · Type · Dispo. + tags livraison, scroll horizontal ===== */}
+<div class="product-detail__stats">
+  <a href="#avis" class="product-detail__stat product-detail__stat--link">
+    <span class="product-detail__stat-label">{reviewCount > 0 ? `${reviewCount} avis` : 'Avis'}</span>
+    <span class="product-detail__stat-value">{reviewCount > 0 ? reviewAverage.toFixed(1).replace('.', ',') : '—'}</span>
+    <span class="product-detail__stat-stars">
+      {starRow(Math.round(reviewAverage)).map((on) => (
+        <span class:list={['flex items-center justify-center', on ? 'text-neutral-900' : 'text-neutral-300']} set:html={Star} />
+      ))}
+    </span>
+  </a>
+  <div class="product-detail__stat">
+    <span class="product-detail__stat-label">Prix</span>
+    <span data-sync-price class:list={['product-detail__stat-value product-detail__stat-value--sm product-detail__stat-price', salePriceText && 'is-sale']}>{salePriceText ?? initialPriceText}</span>
   </div>
-  {(galleryMedia.length > 1 || (video && images.length === 0)) && (
-    <div class="gallery-strip flex gap-2 overflow-x-auto px-[22px] pt-3" data-gallery-strip>
-      {galleryMedia.map((m, i) => {
+  <div class="product-detail__stat">
+    <span class="product-detail__stat-label">Type</span>
+    <span class="product-detail__stat-value product-detail__stat-value--sm">{product.type === 'digital' ? 'Numérique' : 'Physique'}</span>
+  </div>
+  <div class="product-detail__stat">
+    <span class="product-detail__stat-label">Dispo.</span>
+    <span id="product-stock" class:list={['product-detail__stat-value product-detail__stat-value--sm product-detail__stock', initialInStock ? 'is-available' : 'is-unavailable']}>{stockLabel}</span>
+  </div>
+  {deliveryTags.map((t) => (
+    <div class="product-detail__stat">
+      <span class="product-detail__stat-label">{t.label}</span>
+      <span class="product-detail__stat-value product-detail__stat-icon" set:html={t.icon} />
+    </div>
+  ))}
+</div>
+
+{/* ===== Galerie média : carrousel 9:16 (item qui dépasse → scroll horizontal) ===== */}
+<div class="product-detail__media" data-carousel>
+  <div class="product-detail__carousel gallery-strip" data-carousel-track>
+    {galleryMedia.length > 0 ? (
+      galleryMedia.map((m) => {
         const isVideo = m.media_type === 'video'
         return (
-          <button
-            type="button"
-            data-thumb={m.url}
-            data-media-type={isVideo ? 'video' : 'image'}
-            class:list={[
-              'relative h-14 w-14 shrink-0 overflow-hidden rounded-[10px] border-2 transition',
-              i === 0 ? 'border-accent' : 'border-transparent hover:border-neutral-300',
-            ]}
-            aria-label={isVideo ? 'Voir la vidéo' : `Voir l'image ${i + 1}`}
-          >
+          <div class="product-detail__slide">
             {isVideo ? (
-              <>
-                <video src={m.url} preload="metadata" muted class="h-full w-full object-cover"></video>
-                <span class="absolute inset-0 flex items-center justify-center bg-black/30 text-white">
-                  <span class="flex h-6 w-6 items-center justify-center" set:html={PlayCircle} />
-                </span>
-              </>
+              <video src={m.url} controls preload="metadata" playsinline class="h-full w-full bg-black object-cover"></video>
             ) : (
               <img src={m.url} alt={m.alt_text ?? product.title} class="h-full w-full object-cover" loading="lazy" />
             )}
-          </button>
+          </div>
         )
-      })}
-    </div>
+      })
+    ) : (
+      <div class="product-detail__slide">
+        <div class="ph" aria-hidden="true">
+          <span class="flex h-14 w-14 items-center justify-center" set:html={ShoppingBag} />
+        </div>
+      </div>
+    )}
+  </div>
+  {galleryMedia.length > 1 && (
+    <>
+      <button type="button" class="product-detail__nav product-detail__nav--prev" data-carousel-prev aria-label="Image précédente">
+        <span class="flex items-center justify-center" set:html={ChevronLeft} />
+      </button>
+      <button type="button" class="product-detail__nav product-detail__nav--next" data-carousel-next aria-label="Image suivante">
+        <span class="flex items-center justify-center" set:html={ChevronRight} />
+      </button>
+    </>
   )}
 </div>
 
-{/* ===== INFOS ===== */}
-<div class="px-[22px] pt-[18px] pb-1.5">
-  <div class="flex flex-wrap items-center gap-2">
-    <span class="pill">
-      <span class="flex h-3.5 w-3.5 items-center justify-center" set:html={product.type === 'digital' ? Download : Package} />
-      {product.type === 'digital' ? 'Produit numérique' : 'Click & collect'}
-    </span>
-    {categoryName && <span class="pill pill--accent">{categoryName}</span>}
-  </div>
-  <h1 class="mt-3 mb-0 font-display text-[23px] font-semibold leading-tight text-neutral-900">{product.title}</h1>
-
-  {/* Note moyenne (si avis publiés) */}
-  {aggregates && aggregates.count > 0 && (
-    <div class="mt-2 flex items-center gap-2">
-      <span class="stars text-amber-500">
-        {starRow(Math.round(aggregates.average)).map((on) => (
-          <span class:list={['flex items-center justify-center', !on && 'text-neutral-200']} set:html={Star} />
-        ))}
-      </span>
-      <span class="text-[13px] text-neutral-500">{aggregates.average.toFixed(1).replace('.', ',')} · {aggregates.count} avis</span>
+{/* ===== Card Information (sans prix : le prix vit dans la caractéristique PRIX) ===== */}
+<div class="product-detail__buybox-card">
+  {editHref && (
+    <div class="product-detail__buybox-top">
+      <a href={editHref} class="product-detail__cta">Modifier</a>
     </div>
   )}
-
-  {/* Points principaux (bullet_points) — checklist accent */}
-  {bulletPoints.length > 0 && (
-    <ul class="mt-4 mb-0 flex list-none flex-col gap-2 p-0">
-      {bulletPoints.map((point) => (
-        <li class="flex items-start gap-2.5 text-sm text-neutral-700">
-          <span class="mt-0.5 flex h-[17px] w-[17px] shrink-0 items-center justify-center text-accent" set:html={Check} />
-          <span>{point}</span>
-        </li>
-      ))}
-    </ul>
-  )}
-
-  <p class="mt-3 mb-0 text-sm leading-normal text-neutral-600">{product.description_short}</p>
-
-  {/* Disponibilité (le prix vit dans l'actionbar sticky, mis à jour par le JS variantes) */}
-  <p id="product-stock" class="mt-3 mb-0 text-xs" class:list={[initialInStock ? 'text-success' : 'text-error']}>
-    {initialInStock ? 'En stock' : 'Indisponible'}
-  </p>
-  {saleEndsLabel && (
-    <p id="product-sale-ends" class="mt-1 mb-0 text-xs text-accent">Promo jusqu'au {saleEndsLabel}</p>
-  )}
-
-  {/* Sélecteur de variantes */}
-  {hasVariants && (
-    <div class="mt-5 space-y-4" id="variant-selector" data-variants={JSON.stringify(variantData)}>
-      {attrKeys.map((key) => (
-        <div data-attr-group={key}>
-          <p class="mb-1.5 text-xs font-medium uppercase tracking-wider text-neutral-500">{key}</p>
-          <div class="flex flex-wrap gap-2">
-            {attrOptions[key].map((value) => (
-              <button
-                type="button"
-                data-attr-key={key}
-                data-attr-value={value}
-                class="rounded-[10px] border border-neutral-200 px-3 py-1.5 text-sm font-medium text-neutral-700 transition hover:border-accent hover:text-accent data-[selected=true]:border-accent data-[selected=true]:bg-accent/10 data-[selected=true]:text-accent"
-              >
-                {value}
-              </button>
+  {detailLines.length > 0 && (
+    <div id="tous-les-details" class="product-detail__buybox-info scroll-mt-20">
+      <h3 class="product-detail__info-title">Information</h3>
+      <div class="product-detail__info-menus">
+        <details class="product-detail__tech-menu">
+          <summary>
+            <span>Information générale</span>
+            <span class="product-detail__tech-chevron" aria-hidden="true" set:html={ChevronRight} />
+          </summary>
+          <div class="product-detail__tech-panel">
+            {detailRows.map((row) => (
+              <div class="product-detail__tech-line">
+                <span>{row.label}</span>
+                <strong>{row.value}</strong>
+              </div>
             ))}
           </div>
-        </div>
-      ))}
-    </div>
-  )}
-
-  {/* Bloc digital : détails du fichier en cartes (3 max + "Voir plus" si davantage) */}
-  {product.type === 'digital' && detailLines.length > 0 && (
-    <div class="mt-5">
-      <div class="flex gap-2.5">
-        {visibleDetailLines.map((line) => (
-          <div class="flex flex-1 flex-col items-center gap-1 rounded-[12px] border border-[var(--color-border)] px-1.5 py-3 text-center">
-            <span class="flex h-[18px] w-[18px] items-center justify-center text-neutral-400" set:html={line.icon} />
-            <span class="text-[12.5px] font-medium text-neutral-900">{line.text}</span>
-          </div>
-        ))}
+        </details>
       </div>
-      {hasMoreDetails && (
-        <a href="#tous-les-details" class="mt-2 inline-flex items-center gap-1 text-sm font-medium text-accent hover:underline">
-          Voir plus
-          <span class="flex h-4 w-4 items-center justify-center" set:html={ChevronDown} />
-        </a>
-      )}
-    </div>
-  )}
-
-  {/* Bloc physical : modes de remise (retrait / livraison, cumulables) + état */}
-  {product.type === 'physical' && (
-    <div class="mt-5 space-y-3 rounded-[14px] border border-[var(--color-border)] bg-neutral-50 p-4">
-      <h2 class="m-0 text-sm font-semibold text-neutral-900">Modes de remise</h2>
-      <div class="space-y-3">
-        {product.pickup_enabled && (
-          <div class="flex items-start gap-2.5">
-            <span class="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center text-accent" set:html={Store} />
-            <div>
-              <p class="m-0 text-sm font-medium text-neutral-900">Retrait sur place</p>
-              {product.physical_pickup_location && (
-                <p class="m-0 text-sm text-neutral-600">Lieu de retrait : {product.physical_pickup_location}</p>
-              )}
-              {product.physical_pickup_instructions && (
-                <p class="m-0 text-sm text-neutral-500">{product.physical_pickup_instructions}</p>
-              )}
-            </div>
-          </div>
-        )}
-        {product.delivery_enabled && (
-          <div class="flex items-start gap-2.5">
-            <span class="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center text-accent" set:html={Truck} />
-            <div>
-              <p class="m-0 text-sm font-medium text-neutral-900">Livraison possible</p>
-              <p class="m-0 text-sm text-neutral-500">Modalités communiquées par le vendeur.</p>
-            </div>
-          </div>
-        )}
-        {!product.pickup_enabled && !product.delivery_enabled && (
-          <p class="m-0 flex items-start gap-2.5 text-sm text-neutral-500">
-            <span class="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center text-neutral-400" set:html={MapPin} />
-            Modalités de remise communiquées par le vendeur.
-          </p>
-        )}
-      </div>
-      {product.physical_condition && (
-        <p class="m-0 border-t border-[var(--color-border)] pt-3 text-sm text-neutral-600">
-          État : {conditionLabels[product.physical_condition] ?? product.physical_condition}
-        </p>
-      )}
     </div>
   )}
 </div>
 
-{/* Description : content_blocks (V2) dans l'ordre, fallback description_long (V1) */}
-{(hasContentBlocks || product.description_long) && (
-  <section class="sec" style="margin-top:22px;">
-    <h2 class="sec-h mt-0 mb-2">Description</h2>
-    {hasContentBlocks ? (
-      <div class="space-y-3">
-        {contentBlocks.map((block) =>
-          block.type === 'text' ? (
-            <p class="m-0 whitespace-pre-wrap text-sm leading-relaxed text-neutral-600">{block.content}</p>
-          ) : (
-            <figure class="m-0">
-              <img src={block.url} alt={block.alt ?? ''} class="w-full rounded-[14px]" loading="lazy" />
-            </figure>
-          )
-        )}
-      </div>
-    ) : (
-      <p class="m-0 whitespace-pre-wrap text-sm leading-relaxed text-neutral-600">{product.description_long}</p>
-    )}
-  </section>
-)}
-
-{/* Tous les détails — toujours affichée dès qu'il y a au moins un détail
-    (cible de l'ancre "Voir plus" du bloc fichier quand il y en a plus de 3).
-    Détails libres d'abord, puis chaque famille sous son intitulé. */}
-{detailLines.length > 0 && (
-  <section id="tous-les-details" class="sec scroll-mt-20">
-    <h2 class="sec-h mt-0 mb-3">Tous les détails</h2>
-    {ungroupedLines.length > 0 && (
-      <ul class="m-0 flex list-none flex-col gap-1.5 p-0 text-sm text-neutral-600">
-        {ungroupedLines.map((line) => (
-          <li class="flex items-center gap-2">
-            <span class="flex h-4 w-4 shrink-0 items-center justify-center text-neutral-400" set:html={line.icon} />
-            {line.text}
-          </li>
-        ))}
-      </ul>
-    )}
-    {familyGroups.map((group) => (
-      <div class="mt-5 first:mt-0">
-        <h3 class="mb-2 text-xs font-semibold uppercase tracking-wider text-neutral-500">{group.name}</h3>
-        <ul class="m-0 flex list-none flex-col gap-1.5 p-0 text-sm text-neutral-600">
-          {group.lines.map((line) => (
-            <li class="flex items-center gap-2">
-              <span class="flex h-4 w-4 shrink-0 items-center justify-center text-neutral-400" set:html={line.icon} />
-              {line.text}
-            </li>
+{/* ===== Sélecteur de variantes (pleine largeur) ===== */}
+{hasVariants && (
+  <div class="product-detail__variants" id="variant-selector" data-variants={JSON.stringify(variantData)}>
+    {attrKeys.map((key) => (
+      <div data-attr-group={key}>
+        <p class="product-detail__variant-label">{key}</p>
+        <div class="flex flex-wrap gap-2">
+          {attrOptions[key].map((value) => (
+            <button
+              type="button"
+              data-attr-key={key}
+              data-attr-value={value}
+              class="product-detail__variant-btn"
+            >
+              {value}
+            </button>
           ))}
-        </ul>
+        </div>
       </div>
     ))}
-  </section>
+  </div>
 )}
 
+{/* ===== Plus de détails (contenu produit) + Actualités profil ===== */}
+<EntityMoreDetails
+  entityKind="product"
+  contentBlocks={contentBlocks}
+  bulletPoints={bulletPoints}
+  fallbackText={product.description_long}
+/>
+{hasNews && entitySlug && <NewsWidget entitySlug={entitySlug} />}
+
+</div>
+
 <style>
-  /* Miniatures : défilement horizontal sans scrollbar */
+  .product-detail {
+    background: transparent;
+  }
+
+  .product-detail__media {
+    position: relative;
+    padding: 16px 0;
+  }
+
+  /* ===== Carrousel d'images 9:16 (item qui dépasse → scroll horizontal) ===== */
+  .product-detail__carousel {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-padding-left: 22px;
+    padding: 0 22px;
+  }
+  @media (min-width: 768px) {
+    .product-detail__carousel {
+      cursor: grab;
+    }
+    .product-detail__carousel.is-grabbing {
+      cursor: grabbing;
+      scroll-behavior: auto;
+      user-select: none;
+    }
+    .product-detail__carousel.is-grabbing img {
+      pointer-events: none;
+    }
+  }
+  .product-detail__slide {
+    flex: 0 0 58%;
+    aspect-ratio: 1 / 1;
+    border-radius: var(--radius-card);
+    overflow: hidden;
+    background: var(--color-panel);
+    scroll-snap-align: start;
+  }
+
+  /* ===== Flèches de navigation (tablette + desktop uniquement) ===== */
+  .product-detail__nav {
+    display: none;
+  }
+  @media (min-width: 768px) {
+    .product-detail__nav {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 3;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      border: 1px solid var(--color-border);
+      background: color-mix(in srgb, var(--color-surface) 92%, transparent);
+      backdrop-filter: blur(8px);
+      color: var(--color-neutral-800);
+      box-shadow: 0 6px 18px -10px rgba(0, 0, 0, .35);
+      cursor: pointer;
+      transition: background .16s ease, transform .08s ease, opacity .16s ease;
+    }
+    .product-detail__nav :global(svg) {
+      width: 20px;
+      height: 20px;
+    }
+    .product-detail__nav:hover {
+      background: var(--color-surface);
+    }
+    .product-detail__nav:active {
+      transform: translateY(-50%) scale(.94);
+    }
+    .product-detail__nav--prev {
+      left: 30px;
+    }
+    .product-detail__nav--next {
+      right: 30px;
+    }
+    .product-detail__nav[disabled] {
+      opacity: 0;
+      pointer-events: none;
+    }
+  }
+
+  /* ===== Card d'achat : prix + Modifier (sous les images) ===== */
+  .product-detail__buybox-card {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin: 0 22px;
+  }
+  /* Téléphone : bouton Modifier sous l'image. Desktop/tablette : Modifier dans le strip. */
+  .product-detail__buybox-top {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 14px;
+  }
+  .product-detail__buybox-info {
+    border-top: 1px solid color-mix(in srgb, var(--color-border) 60%, transparent);
+    padding-top: 16px;
+  }
+  @media (min-width: 768px) {
+    .product-detail__buybox-top {
+      display: none;
+    }
+    .product-detail__buybox-info {
+      border-top: 0;
+      padding-top: 0;
+    }
+  }
+  /* Conteneur des menus déployables : 1 menu = pleine largeur ;
+     un 2e menu se place à droite (2 colonnes 50/50) dès la tablette. */
+  .product-detail__info-menus {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    align-items: start;
+  }
+  @media (min-width: 768px) {
+    .product-detail__info-menus {
+      grid-template-columns: 1fr 1fr;
+    }
+    .product-detail__info-menus > .product-detail__tech-menu:only-child {
+      grid-column: 1 / -1;
+    }
+  }
+  .product-detail__buy-price {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+  .product-detail__from {
+    font-size: 11px;
+    color: var(--color-neutral-500);
+  }
+  .product-detail__buy-now {
+    font-family: var(--font-display);
+    font-size: 24px;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--color-neutral-900);
+  }
+  .product-detail__buy-now.is-sale {
+    color: var(--color-accent);
+  }
+  .product-detail__buy-was {
+    font-size: 14px;
+    color: var(--color-neutral-400);
+    text-decoration: line-through;
+  }
+  .product-detail__cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 110px;
+    min-height: 40px;
+    padding: 0 22px;
+    border-radius: 12px;
+    background: var(--color-accent);
+    color: #fff;
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: background .18s, transform .08s;
+  }
+  .product-detail__cta:hover { background: var(--color-accent-hover); }
+  .product-detail__cta:active { transform: translateY(1px); }
+
+  /* ===== Bandeau de caractéristiques : scroll horizontal, aligné à gauche ===== */
+  .product-detail__stats {
+    display: flex;
+    align-items: stretch;
+    overflow-x: auto;
+    scrollbar-width: none;
+    margin: 24px 0 22px;
+    padding: 6px 22px;
+  }
+  .product-detail__stats::-webkit-scrollbar {
+    display: none;
+  }
+  .product-detail__stat {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 4px;
+    padding: 4px 16px;
+    text-decoration: none;
+    border-left: 1px solid var(--color-border);
+    white-space: nowrap;
+  }
+  .product-detail__stat:first-child {
+    border-left: 0;
+    padding-left: 0;
+  }
+  /* Icône d'un mode de livraison (caractéristique : titre = mode, principal = icône) */
+  .product-detail__stat-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-neutral-700);
+  }
+  .product-detail__stat-icon :global(svg) {
+    width: 20px;
+    height: 20px;
+  }
+  .product-detail__stat-label {
+    font-family: var(--font-sans);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: var(--color-neutral-400);
+    text-align: center;
+  }
+  .product-detail__stat-value {
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 800;
+    line-height: 1.1;
+    color: var(--color-neutral-500);
+    text-align: center;
+  }
+  .product-detail__stat-value--sm {
+    font-size: 15px;
+    font-weight: 700;
+  }
+  .product-detail__stat-stars {
+    display: inline-flex;
+    gap: 1px;
+  }
+  .product-detail__stat-stars :global(svg) {
+    width: 11px;
+    height: 11px;
+  }
+  .product-detail__stat-sub {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--color-neutral-400);
+    text-align: center;
+  }
+  /* Colonne PRIX : valeur principale sombre, secondaire = prix avant promo barré */
+  .product-detail__stat-price {
+    color: var(--color-neutral-900);
+  }
+  .product-detail__stat-price.is-sale {
+    color: var(--color-accent);
+  }
+  .product-detail__stat-sub--strike {
+    text-decoration: line-through;
+  }
+
+  .product-detail__delivery-tag :global(svg) {
+    width: 15px;
+    height: 15px;
+    color: var(--color-neutral-500);
+  }
+
+  /* #product-stock vit dans le bandeau de stats : couleur seule, taille via stat-value--sm */
+  .product-detail__stock.is-available {
+    color: var(--color-success);
+  }
+
+  .product-detail__stock.is-unavailable {
+    color: var(--color-error);
+  }
+
+  .product-detail__variants {
+    margin: 18px 22px 0;
+    padding: 14px;
+    border-radius: 16px;
+    background: color-mix(in srgb, var(--color-surface) 82%, var(--color-panel));
+  }
+
+  .product-detail__variants > * + * {
+    margin-top: 14px;
+  }
+
+  .product-detail__variant-label,
+  .product-detail__small-title {
+    margin: 0 0 8px;
+    font-family: var(--font-display);
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--color-neutral-600);
+  }
+
+  .product-detail__variant-btn {
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    background: var(--color-surface);
+    padding: 8px 12px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--color-neutral-700);
+    transition: border-color 140ms ease, color 140ms ease, background 140ms ease;
+  }
+
+  .product-detail__variant-btn:hover,
+  .product-detail__variant-btn[data-selected='true'] {
+    border-color: var(--color-accent);
+    background: var(--color-accent-soft);
+    color: var(--color-accent);
+  }
+
+  .product-detail__sections {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 20px 22px 4px;
+  }
+
+  .product-detail__card {
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    padding: 0;
+    box-shadow: none;
+  }
+
+  .product-detail__detail-card {
+    position: relative;
+  }
+
+  .product-detail__tech-menu {
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--color-panel) 72%, var(--color-surface));
+    overflow: hidden;
+  }
+
+  .product-detail__info-title {
+    margin: 0 0 12px;
+    font-family: var(--font-display);
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--color-neutral-900);
+  }
+
+  .product-detail__tech-menu summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    cursor: pointer;
+    list-style: none;
+    padding: 14px;
+  }
+
+  .product-detail__tech-menu summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .product-detail__tech-menu summary > span:first-child {
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .06em;
+    color: #2a2a2a;
+    text-transform: uppercase;
+  }
+
+  .product-detail__tech-chevron {
+    display: flex;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    color: #2a2a2a;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1;
+    transition: transform 140ms ease;
+  }
+
+  .product-detail__tech-menu[open] .product-detail__tech-chevron {
+    transform: rotate(90deg);
+  }
+
+  .product-detail__tech-panel {
+    padding: 0 14px 14px;
+  }
+
+  .product-detail__tech-line {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(92px, .8fr);
+    gap: 14px;
+    padding: 10px 0;
+  }
+
+  .product-detail__tech-line + .product-detail__tech-line {
+    border-top: 1px solid color-mix(in srgb, var(--color-border) 55%, transparent);
+  }
+
+  .product-detail__tech-line strong {
+    min-width: 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: #2a2a2a;
+    text-align: right;
+  }
+
+  .product-detail__tech-line span {
+    font-size: 11px;
+    font-weight: 600;
+    color: #2a2a2a;
+    text-align: left;
+    text-transform: uppercase;
+  }
+
+  @media (max-width: 520px) {
+    .product-detail__tech-menu summary {
+      padding: 12px;
+    }
+    .product-detail__tech-panel {
+      padding: 0 12px 12px;
+    }
+    .product-detail__tech-line {
+      grid-template-columns: 1fr;
+      gap: 3px;
+    }
+    .product-detail__tech-line span {
+      text-align: left;
+    }
+    .product-detail__tech-line strong {
+      text-align: left;
+    }
+  }
+
   .gallery-strip {
     scrollbar-width: none;
     -webkit-overflow-scrolling: touch;
@@ -501,33 +869,60 @@ const hasMoreDetails = detailLines.length > 3
         showImageView(btn.getAttribute('data-thumb'))
       }
       document.querySelectorAll('[data-thumb]').forEach(function(b) {
-        b.className = b.className.replace('border-accent', 'border-transparent')
+        b.classList.remove('is-active')
       })
-      btn.className = btn.className.replace('border-transparent', 'border-accent')
+      btn.classList.add('is-active')
     })
   })
 
-  // --- Miniatures : flèches de défilement (visibles seulement si overflow) ---
-  var strip = document.querySelector('[data-gallery-strip]')
-  if (strip) {
-    var arrows = document.querySelectorAll('[data-gallery-scroll]')
-    var updateArrows = function() {
-      var max = strip.scrollWidth - strip.clientWidth
-      arrows.forEach(function(btn) {
-        var dir = parseInt(btn.getAttribute('data-gallery-scroll'), 10)
-        if (max <= 1) { btn.hidden = true; return }
-        btn.hidden = dir === -1 ? strip.scrollLeft <= 0 : strip.scrollLeft >= max - 1
-      })
+  // --- Carrousel images : flèches de navigation (tablette + desktop) ---
+  var track = document.querySelector('[data-carousel-track]')
+  if (track) {
+    var prevBtn = document.querySelector('[data-carousel-prev]')
+    var nextBtn = document.querySelector('[data-carousel-next]')
+    var slideStep = function() {
+      var slide = track.querySelector('.product-detail__slide')
+      var w = slide ? slide.getBoundingClientRect().width : track.clientWidth * 0.6
+      return w + 12 // largeur d'une slide + gap
     }
-    arrows.forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        var dir = parseInt(btn.getAttribute('data-gallery-scroll'), 10)
-        strip.scrollBy({ left: dir * Math.round(strip.clientWidth * 0.8), behavior: 'smooth' })
-      })
+    var updateNav = function() {
+      var max = track.scrollWidth - track.clientWidth
+      if (prevBtn) prevBtn.disabled = track.scrollLeft <= 1
+      if (nextBtn) nextBtn.disabled = track.scrollLeft >= max - 1
+    }
+    if (prevBtn) prevBtn.addEventListener('click', function() {
+      track.scrollBy({ left: -slideStep(), behavior: 'smooth' })
     })
-    strip.addEventListener('scroll', updateArrows)
-    window.addEventListener('resize', updateArrows)
-    updateArrows()
+    if (nextBtn) nextBtn.addEventListener('click', function() {
+      track.scrollBy({ left: slideStep(), behavior: 'smooth' })
+    })
+    track.addEventListener('scroll', updateNav)
+    window.addEventListener('resize', updateNav)
+    updateNav()
+
+    // --- Glisser-déposer à la main (souris/stylet) ; le tactile garde le scroll natif ---
+    var isDown = false, startX = 0, startScroll = 0
+    track.addEventListener('pointerdown', function(e) {
+      if (e.pointerType === 'touch') return
+      isDown = true
+      startX = e.clientX
+      startScroll = track.scrollLeft
+      track.style.scrollSnapType = 'none' // évite les à-coups pendant le glissement
+      track.classList.add('is-grabbing')
+    })
+    window.addEventListener('pointermove', function(e) {
+      if (!isDown) return
+      track.scrollLeft = startScroll - (e.clientX - startX)
+    })
+    var endDrag = function() {
+      if (!isDown) return
+      isDown = false
+      track.style.scrollSnapType = ''
+      track.classList.remove('is-grabbing')
+    }
+    window.addEventListener('pointerup', endDrag)
+    window.addEventListener('pointercancel', endDrag)
+    track.addEventListener('dragstart', function(e) { e.preventDefault() })
   }
 
   function formatPrice(cents) {
@@ -568,15 +963,24 @@ const hasMoreDetails = detailLines.length > 3
 
       var v = findVariant()
       if (!v) {
-        if (stockEl) { stockEl.textContent = 'Combinaison indisponible'; stockEl.className = 'mt-1 text-xs text-error' }
+        if (stockEl) {
+          stockEl.textContent = 'Indisponible'
+          stockEl.classList.remove('is-available')
+          stockEl.classList.add('is-unavailable')
+        }
         return
       }
       if (priceEl) {
         priceEl.textContent = formatPrice(v.priceCents)
         // Le prix variante prime : la promo (base) ne s'applique pas sur la ligne variante.
-        priceEl.classList.remove('text-accent')
-        priceEl.classList.add('text-neutral-900')
+        priceEl.classList.remove('is-sale')
       }
+      // Synchronise les prix dupliqués (strip desktop + colonne PRIX du bandeau).
+      // Le prix variante prime → on retire l'état promo et le prix barré du bandeau.
+      document.querySelectorAll('[data-sync-price]').forEach(function(el) {
+        el.textContent = formatPrice(v.priceCents)
+        el.classList.remove('is-sale')
+      })
       if (fromEl) fromEl.style.display = 'none'
       // Masque les éléments de promo (prix barré, badge -X%, date de fin) car ils
       // concernent le prix de BASE, pas le prix de la variante sélectionnée.
@@ -587,7 +991,8 @@ const hasMoreDetails = detailLines.length > 3
       var inStock = v.stock > 0
       if (stockEl) {
         stockEl.textContent = inStock ? 'En stock' : 'Indisponible'
-        stockEl.className = 'mt-1 text-xs ' + (inStock ? 'text-success' : 'text-error')
+        stockEl.classList.toggle('is-available', inStock)
+        stockEl.classList.toggle('is-unavailable', !inStock)
       }
       // photo de la variante : repasse en vue image si la vidéo était affichée
       if (v.image && mainImg) showImageView(v.image)
@@ -599,7 +1004,8 @@ const hasMoreDetails = detailLines.length > 3
         var value = btn.getAttribute('data-attr-value')
         selected[key] = value
         // visuel : dé-sélectionne les autres du même groupe
-        selector.querySelectorAll('[data-attr-key="' + key + '"]').forEach(function(b) {
+        selector.querySelectorAll('[data-attr-key]').forEach(function(b) {
+          if (b.getAttribute('data-attr-key') !== key) return
           b.setAttribute('data-selected', b === btn ? 'true' : 'false')
         })
         update()

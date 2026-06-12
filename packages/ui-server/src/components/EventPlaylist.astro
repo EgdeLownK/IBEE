@@ -1,0 +1,302 @@
+---
+import { Search, Zap, X } from 'lucide-static'
+import SectionEmptyState from './SectionEmptyState.astro'
+
+interface EventItem {
+  id: string
+  title: string
+  slug: string
+  detailExcerpt?: string | null
+  start_at: string
+  location_type: string
+  price_cents: number | null
+  currency: string
+  capacity?: number | null
+  registrations_count?: number
+  gallery_images?: string[]
+  is_published?: boolean
+}
+
+interface Props {
+  events?: EventItem[]
+  isOwner?: boolean
+  entitySlug?: string
+  dashboardUrl?: string
+}
+
+const { events = [], isOwner = false, entitySlug, dashboardUrl } = Astro.props
+
+const LOCATION_LABELS: Record<string, string> = {
+  online: 'En ligne',
+  in_person: 'Sur place',
+}
+
+function formatPrice(cents: number | null | undefined, currency: string | undefined): string {
+  if (cents == null || cents === 0) return '0€'
+  const value = cents / 100
+  try {
+    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: currency || 'EUR' }).format(value)
+  } catch {
+    return `${value.toFixed(2)} €`
+  }
+}
+
+function metaLabel(ev: EventItem): string {
+  return LOCATION_LABELS[ev.location_type] ?? 'En ligne'
+}
+
+function dateBadge(ev: EventItem) {
+  const start = new Date(ev.start_at)
+  return {
+    day: new Intl.DateTimeFormat('fr-FR', { day: 'numeric' }).format(start),
+    month: new Intl.DateTimeFormat('fr-FR', { month: 'short' }).format(start).replace('.', ''),
+  }
+}
+
+function remainingPlaces(ev: EventItem): number | null {
+  if (ev.capacity == null) return null
+  const count = ev.registrations_count ?? 0
+  return Math.max(0, ev.capacity - count)
+}
+
+function isEventFull(remaining: number | null): boolean {
+  return remaining !== null && remaining < 1
+}
+
+function showLowPlacesBadge(remaining: number | null): boolean {
+  return remaining !== null && remaining > 0 && remaining < 6
+}
+---
+<section class="spl">
+  {events.length === 0 ? (
+    <SectionEmptyState
+      icon={Zap}
+      title="Aucun event à venir"
+      description="Reviens bientôt pour découvrir les prochains events."
+      ownerDescription="Annonce ton prochain webinaire, atelier ou meetup."
+      ctaLabel="Ajouter un event"
+      ctaAction="data-open-event-overlay"
+      isOwner={isOwner}
+    />
+  ) : (
+    <div class="spl__inner" data-ev-pl>
+      <div class="spl__bar">
+        <span class="spl__count">
+          <b data-ev-pl-count>{events.length}</b> event{events.length > 1 ? 's' : ''}
+        </span>
+        <div class="spl__searchwrap" data-ev-pl-search-wrap>
+          <button type="button" class="spl__search-btn" data-ev-pl-search-toggle aria-expanded="false" aria-label="Rechercher">
+            <span class="spl__icon" data-ev-pl-icon-search set:html={Search} />
+            <span class="spl__icon" data-ev-pl-icon-close hidden set:html={X} />
+          </button>
+          <input
+            type="search"
+            class="spl__search-input"
+            placeholder="Rechercher un event…"
+            aria-label="Rechercher un event"
+            data-ev-pl-search
+          />
+        </div>
+      </div>
+
+      <div class="grid-tiles">
+        {events.map((ev) => {
+          const href = entitySlug && ev.slug ? `/${entitySlug}/events/${ev.slug}` : null
+          const editHref = isOwner && dashboardUrl ? `${dashboardUrl}/events/${ev.id}` : null
+          const cover = ev.gallery_images?.[0] ?? null
+          const badge = dateBadge(ev)
+          const remaining = remainingPlaces(ev)
+          const isFull = isEventFull(remaining)
+          const lowPlaces = showLowPlacesBadge(remaining)
+          const excerpt = ev.detailExcerpt?.trim() ?? ''
+          const showPrice = ev.price_cents != null
+          const draftBadge = isOwner && ev.is_published === false ? 'Brouillon' : null
+          return (
+            <div class="tile tile--rich" data-ev-pl-item data-ev-pl-name={ev.title.toLowerCase()}>
+              {href && <a class="tile__stretch" href={href} aria-label={ev.title}></a>}
+              <div class="tile__media">
+                {draftBadge ? (
+                  <span class="tile__badge tile__badge--dark">{draftBadge}</span>
+                ) : isFull ? (
+                  <span class="tile__badge tile__badge--dark">Complet</span>
+                ) : lowPlaces ? (
+                  <span class="tile__badge">{remaining} place{remaining! > 1 ? 's' : ''}</span>
+                ) : null}
+                {showPrice && (
+                  <span class="tile__price-badge">
+                    <span class="tile__price-now">{formatPrice(ev.price_cents, ev.currency)}</span>
+                  </span>
+                )}
+                {cover ? (
+                  <img src={cover} alt={ev.title} loading="lazy" />
+                ) : (
+                  <div class="ph" aria-hidden="true">
+                    <span class="flex h-6 w-6 items-center justify-center" set:html={Zap} />
+                  </div>
+                )}
+                <span class="tile__date-badge" aria-hidden="true">
+                  <span class="tile__date-d">{badge.day}</span>
+                  <span class="tile__date-m">{badge.month}</span>
+                </span>
+              </div>
+              <div class="tile__body">
+                <div class="tile__head">
+                  <div class="tile__title">{ev.title}</div>
+                  <div class="tile__meta">{metaLabel(ev)}</div>
+                </div>
+
+                {excerpt && (
+                  <div class="tile__detail">
+                    <p class="tile__detail-text">{excerpt}</p>
+                  </div>
+                )}
+
+                <div class="tile__reviews">
+                  <span class="tile__review-empty">Soyez le premier à noter</span>
+                </div>
+              </div>
+
+              {editHref && (
+                <div class="tile__edit-wrap">
+                  <a href={editHref} class="tile__edit">Modifier</a>
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+
+      <p class="spl__noresults" data-ev-pl-noresults hidden>Aucun event ne correspond.</p>
+    </div>
+  )}
+</section>
+
+<script is:inline>
+(function () {
+  var root = document.querySelector('[data-ev-pl]')
+  if (!root) return
+  var searchInput = root.querySelector('[data-ev-pl-search]')
+  var searchWrap = root.querySelector('[data-ev-pl-search-wrap]')
+  var searchToggle = root.querySelector('[data-ev-pl-search-toggle]')
+  var iconSearch = root.querySelector('[data-ev-pl-icon-search]')
+  var iconClose = root.querySelector('[data-ev-pl-icon-close]')
+  var items = root.querySelectorAll('[data-ev-pl-item]')
+  var noResults = root.querySelector('[data-ev-pl-noresults]')
+  var countEl = root.querySelector('[data-ev-pl-count]')
+
+  function apply() {
+    var q = (searchInput.value || '').trim().toLowerCase()
+    var visible = 0
+    items.forEach(function (item) {
+      var show = !q || (item.getAttribute('data-ev-pl-name') || '').indexOf(q) !== -1
+      item.hidden = !show
+      if (show) visible++
+    })
+    if (noResults) noResults.hidden = visible > 0
+    if (countEl) countEl.textContent = String(visible)
+  }
+
+  function setSearchOpen(open) {
+    if (searchWrap) searchWrap.classList.toggle('is-open', open)
+    if (iconSearch) iconSearch.hidden = open
+    if (iconClose) iconClose.hidden = !open
+    if (searchToggle) {
+      searchToggle.setAttribute('aria-expanded', open ? 'true' : 'false')
+      searchToggle.setAttribute('aria-label', open ? 'Fermer la recherche' : 'Rechercher')
+    }
+    if (open) {
+      searchInput.focus()
+    } else {
+      searchInput.value = ''
+      apply()
+    }
+  }
+
+  if (searchInput) searchInput.addEventListener('input', apply)
+  if (searchInput) searchInput.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') setSearchOpen(false)
+  })
+  if (searchToggle) searchToggle.addEventListener('click', function () {
+    setSearchOpen(!searchWrap.classList.contains('is-open'))
+  })
+})()
+</script>
+
+<style>
+  .spl {
+    padding: 4px 22px 28px;
+  }
+  .spl__inner {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .spl__bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 38px;
+  }
+  .spl__count {
+    font-size: 13px;
+    color: var(--color-neutral-500);
+  }
+  .spl__count b {
+    color: var(--color-neutral-900);
+    font-weight: 600;
+  }
+  .spl__searchwrap {
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    width: 38px;
+    overflow: hidden;
+    transition: width .25s ease;
+  }
+  .spl__searchwrap.is-open {
+    width: 100%;
+    max-width: 320px;
+  }
+  .spl__search-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: 0;
+    background: none;
+    color: var(--color-neutral-500);
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: color 120ms;
+  }
+  .spl__search-btn:hover { color: var(--color-accent); }
+  .spl__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 15px;
+    height: 15px;
+  }
+  .spl__search-input {
+    border: 0;
+    outline: none;
+    font-size: 13px;
+    font-family: inherit;
+    width: 100%;
+    min-width: 0;
+    background: none;
+    padding: 9px 12px 9px 0;
+    color: var(--color-neutral-900);
+  }
+  .spl__search-input::-webkit-search-cancel-button { display: none; }
+  .spl__noresults {
+    text-align: center;
+    color: var(--color-neutral-400);
+    font-size: 13px;
+    padding: 28px 0;
+    margin: 0;
+  }
+</style>

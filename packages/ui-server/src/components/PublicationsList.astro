@@ -47,7 +47,7 @@ const { publications, entityDisplayName, entityAvatarUrl, entitySlug, entityRole
       />
     </div>
   ) : (
-    <div class="divide-y divide-neutral-200">
+    <div class="divide-y divide-neutral-200 [&>article]:pt-2 [&>article]:pb-4">
       {publications.map((pub) => (
         <PublicationCard
           id={pub.id}

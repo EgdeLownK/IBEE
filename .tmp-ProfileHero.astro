@@ -1,0 +1,772 @@
+﻿---
+import { UserPlus, UserMinus, Bell, BellOff, ChevronDown, Pencil, Image as ImageIcon, Trash2, Plus, Share, Check } from 'lucide-static'
+import AuthPromptOverlay from './AuthPromptOverlay.astro'
+
+interface Props {
+  displayName: string
+  role: string | null
+  location: string | null
+  bio: string | null
+  avatarUrl: string | null
+  createdAt: string
+  isOwner?: boolean
+  isAuthenticated?: boolean
+  isFollowing?: boolean
+  entityId?: string
+  entitySlug?: string
+  followersCount?: number
+  dashboardUrl?: string
+  previewMode?: boolean
+  /** Menu ┬½ Ajouter contenu ┬╗ (owner only) : un item par type de section.
+      active=true ÔåÆ entr├®e de cr├®ation de contenu ; false ÔåÆ ┬½ Ajouter le menu X ┬╗.
+      Omis (ex : page produit, pas d'overlay) ÔåÆ bouton non rendu. */
+  addContentSections?: { type: string; active: boolean }[]
+}
+
+const {
+  displayName,
+  role,
+  bio,
+  avatarUrl,
+  isOwner = false,
+  isAuthenticated = false,
+  isFollowing = false,
+  entityId,
+  entitySlug,
+  followersCount = 0,
+  dashboardUrl = '',
+  previewMode = false,
+  addContentSections = [],
+} = Astro.props
+
+const initials = displayName
+  .split(/\s+/)
+  .filter(Boolean)
+  .slice(0, 2)
+  .map((w) => w[0]!.toUpperCase())
+  .join('')
+
+const followersDisplay = new Intl.NumberFormat('fr-FR', {
+  notation: 'compact',
+  maximumFractionDigits: 1,
+}).format(followersCount)
+const followersText = followersCount === 0 ? null : `${followersDisplay} abonn├®s`
+
+const followAuthId = `follow-auth-${entityId ?? 'default'}`
+const subscribeInfoId = `subscribe-info-${entityId ?? 'default'}`
+const notifMenuId = `notif-menu-${entityId ?? 'default'}`
+const bannerMenuId = `banner-menu-${entityId ?? 'default'}`
+const avatarMenuId = `avatar-menu-${entityId ?? 'default'}`
+const addContentId = `add-content-${entityId ?? 'default'}`
+const hasAvatar = !!avatarUrl
+
+// Menu ┬½ Ajouter contenu ┬╗ : libell├®s des menus (sections) et des contenus.
+// Seul le shop a un flux de cr├®ation web (overlay produit) ÔÇö les autres types
+// actifs apparaissent gris├®s ┬½ bient├┤t ┬╗ en attendant leur flux.
+const showAddContent = isOwner && !previewMode && addContentSections.length > 0
+const menuLabels: Record<string, string> = {
+  shop: 'Shop',
+  appointments: 'Service',
+  events: 'Event',
+  news: 'News',
+  history: 'Histoire',
+  faq: 'FAQ',
+}
+const contentLabels: Record<string, string> = {
+  shop: 'Produit',
+  appointments: 'Service',
+  events: 'Event',
+  news: 'Publication',
+  history: 'Histoire',
+  faq: 'FAQ',
+}
+---
+<header>
+  {/* Banner ÔÇö 172px hauteur, placeholder hachur├® si pas d'image + bouton partager flottant */}
+  <div class="relative">
+    {isOwner ? (
+      <button
+        type="button"
+        class="profile-banner profile-banner--editable"
+        popovertarget={bannerMenuId}
+        style={`anchor-name: --${bannerMenuId};`}
+        aria-label="Modifier la banni├¿re"
+      >
+        <div class="profile-banner__placeholder" aria-hidden="true">
+          <span class="profile-banner__label">BANNER IMAGE 800├ù172</span>
+        </div>
+        <span class="banner-edit-hint" aria-hidden="true">
+          <span class="flex h-4 w-4 items-center justify-center" set:html={ImageIcon} />
+          Modifier
+        </span>
+      </button>
+    ) : (
+      <div class="profile-banner">
+        <div class="profile-banner__placeholder" aria-hidden="true">
+          <span class="profile-banner__label">BANNER IMAGE 800├ù172</span>
+        </div>
+      </div>
+    )}
+    <button
+      type="button"
+      class="iconbtn profile-share"
+      data-share-profile
+      aria-label="Partager le profil"
+    >
+      <span class="flex h-[17px] w-[17px] items-center justify-center" set:html={Share} />
+      <span class="hidden h-[17px] w-[17px] items-center justify-center" data-share-done set:html={Check} />
+    </button>
+  </div>
+
+  <div class="px-[22px]">
+    {/* Avatar chevauchant + nom + r├┤le */}
+    <div class="flex items-end gap-4 mt-[-34px]">
+      {isOwner ? (
+        <button
+          type="button"
+          class="profile-avatar profile-avatar--editable"
+          popovertarget={avatarMenuId}
+          style={`anchor-name: --${avatarMenuId};`}
+          aria-label="Modifier l'avatar"
+        >
+          {avatarUrl ? (
+            <img src={avatarUrl} alt={displayName} width="172" height="172" fetchpriority="high" class="h-full w-full object-cover" />
+          ) : (
+            <span class="font-display text-[30px] font-semibold text-accent">{initials}</span>
+          )}
+          <span class="avatar-edit-hint" aria-hidden="true">
+            <span class="flex h-4 w-4 items-center justify-center" set:html={ImageIcon} />
+          </span>
+        </button>
+      ) : (
+        <div class="profile-avatar">
+          {avatarUrl ? (
+            <img src={avatarUrl} alt={displayName} width="172" height="172" fetchpriority="high" class="h-full w-full object-cover" />
+          ) : (
+            <span class="font-display text-[30px] font-semibold text-accent">{initials}</span>
+          )}
+        </div>
+      )}
+
+      <div class="min-w-0 flex-1 pb-1">
+        <h1 class="m-0 font-display text-[22px] font-semibold leading-tight text-neutral-900 truncate">{displayName}</h1>
+        {role && <p class="mt-0.5 mb-0 text-[13.5px] text-neutral-500">{role}</p>}
+      </div>
+    </div>
+
+    {/* Abonn├®s (mise ├á jour par le JS follow/unfollow) */}
+    <p
+      data-followers-count
+      data-count={String(followersCount)}
+      class="mt-4 mb-0 text-[13.5px] text-neutral-600"
+      style={followersText ? undefined : 'display: none;'}
+    >
+      <b class="font-display font-bold text-neutral-900">{followersDisplay}</b> abonn├®s
+    </p>
+
+    {/* Bio */}
+    {bio && <p class="mt-3 mb-0 text-[13.5px] leading-normal text-neutral-600">{bio}</p>}
+
+    {/* Actions */}
+    <div
+      class="flex items-center gap-2.5 mt-5 mb-1"
+      data-follow-wrapper
+      data-entity-id={entityId}
+      data-entity-slug={entitySlug}
+    >
+      {previewMode ? (
+        <>
+          <a href={`/${entitySlug}`} class="btn btn--dark flex-1">
+            <span class="flex h-4 w-4 items-center justify-center" set:html={UserPlus} />
+            Suivre
+          </a>
+          <a href={`/${entitySlug}`} class="btn btn--ghost flex-1">Voir le profil</a>
+        </>
+      ) : isOwner ? (
+        <>
+          {showAddContent && (
+            <button
+              type="button"
+              popovertarget={addContentId}
+              style={`anchor-name: --${addContentId};`}
+              class="btn btn--dark flex-1"
+            >
+              <span class="flex h-4 w-4 items-center justify-center" set:html={Plus} />
+              Ajouter contenu
+            </button>
+          )}
+          <a href={`/${entitySlug}/informations`} class="btn btn--ghost flex-1">
+            <span class="flex h-4 w-4 items-center justify-center" set:html={Pencil} />
+            Modifier profil
+          </a>
+        </>
+      ) : (
+        <>
+          {/* Anonyme ÔåÆ popover auth */}
+          {!isAuthenticated && (
+            <button
+              type="button"
+              popovertarget={followAuthId}
+              style={`anchor-name: --${followAuthId};`}
+              class="btn btn--dark flex-1"
+            >
+              <span class="flex h-4 w-4 items-center justify-center" set:html={UserPlus} />
+              Suivre
+            </button>
+          )}
+
+          {/* Authentifi├® ÔÇö Not following */}
+          {isAuthenticated && (
+            <button
+              type="button"
+              data-follow-action
+              style={isFollowing ? 'display: none;' : undefined}
+              class="btn btn--dark flex-1"
+            >
+              <span class="flex h-4 w-4 items-center justify-center" set:html={UserPlus} />
+              Suivre
+            </button>
+          )}
+
+          {/* Authentifi├® ÔÇö Following : bell + chevron */}
+          {isAuthenticated && (
+            <button
+              type="button"
+              data-notif-trigger
+              popovertarget={notifMenuId}
+              style={`anchor-name: --${notifMenuId};${!isFollowing ? ' display: none;' : ''}`}
+              class="btn btn--ghost flex-1"
+            >
+              <span class="flex h-4 w-4 items-center justify-center" set:html={Bell} />
+              <span class="flex h-3 w-3 items-center justify-center" set:html={ChevronDown} />
+            </button>
+          )}
+
+          {/* S'abonner ÔåÆ popover info "bient├┤t dispo" */}
+          <button type="button" popovertarget={subscribeInfoId} class="btn btn--ghost flex-1">
+            S'abonner
+          </button>
+        </>
+      )}
+    </div>
+  </div>
+</header>
+
+{/* Popovers rendus hors du header pour le top layer */}
+
+{!isOwner && !isAuthenticated && (
+  <AuthPromptOverlay
+    id={followAuthId}
+    title={`Connectez-vous pour suivre ${displayName}`}
+    loginUrl={`${dashboardUrl}/login`}
+  />
+)}
+
+{!isOwner && (
+  <AuthPromptOverlay
+    id={subscribeInfoId}
+    title="L'abonnement sera bient├┤t disponible"
+    subtitle={`Vous pourrez soutenir ${displayName} et acc├®der ├á du contenu exclusif.`}
+    position="center"
+  />
+)}
+
+{/* Menu ┬½ Ajouter contenu ┬╗ (owner only) : cr├®ation de contenu par section
+    active, puis menus ├á activer s├®par├®s visuellement. */}
+{showAddContent && (
+  <div id={addContentId} popover="auto" class="image-action-menu" style={`position-anchor: --${addContentId};`} data-add-content-menu>
+    {/* Cr├®ation de contenu dans les menus actifs */}
+    <p class="image-action-menu__label">Ajouter contenu</p>
+    {addContentSections.filter((s) => s.active).map((s) =>
+      s.type === 'shop' ? (
+        <button type="button" class="image-action-menu__item" data-open-product-overlay>
+          <span class="flex h-4 w-4 items-center justify-center" set:html={Plus} />
+          <span>{contentLabels[s.type] ?? s.type}</span>
+        </button>
+      ) : s.type === 'appointments' ? (
+        <button type="button" class="image-action-menu__item" data-open-service-overlay>
+          <span class="flex h-4 w-4 items-center justify-center" set:html={Plus} />
+          <span>{contentLabels[s.type] ?? s.type}</span>
+        </button>
+      ) : s.type === 'events' ? (
+        <button type="button" class="image-action-menu__item" data-open-event-overlay>
+          <span class="flex h-4 w-4 items-center justify-center" set:html={Plus} />
+          <span>{contentLabels[s.type] ?? s.type}</span>
+        </button>
+      ) : (
+        <button type="button" class="image-action-menu__item" disabled title="Bient├┤t disponible">
+          <span class="flex h-4 w-4 items-center justify-center" set:html={Plus} />
+          <span>{contentLabels[s.type] ?? s.type}</span>
+          <span class="image-action-menu__soon">bient├┤t</span>
+        </button>
+      )
+    )}
+    {/* Gestion des menus : activer / d├®sactiver chaque section au m├¬me endroit
+        (remplace l'ancien bouton "+" des onglets) */}
+    <div class="image-action-menu__divider" aria-hidden="true"></div>
+    <p class="image-action-menu__label">G├®rer les menus</p>
+    {addContentSections.map((s) => (
+      <button
+        type="button"
+        class="image-action-menu__item"
+        data-toggle-section-type={s.type}
+        data-section-active={s.active ? 'true' : 'false'}
+        aria-pressed={s.active ? 'true' : 'false'}
+      >
+        <span class:list={['flex h-4 w-4 items-center justify-center', s.active ? 'text-accent' : 'text-neutral-500']} set:html={s.active ? Check : Plus} />
+        <span>{s.active ? (menuLabels[s.type] ?? s.type) : `Ajouter ${menuLabels[s.type] ?? s.type}`}</span>
+        {s.active && <span class="image-action-menu__soon">Activ├®</span>}
+      </button>
+    ))}
+  </div>
+)}
+
+{/* Banner image menu (owner only) */}
+{isOwner && (
+  <div id={bannerMenuId} popover="auto" class="image-action-menu image-action-menu--banner" style={`position-anchor: --${bannerMenuId};`}>
+    <button type="button" class="image-action-menu__item" data-banner-action="change">
+      <span class="flex h-4 w-4 items-center justify-center" set:html={ImageIcon} />
+      <span>Changer l'image</span>
+    </button>
+    <button type="button" class="image-action-menu__item image-action-menu__item--danger" data-banner-action="delete">
+      <span class="flex h-4 w-4 items-center justify-center" set:html={Trash2} />
+      <span>Supprimer</span>
+    </button>
+  </div>
+)}
+
+{/* Avatar image menu (owner only) */}
+{isOwner && (
+  <div id={avatarMenuId} popover="auto" class="image-action-menu" style={`position-anchor: --${avatarMenuId};`}>
+    <button type="button" class="image-action-menu__item" data-avatar-action="change">
+      <span class="flex h-4 w-4 items-center justify-center" set:html={ImageIcon} />
+      <span>Changer l'image</span>
+    </button>
+    {hasAvatar && (
+      <button type="button" class="image-action-menu__item image-action-menu__item--danger" data-avatar-action="delete">
+        <span class="flex h-4 w-4 items-center justify-center" set:html={Trash2} />
+        <span>Supprimer</span>
+      </button>
+    )}
+  </div>
+)}
+
+{/* Notification menu dropdown */}
+{!isOwner && isAuthenticated && (
+  <div id={notifMenuId} popover="auto" class="notif-menu" style={`position-anchor: --${notifMenuId};`}>
+    <button type="button" data-notif-option="all" class="notif-menu-item notif-menu-item--active">
+      <span class="flex h-5 w-5 shrink-0 items-center justify-center" set:html={Bell} />
+      <span class="flex-1">Toutes</span>
+    </button>
+    <button type="button" data-notif-option="none" class="notif-menu-item">
+      <span class="flex h-5 w-5 shrink-0 items-center justify-center" set:html={BellOff} />
+      <span class="flex-1">Aucune</span>
+    </button>
+    <div class="my-1 border-t border-neutral-200"></div>
+    <button type="button" data-unfollow-action class="notif-menu-item notif-menu-item--danger">
+      <span class="flex h-5 w-5 shrink-0 items-center justify-center" set:html={UserMinus} />
+      <span class="flex-1">Ne plus suivre</span>
+    </button>
+  </div>
+)}
+
+<style>
+  .profile-banner {
+    width: 100%;
+    height: 172px;
+    overflow: hidden;
+    background: var(--color-panel);
+  }
+
+  .profile-share {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    background: rgba(255, 255, 255, .85);
+    backdrop-filter: blur(6px);
+    z-index: 1;
+  }
+
+  .profile-banner__placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-image: repeating-linear-gradient(
+      135deg,
+      var(--color-panel-2) 0,
+      var(--color-panel-2) 4px,
+      var(--color-panel) 4px,
+      var(--color-panel) 10px
+    );
+  }
+
+  .profile-banner__label {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    letter-spacing: 0.05em;
+    color: var(--color-neutral-400);
+    background: var(--color-surface);
+    padding: 6px 14px;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--color-border);
+  }
+
+  .profile-avatar {
+    width: 86px;
+    height: 86px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: var(--color-accent-soft);
+    border: 4px solid var(--color-surface);
+    box-shadow: 0 6px 16px -8px rgba(0, 0, 0, .3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    /* Au-dessus du wrapper banner (position:relative) ÔÇö sans ├ºa l'avatar
+       chevauchant (-34px) est peint sous la cover, sauf au hover o├╣ le
+       filter le promeut dans un stacking context. */
+    position: relative;
+    z-index: 2;
+  }
+
+  .profile-banner--editable,
+  .profile-avatar--editable {
+    padding: 0;
+    cursor: pointer;
+    font: inherit;
+    transition: filter 160ms ease;
+  }
+  .profile-banner--editable {
+    border: none;
+    background: var(--color-panel);
+    width: 100%;
+    height: 172px;
+    overflow: hidden;
+    display: block;
+    /* Ancre le hint d'├®dition (.banner-edit-hint) en bas ├á droite */
+    position: relative;
+  }
+  .profile-banner--editable:hover {
+    filter: brightness(0.94);
+  }
+  .profile-avatar--editable:hover {
+    filter: brightness(0.94);
+  }
+
+  .image-action-menu {
+    min-width: 200px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    box-shadow: var(--shadow-pop);
+    padding: 6px;
+    margin: 0;
+    margin-top: 8px;
+    overflow: visible;
+    position-area: bottom span-right;
+    position-try-fallbacks: flip-block;
+  }
+  /* Menu banni├¿re : ancr├® au bord droit de la cover, ├®cart├® du bord du
+     container (les menus avatar / ajouter contenu restent align├®s ├á gauche) */
+  .image-action-menu--banner {
+    position-area: bottom span-left;
+    margin-right: 22px;
+  }
+  .image-action-menu::backdrop {
+    background: transparent;
+  }
+  .image-action-menu__item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 9px 12px;
+    border-radius: 8px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    color: var(--color-neutral-900);
+    text-align: left;
+    transition: background 120ms;
+  }
+  .image-action-menu__item:hover {
+    background: var(--color-panel);
+  }
+  .image-action-menu__item--danger {
+    color: rgb(181, 51, 51);
+  }
+  .image-action-menu__item--danger:hover {
+    background: rgba(181, 51, 51, 0.08);
+  }
+  .image-action-menu__item:disabled {
+    opacity: 0.45;
+    cursor: default;
+  }
+  .image-action-menu__item:disabled:hover {
+    background: transparent;
+  }
+  .image-action-menu__soon {
+    margin-left: auto;
+    font-size: 11px;
+    color: var(--color-neutral-400);
+  }
+  .image-action-menu__divider {
+    margin: 6px 0;
+    border-top: 1px solid var(--color-border);
+  }
+  .image-action-menu__label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-neutral-500);
+    padding: 4px 12px 6px;
+    margin: 0;
+  }
+
+  .notif-menu {
+    width: 240px;
+    padding: 6px;
+    background: var(--color-neutral-0);
+    border: 1px solid var(--color-neutral-200);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    margin: 0;
+    margin-top: 4px;
+    overflow: visible;
+    position-area: bottom;
+    position-try-fallbacks: flip-block;
+  }
+
+  .notif-menu::backdrop {
+    background: transparent;
+  }
+
+  .notif-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 8px 12px;
+    border: none;
+    background: transparent;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    color: var(--color-neutral-600);
+    cursor: pointer;
+    transition: background-color 0.15s;
+  }
+
+  .notif-menu-item:hover {
+    background: var(--color-neutral-50);
+  }
+
+  .notif-menu-item--active {
+    color: var(--color-accent);
+    font-weight: 500;
+  }
+
+  .notif-menu-item--danger {
+    color: var(--color-neutral-600);
+  }
+
+  .notif-menu-item--danger:hover {
+    background: rgb(220 38 38 / 0.06);
+    color: var(--color-error);
+  }
+</style>
+
+{/* Exception JS justifi├®e : bouton partager du hero (Web Share API, fallback
+    copie du lien). Contenu rendu serveur, ce script ne touche pas au SEO. */}
+<script is:inline>
+  (function () {
+    var btn = document.querySelector('[data-share-profile]')
+    if (!btn) return
+    var icons = btn.querySelectorAll('span')
+    btn.addEventListener('click', function () {
+      var url = location.origin + location.pathname
+      function done() {
+        if (icons.length < 2) return
+        icons[0].classList.add('hidden')
+        icons[1].classList.remove('hidden')
+        icons[1].classList.add('flex')
+        setTimeout(function () {
+          icons[1].classList.add('hidden')
+          icons[1].classList.remove('flex')
+          icons[0].classList.remove('hidden')
+        }, 1600)
+      }
+      if (navigator.share) {
+        navigator.share({ title: document.title, url: url }).catch(function () {})
+      } else if (navigator.clipboard) {
+        navigator.clipboard.writeText(url).then(done).catch(function () {})
+      }
+    })
+  })()
+</script>
+
+{/* Image action menus ÔÇö stubs (backend upload/delete ├á venir) */}
+<script is:inline>
+  (function() {
+    document.querySelectorAll('[data-banner-action], [data-avatar-action]').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var bannerAction = btn.dataset.bannerAction
+        var avatarAction = btn.dataset.avatarAction
+        var target = bannerAction ? 'banner' : 'avatar'
+        var action = bannerAction || avatarAction
+        if (action === 'change') {
+          alert('Upload ' + target + ' ├á venir')
+        } else if (action === 'delete') {
+          if (confirm('Supprimer ' + target + ' ?')) {
+            alert('Suppression ' + target + ' ├á venir')
+          }
+        }
+      })
+    })
+  })()
+</script>
+
+{/* Menu ┬½ Ajouter contenu ┬╗ : activation ET d├®sactivation des menus
+    (API menu-sections, remplace l'ancien gestionnaire du bouton "+" des
+    onglets) + fermeture du popover avant l'ouverture des overlays. */}
+<script is:inline>
+  (function() {
+    var menu = document.querySelector('[data-add-content-menu]')
+    if (!menu) return
+
+    async function callApi(method, type) {
+      try {
+        var res = await fetch('/api/menu-sections', {
+          method: method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type: type }),
+        })
+        if (!res.ok) {
+          var data = await res.json().catch(function() { return {} })
+          alert('Erreur : ' + (data.error || res.status))
+          return false
+        }
+        return true
+      } catch (err) {
+        console.error('[add-content]', err)
+        alert('Erreur r├®seau')
+        return false
+      }
+    }
+
+    menu.querySelectorAll('[data-toggle-section-type]').forEach(function(btn) {
+      btn.addEventListener('click', async function() {
+        var type = btn.dataset.toggleSectionType
+        var isActive = btn.dataset.sectionActive === 'true'
+        if (isActive && !confirm('D├®sactiver la section ' + type + ' ? Son contenu est conserv├®.')) return
+        var ok = await callApi(isActive ? 'DELETE' : 'POST', type)
+        if (ok) location.reload()
+      })
+    })
+
+    // L'ouverture des overlays (produit, service, event) est g├®r├®e par leurs
+    // propres scripts ([data-open-*-overlay]) ÔÇö ici on referme juste le popover.
+    menu.querySelectorAll('[data-open-product-overlay], [data-open-service-overlay], [data-open-event-overlay]').forEach(function(btn) {
+      if (menu.hidePopover) btn.addEventListener('click', function() { menu.hidePopover() })
+    })
+  })()
+</script>
+
+{/* Vanilla JS ÔÇö follow/unfollow + notification menu */}
+<script>
+  const wrapper = document.querySelector<HTMLElement>('[data-follow-wrapper]')
+  if (wrapper) {
+    const entityId = wrapper.dataset.entityId
+    const entitySlug = wrapper.dataset.entitySlug
+    const followBtn = wrapper.querySelector<HTMLButtonElement>('[data-follow-action]')
+    const notifTrigger = wrapper.querySelector<HTMLButtonElement>('[data-notif-trigger]')
+    const counterEl = document.querySelector<HTMLElement>('[data-followers-count]')
+    const unfollowBtn = document.querySelector<HTMLButtonElement>('[data-unfollow-action]')
+
+    const notifOptions = document.querySelectorAll<HTMLButtonElement>('[data-notif-option]')
+    notifOptions.forEach(opt => {
+      opt.addEventListener('click', () => {
+        notifOptions.forEach(o => o.classList.remove('notif-menu-item--active'))
+        opt.classList.add('notif-menu-item--active')
+      })
+    })
+
+    let busy = false
+
+    function formatCount(count: number) {
+      return new Intl.NumberFormat('fr-FR', {
+        notation: 'compact',
+        maximumFractionDigits: 1,
+      }).format(count)
+    }
+
+    function updateCounter(count: number) {
+      if (!counterEl) return
+      counterEl.dataset.count = String(count)
+      if (count === 0) {
+        counterEl.style.display = 'none'
+        counterEl.textContent = ''
+      } else {
+        counterEl.style.display = ''
+        counterEl.innerHTML = `<b class="font-display font-bold text-neutral-900">${formatCount(count)}</b> abonn├®s`
+      }
+    }
+
+    followBtn?.addEventListener('click', async () => {
+      if (busy) return
+      busy = true
+      try {
+        const res = await fetch('/api/follow', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ entityId, slug: entitySlug }),
+        })
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+        const data = await res.json()
+
+        followBtn.style.display = 'none'
+        if (notifTrigger) notifTrigger.style.display = ''
+        updateCounter(data.followers_count ?? 0)
+      } catch (err) {
+        console.error('[follow]', err)
+      } finally {
+        busy = false
+      }
+    })
+
+    unfollowBtn?.addEventListener('click', async () => {
+      if (busy) return
+      busy = true
+      try {
+        const res = await fetch('/api/unfollow', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ entityId, slug: entitySlug }),
+        })
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+        const data = await res.json()
+
+        const notifMenu = document.querySelector<HTMLElement>(`[id="notif-menu-${entityId}"]`)
+        if (notifMenu && 'hidePopover' in notifMenu) {
+          (notifMenu as HTMLElement & { hidePopover: () => void }).hidePopover()
+        }
+
+        if (notifTrigger) notifTrigger.style.display = 'none'
+        if (followBtn) followBtn.style.display = ''
+        updateCounter(data.followers_count ?? 0)
+
+        notifOptions.forEach(o => o.classList.remove('notif-menu-item--active'))
+        document.querySelector('[data-notif-option="all"]')?.classList.add('notif-menu-item--active')
+      } catch (err) {
+        console.error('[unfollow]', err)
+      } finally {
+        busy = false
+      }
+    })
+  }
+</script>

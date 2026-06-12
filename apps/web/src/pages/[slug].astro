@@ -8,49 +8,55 @@ import {
   getEntityBySlug,
   getEntityMenuSections,
   getEntityHomeWidgets,
+  getEntityHistory,
+  getEntityContactInfo,
+  defaultOpeningHours,
   getEntityFaq,
   getPublicationsByEntity,
   getAppointmentTypesByEntity,
   listPublishedProductsByEntity,
-  listProductsByEntity,
   listProductCategories,
   listUpcomingEvents,
   countEventRegistrations,
+  getReviewAggregates,
+  getServiceReviewAggregates,
   isFollowing as checkIsFollowing
 } from '@ibee/supabase'
 
 const { slug } = Astro.params
 if (!slug) return new Response(null, { status: 404 })
 
-// Les slugs système (__*) ne sont pas accessibles via cette route
 if (slug.startsWith('__')) return new Response(null, { status: 404 })
 
 const entity = await getEntityBySlug(supabase, slug)
 if (!entity) return new Response(null, { status: 404 })
 
-// Résolution de l'utilisateur AVANT le fetch produits : l'owner voit ses
-// brouillons via le client authentifié (RLS), le public voit les publiés.
+const entityRow = entity as typeof entity & { banner_url?: string | null }
+
 const authClient = createAuthClient(Astro.request, Astro.cookies)
 const { data: { user } } = await authClient.auth.getUser()
+const dashboardUrl = import.meta.env.DASHBOARD_URL ?? 'http://localhost:3000'
+const isPreview = Astro.url.searchParams.get('preview') === '1'
 const isOwner = !!(user && entity.user_id && user.id === entity.user_id)
 
-const [menuSections, homeWidgets, faq, publications, appointmentTypes, products, productCategories, upcomingEvents] = await Promise.all([
+// Cutover phase 9 : l'owner édite via le dashboard React, pas via Astro.
+if (isOwner && !isPreview) {
+  return Astro.redirect(`${dashboardUrl}/dashboard/site`)
+}
+
+const [menuSections, homeWidgetsRaw, historyBlocks, contactInfoRaw, faq, publications, appointmentTypes, products, productCategories, upcomingEvents] = await Promise.all([
   getEntityMenuSections(supabase, entity.id),
   getEntityHomeWidgets(supabase, entity.id),
+  getEntityHistory(supabase, entity.id).catch(() => []),
+  getEntityContactInfo(supabase, entity.id).catch(() => null),
   getEntityFaq(supabase, entity.id),
-  getPublicationsByEntity(supabase, entity.id, { publicOnly: true }),
+  getPublicationsByEntity(supabase, entity.id, { publicOnly: true, limit: 50 }),
   getAppointmentTypesByEntity(supabase, entity.id, { activeOnly: true }),
-  isOwner
-    ? listProductsByEntity(authClient, entity.id, { limit: 60 })
-    : listPublishedProductsByEntity(supabase, entity.id, { limit: 60 }),
-  // Catégories "playlist" : groupes de la section shop (lecture publique RLS)
-  // + options de l'overlay de création pour l'owner
+  listPublishedProductsByEntity(supabase, entity.id, { limit: 60 }),
   listProductCategories(supabase, entity.id),
-  // Events publiés à venir (les passés ne s'affichent pas)
   listUpcomingEvents(supabase, entity.id),
 ])
 
-// Jauge par event ("X places restantes") — RPC SECURITY DEFINER, une par event
 const eventRegistrationCounts = await Promise.all(
   upcomingEvents.map((ev) =>
     ev.capacity != null ? countEventRegistrations(supabase, ev.id).catch(() => 0) : Promise.resolve(0)
@@ -61,15 +67,88 @@ const events = upcomingEvents.map((ev, i) => ({
   registrations_count: eventRegistrationCounts[i],
 }))
 
-// Aplatissement pour l'overlay : {id, name} uniquement (props SSR, pas de route GET dédiée).
 const productCategoryOptions = productCategories.map((c) => ({ id: c.id, name: c.name }))
 
-// Aplatissement pour ShopPlaylist : image principale + dispo + groupe catégorie.
-const shopProducts = products.map((p) => ({
+const CARD_DETAIL_EXCERPT_MAX = 150
+
+function truncateText(text: string, max: number = CARD_DETAIL_EXCERPT_MAX): string {
+  const t = text.trim()
+  if (t.length <= max) return t
+  return `${t.slice(0, max)}...`
+}
+
+function entityDetailExcerpt(entity: {
+  content_blocks?: unknown
+  description_long?: string | null
+  description_short?: string | null
+  description?: string | null
+}): string {
+  if (Array.isArray(entity.content_blocks)) {
+    for (const raw of entity.content_blocks) {
+      if (!raw || typeof raw !== 'object') continue
+      const block = raw as Record<string, unknown>
+      if (block.type === 'text' && typeof block.content === 'string' && block.content.trim()) {
+        return truncateText(block.content)
+      }
+      if (block.type === 'list' && Array.isArray(block.items) && block.items.length > 0) {
+        return truncateText(
+          block.items.filter((item): item is string => typeof item === 'string').join(' · ')
+        )
+      }
+    }
+  }
+  if (typeof entity.description_long === 'string' && entity.description_long.trim()) {
+    return truncateText(entity.description_long)
+  }
+  if (typeof entity.description_short === 'string' && entity.description_short.trim()) {
+    return truncateText(entity.description_short)
+  }
+  if (typeof entity.description === 'string' && entity.description.trim()) {
+    const desc = entity.description.trim()
+    try {
+      const parsed = JSON.parse(desc)
+      if (Array.isArray(parsed) && parsed[0]?.type === 'text' && typeof parsed[0].content === 'string') {
+        return truncateText(parsed[0].content)
+      }
+    } catch {
+      return truncateText(desc)
+    }
+  }
+  return ''
+}
+
+const [productReviewStats, serviceReviewStats] = await Promise.all([
+  Promise.all(
+    products.map((p) =>
+      getReviewAggregates(supabase, p.id).catch(() => ({ count: 0, average: 0 }))
+    )
+  ),
+  Promise.all(
+    appointmentTypes.map((s) =>
+      getServiceReviewAggregates(supabase, s.id).catch(() => ({ count: 0, average: 0 }))
+    )
+  ),
+])
+
+const playlistServices = appointmentTypes.map((s, i) => ({
+  ...s,
+  detailExcerpt: entityDetailExcerpt(s),
+  reviewCount: serviceReviewStats[i].count,
+  reviewAverage: serviceReviewStats[i].average,
+}))
+
+const playlistEvents = events.map((ev) => ({
+  ...ev,
+  detailExcerpt: entityDetailExcerpt(ev),
+}))
+
+const shopProducts = products.map((p, i) => ({
   id: p.id,
   title: p.title,
   slug: p.slug,
-  description: p.description_short,
+  detailExcerpt: entityDetailExcerpt(p),
+  reviewCount: productReviewStats[i].count,
+  reviewAverage: productReviewStats[i].average,
   price_cents: p.price_cents,
   sale_price_cents: p.sale_price_cents,
   sale_ends_at: p.sale_ends_at,
@@ -83,12 +162,31 @@ const shopProducts = products.map((p) => ({
 
 const siteUrl = import.meta.env.SITE_URL
 const profileUrl = `${siteUrl}/${entity.slug}`
-const faqItems = faq.isActive ? faq.items : []
-const dashboardUrl = import.meta.env.DASHBOARD_URL ?? 'http://localhost:3000'
-const isAuthenticated = !!user
+const homeWidgets = homeWidgetsRaw.map((w) => ({
+  ...w,
+  config: typeof w.config === 'string'
+    ? (() => { try { return JSON.parse(w.config) } catch { return {} } })()
+    : (w.config ?? {}),
+}))
 
+const faqItems = (faq.items ?? []).map((item) => ({
+  question: item.question,
+  answer: item.answer,
+}))
+const contactInfo = contactInfoRaw ?? {
+  entity_id: entity.id,
+  contact_email: null,
+  contact_email_public: true,
+  contact_phone: null,
+  contact_phone_public: true,
+  message_enabled: false,
+  opening_hours_enabled: false,
+  opening_hours: defaultOpeningHours(),
+}
+
+const isAuthenticated = !!user
 let isFollowing = false
-if (user && !isOwner) {
+if (user) {
   isFollowing = await checkIsFollowing(supabase, user.id, entity.id)
 }
 
@@ -115,20 +213,32 @@ Astro.response.headers.set(
     slot="head"
     entity={entity}
     siteUrl={siteUrl}
-    faqItems={faqItems}
+    faqItems={faq.isActive ? faqItems : []}
   />
-  <main class="md:py-8 sm:py-12">
+  <main class="profile-page">
     <ProfilePage
-      entity={entity}
+      entity={{
+        id: entity.id,
+        display_name: entity.display_name,
+        role: entity.role,
+        location: entity.location,
+        bio: entity.bio,
+        avatar_url: entity.avatar_url,
+        banner_url: entityRow.banner_url ?? null,
+        created_at: entity.created_at,
+        slug: entity.slug,
+        followers_count: entity.followers_count ?? 0,
+      }}
       menuSections={menuSections}
       homeWidgets={homeWidgets}
       faqItems={faqItems}
       publications={publications}
-      appointmentTypes={appointmentTypes}
+      appointmentTypes={playlistServices}
       shopProducts={shopProducts}
       productCategories={productCategoryOptions}
-      events={events}
-      isOwner={isOwner}
+      events={playlistEvents}
+      historyBlocks={historyBlocks}
+      contactInfo={contactInfo}
       isAuthenticated={isAuthenticated}
       isFollowing={isFollowing}
       dashboardUrl={dashboardUrl}

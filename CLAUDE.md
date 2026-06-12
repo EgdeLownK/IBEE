@@ -85,6 +85,18 @@ Le brain (`.ibee-brain/`) est la mémoire long terme du projet.
 - `technique/` — règles tech, stack, pièges, opérations brain, guide entretiens, setup Claude Code, commandes gstack
 - `marche/` — intelligence marché, concurrents, entretiens
 
+## Doctrine des surfaces (post cutover phase 9)
+
+| Surface | Rôle | Édition owner |
+|---------|------|----------------|
+| `apps/dashboard` | Studio React `/dashboard/site` | Oui — Server Actions, uploads, wizards |
+| `apps/web` | SSR public SEO/CDN | Non — visiteur + auth légère (follow, commentaires, réservations) |
+
+- Owner sur `/{slug}` sans `?preview=1` → redirect dashboard.
+- Aperçu public owner : `/{slug}?preview=1`.
+- Astro : pas de `isOwner`, pas de `Cache-Control: private` sur le profil, fetch `publicOnly` uniquement.
+- APIs `apps/web/src/pages/api/*` owner : dépréciées (conservées pour rollback).
+
 ## Règle d'or
 
 Si une décision contredit `.ibee-brain/pilier/`, alerter Killian avant d'exécuter.

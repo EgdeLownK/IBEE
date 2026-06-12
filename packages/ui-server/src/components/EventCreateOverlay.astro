@@ -784,6 +784,9 @@ const { entitySlug } = Astro.props
     function closeOverlay() {
       if (typeof dialog.close === 'function') dialog.close()
       else dialog.removeAttribute('open')
+      if (typeof window.ibeeReopenAddContentIfNeeded === 'function') {
+        window.ibeeReopenAddContentIfNeeded()
+      }
     }
 
     document.querySelectorAll('[data-open-event-overlay]').forEach(function (btn) {

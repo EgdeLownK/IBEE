@@ -1,5 +1,5 @@
 ---
-import { CalendarDays, Zap, BookOpen, MessageCircleQuestion } from 'lucide-static'
+import { BookOpen } from 'lucide-static'
 import ProfileCard from './ProfileCard.astro'
 import ProfileHero from './ProfileHero.astro'
 import ProfileStories from './ProfileStories.astro'
@@ -7,15 +7,14 @@ import MenuTabs from './MenuTabs.astro'
 import ProfileEmptyState from './ProfileEmptyState.astro'
 import SectionEmptyState from './SectionEmptyState.astro'
 import PublicationsList from './PublicationsList.astro'
-import AppointmentBooking from './AppointmentBooking.astro'
-import SectionHeader from './SectionHeader.astro'
-import WidgetCard from './WidgetCard.astro'
-import BannerWelcomeWidget from './BannerWelcomeWidget.astro'
+import ServicePlaylist from './ServicePlaylist.astro'
+import EventPlaylist from './EventPlaylist.astro'
+import HomeWidgetsSection from './HomeWidgetsSection.astro'
 import ShopPlaylist from './ShopPlaylist.astro'
-import ProductCreateOverlay from './ProductCreateOverlay.astro'
-import ServiceCreateOverlay from './ServiceCreateOverlay.astro'
-import EventCreateOverlay from './EventCreateOverlay.astro'
-import EventCard from './EventCard.astro'
+import HistoryWidget from './HistoryWidget.astro'
+import type { HistoryBlock } from '../history-blocks.ts'
+import { historyBlocksHaveContent } from '../history-blocks.ts'
+import type { FaqItemInput } from '../faq-items.ts'
 
 interface Media {
   id: string
@@ -41,45 +40,66 @@ interface Props {
     location: string | null
     bio: string | null
     avatar_url: string | null
+    banner_url?: string | null
     created_at: string
     slug: string
     followers_count: number
   }
   menuSections: { id: string; type: string; position: number; is_configured?: boolean | null }[]
-  homeWidgets?: unknown[]
+  homeWidgets?: { id: string; type: string; position: number; config?: unknown }[]
   faqItems?: unknown[]
   publications?: Publication[]
-  appointmentTypes?: { id: string; title: string; slug: string; description: string | null; duration_minutes: number; location_type: string; price_cents: number | null; promo_price_cents?: number | null; currency: string; gallery_images?: string[] }[]
-  events?: { id: string; title: string; slug: string; description: string | null; start_at: string; end_at?: string | null; location_type: string; location_details?: string | null; price_cents: number | null; currency: string; capacity?: number | null; gallery_images?: string[]; registrations_count?: number }[]
-  shopProducts?: { id: string; title: string; slug: string; description?: string | null; price_cents?: number | null; sale_price_cents?: number | null; sale_ends_at?: string | null; currency?: string; image_url?: string | null; status?: string | null; category_id?: string | null; type?: string | null; physical_stock_quantity?: number | null }[]
+  appointmentTypes?: { id: string; title: string; slug: string; description: string | null; detailExcerpt?: string | null; reviewCount?: number; reviewAverage?: number; duration_minutes: number; location_type: string; price_cents: number | null; promo_price_cents?: number | null; currency: string; gallery_images?: string[] }[]
+  events?: { id: string; title: string; slug: string; description: string | null; detailExcerpt?: string | null; start_at: string; end_at?: string | null; location_type: string; location_details?: string | null; price_cents: number | null; currency: string; capacity?: number | null; gallery_images?: string[]; registrations_count?: number }[]
+  shopProducts?: { id: string; title: string; slug: string; detailExcerpt?: string | null; reviewCount?: number; reviewAverage?: number; price_cents?: number | null; sale_price_cents?: number | null; sale_ends_at?: string | null; currency?: string; image_url?: string | null; status?: string | null; category_id?: string | null; type?: string | null; physical_stock_quantity?: number | null }[]
   productCategories?: { id: string; name: string }[]
-  isOwner?: boolean
+  historyBlocks?: HistoryBlock[]
+  contactInfo?: {
+    contact_email: string | null
+    contact_email_public: boolean
+    contact_phone: string | null
+    contact_phone_public: boolean
+    message_enabled: boolean
+    opening_hours_enabled: boolean
+    opening_hours: { day_of_week: number; closed: boolean; start_time: string | null; end_time: string | null }[]
+  } | null
   isAuthenticated?: boolean
   isFollowing?: boolean
   dashboardUrl?: string
 }
 
-const { entity, menuSections, isOwner, isAuthenticated, isFollowing, dashboardUrl, publications = [], appointmentTypes = [], shopProducts = [], productCategories = [], faqItems = [], events = [] } = Astro.props
-const hasFaqItems = Array.isArray(faqItems) && faqItems.length > 0
+const {
+  entity,
+  menuSections,
+  homeWidgets = [],
+  isAuthenticated,
+  isFollowing,
+  dashboardUrl,
+  publications = [],
+  appointmentTypes = [],
+  shopProducts = [],
+  productCategories = [],
+  faqItems = [],
+  events = [],
+  historyBlocks = [],
+  contactInfo = null,
+} = Astro.props
 
-const hasNewsSection = menuSections.some(s => s.type === 'news')
-const hasAppointmentsSection = menuSections.some(s => s.type === 'appointments')
-const hasShopSection = menuSections.some(s => s.type === 'shop')
-const hasEventsSection = menuSections.some(s => s.type === 'events')
-const hasHistorySection = menuSections.some(s => s.type === 'history')
-const hasFaqSection = menuSections.some(s => s.type === 'faq') || hasFaqItems
-
-// Menu « Ajouter contenu » du hero (owner) : un item par type de section.
-// FAQ : active si la section existe OU si des items FAQ existent (même logique
-// que MenuTabs).
-const ALL_SECTION_TYPES = ['shop', 'appointments', 'events', 'news', 'history', 'faq'] as const
-const sectionTypeSet = new Set(menuSections.map(s => s.type))
-const addContentSections = ALL_SECTION_TYPES.map(type => ({
-  type,
-  active: sectionTypeSet.has(type) || (type === 'faq' && hasFaqItems),
-}))
-// La section "home" est implicite : toujours présente comme tab par défaut, même
-// si elle n'est pas dans entity_menu_sections (les widgets viennent de entity_home_widgets)
+const hasHistoryContent = historyBlocksHaveContent(historyBlocks)
+const faqItemsNormalized: FaqItemInput[] = Array.isArray(faqItems)
+  ? faqItems.map((item) => {
+      const row = item as { question?: string; answer?: string }
+      return {
+        question: typeof row.question === 'string' ? row.question : '',
+        answer: typeof row.answer === 'string' ? row.answer : '',
+      }
+    })
+  : []
+const hasNewsSection = menuSections.some((s) => s.type === 'news')
+const hasAppointmentsSection = menuSections.some((s) => s.type === 'appointments')
+const hasShopSection = menuSections.some((s) => s.type === 'shop')
+const hasEventsSection = menuSections.some((s) => s.type === 'events')
+const hasHistorySection = menuSections.some((s) => s.type === 'history')
 const defaultActiveType = 'home'
 ---
 <ProfileCard>
@@ -89,42 +109,39 @@ const defaultActiveType = 'home'
     location={entity.location}
     bio={entity.bio}
     avatarUrl={entity.avatar_url}
+    bannerUrl={entity.banner_url}
     createdAt={entity.created_at}
-    isOwner={isOwner}
     isAuthenticated={isAuthenticated}
     isFollowing={isFollowing}
     entityId={entity.id}
     entitySlug={entity.slug}
     followersCount={entity.followers_count}
     dashboardUrl={dashboardUrl}
-    addContentSections={addContentSections}
   />
 
-  {/* Stories — juste sous les boutons du hero (backend à venir) */}
-  <ProfileStories isOwner={isOwner} />
+  <ProfileStories />
 
-  {(menuSections.length > 0 || isOwner) ? (
-    <MenuTabs sections={menuSections} activeType={defaultActiveType} isOwner={isOwner} hasFaq={hasFaqItems} />
-  ) : <ProfileEmptyState />}
+  {menuSections.length > 0 ? (
+    <MenuTabs sections={menuSections} activeType={defaultActiveType} />
+  ) : (
+    <ProfileEmptyState />
+  )}
 
-  {/* Section Accueil — widgets de la home */}
-  <div data-section="home" class="profile-section">
-    <SectionHeader title="Accueil" sectionType="home" isOwner={isOwner} isVisible={true} />
-    <div class="profile-section__widgets">
-      <WidgetCard title="Bannière" isOwner={isOwner}>
-        <BannerWelcomeWidget
-          title={`Bienvenue chez ${entity.display_name}`}
-          description={entity.bio ?? 'Solopreneur sur IBEE.'}
-          ctaLabel="Réserver"
-          ctaHref={`/${entity.slug}#appointments`}
-          secondaryLabel="Voir le profil"
-          secondaryHref={`/${entity.slug}`}
-        />
-      </WidgetCard>
-    </div>
-  </div>
+  <HomeWidgetsSection
+    entityId={entity.id}
+    entitySlug={entity.slug}
+    entityName={entity.display_name}
+    entityAvatarUrl={entity.avatar_url}
+    widgets={homeWidgets}
+    shopProducts={shopProducts}
+    productCategories={productCategories}
+    appointmentTypes={appointmentTypes}
+    events={events}
+    publications={publications}
+    contactInfo={contactInfo}
+    faqItems={faqItemsNormalized}
+  />
 
-  {/* Section News */}
   {hasNewsSection && (
     <div data-section="news">
       <PublicationsList
@@ -133,116 +150,47 @@ const defaultActiveType = 'home'
         entityAvatarUrl={entity.avatar_url}
         entitySlug={entity.slug}
         entityRole={entity.role}
-        isOwner={isOwner}
       />
     </div>
   )}
 
-  {/* Section Rendez-vous */}
   {hasAppointmentsSection && (
     <div data-section="appointments" class="profile-section">
-      {appointmentTypes.length === 0 ? (
-        <SectionEmptyState
-          icon={CalendarDays}
-          title="Aucun service pour le moment"
-          description="Aucun service réservable pour l'instant."
-          ownerDescription="Propose ton premier service réservable."
-          ctaLabel="Ajouter un service"
-          ctaAction="data-open-service-overlay"
-          isOwner={isOwner}
-        />
-      ) : (
-        <AppointmentBooking
-          entityId={entity.id}
-          entitySlug={entity.slug}
-          appointmentTypes={appointmentTypes}
-        />
-      )}
+      <ServicePlaylist services={appointmentTypes} entitySlug={entity.slug} />
     </div>
   )}
 
-  {/* Section Events — events publiés à venir uniquement */}
   {hasEventsSection && (
     <div data-section="events" class="profile-section">
-      {events.length === 0 ? (
-        <SectionEmptyState
-          icon={Zap}
-          title="Aucun event à venir"
-          description="Reviens bientôt pour découvrir les prochains events."
-          ownerDescription="Annonce ton prochain webinaire, atelier ou meetup."
-          ctaLabel="Ajouter un event"
-          ctaAction="data-open-event-overlay"
-          isOwner={isOwner}
-        />
-      ) : (
-        <div class="flex flex-col gap-2.5">
-          {events.map((ev) => (
-            <EventCard
-              id={ev.id}
-              title={ev.title}
-              slug={ev.slug}
-              description={ev.description}
-              startAt={ev.start_at}
-              endAt={ev.end_at ?? null}
-              locationType={ev.location_type}
-              locationDetails={ev.location_details ?? null}
-              priceCents={ev.price_cents}
-              currency={ev.currency}
-              capacity={ev.capacity ?? null}
-              registrationsCount={ev.registrations_count ?? 0}
-              coverImageUrl={ev.gallery_images?.[0] ?? null}
-              entitySlug={entity.slug}
-            />
-          ))}
-        </div>
-      )}
+      <EventPlaylist events={events} entitySlug={entity.slug} />
     </div>
   )}
 
-  {/* Section Shop — pattern Playlist (recherche + catégories + tuiles) */}
   {hasShopSection && (
     <div data-section="shop" class="profile-section">
-      <ShopPlaylist products={shopProducts} categories={productCategories} isOwner={isOwner} entitySlug={entity.slug} />
+      <ShopPlaylist products={shopProducts} categories={productCategories} entitySlug={entity.slug} />
     </div>
   )}
 
-  {/* Section Histoire — affichage à venir, état vide en attendant */}
   {hasHistorySection && (
     <div data-section="history" class="profile-section">
-      <SectionEmptyState
-        icon={BookOpen}
-        title="Aucune histoire pour le moment"
-        description="L'histoire arrive bientôt."
-        ownerDescription="Raconte ton parcours et ce qui t'anime."
-        ctaLabel="Ajouter votre histoire"
-        ctaAction="data-open-history-overlay"
-        isOwner={isOwner}
-      />
-    </div>
-  )}
-
-  {/* Section FAQ — affichage des questions à venir, état vide en attendant */}
-  {hasFaqSection && (
-    <div data-section="faq" class="profile-section">
-      {!hasFaqItems && (
+      {hasHistoryContent ? (
+        <HistoryWidget
+          entitySlug={entity.slug}
+          displayName={entity.display_name}
+          sectionTitle="Histoire"
+          blocks={historyBlocks}
+        />
+      ) : (
         <SectionEmptyState
-          icon={MessageCircleQuestion}
-          title="Aucune question pour le moment"
-          description="Pas encore de FAQ par ici."
-          ownerDescription="Réponds aux questions les plus fréquentes de tes clients."
-          ctaLabel="Ajouter une question"
-          ctaAction="data-open-faq-overlay"
-          isOwner={isOwner}
+          icon={BookOpen}
+          title="Aucune histoire pour le moment"
+          description="L'histoire arrive bientôt."
         />
       )}
     </div>
   )}
 
-  {isOwner && <ProductCreateOverlay entitySlug={entity.slug} categories={productCategories} />}
-  {isOwner && <ServiceCreateOverlay entitySlug={entity.slug} />}
-  {isOwner && <EventCreateOverlay entitySlug={entity.slug} />}
-
-  {/* Tab switching — affiche uniquement la section active */}
   <script is:inline>
     (function() {
       var sections = document.querySelectorAll('[data-section]');
@@ -253,15 +201,15 @@ const defaultActiveType = 'home'
         sections.forEach(function(s) {
           s.style.display = s.dataset.section === type ? '' : 'none';
         });
-        tabs.forEach(function(a) {
+        document.querySelectorAll('nav[aria-label="Navigation du profil"] a[data-section-tab]').forEach(function(a) {
           var t = a.dataset.sectionTab || a.getAttribute('href').slice(1);
           a.classList.toggle('is-active', t === type);
         });
       }
 
+      window.__ibeeShowProfileTab = show;
+
       tabs.forEach(function(a) {
-        // Les tabs sans data-section-tab naviguent vers une page dédiée (ex: shop) :
-        // on laisse le navigateur suivre le lien normalement.
         if (!a.dataset.sectionTab) return;
         a.addEventListener('click', function(e) {
           e.preventDefault();
@@ -278,7 +226,6 @@ const defaultActiveType = 'home'
     })();
   </script>
 
-  {/* Fallback noscript : tout visible si JS désactivé */}
   <noscript>
     <style>
       [data-section] { display: block !important; }
@@ -290,9 +237,10 @@ const defaultActiveType = 'home'
   .profile-section {
     padding: 4px 22px 28px;
   }
-  .profile-section__widgets {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
+  @media (max-width: 1023px) {
+    .profile-section:is([data-section="shop"], [data-section="appointments"], [data-section="events"]) {
+      padding-left: 0;
+      padding-right: 0;
+    }
   }
 </style>

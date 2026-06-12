@@ -2,6 +2,11 @@
 
 App Astro déployée sur Cloudflare Pages. Sert les profils publics SEO/GEO/AEO.
 
+**Cutover phase 9** : surface visiteur uniquement. L'édition owner vit dans `apps/dashboard`.
+- `/{slug}` : fetch public, cache CDN ; owner connecté → redirect dashboard (sauf `?preview=1`).
+- Plus de overlays/wizards owner, plus de `isOwner` dans les composants servis ici.
+- APIs owner sous `src/pages/api/` : dépréciées ; préférer les Server Actions dashboard.
+
 ## Structure
 - `src/layouts/` — AppLayout (sidebar + header + slot), BaseLayout (head + SEO)
 - `src/pages/` — [slug].astro (profil), explore.astro, notifications.astro, api/

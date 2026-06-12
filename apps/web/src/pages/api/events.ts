@@ -1,3 +1,4 @@
+/** @deprecated Phase 9 — events via dashboard (`event-actions`). Rollback only. */
 import type { APIRoute } from 'astro'
 import { createAuthClient } from '../../lib/supabase/auth'
 import {
@@ -288,41 +289,39 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     )
   }
 
-  // --- Si publié, activer la section menu "events" (pattern shop/appointments) ---
-  if (isPublished) {
-    try {
-      const { data: existing } = await authClient
+  // --- Activer la section menu "events" dès la première création (y compris brouillon) ---
+  try {
+    const { data: existing } = await authClient
+      .from('entity_menu_sections')
+      .select('id, is_active')
+      .eq('entity_id', entity.id)
+      .eq('type', 'events' as never)
+      .maybeSingle()
+
+    if (!existing) {
+      const { data: positions } = await authClient
         .from('entity_menu_sections')
-        .select('id, is_active')
+        .select('position')
         .eq('entity_id', entity.id)
-        .eq('type', 'events' as never)
-        .maybeSingle()
+        .order('position', { ascending: false })
+        .limit(1)
+      const nextPosition = (positions?.[0]?.position ?? 0) + 1
 
-      if (!existing) {
-        const { data: positions } = await authClient
-          .from('entity_menu_sections')
-          .select('position')
-          .eq('entity_id', entity.id)
-          .order('position', { ascending: false })
-          .limit(1)
-        const nextPosition = (positions?.[0]?.position ?? 0) + 1
-
-        await authClient.from('entity_menu_sections').insert({
-          entity_id: entity.id,
-          type: 'events' as never,
-          is_active: true,
-          is_configured: true,
-          position: nextPosition,
-        })
-      } else if (!existing.is_active) {
-        await authClient
-          .from('entity_menu_sections')
-          .update({ is_active: true })
-          .eq('id', existing.id)
-      }
-    } catch (err) {
-      console.error('[api/events] ensure events section', err)
+      await authClient.from('entity_menu_sections').insert({
+        entity_id: entity.id,
+        type: 'events' as never,
+        is_active: true,
+        is_configured: isPublished,
+        position: nextPosition,
+      })
+    } else if (!existing.is_active) {
+      await authClient
+        .from('entity_menu_sections')
+        .update({ is_active: true })
+        .eq('id', existing.id)
     }
+  } catch (err) {
+    console.error('[api/events] ensure events section', err)
   }
 
   const siteUrl = import.meta.env.SITE_URL ?? ''

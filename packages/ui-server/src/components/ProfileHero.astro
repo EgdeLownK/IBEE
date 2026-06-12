@@ -1,5 +1,5 @@
 ---
-import { UserPlus, UserMinus, Bell, BellOff, ChevronDown, Pencil, Image as ImageIcon, Trash2, Plus, Share, Check } from 'lucide-static'
+import { UserPlus, UserMinus, Bell, BellOff, ChevronDown, Share, Check } from 'lucide-static'
 import AuthPromptOverlay from './AuthPromptOverlay.astro'
 
 interface Props {
@@ -8,8 +8,8 @@ interface Props {
   location: string | null
   bio: string | null
   avatarUrl: string | null
+  bannerUrl?: string | null
   createdAt: string
-  isOwner?: boolean
   isAuthenticated?: boolean
   isFollowing?: boolean
   entityId?: string
@@ -17,10 +17,6 @@ interface Props {
   followersCount?: number
   dashboardUrl?: string
   previewMode?: boolean
-  /** Menu « Ajouter contenu » (owner only) : un item par type de section.
-      active=true → entrée de création de contenu ; false → « Ajouter le menu X ».
-      Omis (ex : page produit, pas d'overlay) → bouton non rendu. */
-  addContentSections?: { type: string; active: boolean }[]
 }
 
 const {
@@ -28,7 +24,7 @@ const {
   role,
   bio,
   avatarUrl,
-  isOwner = false,
+  bannerUrl,
   isAuthenticated = false,
   isFollowing = false,
   entityId,
@@ -36,7 +32,6 @@ const {
   followersCount = 0,
   dashboardUrl = '',
   previewMode = false,
-  addContentSections = [],
 } = Astro.props
 
 const initials = displayName
@@ -55,58 +50,18 @@ const followersText = followersCount === 0 ? null : `${followersDisplay} abonné
 const followAuthId = `follow-auth-${entityId ?? 'default'}`
 const subscribeInfoId = `subscribe-info-${entityId ?? 'default'}`
 const notifMenuId = `notif-menu-${entityId ?? 'default'}`
-const bannerMenuId = `banner-menu-${entityId ?? 'default'}`
-const avatarMenuId = `avatar-menu-${entityId ?? 'default'}`
-const addContentId = `add-content-${entityId ?? 'default'}`
-const hasAvatar = !!avatarUrl
-
-// Menu « Ajouter contenu » : libellés des menus (sections) et des contenus.
-// Seul le shop a un flux de création web (overlay produit) — les autres types
-// actifs apparaissent grisés « bientôt » en attendant leur flux.
-const showAddContent = isOwner && !previewMode && addContentSections.length > 0
-const menuLabels: Record<string, string> = {
-  shop: 'Shop',
-  appointments: 'Service',
-  events: 'Event',
-  news: 'News',
-  history: 'Histoire',
-  faq: 'FAQ',
-}
-const contentLabels: Record<string, string> = {
-  shop: 'Produit',
-  appointments: 'Service',
-  events: 'Event',
-  news: 'Publication',
-  history: 'Histoire',
-  faq: 'FAQ',
-}
 ---
 <header>
-  {/* Banner — 172px hauteur, placeholder hachuré si pas d'image + bouton partager flottant */}
   <div class="relative">
-    {isOwner ? (
-      <button
-        type="button"
-        class="profile-banner profile-banner--editable"
-        popovertarget={bannerMenuId}
-        style={`anchor-name: --${bannerMenuId};`}
-        aria-label="Modifier la bannière"
-      >
+    <div class="profile-banner">
+      {bannerUrl ? (
+        <img src={bannerUrl} alt="" class="profile-banner__img" width="800" height="172" />
+      ) : (
         <div class="profile-banner__placeholder" aria-hidden="true">
           <span class="profile-banner__label">BANNER IMAGE 800×172</span>
         </div>
-        <span class="banner-edit-hint" aria-hidden="true">
-          <span class="flex h-4 w-4 items-center justify-center" set:html={ImageIcon} />
-          Modifier
-        </span>
-      </button>
-    ) : (
-      <div class="profile-banner">
-        <div class="profile-banner__placeholder" aria-hidden="true">
-          <span class="profile-banner__label">BANNER IMAGE 800×172</span>
-        </div>
-      </div>
-    )}
+      )}
+    </div>
     <button
       type="button"
       class="iconbtn profile-share"
@@ -119,42 +74,20 @@ const contentLabels: Record<string, string> = {
   </div>
 
   <div class="px-[22px]">
-    {/* Avatar chevauchant + nom + rôle */}
-    <div class="flex items-end gap-4 mt-[-34px]">
-      {isOwner ? (
-        <button
-          type="button"
-          class="profile-avatar profile-avatar--editable"
-          popovertarget={avatarMenuId}
-          style={`anchor-name: --${avatarMenuId};`}
-          aria-label="Modifier l'avatar"
-        >
-          {avatarUrl ? (
-            <img src={avatarUrl} alt={displayName} width="172" height="172" fetchpriority="high" class="h-full w-full object-cover" />
-          ) : (
-            <span class="font-display text-[30px] font-semibold text-accent">{initials}</span>
-          )}
-          <span class="avatar-edit-hint" aria-hidden="true">
-            <span class="flex h-4 w-4 items-center justify-center" set:html={ImageIcon} />
-          </span>
-        </button>
-      ) : (
-        <div class="profile-avatar">
-          {avatarUrl ? (
-            <img src={avatarUrl} alt={displayName} width="172" height="172" fetchpriority="high" class="h-full w-full object-cover" />
-          ) : (
-            <span class="font-display text-[30px] font-semibold text-accent">{initials}</span>
-          )}
-        </div>
-      )}
-
-      <div class="min-w-0 flex-1 pb-1">
+    <div class="flex items-center gap-4 mt-4">
+      <div class="profile-avatar">
+        {avatarUrl ? (
+          <img src={avatarUrl} alt={displayName} width="172" height="172" fetchpriority="high" class="h-full w-full object-cover" />
+        ) : (
+          <span class="font-display text-[30px] font-semibold text-accent">{initials}</span>
+        )}
+      </div>
+      <div class="min-w-0 flex-1">
         <h1 class="m-0 font-display text-[22px] font-semibold leading-tight text-neutral-900 truncate">{displayName}</h1>
         {role && <p class="mt-0.5 mb-0 text-[13.5px] text-neutral-500">{role}</p>}
       </div>
     </div>
 
-    {/* Abonnés (mise à jour par le JS follow/unfollow) */}
     <p
       data-followers-count
       data-count={String(followersCount)}
@@ -164,10 +97,8 @@ const contentLabels: Record<string, string> = {
       <b class="font-display font-bold text-neutral-900">{followersDisplay}</b> abonnés
     </p>
 
-    {/* Bio */}
     {bio && <p class="mt-3 mb-0 text-[13.5px] leading-normal text-neutral-600">{bio}</p>}
 
-    {/* Actions */}
     <div
       class="flex items-center gap-2.5 mt-5 mb-1"
       data-follow-wrapper
@@ -182,27 +113,8 @@ const contentLabels: Record<string, string> = {
           </a>
           <a href={`/${entitySlug}`} class="btn btn--ghost flex-1">Voir le profil</a>
         </>
-      ) : isOwner ? (
-        <>
-          {showAddContent && (
-            <button
-              type="button"
-              popovertarget={addContentId}
-              style={`anchor-name: --${addContentId};`}
-              class="btn btn--dark flex-1"
-            >
-              <span class="flex h-4 w-4 items-center justify-center" set:html={Plus} />
-              Ajouter contenu
-            </button>
-          )}
-          <a href={`/${entitySlug}/informations`} class="btn btn--ghost flex-1">
-            <span class="flex h-4 w-4 items-center justify-center" set:html={Pencil} />
-            Modifier profil
-          </a>
-        </>
       ) : (
         <>
-          {/* Anonyme → popover auth */}
           {!isAuthenticated && (
             <button
               type="button"
@@ -215,7 +127,6 @@ const contentLabels: Record<string, string> = {
             </button>
           )}
 
-          {/* Authentifié — Not following */}
           {isAuthenticated && (
             <button
               type="button"
@@ -228,7 +139,6 @@ const contentLabels: Record<string, string> = {
             </button>
           )}
 
-          {/* Authentifié — Following : bell + chevron */}
           {isAuthenticated && (
             <button
               type="button"
@@ -242,7 +152,6 @@ const contentLabels: Record<string, string> = {
             </button>
           )}
 
-          {/* S'abonner → popover info "bientôt dispo" */}
           <button type="button" popovertarget={subscribeInfoId} class="btn btn--ghost flex-1">
             S'abonner
           </button>
@@ -252,9 +161,7 @@ const contentLabels: Record<string, string> = {
   </div>
 </header>
 
-{/* Popovers rendus hors du header pour le top layer */}
-
-{!isOwner && !isAuthenticated && (
+{!isAuthenticated && (
   <AuthPromptOverlay
     id={followAuthId}
     title={`Connectez-vous pour suivre ${displayName}`}
@@ -262,97 +169,14 @@ const contentLabels: Record<string, string> = {
   />
 )}
 
-{!isOwner && (
-  <AuthPromptOverlay
-    id={subscribeInfoId}
-    title="L'abonnement sera bientôt disponible"
-    subtitle={`Vous pourrez soutenir ${displayName} et accéder à du contenu exclusif.`}
-    position="center"
-  />
-)}
+<AuthPromptOverlay
+  id={subscribeInfoId}
+  title="L'abonnement sera bientôt disponible"
+  subtitle={`Vous pourrez soutenir ${displayName} et accéder à du contenu exclusif.`}
+  position="center"
+/>
 
-{/* Menu « Ajouter contenu » (owner only) : création de contenu par section
-    active, puis menus à activer séparés visuellement. */}
-{showAddContent && (
-  <div id={addContentId} popover="auto" class="image-action-menu" style={`position-anchor: --${addContentId};`} data-add-content-menu>
-    {/* Création de contenu dans les menus actifs */}
-    <p class="image-action-menu__label">Ajouter contenu</p>
-    {addContentSections.filter((s) => s.active).map((s) =>
-      s.type === 'shop' ? (
-        <button type="button" class="image-action-menu__item" data-open-product-overlay>
-          <span class="flex h-4 w-4 items-center justify-center" set:html={Plus} />
-          <span>{contentLabels[s.type] ?? s.type}</span>
-        </button>
-      ) : s.type === 'appointments' ? (
-        <button type="button" class="image-action-menu__item" data-open-service-overlay>
-          <span class="flex h-4 w-4 items-center justify-center" set:html={Plus} />
-          <span>{contentLabels[s.type] ?? s.type}</span>
-        </button>
-      ) : s.type === 'events' ? (
-        <button type="button" class="image-action-menu__item" data-open-event-overlay>
-          <span class="flex h-4 w-4 items-center justify-center" set:html={Plus} />
-          <span>{contentLabels[s.type] ?? s.type}</span>
-        </button>
-      ) : (
-        <button type="button" class="image-action-menu__item" disabled title="Bientôt disponible">
-          <span class="flex h-4 w-4 items-center justify-center" set:html={Plus} />
-          <span>{contentLabels[s.type] ?? s.type}</span>
-          <span class="image-action-menu__soon">bientôt</span>
-        </button>
-      )
-    )}
-    {/* Gestion des menus : activer / désactiver chaque section au même endroit
-        (remplace l'ancien bouton "+" des onglets) */}
-    <div class="image-action-menu__divider" aria-hidden="true"></div>
-    <p class="image-action-menu__label">Gérer les menus</p>
-    {addContentSections.map((s) => (
-      <button
-        type="button"
-        class="image-action-menu__item"
-        data-toggle-section-type={s.type}
-        data-section-active={s.active ? 'true' : 'false'}
-        aria-pressed={s.active ? 'true' : 'false'}
-      >
-        <span class:list={['flex h-4 w-4 items-center justify-center', s.active ? 'text-accent' : 'text-neutral-500']} set:html={s.active ? Check : Plus} />
-        <span>{s.active ? (menuLabels[s.type] ?? s.type) : `Ajouter ${menuLabels[s.type] ?? s.type}`}</span>
-        {s.active && <span class="image-action-menu__soon">Activé</span>}
-      </button>
-    ))}
-  </div>
-)}
-
-{/* Banner image menu (owner only) */}
-{isOwner && (
-  <div id={bannerMenuId} popover="auto" class="image-action-menu image-action-menu--banner" style={`position-anchor: --${bannerMenuId};`}>
-    <button type="button" class="image-action-menu__item" data-banner-action="change">
-      <span class="flex h-4 w-4 items-center justify-center" set:html={ImageIcon} />
-      <span>Changer l'image</span>
-    </button>
-    <button type="button" class="image-action-menu__item image-action-menu__item--danger" data-banner-action="delete">
-      <span class="flex h-4 w-4 items-center justify-center" set:html={Trash2} />
-      <span>Supprimer</span>
-    </button>
-  </div>
-)}
-
-{/* Avatar image menu (owner only) */}
-{isOwner && (
-  <div id={avatarMenuId} popover="auto" class="image-action-menu" style={`position-anchor: --${avatarMenuId};`}>
-    <button type="button" class="image-action-menu__item" data-avatar-action="change">
-      <span class="flex h-4 w-4 items-center justify-center" set:html={ImageIcon} />
-      <span>Changer l'image</span>
-    </button>
-    {hasAvatar && (
-      <button type="button" class="image-action-menu__item image-action-menu__item--danger" data-avatar-action="delete">
-        <span class="flex h-4 w-4 items-center justify-center" set:html={Trash2} />
-        <span>Supprimer</span>
-      </button>
-    )}
-  </div>
-)}
-
-{/* Notification menu dropdown */}
-{!isOwner && isAuthenticated && (
+{isAuthenticated && (
   <div id={notifMenuId} popover="auto" class="notif-menu" style={`position-anchor: --${notifMenuId};`}>
     <button type="button" data-notif-option="all" class="notif-menu-item notif-menu-item--active">
       <span class="flex h-5 w-5 shrink-0 items-center justify-center" set:html={Bell} />
@@ -376,6 +200,13 @@ const contentLabels: Record<string, string> = {
     height: 172px;
     overflow: hidden;
     background: var(--color-panel);
+  }
+
+  .profile-banner__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
   }
 
   .profile-share {
@@ -425,108 +256,8 @@ const contentLabels: Record<string, string> = {
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    /* Au-dessus du wrapper banner (position:relative) — sans ça l'avatar
-       chevauchant (-34px) est peint sous la cover, sauf au hover où le
-       filter le promeut dans un stacking context. */
     position: relative;
     z-index: 2;
-  }
-
-  .profile-banner--editable,
-  .profile-avatar--editable {
-    padding: 0;
-    cursor: pointer;
-    font: inherit;
-    transition: filter 160ms ease;
-  }
-  .profile-banner--editable {
-    border: none;
-    background: var(--color-panel);
-    width: 100%;
-    height: 172px;
-    overflow: hidden;
-    display: block;
-    /* Ancre le hint d'édition (.banner-edit-hint) en bas à droite */
-    position: relative;
-  }
-  .profile-banner--editable:hover {
-    filter: brightness(0.94);
-  }
-  .profile-avatar--editable:hover {
-    filter: brightness(0.94);
-  }
-
-  .image-action-menu {
-    min-width: 200px;
-    background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: 12px;
-    box-shadow: var(--shadow-pop);
-    padding: 6px;
-    margin: 0;
-    margin-top: 8px;
-    overflow: visible;
-    position-area: bottom span-right;
-    position-try-fallbacks: flip-block;
-  }
-  /* Menu bannière : ancré au bord droit de la cover, écarté du bord du
-     container (les menus avatar / ajouter contenu restent alignés à gauche) */
-  .image-action-menu--banner {
-    position-area: bottom span-left;
-    margin-right: 22px;
-  }
-  .image-action-menu::backdrop {
-    background: transparent;
-  }
-  .image-action-menu__item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    width: 100%;
-    padding: 9px 12px;
-    border-radius: 8px;
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    font-family: inherit;
-    font-size: 13px;
-    color: var(--color-neutral-900);
-    text-align: left;
-    transition: background 120ms;
-  }
-  .image-action-menu__item:hover {
-    background: var(--color-panel);
-  }
-  .image-action-menu__item--danger {
-    color: rgb(181, 51, 51);
-  }
-  .image-action-menu__item--danger:hover {
-    background: rgba(181, 51, 51, 0.08);
-  }
-  .image-action-menu__item:disabled {
-    opacity: 0.45;
-    cursor: default;
-  }
-  .image-action-menu__item:disabled:hover {
-    background: transparent;
-  }
-  .image-action-menu__soon {
-    margin-left: auto;
-    font-size: 11px;
-    color: var(--color-neutral-400);
-  }
-  .image-action-menu__divider {
-    margin: 6px 0;
-    border-top: 1px solid var(--color-border);
-  }
-  .image-action-menu__label {
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--color-neutral-500);
-    padding: 4px 12px 6px;
-    margin: 0;
   }
 
   .notif-menu {
@@ -581,8 +312,6 @@ const contentLabels: Record<string, string> = {
   }
 </style>
 
-{/* Exception JS justifiée : bouton partager du hero (Web Share API, fallback
-    copie du lien). Contenu rendu serveur, ce script ne touche pas au SEO. */}
 <script is:inline>
   (function () {
     var btn = document.querySelector('[data-share-profile]')
@@ -610,74 +339,6 @@ const contentLabels: Record<string, string> = {
   })()
 </script>
 
-{/* Image action menus — stubs (backend upload/delete à venir) */}
-<script is:inline>
-  (function() {
-    document.querySelectorAll('[data-banner-action], [data-avatar-action]').forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        var bannerAction = btn.dataset.bannerAction
-        var avatarAction = btn.dataset.avatarAction
-        var target = bannerAction ? 'banner' : 'avatar'
-        var action = bannerAction || avatarAction
-        if (action === 'change') {
-          alert('Upload ' + target + ' à venir')
-        } else if (action === 'delete') {
-          if (confirm('Supprimer ' + target + ' ?')) {
-            alert('Suppression ' + target + ' à venir')
-          }
-        }
-      })
-    })
-  })()
-</script>
-
-{/* Menu « Ajouter contenu » : activation ET désactivation des menus
-    (API menu-sections, remplace l'ancien gestionnaire du bouton "+" des
-    onglets) + fermeture du popover avant l'ouverture des overlays. */}
-<script is:inline>
-  (function() {
-    var menu = document.querySelector('[data-add-content-menu]')
-    if (!menu) return
-
-    async function callApi(method, type) {
-      try {
-        var res = await fetch('/api/menu-sections', {
-          method: method,
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ type: type }),
-        })
-        if (!res.ok) {
-          var data = await res.json().catch(function() { return {} })
-          alert('Erreur : ' + (data.error || res.status))
-          return false
-        }
-        return true
-      } catch (err) {
-        console.error('[add-content]', err)
-        alert('Erreur réseau')
-        return false
-      }
-    }
-
-    menu.querySelectorAll('[data-toggle-section-type]').forEach(function(btn) {
-      btn.addEventListener('click', async function() {
-        var type = btn.dataset.toggleSectionType
-        var isActive = btn.dataset.sectionActive === 'true'
-        if (isActive && !confirm('Désactiver la section ' + type + ' ? Son contenu est conservé.')) return
-        var ok = await callApi(isActive ? 'DELETE' : 'POST', type)
-        if (ok) location.reload()
-      })
-    })
-
-    // L'ouverture des overlays (produit, service, event) est gérée par leurs
-    // propres scripts ([data-open-*-overlay]) — ici on referme juste le popover.
-    menu.querySelectorAll('[data-open-product-overlay], [data-open-service-overlay], [data-open-event-overlay]').forEach(function(btn) {
-      if (menu.hidePopover) btn.addEventListener('click', function() { menu.hidePopover() })
-    })
-  })()
-</script>
-
-{/* Vanilla JS — follow/unfollow + notification menu */}
 <script>
   const wrapper = document.querySelector<HTMLElement>('[data-follow-wrapper]')
   if (wrapper) {

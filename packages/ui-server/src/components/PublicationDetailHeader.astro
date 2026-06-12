@@ -1,0 +1,206 @@
+---
+/** En-tête de la page détail news : pas de cover, avatar compact, titre + date
+    et menu options sur la même ligne (aligné sur le bloc meta du fil). */
+import { MoreVertical, Pencil, Link2, Trash2 } from 'lucide-static'
+
+interface Props {
+  publicationId: string
+  title: string
+  /** Date relative (ex. « il y a environ 2 jours »). */
+  subtitle: string
+  /** datetime ISO pour l'attribut datetime du time. */
+  publishedAt: string
+  /** Date complète au survol (ex. « 5 mars 2026 à 14:30 »). */
+  dateTitle?: string
+  displayName: string
+  avatarUrl: string | null
+  profileHref?: string
+  isOwner?: boolean
+}
+
+const {
+  publicationId,
+  title,
+  subtitle,
+  publishedAt,
+  dateTitle = undefined,
+  displayName,
+  avatarUrl,
+  profileHref = undefined,
+  isOwner = false,
+} = Astro.props
+
+const initial = displayName.charAt(0).toUpperCase()
+const optionsMenuId = `pub-detail-header-options-${publicationId}`
+---
+<header class="pub-detail-header" aria-label={`Publication : ${title}`}>
+  <div class="pub-detail-header__row">
+    <div class="pub-detail-header__group">
+      {profileHref ? (
+        <a href={profileHref} class="pub-detail-header__avatar" aria-label={`Voir le profil de ${displayName}`}>
+          {avatarUrl ? (
+            <img src={avatarUrl} alt="" width="40" height="40" class="h-full w-full object-cover" />
+          ) : (
+            <span class="text-sm font-semibold text-accent">{initial}</span>
+          )}
+        </a>
+      ) : (
+        <div class="pub-detail-header__avatar">
+          {avatarUrl ? (
+            <img src={avatarUrl} alt={displayName} width="40" height="40" class="h-full w-full object-cover" />
+          ) : (
+            <span class="text-sm font-semibold text-accent">{initial}</span>
+          )}
+        </div>
+      )}
+
+      <div class="pub-detail-header__id">
+        <h1 class="pub-detail-header__title">{title}</h1>
+        <time datetime={publishedAt} title={dateTitle} class="pub-detail-header__meta">{subtitle}</time>
+      </div>
+    </div>
+
+    {isOwner && (
+      <button
+        type="button"
+        popovertarget={optionsMenuId}
+        aria-label="Options de la publication"
+        style={`anchor-name: --${optionsMenuId};`}
+        class="pub-detail-header__options"
+      >
+        <span class="flex h-5 w-5 items-center justify-center" set:html={MoreVertical} />
+      </button>
+    )}
+  </div>
+</header>
+
+{isOwner && (
+  <div id={optionsMenuId} popover="auto" class="pub-options-menu" style={`position-anchor: --${optionsMenuId};`}>
+    <button type="button" class="pub-options-menu__item" data-pub-action="edit" data-pub-id={publicationId}>
+      <span class="flex h-4 w-4 items-center justify-center" set:html={Pencil} />
+      <span>Modifier</span>
+    </button>
+    <button type="button" class="pub-options-menu__item" data-pub-action="associate" data-pub-id={publicationId}>
+      <span class="flex h-4 w-4 items-center justify-center" set:html={Link2} />
+      <span>Associer</span>
+    </button>
+    <button type="button" class="pub-options-menu__item pub-options-menu__item--danger" data-pub-action="delete" data-pub-id={publicationId}>
+      <span class="flex h-4 w-4 items-center justify-center" set:html={Trash2} />
+      <span>Supprimer</span>
+    </button>
+  </div>
+)}
+
+<style>
+  .pub-detail-header {
+    padding: 16px 22px 12px;
+  }
+  .pub-detail-header__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .pub-detail-header__group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+    flex: 1;
+  }
+  .pub-detail-header__avatar {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: var(--color-accent-soft);
+    text-decoration: none;
+    color: inherit;
+  }
+  .pub-detail-header__id {
+    min-width: 0;
+    flex: 1;
+  }
+  .pub-detail-header__title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.25;
+    color: var(--color-neutral-900);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .pub-detail-header__meta {
+    display: block;
+    margin-top: 2px;
+    font-size: 12px;
+    color: var(--color-neutral-400);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .pub-detail-header__options {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    margin-right: -4px;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--color-neutral-400);
+    cursor: pointer;
+    transition: background .15s ease, color .15s ease;
+  }
+  .pub-detail-header__options:hover {
+    background: var(--color-neutral-50);
+    color: var(--color-neutral-900);
+  }
+
+  .pub-options-menu {
+    margin: 0;
+    padding: 6px;
+    min-width: 200px;
+    background: var(--color-neutral-0);
+    border: 1px solid var(--color-neutral-200);
+    border-radius: 14px;
+    box-shadow: var(--shadow-lg);
+    position: fixed;
+    position-area: bottom span-left;
+    position-try-fallbacks: flip-block;
+    margin-top: 6px;
+    overflow: visible;
+  }
+  .pub-options-menu__item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 9px 10px;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    font-size: 14px;
+    color: var(--color-neutral-800);
+    text-align: left;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .pub-options-menu__item:hover:not(:disabled) {
+    background: var(--color-neutral-100);
+  }
+  .pub-options-menu__item--danger {
+    color: var(--color-error);
+  }
+  .pub-options-menu__item--danger:hover {
+    background: color-mix(in srgb, var(--color-error) 8%, transparent);
+  }
+</style>

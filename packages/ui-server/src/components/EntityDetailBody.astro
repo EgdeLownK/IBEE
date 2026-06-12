@@ -1,0 +1,593 @@
+---
+/** Corps générique des pages détail (template commun produit / service / event).
+    Reprend le design App Store : bandeau de stats, carrousel d'images
+    (flèches + glisser), card prix + Modifier, widgets profil, accordéon
+    « Information ». Les données (stats, médias, prix, lignes d'info) sont
+    fournies par la page selon le type. */
+import { ShoppingBag, Star, ChevronRight, ChevronLeft } from 'lucide-static'
+import EntityMoreDetails from './EntityMoreDetails.astro'
+import NewsWidget from './NewsWidget.astro'
+
+type ContentBlock =
+  | { type: 'text'; content: string }
+  | { type: 'image'; url: string; alt?: string }
+
+interface Media {
+  url: string
+  mediaType?: string | null
+  alt?: string
+}
+interface Stat {
+  label: string
+  value: string
+  valueSmall?: boolean
+  /** Valeur en couleur sombre (ex. la caractéristique PRIX). */
+  valueDark?: boolean
+  sub?: string
+  stars?: number | null
+  href?: string
+  state?: 'success' | 'error' | null
+  /** Icône lucide (html) affichée comme valeur principale (ex. mode de livraison). */
+  icon?: string
+}
+interface DetailRow {
+  label: string
+  value: string
+}
+
+interface Props {
+  title: string
+  media?: Media[]
+  /** Icône (html lucide) du placeholder si aucun média. */
+  placeholderIcon?: string
+  stats: Stat[]
+  fromLabel?: string | null
+  priceText: string
+  wasText?: string | null
+  isSale?: boolean
+  /** Lien d'édition dashboard (owner — déprécié sur Astro public). */
+  editHref?: string
+  /** CTA visiteur (ex. page de réservation). */
+  ctaHref?: string
+  ctaLabel?: string
+  detailRows: DetailRow[]
+  infoTitle?: string
+  infoMenuLabel?: string
+  entitySlug?: string
+  entityKind: 'service' | 'event'
+  contentBlocks?: ContentBlock[]
+  fallbackText?: string | null
+  hasNews?: boolean
+}
+
+const {
+  title,
+  media = [],
+  placeholderIcon = ShoppingBag,
+  stats,
+  fromLabel = null,
+  priceText,
+  wasText = null,
+  isSale = false,
+  editHref,
+  ctaHref,
+  ctaLabel = 'Réserver',
+  detailRows,
+  infoTitle = 'Information',
+  infoMenuLabel = 'Information générale',
+  entitySlug = '',
+  entityKind,
+  contentBlocks = [],
+  fallbackText = null,
+  hasNews = false,
+} = Astro.props
+
+const starRow = (n: number) => Array.from({ length: 5 }, (_, i) => i < n)
+const actionHref = editHref ?? ctaHref
+const actionLabel = editHref ? 'Modifier' : ctaLabel
+---
+<div class="edb">
+  {/* ===== Caractéristiques : scroll horizontal, aligné à gauche (titre · principal) ===== */}
+  <div class="edb__stats">
+    {stats.map((s) => {
+      const Tag = s.href ? 'a' : 'div'
+      return (
+        <Tag class="edb__stat" href={s.href}>
+          <span class="edb__stat-label">{s.label}</span>
+          {s.icon ? (
+            <span class="edb__stat-value edb__stat-icon" set:html={s.icon} />
+          ) : (
+            <span class:list={['edb__stat-value', s.valueSmall && 'edb__stat-value--sm', s.valueDark && 'edb__stat-value--dark', s.state === 'success' && 'is-available', s.state === 'error' && 'is-unavailable']}>{s.value}</span>
+          )}
+          {s.stars != null && (
+            <span class="edb__stat-stars">
+              {starRow(Math.round(s.stars)).map((on) => (
+                <span class:list={['flex items-center justify-center', on ? 'text-neutral-900' : 'text-neutral-300']} set:html={Star} />
+              ))}
+            </span>
+          )}
+        </Tag>
+      )
+    })}
+  </div>
+
+  {/* ===== Carrousel 1:1 (flèches + glisser) ===== */}
+  <div class="edb__media" data-carousel>
+    <div class="edb__carousel gallery-strip" data-edb-track>
+      {media.length > 0 ? (
+        media.map((m) => (
+          <div class="edb__slide">
+            {m.mediaType === 'video' ? (
+              <video src={m.url} controls preload="metadata" playsinline class="h-full w-full bg-black object-cover"></video>
+            ) : (
+              <img src={m.url} alt={m.alt ?? title} class="h-full w-full object-cover" loading="lazy" />
+            )}
+          </div>
+        ))
+      ) : (
+        <div class="edb__slide">
+          <div class="edb__ph" aria-hidden="true">
+            <span class="flex h-14 w-14 items-center justify-center" set:html={placeholderIcon} />
+          </div>
+        </div>
+      )}
+    </div>
+    {media.length > 1 && (
+      <>
+        <button type="button" class="edb__nav edb__nav--prev" data-edb-prev aria-label="Image précédente">
+          <span class="flex items-center justify-center" set:html={ChevronLeft} />
+        </button>
+        <button type="button" class="edb__nav edb__nav--next" data-edb-next aria-label="Image suivante">
+          <span class="flex items-center justify-center" set:html={ChevronRight} />
+        </button>
+      </>
+    )}
+  </div>
+
+  {/* ===== Card Information (sans prix : le prix vit dans la caractéristique PRIX) ===== */}
+  <div class="edb__buybox-card" id="tous-les-details">
+    {actionHref && (
+      <div class="edb__buybox-top">
+        <a href={actionHref} class="edb__cta">{actionLabel}</a>
+      </div>
+    )}
+    {detailRows.length > 0 && (
+      <div class="edb__buybox-info">
+        <h3 class="edb__info-title">{infoTitle}</h3>
+        <div class="edb__info-menus">
+          <details class="edb__tech-menu">
+            <summary>
+              <span>{infoMenuLabel}</span>
+              <span class="edb__tech-chevron" aria-hidden="true" set:html={ChevronRight} />
+            </summary>
+            <div class="edb__tech-panel">
+              {detailRows.map((row) => (
+                <div class="edb__tech-line">
+                  <span>{row.label}</span>
+                  <strong>{row.value}</strong>
+                </div>
+              ))}
+            </div>
+          </details>
+        </div>
+      </div>
+    )}
+  </div>
+
+  {/* ===== Plus de détails (contenu service / event) + Actualités profil ===== */}
+  <EntityMoreDetails
+    entityKind={entityKind}
+    contentBlocks={contentBlocks}
+    fallbackText={fallbackText}
+  />
+  {hasNews && entitySlug && <NewsWidget entitySlug={entitySlug} />}
+</div>
+
+<style>
+  .edb {
+    background: transparent;
+  }
+
+  /* ===== Caractéristiques : scroll horizontal, aligné à gauche ===== */
+  .edb__stats {
+    display: flex;
+    align-items: stretch;
+    overflow-x: auto;
+    scrollbar-width: none;
+    margin: 24px 0 22px;
+    padding: 6px 22px;
+  }
+  .edb__stats::-webkit-scrollbar {
+    display: none;
+  }
+  .edb__stat {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 4px;
+    padding: 4px 16px;
+    text-decoration: none;
+    border-left: 1px solid var(--color-border);
+    white-space: nowrap;
+  }
+  .edb__stat:first-child {
+    border-left: 0;
+    padding-left: 0;
+  }
+  .edb__stat-label {
+    font-family: var(--font-sans);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: var(--color-neutral-400);
+    text-align: center;
+  }
+  .edb__stat-value {
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 800;
+    line-height: 1.1;
+    color: var(--color-neutral-500);
+    text-align: center;
+  }
+  .edb__stat-value--sm {
+    font-size: 15px;
+    font-weight: 700;
+  }
+  .edb__stat-value--dark {
+    color: var(--color-neutral-900);
+  }
+  .edb__stat-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-neutral-700);
+  }
+  .edb__stat-icon :global(svg) {
+    width: 20px;
+    height: 20px;
+  }
+  .edb__stat-value.is-available {
+    color: var(--color-success);
+  }
+  .edb__stat-value.is-unavailable {
+    color: var(--color-error);
+  }
+  .edb__stat-stars {
+    display: inline-flex;
+    gap: 1px;
+  }
+  .edb__stat-stars :global(svg) {
+    width: 11px;
+    height: 11px;
+  }
+  .edb__stat-sub {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--color-neutral-400);
+    text-align: center;
+  }
+
+  /* ===== Carrousel ===== */
+  .edb__media {
+    position: relative;
+    padding: 16px 0;
+  }
+  .edb__carousel {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-padding-left: 22px;
+    padding: 0 22px;
+  }
+  .edb__slide {
+    flex: 0 0 58%;
+    aspect-ratio: 1 / 1;
+    border-radius: var(--radius-card);
+    overflow: hidden;
+    background: var(--color-panel);
+    scroll-snap-align: start;
+  }
+  .edb__ph {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-neutral-400);
+    background-image: repeating-linear-gradient(
+      135deg,
+      var(--color-panel-2) 0,
+      var(--color-panel-2) 4px,
+      var(--color-panel) 4px,
+      var(--color-panel) 10px
+    );
+  }
+  /* Flèches masquées par défaut (mobile) ; affichées dès la tablette ci-dessous */
+  .edb__nav {
+    display: none;
+  }
+  @media (min-width: 768px) {
+    .edb__carousel {
+      cursor: grab;
+    }
+    .edb__carousel.is-grabbing {
+      cursor: grabbing;
+      scroll-behavior: auto;
+      user-select: none;
+    }
+    .edb__carousel.is-grabbing img {
+      pointer-events: none;
+    }
+    .edb__nav {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 3;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      border: 1px solid var(--color-border);
+      background: color-mix(in srgb, var(--color-surface) 92%, transparent);
+      backdrop-filter: blur(8px);
+      color: var(--color-neutral-800);
+      box-shadow: 0 6px 18px -10px rgba(0, 0, 0, .35);
+      cursor: pointer;
+      transition: background .16s ease, transform .08s ease, opacity .16s ease;
+    }
+    .edb__nav :global(svg) {
+      width: 20px;
+      height: 20px;
+    }
+    .edb__nav:hover {
+      background: var(--color-surface);
+    }
+    .edb__nav:active {
+      transform: translateY(-50%) scale(.94);
+    }
+    .edb__nav--prev {
+      left: 30px;
+    }
+    .edb__nav--next {
+      right: 30px;
+    }
+    .edb__nav[disabled] {
+      opacity: 0;
+      pointer-events: none;
+    }
+  }
+
+  /* ===== Card Information (sans design de card) ===== */
+  .edb__buybox-card {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin: 0 22px;
+  }
+  /* Téléphone : bouton Modifier sous l'image. Desktop/tablette : Modifier dans le strip. */
+  .edb__buybox-top {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 14px;
+  }
+  .edb__buybox-info {
+    border-top: 1px solid color-mix(in srgb, var(--color-border) 60%, transparent);
+    padding-top: 16px;
+  }
+  @media (min-width: 768px) {
+    .edb__buybox-top {
+      display: none;
+    }
+    .edb__buybox-info {
+      border-top: 0;
+      padding-top: 0;
+    }
+  }
+  /* Conteneur des menus déployables : 1 menu = pleine largeur ;
+     un 2e menu se place à droite (2 colonnes 50/50) dès la tablette. */
+  .edb__info-menus {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    align-items: start;
+  }
+  @media (min-width: 768px) {
+    .edb__info-menus {
+      grid-template-columns: 1fr 1fr;
+    }
+    .edb__info-menus > .edb__tech-menu:only-child {
+      grid-column: 1 / -1;
+    }
+  }
+  .edb__buy-price {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+  .edb__from {
+    font-size: 11px;
+    color: var(--color-neutral-500);
+  }
+  .edb__buy-now {
+    font-family: var(--font-display);
+    font-size: 24px;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--color-neutral-900);
+  }
+  .edb__buy-now.is-sale {
+    color: var(--color-accent);
+  }
+  .edb__buy-was {
+    font-size: 14px;
+    color: var(--color-neutral-400);
+    text-decoration: line-through;
+  }
+  .edb__cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 110px;
+    min-height: 40px;
+    padding: 0 22px;
+    border-radius: 12px;
+    background: var(--color-accent);
+    color: #fff;
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: background .18s, transform .08s;
+  }
+  .edb__cta:hover { background: var(--color-accent-hover); }
+  .edb__cta:active { transform: translateY(1px); }
+
+  /* ===== Information ===== */
+  .edb__info-title {
+    margin: 0 0 12px;
+    font-family: var(--font-display);
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--color-neutral-900);
+  }
+  .edb__tech-menu {
+    border-radius: 16px;
+    background: color-mix(in srgb, var(--color-panel) 72%, var(--color-surface));
+    overflow: hidden;
+  }
+  .edb__tech-menu summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    cursor: pointer;
+    list-style: none;
+    padding: 14px;
+  }
+  .edb__tech-menu summary::-webkit-details-marker {
+    display: none;
+  }
+  .edb__tech-menu summary > span:first-child {
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .06em;
+    color: #2a2a2a;
+    text-transform: uppercase;
+  }
+  .edb__tech-chevron {
+    display: flex;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    color: #2a2a2a;
+    transition: transform 140ms ease;
+  }
+  .edb__tech-menu[open] .edb__tech-chevron {
+    transform: rotate(90deg);
+  }
+  .edb__tech-panel {
+    padding: 0 14px 14px;
+  }
+  .edb__tech-line {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(92px, .8fr);
+    gap: 14px;
+    padding: 10px 0;
+  }
+  .edb__tech-line + .edb__tech-line {
+    border-top: 1px solid color-mix(in srgb, var(--color-border) 55%, transparent);
+  }
+  .edb__tech-line strong {
+    min-width: 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: #2a2a2a;
+    text-align: right;
+  }
+  .edb__tech-line span {
+    font-size: 11px;
+    font-weight: 600;
+    color: #2a2a2a;
+    text-align: left;
+    text-transform: uppercase;
+  }
+  @media (max-width: 520px) {
+    .edb__tech-menu summary { padding: 12px; }
+    .edb__tech-panel { padding: 0 12px 12px; }
+    .edb__tech-line { grid-template-columns: 1fr; gap: 3px; }
+    .edb__tech-line span,
+    .edb__tech-line strong { text-align: left; }
+  }
+
+  .gallery-strip {
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+  .gallery-strip::-webkit-scrollbar { display: none; }
+</style>
+
+<script is:inline>
+(function() {
+  var track = document.querySelector('[data-edb-track]')
+  if (!track) return
+  var prevBtn = document.querySelector('[data-edb-prev]')
+  var nextBtn = document.querySelector('[data-edb-next]')
+  var slideStep = function() {
+    var slide = track.querySelector('.edb__slide')
+    var w = slide ? slide.getBoundingClientRect().width : track.clientWidth * 0.6
+    return w + 12
+  }
+  var updateNav = function() {
+    var max = track.scrollWidth - track.clientWidth
+    if (prevBtn) prevBtn.disabled = track.scrollLeft <= 1
+    if (nextBtn) nextBtn.disabled = track.scrollLeft >= max - 1
+  }
+  if (prevBtn) prevBtn.addEventListener('click', function() {
+    track.scrollBy({ left: -slideStep(), behavior: 'smooth' })
+  })
+  if (nextBtn) nextBtn.addEventListener('click', function() {
+    track.scrollBy({ left: slideStep(), behavior: 'smooth' })
+  })
+  track.addEventListener('scroll', updateNav)
+  window.addEventListener('resize', updateNav)
+  updateNav()
+
+  var isDown = false, startX = 0, startScroll = 0
+  track.addEventListener('pointerdown', function(e) {
+    if (e.pointerType === 'touch') return
+    isDown = true
+    startX = e.clientX
+    startScroll = track.scrollLeft
+    track.style.scrollSnapType = 'none'
+    track.classList.add('is-grabbing')
+  })
+  window.addEventListener('pointermove', function(e) {
+    if (!isDown) return
+    track.scrollLeft = startScroll - (e.clientX - startX)
+  })
+  var endDrag = function() {
+    if (!isDown) return
+    isDown = false
+    track.style.scrollSnapType = ''
+    track.classList.remove('is-grabbing')
+  }
+  window.addEventListener('pointerup', endDrag)
+  window.addEventListener('pointercancel', endDrag)
+  track.addEventListener('dragstart', function(e) { e.preventDefault() })
+})()
+</script>

@@ -1,0 +1,291 @@
+---
+import { Check } from 'lucide-static'
+import AppLayout from '../../layouts/AppLayout.astro'
+import DetailTopBar from '@ibee/ui-server/src/components/DetailTopBar.astro'
+import DetailEntityStrip from '@ibee/ui-server/src/components/DetailEntityStrip.astro'
+import ProfileCard from '@ibee/ui-server/src/components/ProfileCard.astro'
+import { supabase } from '../../lib/supabase/client'
+import { createAuthClient } from '../../lib/supabase/auth'
+import { getEntityBySlug, getEntityByUserId, getEntityContactInfo } from '@ibee/supabase'
+
+const { slug } = Astro.params
+if (!slug || slug.startsWith('__')) return new Response(null, { status: 404 })
+
+const entity = await getEntityBySlug(supabase, slug)
+if (!entity) return new Response(null, { status: 404 })
+
+const contactInfo = await getEntityContactInfo(supabase, entity.id)
+if (!contactInfo?.message_enabled) {
+  return Astro.redirect(`/${entity.slug}`)
+}
+
+const authClient = createAuthClient(Astro.request, Astro.cookies)
+const { data: { user } } = await authClient.auth.getUser()
+const dashboardUrl = import.meta.env.DASHBOARD_URL ?? 'http://localhost:3000'
+const isOwner = !!(user && entity.user_id && user.id === entity.user_id)
+if (isOwner) {
+  return Astro.redirect(`${dashboardUrl}/dashboard/site`)
+}
+
+let senderName = ''
+let senderEmail = user?.email ?? ''
+if (user) {
+  const senderEntity = await getEntityByUserId(supabase, user.id)
+  senderName = senderEntity?.display_name ?? ''
+}
+
+const siteUrl = import.meta.env.SITE_URL
+const profileUrl = `${siteUrl}/${entity.slug}`
+---
+<AppLayout
+  title={`Message — ${entity.display_name} — IBEE`}
+  user={user}
+  profileUrl={profileUrl}
+  showSidebar={true}
+>
+  <main class="profile-page">
+    <DetailTopBar backHref={`/${entity.slug}`} title="Envoyer un message" />
+
+    <ProfileCard>
+      <DetailEntityStrip
+        displayName={entity.display_name}
+        avatarUrl={entity.avatar_url}
+        profileHref={`/${entity.slug}`}
+      />
+
+      <section class="message-page px-[22px] pt-[18px] pb-6">
+        <p class="message-page__intro">
+          Votre message sera envoyé directement au compte IBEE de <strong>{entity.display_name}</strong>.
+        </p>
+
+        <form id="message-form" class="message-form" novalidate>
+              <label class="message-form__field">
+                <span>Votre nom</span>
+                <input
+                  type="text"
+                  name="sender_name"
+                  class="message-form__input"
+                  required
+                  maxlength="120"
+                  value={senderName}
+                  autocomplete="name"
+                />
+              </label>
+              <label class="message-form__field">
+                <span>Votre email</span>
+                <input
+                  type="email"
+                  name="sender_email"
+                  class="message-form__input"
+                  required
+                  maxlength="320"
+                  value={senderEmail}
+                  autocomplete="email"
+                />
+              </label>
+              <label class="message-form__field">
+                <span>Message</span>
+                <textarea
+                  name="body"
+                  class="message-form__textarea"
+                  rows="6"
+                  required
+                  maxlength="2000"
+                  placeholder="Écrivez votre message…"
+                ></textarea>
+              </label>
+              <p id="message-error" class="message-form__error" hidden></p>
+              <button type="submit" class="message-form__submit">Envoyer</button>
+            </form>
+
+            <div id="message-success" class="message-success" hidden>
+              <span class="message-success__icon" set:html={Check} />
+              <p class="message-success__title">Message envoyé</p>
+              <p class="message-success__text">Votre message a bien été transmis au compte projet.</p>
+              <a href={`/${entity.slug}`} class="message-success__back">Retour au profil</a>
+            </div>
+      </section>
+    </ProfileCard>
+  </main>
+</AppLayout>
+
+<script is:inline define:vars={{ entitySlug: entity.slug }}>
+(function() {
+  var form = document.getElementById('message-form')
+  if (!form) return
+  var errEl = document.getElementById('message-error')
+  var okEl = document.getElementById('message-success')
+  var submitBtn = form.querySelector('button[type="submit"]')
+
+  form.addEventListener('submit', function(e) {
+    e.preventDefault()
+    if (errEl) errEl.hidden = true
+
+    var name = form.sender_name.value.trim()
+    var email = form.sender_email.value.trim()
+    var body = form.body.value.trim()
+
+    if (!name || !email || !body) {
+      if (errEl) {
+        errEl.textContent = 'Tous les champs sont obligatoires.'
+        errEl.hidden = false
+      }
+      return
+    }
+
+    if (submitBtn) submitBtn.disabled = true
+
+    fetch('/api/entity-messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        entity_slug: entitySlug,
+        sender_name: name,
+        sender_email: email,
+        body: body,
+      }),
+    })
+      .then(function(res) {
+        return res.json().then(function(data) {
+          if (!res.ok) throw new Error(data.error || 'Envoi impossible')
+          form.hidden = true
+          if (okEl) okEl.hidden = false
+        })
+      })
+      .catch(function(err) {
+        if (errEl) {
+          errEl.textContent = err && err.message ? err.message : 'Envoi impossible. Réessaie.'
+          errEl.hidden = false
+        }
+        if (submitBtn) submitBtn.disabled = false
+      })
+  })
+})()
+</script>
+
+<style>
+  .message-page__intro {
+    margin: 0 0 20px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--color-neutral-600);
+  }
+
+  .message-page__notice {
+    margin: 0;
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: var(--color-panel);
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--color-neutral-600);
+  }
+
+  .message-form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .message-form__field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--color-neutral-700);
+  }
+
+  .message-form__input,
+  .message-form__textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    font-size: 14px;
+    font-family: inherit;
+    background: var(--color-surface);
+    color: var(--color-neutral-900);
+  }
+
+  .message-form__textarea {
+    resize: vertical;
+    min-height: 120px;
+  }
+
+  .message-form__error {
+    margin: 0;
+    font-size: 13px;
+    color: #b42318;
+  }
+
+  .message-form__submit {
+    margin-top: 4px;
+    padding: 12px 16px;
+    border: 0;
+    border-radius: 10px;
+    background: var(--color-cta-primary);
+    color: var(--color-neutral-0);
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .16s ease;
+  }
+
+  .message-form__submit:hover:not(:disabled) {
+    background: var(--color-cta-primary-hover);
+  }
+
+  .message-form__submit:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .message-success {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 24px 12px;
+    gap: 8px;
+  }
+
+  .message-success__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--color-accent) 14%, var(--color-panel));
+    color: var(--color-accent);
+  }
+
+  .message-success__icon :global(svg) {
+    width: 24px;
+    height: 24px;
+  }
+
+  .message-success__title {
+    margin: 8px 0 0;
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--color-neutral-900);
+  }
+
+  .message-success__text {
+    margin: 0;
+    font-size: 14px;
+    color: var(--color-neutral-500);
+  }
+
+  .message-success__back {
+    margin-top: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-accent);
+    text-decoration: none;
+  }
+</style>

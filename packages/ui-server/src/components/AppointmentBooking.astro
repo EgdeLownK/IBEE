@@ -20,9 +20,12 @@ interface Props {
   entitySlug: string
   appointmentTypes: AppointmentType[]
   autoBookTypeId?: string
+  /** Owner connecté → affiche "Modifier" sur chaque service. */
+  isOwner?: boolean
+  dashboardUrl?: string
 }
 
-const { entityId, entitySlug, appointmentTypes, autoBookTypeId } = Astro.props
+const { entityId, entitySlug, appointmentTypes, autoBookTypeId, isOwner = false, dashboardUrl } = Astro.props
 ---
 <section id="appointments">
   {appointmentTypes.length === 0 ? (
@@ -48,6 +51,7 @@ const { entityId, entitySlug, appointmentTypes, autoBookTypeId } = Astro.props
               currency={type.currency}
               coverImageUrl={type.gallery_images?.[0] ?? null}
               entitySlug={entitySlug}
+              editHref={isOwner && dashboardUrl ? `${dashboardUrl}/services/${type.id}` : null}
             />
           ))}
         </div>

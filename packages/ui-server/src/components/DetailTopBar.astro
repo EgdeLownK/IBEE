@@ -10,9 +10,9 @@ interface Props {
 
 const { backHref, title } = Astro.props
 ---
-{/* Top bar contextuelle des pages détail (design prototype) : retour +
-    nom complet de l'article + partager. Sticky sous le header global,
-    fond translucide flouté. */}
+{/* Top bar contextuelle des pages détail : retour + nom complet de l'article
+    + partager. Placée au-dessus de la cover, intégrée à la carte (coins du
+    haut arrondis via le conteneur ProfileCard). */}
 <div class="detail-topbar">
   <a href={backHref} class="iconbtn" aria-label="Retour">
     <span class="flex h-[18px] w-[18px] items-center justify-center" set:html={ArrowLeft} />
@@ -27,18 +27,12 @@ const { backHref, title } = Astro.props
 
 <style>
   .detail-topbar {
-    position: sticky;
-    top: 65px; /* hauteur du GlobalHeader (sticky lui aussi) */
-    z-index: 10;
     display: flex;
     align-items: center;
     gap: 12px;
-    height: 60px;
-    padding: 0 16px;
-    margin: 0 auto;
-    max-width: 800px;
-    background: rgba(255, 255, 255, .82);
-    backdrop-filter: saturate(180%) blur(14px);
+    height: 56px;
+    padding: 0 12px;
+    background: var(--color-surface);
     border-bottom: 1px solid var(--color-border);
   }
 

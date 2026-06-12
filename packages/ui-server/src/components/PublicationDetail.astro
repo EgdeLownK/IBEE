@@ -1,0 +1,115 @@
+---
+/** Corps de la page détail d'une publication (news) : médias, texte intégral,
+    barre d'engagement. Le titre vit dans PublicationDetailHeader. */
+import { Heart, MessageCircle, BarChart3, Share2 } from 'lucide-static'
+import AuthPromptOverlay from './AuthPromptOverlay.astro'
+import PublicationMediaCarousel from './PublicationMediaCarousel.astro'
+
+interface Media {
+  id: string
+  url: string
+  alt_text: string | null
+  position: number
+  width: number | null
+  height: number | null
+}
+
+interface Props {
+  id: string
+  content: string | null
+  media: Media[]
+  commentsCount?: number
+}
+
+const { id, content, media, commentsCount = 0 } = Astro.props
+
+const sortedMedia = [...media].sort((a, b) => a.position - b.position)
+
+const likeOverlayId = `pub-detail-like-${id}`
+const shareOverlayId = `pub-detail-share-${id}`
+---
+<div class="pub-detail">
+  {sortedMedia.length > 0 && (
+    <div class="pub-detail__media">
+      <PublicationMediaCarousel media={sortedMedia} publicationId={id} />
+    </div>
+  )}
+
+  {content && (
+    <div class="pub-detail__body">
+      <p class="pub-detail__text">{content}</p>
+    </div>
+  )}
+
+  <div class="pub-detail__engage">
+    <div class="pub-detail__engage-left">
+      <button type="button" popovertarget={likeOverlayId} aria-label="Liker cette publication" class="pub-detail__engage-btn">
+        <span class="flex h-4 w-4 items-center justify-center" set:html={Heart} />
+        <span>0</span>
+      </button>
+      <a href="#comments" aria-label="Commenter cette publication" class="pub-detail__engage-btn">
+        <span class="flex h-4 w-4 items-center justify-center" set:html={MessageCircle} />
+        <span>{commentsCount}</span>
+      </a>
+      <span class="pub-detail__engage-stat">
+        <span class="flex h-4 w-4 items-center justify-center" set:html={BarChart3} />
+        <span>0</span>
+      </span>
+    </div>
+    <button type="button" popovertarget={shareOverlayId} aria-label="Partager cette publication" class="pub-detail__engage-btn">
+      <span class="flex h-4 w-4 items-center justify-center" set:html={Share2} />
+    </button>
+  </div>
+</div>
+
+<AuthPromptOverlay id={likeOverlayId} title="Cette fonctionnalité arrive bientôt" position="center" />
+<AuthPromptOverlay id={shareOverlayId} title="La fonctionnalité de partage arrive bientôt" subtitle="En attendant, copiez le lien de cette publication depuis votre navigateur." position="center" />
+
+<style>
+  .pub-detail__media {
+    padding-bottom: 12px;
+  }
+  .pub-detail__body {
+    padding: 4px 22px 16px;
+  }
+  .pub-detail__text {
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--color-neutral-700);
+    white-space: pre-wrap;
+  }
+  .pub-detail__engage {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 18px 12px;
+  }
+  .pub-detail__engage-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .pub-detail__engage-btn,
+  .pub-detail__engage-stat {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    font-size: 14px;
+    color: var(--color-neutral-500);
+    text-decoration: none;
+    cursor: pointer;
+    transition: background .15s ease, color .15s ease;
+  }
+  .pub-detail__engage-btn:hover {
+    background: var(--color-neutral-50);
+    color: var(--color-neutral-900);
+  }
+  .pub-detail__engage-stat {
+    cursor: default;
+  }
+</style>

@@ -1,0 +1,2249 @@
+---
+/** Overlay owner : éditeur de blocs Histoire (texte + image, réordonnables). */
+import { X, Image as ImageIcon, Type, Plus } from 'lucide-static'
+import type { HistoryBlock } from '../history-blocks.ts'
+
+interface Props {
+  initialBlocks?: HistoryBlock[]
+}
+
+const { initialBlocks = [] } = Astro.props
+const initialJson = JSON.stringify(initialBlocks)
+const histBannerImageIcon = ImageIcon
+---
+<div class="hist-edit" data-history-edit-overlay hidden>
+  <div class="hist-edit__backdrop" data-hist-edit-close></div>
+  <div class="hist-edit__panel" role="dialog" aria-labelledby="hist-edit-title" aria-modal="true">
+    <header class="hist-edit__head">
+      <div class="hist-edit__head-text">
+        <p class="hist-edit__eyebrow">Menu Histoire</p>
+        <h2 id="hist-edit-title" class="hist-edit__title">Composer ton récit</h2>
+        <p class="hist-edit__hint">Alterne texte et visuels. Utilise les flèches pour réordonner.</p>
+      </div>
+      <button type="button" class="hist-edit__close" data-hist-edit-close aria-label="Fermer">
+        <span class="flex h-5 w-5 items-center justify-center" set:html={X} />
+      </button>
+    </header>
+
+    <form class="hist-edit__form" data-hist-edit-form>
+      <div class="hist-edit__scroll">
+        <div class="hist-edit__canvas" data-hist-blocks></div>
+      </div>
+
+      <div class="hist-edit__composer">
+        <p class="hist-edit__composer-label">Ajouter un bloc</p>
+        <div class="hist-edit__add-grid">
+          <button type="button" class="hist-edit__add-card" data-hist-block-add="text">
+            <span class="hist-edit__add-icon hist-edit__add-icon--text">
+              <span class="flex h-[18px] w-[18px] items-center justify-center" set:html={Type} />
+            </span>
+            <span class="hist-edit__add-copy">
+              <strong>Texte</strong>
+              <span>Un paragraphe de ton histoire</span>
+            </span>
+            <span class="hist-edit__add-plus" aria-hidden="true">
+              <span class="flex h-4 w-4 items-center justify-center" set:html={Plus} />
+            </span>
+          </button>
+          <button type="button" class="hist-edit__add-card" data-hist-block-add="image">
+            <span class="hist-edit__add-icon hist-edit__add-icon--image">
+              <span class="flex h-[18px] w-[18px] items-center justify-center" set:html={ImageIcon} />
+            </span>
+            <span class="hist-edit__add-copy">
+              <strong>Image</strong>
+              <span>Une photo ou illustration</span>
+            </span>
+            <span class="hist-edit__add-plus" aria-hidden="true">
+              <span class="flex h-4 w-4 items-center justify-center" set:html={Plus} />
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <p class="hist-edit__error" data-hist-error hidden></p>
+
+      <footer class="hist-edit__foot">
+        <button type="button" class="hist-edit__btn hist-edit__btn--ghost" data-hist-edit-close data-hist-edit-cancel>Annuler</button>
+        <button type="submit" class="hist-edit__btn hist-edit__btn--primary">Enregistrer</button>
+      </footer>
+    </form>
+    <template data-hist-banner-icon-tpl set:html={histBannerImageIcon}></template>
+  </div>
+</div>
+
+<div class="hw-banner-crop" data-hw-banner-crop hidden>
+  <div class="hw-banner-crop__backdrop" data-hw-banner-crop-backdrop></div>
+  <div class="hw-banner-crop__panel" role="dialog" aria-modal="true" aria-labelledby="hist-banner-crop-title">
+    <h3 id="hist-banner-crop-title" class="hw-banner-crop__title">Recadrer l'image</h3>
+    <p class="hw-banner-crop__hint" data-hw-banner-crop-hint>Ajustez le cadre.</p>
+    <div class="hw-banner-crop__stage">
+      <div class="hw-banner-crop__frame">
+        <img alt="" data-hw-banner-crop-img />
+        <div class="hw-banner-crop__box" data-hw-banner-crop-box>
+          <div class="hw-banner-crop__handle" data-hw-banner-crop-handle></div>
+        </div>
+      </div>
+    </div>
+    <footer class="hw-banner-crop__foot">
+      <button type="button" class="hist-edit__btn hist-edit__btn--ghost" data-hw-banner-crop-cancel>Annuler</button>
+      <button type="button" class="hist-edit__btn hist-edit__btn--primary" data-hw-banner-crop-confirm>Valider</button>
+    </footer>
+  </div>
+</div>
+
+<script>
+  import '../lib/banner-image-crop.ts'
+</script>
+
+<script is:inline define:vars={{ initialJson }}>
+(function() {
+  var overlay = document.querySelector('[data-history-edit-overlay]')
+  if (!overlay) return
+  var cropShell = document.querySelector('[data-hw-banner-crop]')
+  if (overlay.parentElement !== document.body) {
+    document.body.appendChild(overlay)
+  }
+  if (cropShell && cropShell.parentElement !== document.body) {
+    document.body.appendChild(cropShell)
+  }
+  var form = overlay.querySelector('[data-hist-edit-form]')
+  var blocksWrap = overlay.querySelector('[data-hist-blocks]')
+  var scrollEl = overlay.querySelector('.hist-edit__scroll')
+  var errorEl = overlay.querySelector('[data-hist-error]')
+  var MAX_BLOCKS = 20
+  var TEXT_MAX = 2000
+  var IMG_AR_MIN = 1
+  var IMG_AR_MAX = 16 / 9
+  var blocks = []
+
+  function clampBlockAspect(ratio) {
+    return Math.min(IMG_AR_MAX, Math.max(IMG_AR_MIN, ratio))
+  }
+
+  var histBannerIconTpl = overlay.querySelector('[data-hist-banner-icon-tpl]')
+
+  function getHistBannerImageIconHtml() {
+    if (!histBannerIconTpl) return ''
+    if (histBannerIconTpl.content && histBannerIconTpl.content.childNodes.length > 0) {
+      var holder = document.createElement('div')
+      holder.appendChild(histBannerIconTpl.content.cloneNode(true))
+      return holder.innerHTML
+    }
+    return histBannerIconTpl.innerHTML || ''
+  }
+
+  function blockSlotCount(block) {
+    return block.slot_count === 2 || block.slot_count === 3 ? block.slot_count : 1
+  }
+
+  function blockCropMode(block) {
+    return blockSlotCount(block) === 1 ? 'landscape' : 'square'
+  }
+
+  function needsSquareRecrop(img) {
+    return img && Math.abs((img.aspect_ratio || 0) - 1) > 0.05
+  }
+
+  function ensureBlockImages(block) {
+    if (!block.images) block.images = []
+  }
+
+  function countFilledBlockImages(block) {
+    var count = 0
+    var slots = blockSlotCount(block)
+    ensureBlockImages(block)
+    for (var i = 0; i < slots; i++) {
+      if (block.images[i] && block.images[i].url) count++
+    }
+    return count
+  }
+
+  function getBlockImageSaveError(block) {
+    var slots = blockSlotCount(block)
+    if (slots <= 1) return null
+    var filled = countFilledBlockImages(block)
+    if (filled === slots) return null
+    if (slots === 2) return 'Le format 2 images requiert 2 images.'
+    return 'Le format 3 images requiert 3 images.'
+  }
+
+  function blockImagesPayload(block) {
+    var payload = []
+    var slots = blockSlotCount(block)
+    ensureBlockImages(block)
+    for (var i = 0; i < slots; i++) {
+      if (block.images[i] && block.images[i].url) {
+        payload.push({
+          url: block.images[i].url,
+          aspect_ratio: slots === 1 ? clampBlockAspect(block.images[i].aspect_ratio) : 1,
+        })
+      }
+    }
+    return payload
+  }
+
+  function readImageMeta(imageUrl) {
+    var readMeta = window.__ibeeBannerReadMeta
+    if (readMeta) return readMeta(imageUrl)
+    return new Promise(function(resolve) {
+      var img = new Image()
+      img.onload = function() { resolve({ width: img.naturalWidth, height: img.naturalHeight }) }
+      img.onerror = function() { resolve(null) }
+      img.src = imageUrl
+    })
+  }
+
+  function imageMatchesFormat(width, height, mode) {
+    var matches = window.__ibeeBannerMatchesFormat
+    if (matches) return matches(width, height, mode)
+    if (!width || !height) return false
+    var ar = width / height
+    if (mode === 'square') return Math.abs(ar - 1) <= 0.02
+    return ar >= IMG_AR_MIN - 0.02 && ar <= IMG_AR_MAX + 0.02
+  }
+
+  function openBlockCrop(sourceUrl, cropMode, fileType, onDone, onFinally) {
+    var openCrop = window.__ibeeBannerCropOpen
+    if (!openCrop) {
+      showError('Recadrage indisponible. Recharge la page.')
+      if (onFinally) onFinally()
+      return
+    }
+    openCrop(sourceUrl, cropMode, fileType).then(function(result) {
+      if (result) onDone(result)
+    }).finally(function() {
+      if (onFinally) onFinally()
+    })
+  }
+
+  function inferImageMime(file) {
+    if (file.type && file.type.indexOf('image/') === 0) return file.type
+    var name = (file.name || '').toLowerCase()
+    if (name.slice(-4) === '.png') return 'image/png'
+    if (name.slice(-5) === '.webp') return 'image/webp'
+    if (name.slice(-4) === '.gif') return 'image/gif'
+    if (name.slice(-5) === '.avif') return 'image/avif'
+    if (name.slice(-4) === '.jpg' || name.slice(-5) === '.jpeg') return 'image/jpeg'
+    return 'image/jpeg'
+  }
+
+  function normalizeUploadFile(file) {
+    var mime = inferImageMime(file)
+    if (file.type === mime) return file
+    return new File([file], file.name || 'image.jpg', { type: mime })
+  }
+
+  function fileFromBlob(blob) {
+    var mime = blob.type && blob.type.startsWith('image/') ? blob.type : 'image/webp'
+    var ext = mime === 'image/png' ? 'png' : mime === 'image/jpeg' ? 'jpg' : 'webp'
+    return new File([blob], 'image.' + ext, { type: mime })
+  }
+
+  function uploadBlockBlob(block, blob, aspectRatio, slotIndex, onComplete, keepUploading) {
+    if (typeof slotIndex !== 'number') {
+      if (onComplete) onComplete()
+      return
+    }
+    block.uploading = true
+    renderBlocks()
+    var fd = new FormData()
+    fd.append('file', fileFromBlob(blob))
+    fetch('/api/product-upload', { method: 'POST', body: fd })
+      .then(function(res) { return res.json().then(function(d) { return { ok: res.ok, data: d } }) })
+      .then(function(result) {
+        block.uploading = false
+        if (result.ok && result.data && result.data.url && result.data.type === 'image') {
+          ensureBlockImages(block)
+          var aspect = blockSlotCount(block) === 1 ? clampBlockAspect(aspectRatio) : 1
+          block.images[slotIndex] = { url: result.data.url, aspect_ratio: aspect }
+          showError('')
+        } else {
+          showError((result.data && result.data.error) || 'Erreur lors de l\'envoi de l\'image.')
+        }
+        renderBlocks()
+        if (onComplete) onComplete()
+      })
+      .catch(function() {
+        block.uploading = false
+        showError('Erreur réseau lors de l\'envoi de l\'image.')
+        renderBlocks()
+        if (onComplete) onComplete()
+      })
+  }
+
+  function uploadBlockFile(block, file, aspectRatio, slotIndex, onComplete, keepUploading) {
+    if (typeof slotIndex !== 'number' || !file) {
+      if (onComplete) onComplete()
+      return
+    }
+    block.uploading = true
+    renderBlocks()
+    var fd = new FormData()
+    var uploadFile = normalizeUploadFile(file)
+    fd.append('file', uploadFile, uploadFile.name || 'image.jpg')
+    fetch('/api/product-upload', { method: 'POST', body: fd })
+      .then(function(res) { return res.json().then(function(d) { return { ok: res.ok, data: d } }) })
+      .then(function(result) {
+        block.uploading = false
+        if (result.ok && result.data && result.data.url && result.data.type === 'image') {
+          ensureBlockImages(block)
+          var aspect = blockSlotCount(block) === 1 ? clampBlockAspect(aspectRatio) : 1
+          block.images[slotIndex] = { url: result.data.url, aspect_ratio: aspect }
+          showError('')
+        } else {
+          showError((result.data && result.data.error) || 'Erreur lors de l\'envoi de l\'image.')
+        }
+        renderBlocks()
+        if (onComplete) onComplete()
+      })
+      .catch(function() {
+        block.uploading = false
+        showError('Erreur réseau lors de l\'envoi de l\'image.')
+        renderBlocks()
+        if (onComplete) onComplete()
+      })
+  }
+
+  function autoSquareRecropBlockSlots(block, indices, onComplete) {
+    if (!indices.length || block.uploading) {
+      if (onComplete) onComplete()
+      return
+    }
+    var autoCrop = window.__ibeeBannerAutoCrop
+    if (!autoCrop) {
+      if (onComplete) onComplete()
+      return
+    }
+    var cursor = 0
+    function next() {
+      if (cursor >= indices.length) {
+        if (onComplete) onComplete()
+        renderBlocks()
+        return
+      }
+      var idx = indices[cursor++]
+      var img = block.images[idx]
+      if (!img) {
+        next()
+        return
+      }
+      readImageMeta(img.url).then(function(meta) {
+        if (meta && imageMatchesFormat(meta.width, meta.height, 'square')) {
+          block.images[idx].aspect_ratio = 1
+          next()
+          return
+        }
+        block.uploading = true
+        renderBlocks()
+        autoCrop(img.url, 'square', 'image/jpeg').then(function(result) {
+          if (!result) {
+            block.uploading = false
+            next()
+            return
+          }
+          uploadBlockBlob(block, result.blob, 1, idx, next, true)
+        })
+      })
+    }
+    next()
+  }
+
+  function ingestBlockFile(block, file, slotIndex, onComplete, keepUploading, forceCrop) {
+    if (!file || typeof slotIndex !== 'number') {
+      if (onComplete) onComplete()
+      return
+    }
+    var mode = blockCropMode(block)
+    var objectUrl = URL.createObjectURL(file)
+
+    function openCropModal() {
+      if (!window.__ibeeBannerCropOpen) {
+        readImageMeta(objectUrl).then(function(meta) {
+          URL.revokeObjectURL(objectUrl)
+          var aspect = mode === 'square' ? 1 : (meta ? clampBlockAspect(meta.width / meta.height) : IMG_AR_MAX)
+          uploadBlockFile(block, file, aspect, slotIndex, onComplete, keepUploading)
+        })
+        return
+      }
+      openBlockCrop(objectUrl, mode, file.type, function(result) {
+        URL.revokeObjectURL(objectUrl)
+        if (!result) {
+          if (onComplete) onComplete()
+          return
+        }
+        uploadBlockBlob(block, result.blob, result.aspect_ratio, slotIndex, onComplete, keepUploading)
+      })
+    }
+
+    function autoCropThenUpload() {
+      var autoCrop = window.__ibeeBannerAutoCrop
+      if (!autoCrop) {
+        URL.revokeObjectURL(objectUrl)
+        uploadBlockFile(block, file, mode === 'square' ? 1 : IMG_AR_MAX, slotIndex, onComplete, keepUploading)
+        return
+      }
+      autoCrop(objectUrl, 'square', file.type).then(function(result) {
+        URL.revokeObjectURL(objectUrl)
+        if (!result) {
+          uploadBlockFile(block, file, 1, slotIndex, onComplete, keepUploading)
+          return
+        }
+        uploadBlockBlob(block, result.blob, 1, slotIndex, onComplete, keepUploading)
+      }).catch(function() {
+        URL.revokeObjectURL(objectUrl)
+        uploadBlockFile(block, file, 1, slotIndex, onComplete, keepUploading)
+      })
+    }
+
+    if (forceCrop) {
+      openCropModal()
+      return
+    }
+
+    readImageMeta(objectUrl).then(function(meta) {
+      if (meta && imageMatchesFormat(meta.width, meta.height, mode)) {
+        URL.revokeObjectURL(objectUrl)
+        var aspect = mode === 'square' ? 1 : clampBlockAspect(meta.width / meta.height)
+        uploadBlockFile(block, file, aspect, slotIndex, onComplete, keepUploading)
+        return
+      }
+      if (mode === 'square') {
+        autoCropThenUpload()
+        return
+      }
+      openCropModal()
+    }).catch(function() {
+      URL.revokeObjectURL(objectUrl)
+      uploadBlockFile(block, file, mode === 'square' ? 1 : IMG_AR_MAX, slotIndex, onComplete, keepUploading)
+    })
+  }
+
+  function buildSlotFillOrder(block, startIndex, fileCount) {
+    var slots = blockSlotCount(block)
+    var order = [startIndex]
+    ensureBlockImages(block)
+    for (var i = 0; i < slots; i++) {
+      if (i !== startIndex && order.length < fileCount && !block.images[i]) {
+        order.push(i)
+      }
+    }
+    return order.slice(0, fileCount)
+  }
+
+  function processBlockFilesQueue(block, files, slotIndices, forceCrop) {
+    if (!files.length || !slotIndices.length) return
+    var fileIdx = 0
+    function nextFile() {
+      if (fileIdx >= files.length || fileIdx >= slotIndices.length) {
+        renderBlocks()
+        return
+      }
+      var file = files[fileIdx]
+      var slotIndex = slotIndices[fileIdx]
+      fileIdx += 1
+      var keep = fileIdx < Math.min(files.length, slotIndices.length)
+      ingestBlockFile(block, file, slotIndex, nextFile, keep, !!forceCrop)
+    }
+    nextFile()
+  }
+
+  function handleBlockFiles(block, files) {
+    if (!files || !files.length) return
+    var startIndex = block.replaceSlot
+    if (typeof startIndex !== 'number') return
+    block.replaceSlot = null
+    var slots = blockSlotCount(block)
+    var limitedFiles = files.slice(0, slots)
+    var slotIndices = buildSlotFillOrder(block, startIndex, limitedFiles.length)
+    if (!slotIndices.length) return
+    processBlockFilesQueue(block, limitedFiles.slice(0, slotIndices.length), slotIndices, false)
+  }
+
+  function clearBlockSlotAt(block, index) {
+    var slots = blockSlotCount(block)
+    if (index < 0 || index >= slots) return
+    ensureBlockImages(block)
+    block.images[index] = null
+    while (block.images.length > slots) block.images.pop()
+    while (block.images.length > 0 && !block.images[block.images.length - 1]) block.images.pop()
+    renderBlocks()
+  }
+
+  function recropBlockSlot(block, slotIndex) {
+    ensureBlockImages(block)
+    var img = block.images[slotIndex]
+    if (!img) return
+    openBlockCrop(img.url, blockCropMode(block), 'image/jpeg', function(result) {
+      if (!result) return
+      uploadBlockBlob(block, result.blob, result.aspect_ratio, slotIndex, null)
+    })
+  }
+
+  function pickBlockSlot(block, slotIndex) {
+    if (block.uploading) return
+    block.replaceSlot = slotIndex
+    var input = block._fileInput
+    if (input) {
+      input.setAttribute('data-hist-slot-index', String(slotIndex))
+      input.click()
+    }
+  }
+
+  function moveBlockSlot(block, from, to) {
+    ensureBlockImages(block)
+    block.images[to] = block.images[from]
+    block.images[from] = null
+    renderBlocks()
+  }
+
+  function swapBlockSlots(block, from, to) {
+    ensureBlockImages(block)
+    var tmp = block.images[from]
+    block.images[from] = block.images[to]
+    block.images[to] = tmp
+    renderBlocks()
+  }
+
+  function bindBlockSlotDrop(block, slot, slotIndex) {
+    slot.addEventListener('dragover', function(e) {
+      if (block.dragSlot === null || block.dragSlot === undefined) return
+      e.preventDefault()
+      if (e.dataTransfer) e.dataTransfer.dropEffect = 'move'
+      slot.classList.add('is-drop-target')
+    })
+    slot.addEventListener('dragleave', function() {
+      slot.classList.remove('is-drop-target')
+    })
+    slot.addEventListener('drop', function(e) {
+      e.preventDefault()
+      slot.classList.remove('is-drop-target')
+      if (block.dragSlot === null || block.dragSlot === undefined || block.dragSlot === slotIndex) return
+      var from = block.dragSlot
+      block.dragSlot = null
+      if (block.images[slotIndex]) {
+        swapBlockSlots(block, from, slotIndex)
+      } else {
+        moveBlockSlot(block, from, slotIndex)
+      }
+    })
+  }
+
+  function setBlockSlotCount(block, slots) {
+    if (slots !== 1 && slots !== 2 && slots !== 3) return
+    if (slots === blockSlotCount(block)) return
+    block.slot_count = slots
+    ensureBlockImages(block)
+    if (block.images.length > slots) block.images.length = slots
+    if (slots > 1) {
+      var toAutoCrop = []
+      for (var j = 0; j < slots; j++) {
+        if (block.images[j] && needsSquareRecrop(block.images[j])) toAutoCrop.push(j)
+      }
+      renderBlocks()
+      if (toAutoCrop.length) autoSquareRecropBlockSlots(block, toAutoCrop, function() { renderBlocks() })
+    } else {
+      if (block.images[0]) block.images[0].aspect_ratio = clampBlockAspect(block.images[0].aspect_ratio)
+      renderBlocks()
+    }
+  }
+
+  function parseImageBlockItem(item) {
+    var images = []
+    var slot_count = 1
+    var title = ''
+    var description = ''
+    if (Array.isArray(item.images) && item.images.length) {
+      item.images.forEach(function(img) {
+        if (img && img.url) images.push({ url: img.url, aspect_ratio: typeof img.aspect_ratio === 'number' ? img.aspect_ratio : IMG_AR_MAX })
+      })
+      slot_count = item.slot_count === 2 || item.slot_count === 3 ? item.slot_count : (images.length >= 3 ? 3 : images.length === 2 ? 2 : 1)
+      images = images.slice(0, slot_count)
+      title = typeof item.title === 'string' ? item.title : ''
+      description = typeof item.description === 'string' ? item.description : ''
+    } else if (typeof item.url === 'string' && item.url) {
+      images[0] = { url: item.url, aspect_ratio: clampBlockAspect(typeof item.aspect_ratio === 'number' ? item.aspect_ratio : IMG_AR_MAX) }
+      title = typeof item.title === 'string' ? item.title : (typeof item.alt === 'string' ? item.alt : '')
+      description = typeof item.description === 'string' ? item.description : ''
+    } else {
+      return null
+    }
+    if (slot_count > 1) {
+      for (var j = 0; j < slot_count; j++) {
+        if (images[j]) images[j].aspect_ratio = 1
+      }
+    } else if (images[0]) {
+      images[0].aspect_ratio = clampBlockAspect(images[0].aspect_ratio)
+    }
+    return {
+      id: nextId(),
+      type: 'image',
+      slot_count: slot_count,
+      images: images,
+      title: title,
+      description: description,
+      uploading: false,
+      replaceSlot: null,
+      dragSlot: null,
+    }
+  }
+
+  function renderBlockImageSlots(block, rowEl, blockErrorEl, workspaceEl) {
+    var slots = blockSlotCount(block)
+    var layout = slots === 1 ? 'landscape' : 'square'
+    ensureBlockImages(block)
+    rowEl.className = 'hw-config__banner-row hw-config__banner-row--' + layout
+    if (slots === 3) rowEl.classList.add('hw-config__banner-row--triple')
+    rowEl.innerHTML = ''
+
+    var err = getBlockImageSaveError(block)
+    if (blockErrorEl) {
+      if (err) {
+        blockErrorEl.textContent = err
+        blockErrorEl.hidden = false
+        if (workspaceEl) workspaceEl.classList.add('has-error')
+      } else {
+        blockErrorEl.textContent = ''
+        blockErrorEl.hidden = true
+        if (workspaceEl) workspaceEl.classList.remove('has-error')
+      }
+    }
+
+    for (var index = 0; index < slots; index++) {
+      ;(function(slotIndex) {
+        var img = block.images[slotIndex]
+        var slot = document.createElement('div')
+        slot.className = 'hw-config__banner-slot hw-config__banner-slot--' + layout
+        slot.setAttribute('data-banner-index', String(slotIndex))
+
+        if (!img) {
+          slot.classList.add('hw-config__banner-slot--empty')
+          slot.innerHTML =
+            '<button type="button" class="hw-config__banner-slot-add" aria-label="Ajouter une image">' +
+              '<span class="hw-config__banner-slot-frame hw-config__banner-slot-frame--' + layout + '">' +
+                '<span class="hw-config__banner-slot-add-icon">' + getHistBannerImageIconHtml() + '</span>' +
+              '</span>' +
+            '</button>'
+          var addBtn = slot.querySelector('.hw-config__banner-slot-add')
+          if (addBtn) addBtn.addEventListener('click', function() { pickBlockSlot(block, slotIndex) })
+          if (slots > 1) bindBlockSlotDrop(block, slot, slotIndex)
+          rowEl.appendChild(slot)
+          return
+        }
+
+        if (slots > 1) slot.setAttribute('draggable', 'true')
+        if (needsSquareRecrop(img)) slot.classList.add('hw-config__banner-slot--warn')
+        if (slots === 1) slot.style.setProperty('--banner-aspect', String(img.aspect_ratio))
+
+        var dragHandleHtml = slots > 1
+          ? '<button type="button" class="hw-config__banner-slot-drag" aria-label="Déplacer l\'image">' +
+              '<span class="hw-config__banner-slot-drag-grip" aria-hidden="true"></span>' +
+            '</button>'
+          : ''
+
+        slot.innerHTML =
+          '<div class="hw-config__banner-slot-media">' +
+            '<img alt="" draggable="false" />' +
+          '</div>' +
+          dragHandleHtml +
+          '<button type="button" class="hw-config__banner-slot-hit" aria-label="Modifier l\'image">' +
+            '<span class="hw-config__banner-slot-edit">Modifier</span>' +
+          '</button>' +
+          '<button type="button" class="hw-config__banner-slot-remove" aria-label="Supprimer">×</button>'
+
+        var hit = slot.querySelector('.hw-config__banner-slot-hit')
+        var previewImg = slot.querySelector('.hw-config__banner-slot-media img')
+        if (previewImg) previewImg.src = img.url
+        if (hit) hit.addEventListener('click', function() { recropBlockSlot(block, slotIndex) })
+
+        var removeBtn = slot.querySelector('.hw-config__banner-slot-remove')
+        if (removeBtn) {
+          removeBtn.addEventListener('mousedown', function(e) {
+            e.preventDefault()
+            e.stopPropagation()
+          })
+          removeBtn.addEventListener('click', function(e) {
+            e.preventDefault()
+            e.stopPropagation()
+            clearBlockSlotAt(block, slotIndex)
+          })
+        }
+
+        if (slots > 1) {
+          slot.addEventListener('dragstart', function(e) {
+            if (!e.target.closest('.hw-config__banner-slot-drag')) {
+              e.preventDefault()
+              return
+            }
+            block.dragSlot = slotIndex
+            slot.classList.add('is-dragging')
+            if (e.dataTransfer) {
+              e.dataTransfer.effectAllowed = 'move'
+              e.dataTransfer.setData('text/plain', String(slotIndex))
+            }
+          })
+          slot.addEventListener('dragend', function() {
+            block.dragSlot = null
+            slot.classList.remove('is-dragging')
+            rowEl.querySelectorAll('.hw-config__banner-slot').forEach(function(el) {
+              el.classList.remove('is-drop-target')
+            })
+          })
+          bindBlockSlotDrop(block, slot, slotIndex)
+        }
+
+        rowEl.appendChild(slot)
+      })(index)
+    }
+  }
+
+  function renderBlockImageUI(body, block) {
+    if (!block.slot_count) block.slot_count = 1
+    if (!block.images) block.images = []
+    if (block.title === undefined || block.title === null) block.title = ''
+    if (block.description === undefined || block.description === null) block.description = ''
+
+    var formatField = document.createElement('div')
+    formatField.className = 'hw-config__field'
+    formatField.innerHTML =
+      '<span>Format</span>' +
+      '<div class="hw-config__banner-layout-picker" data-hist-layout-picker role="group" aria-label="Format de bannière">' +
+        '<button type="button" class="hw-config__banner-layout-btn" data-hist-layout="1" aria-label="1 image paysage">' +
+          '<span class="hw-config__layout-icon hw-config__layout-icon--landscape" aria-hidden="true"><i></i></span>' +
+        '</button>' +
+        '<button type="button" class="hw-config__banner-layout-btn" data-hist-layout="2" aria-label="2 images carrées">' +
+          '<span class="hw-config__layout-icon hw-config__layout-icon--duo" aria-hidden="true"><i></i><i></i></span>' +
+        '</button>' +
+        '<button type="button" class="hw-config__banner-layout-btn" data-hist-layout="3" aria-label="3 images carrées">' +
+          '<span class="hw-config__layout-icon hw-config__layout-icon--trio" aria-hidden="true"><i></i><i></i><i></i></span>' +
+        '</button>' +
+      '</div>'
+    var picker = formatField.querySelector('[data-hist-layout-picker]')
+    if (picker) {
+      picker.querySelectorAll('[data-hist-layout]').forEach(function(btn) {
+        var n = parseInt(btn.getAttribute('data-hist-layout'), 10)
+        var active = n === blockSlotCount(block)
+        btn.classList.toggle('is-active', active)
+        btn.setAttribute('aria-pressed', active ? 'true' : 'false')
+        btn.addEventListener('click', function() { setBlockSlotCount(block, n) })
+      })
+    }
+    body.appendChild(formatField)
+
+    var imagesField = document.createElement('div')
+    imagesField.className = 'hw-config__field'
+    imagesField.innerHTML = '<span>Images</span>'
+    var workspace = document.createElement('div')
+    workspace.className = 'hw-config__banner-workspace' + (block.uploading ? ' is-uploading' : '')
+    var row = document.createElement('div')
+    row.className = 'hw-config__banner-row'
+    workspace.appendChild(row)
+    var blockError = document.createElement('p')
+    blockError.className = 'hw-config__banner-error'
+    blockError.hidden = true
+    workspace.appendChild(blockError)
+    var fileInput = document.createElement('input')
+    fileInput.type = 'file'
+    fileInput.accept = 'image/jpeg,image/png,image/webp,image/gif,image/avif'
+    fileInput.hidden = true
+    if (blockSlotCount(block) > 1) fileInput.setAttribute('multiple', '')
+    fileInput.addEventListener('change', function() {
+      var list = fileInput.files
+      if (!list || !list.length) return
+      var files = Array.prototype.slice.call(list)
+      fileInput.value = ''
+      handleBlockFiles(block, files)
+    })
+    block._fileInput = fileInput
+    workspace.appendChild(fileInput)
+    imagesField.appendChild(workspace)
+    body.appendChild(imagesField)
+    renderBlockImageSlots(block, row, blockError, workspace)
+
+    var advanced = document.createElement('details')
+    advanced.className = 'hw-config__banner-advanced'
+    advanced.innerHTML =
+      '<summary class="hw-config__banner-advanced-summary">' +
+        '<span>Paramètres avancés — visibilité</span>' +
+        '<span class="hw-config__banner-advanced-chevron flex h-4 w-4 items-center justify-center">' +
+          '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>' +
+        '</span>' +
+      '</summary>' +
+      '<div class="hw-config__banner-advanced-body"></div>'
+    var advBody = advanced.querySelector('.hw-config__banner-advanced-body')
+
+    var titleLabel = document.createElement('label')
+    titleLabel.className = 'hw-config__field'
+    titleLabel.innerHTML = '<span>Titre <span class="hw-config__optional">(optionnel · SEO)</span></span>'
+    var titleInput = document.createElement('input')
+    titleInput.type = 'text'
+    titleInput.className = 'hw-config__input'
+    titleInput.placeholder = 'Non affiché sur le profil'
+    titleInput.value = block.title || ''
+    titleInput.addEventListener('input', function() { block.title = titleInput.value })
+    titleLabel.appendChild(titleInput)
+    advBody.appendChild(titleLabel)
+
+    var descLabel = document.createElement('label')
+    descLabel.className = 'hw-config__field'
+    descLabel.innerHTML = '<span>Description <span class="hw-config__optional">(optionnel · SEO)</span></span>'
+    var descInput = document.createElement('textarea')
+    descInput.rows = 3
+    descInput.className = 'hw-config__textarea'
+    descInput.placeholder = 'Non affichée sur le profil'
+    descInput.value = block.description || ''
+    descInput.addEventListener('input', function() { block.description = descInput.value })
+    descLabel.appendChild(descInput)
+    advBody.appendChild(descLabel)
+
+    body.appendChild(advanced)
+  }
+
+  try {
+    var parsed = JSON.parse(initialJson)
+    if (Array.isArray(parsed)) {
+      parsed.forEach(function(item) {
+        if (!item || typeof item !== 'object') return
+        if (item.type === 'text' && typeof item.content === 'string') {
+          blocks.push({ id: nextId(), type: 'text', content: item.content, url: null, uploading: false, previewUrl: null })
+        } else if (item.type === 'image') {
+          var imageBlock = parseImageBlockItem(item)
+          if (imageBlock) blocks.push(imageBlock)
+        }
+      })
+    }
+  } catch (e) {}
+
+  function nextId() {
+    return 'hb-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7)
+  }
+
+  function showError(msg) {
+    if (!errorEl) return
+    if (msg) {
+      errorEl.textContent = msg
+      errorEl.hidden = false
+    } else {
+      errorEl.hidden = true
+      errorEl.textContent = ''
+    }
+  }
+
+  var scrollLockY = 0
+
+  function lockPageScroll() {
+    scrollLockY = window.scrollY || window.pageYOffset || 0
+    document.documentElement.style.overflow = 'hidden'
+    document.body.style.overflow = 'hidden'
+    document.body.style.position = 'fixed'
+    document.body.style.top = '-' + scrollLockY + 'px'
+    document.body.style.left = '0'
+    document.body.style.right = '0'
+    document.body.style.width = '100%'
+  }
+
+  function unlockPageScroll() {
+    document.documentElement.style.overflow = ''
+    document.body.style.overflow = ''
+    document.body.style.position = ''
+    document.body.style.top = ''
+    document.body.style.left = ''
+    document.body.style.right = ''
+    document.body.style.width = ''
+    window.scrollTo(0, scrollLockY)
+  }
+
+  var openedFromAddContent = false
+  var cancelBtn = overlay.querySelector('[data-hist-edit-cancel]')
+
+  function open() {
+    openedFromAddContent = !!window.__ibeeReturnToAddContent
+    if (cancelBtn) cancelBtn.textContent = openedFromAddContent ? 'Retour' : 'Annuler'
+    overlay.hidden = false
+    lockPageScroll()
+    renderBlocks()
+  }
+
+  function close() {
+    overlay.hidden = true
+    unlockPageScroll()
+    showError('')
+    if (openedFromAddContent) {
+      openedFromAddContent = false
+      if (typeof window.ibeeReopenAddContentIfNeeded === 'function') {
+        window.ibeeReopenAddContentIfNeeded()
+      }
+      return
+    }
+    window.__ibeeReturnToAddContent = false
+  }
+
+  function scrollBlockIntoView(index) {
+    if (!scrollEl) return
+    var card = blocksWrap.querySelector('[data-hist-block-index="' + index + '"]')
+    if (!card) return
+    var top = card.getBoundingClientRect().top - scrollEl.getBoundingClientRect().top + scrollEl.scrollTop
+    scrollEl.scrollTo({ top: Math.max(0, top - 12), behavior: 'smooth' })
+  }
+
+  function moveBlock(index, delta) {
+    var target = index + delta
+    if (target < 0 || target >= blocks.length) return
+    var tmp = blocks[index]
+    blocks[index] = blocks[target]
+    blocks[target] = tmp
+    renderBlocks()
+    scrollBlockIntoView(target)
+  }
+
+  function renderEmptyState() {
+    var empty = document.createElement('div')
+    empty.className = 'hist-edit__empty'
+    empty.innerHTML =
+      '<div class="hist-edit__empty-icon" aria-hidden="true">' +
+        '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 7h16"/><path d="M4 12h10"/><path d="M4 17h14"/></svg>' +
+      '</div>' +
+      '<p class="hist-edit__empty-title">Ton histoire commence ici</p>' +
+      '<p class="hist-edit__empty-desc">Ajoute un bloc texte ou image pour structurer ton récit.</p>'
+    blocksWrap.appendChild(empty)
+  }
+
+  function renderBlocks() {
+    blocksWrap.innerHTML = ''
+    if (blocks.length === 0) {
+      renderEmptyState()
+      return
+    }
+
+    blocks.forEach(function(block, i) {
+      var box = document.createElement('article')
+      box.className = 'hist-edit__card hist-edit__card--' + block.type
+      box.setAttribute('data-hist-block-index', String(i))
+
+      var main = document.createElement('div')
+      main.className = 'hist-edit__card-main'
+
+      var head = document.createElement('header')
+      head.className = 'hist-edit__card-head'
+
+      var meta = document.createElement('div')
+      meta.className = 'hist-edit__meta'
+      var index = document.createElement('span')
+      index.className = 'hist-edit__index'
+      index.textContent = String(i + 1)
+      var tag = document.createElement('span')
+      tag.className = 'hist-edit__tag hist-edit__tag--' + block.type
+      tag.textContent = block.type === 'text' ? 'Paragraphe' : 'Visuel'
+      meta.appendChild(index)
+      meta.appendChild(tag)
+      head.appendChild(meta)
+
+      var ctrls = document.createElement('div')
+      ctrls.className = 'hist-edit__ctrls'
+
+      var up = document.createElement('button')
+      up.type = 'button'
+      up.className = 'hist-edit__ctrl'
+      up.disabled = i === 0
+      up.setAttribute('aria-label', 'Monter')
+      up.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m18 15-6-6-6 6"/></svg>'
+      up.addEventListener('click', function() { moveBlock(i, -1) })
+      ctrls.appendChild(up)
+
+      var down = document.createElement('button')
+      down.type = 'button'
+      down.className = 'hist-edit__ctrl'
+      down.disabled = i === blocks.length - 1
+      down.setAttribute('aria-label', 'Descendre')
+      down.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>'
+      down.addEventListener('click', function() { moveBlock(i, 1) })
+      ctrls.appendChild(down)
+
+      var del = document.createElement('button')
+      del.type = 'button'
+      del.className = 'hist-edit__ctrl hist-edit__ctrl--danger'
+      del.setAttribute('aria-label', 'Supprimer')
+      del.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>'
+      del.addEventListener('click', function() {
+        if (block.previewUrl) { try { URL.revokeObjectURL(block.previewUrl) } catch (err) {} }
+        blocks.splice(i, 1)
+        renderBlocks()
+      })
+      ctrls.appendChild(del)
+
+      head.appendChild(ctrls)
+      main.appendChild(head)
+
+      var body = document.createElement('div')
+      body.className = 'hist-edit__card-body'
+
+      if (block.type === 'text') {
+        var shell = document.createElement('div')
+        shell.className = 'hist-edit__text-shell'
+
+        var ta = document.createElement('textarea')
+        ta.className = 'hist-edit__textarea'
+        ta.rows = 6
+        ta.maxLength = TEXT_MAX
+        ta.placeholder = 'Ex. : J’ai lancé ce projet en 2020 avec l’envie de…'
+        ta.value = block.content
+
+        var foot = document.createElement('div')
+        foot.className = 'hist-edit__text-foot'
+        var counter = document.createElement('span')
+        counter.className = 'hist-edit__counter'
+        function syncCounter() {
+          counter.textContent = ta.value.length + ' / ' + TEXT_MAX
+        }
+        ta.addEventListener('input', function() {
+          block.content = ta.value
+          syncCounter()
+        })
+        syncCounter()
+        foot.appendChild(counter)
+
+        shell.appendChild(ta)
+        shell.appendChild(foot)
+        body.appendChild(shell)
+      } else {
+        renderBlockImageUI(body, block)
+      }
+
+      main.appendChild(body)
+      box.appendChild(main)
+      blocksWrap.appendChild(box)
+    })
+  }
+
+  overlay.querySelectorAll('[data-hist-block-add]').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      if (blocks.length >= MAX_BLOCKS) {
+        showError('Maximum ' + MAX_BLOCKS + ' blocs.')
+        return
+      }
+      showError('')
+      var kind = btn.getAttribute('data-hist-block-add')
+      if (kind === 'text') {
+        blocks.push({ id: nextId(), type: 'text', content: '', url: null, uploading: false, previewUrl: null })
+      } else {
+        blocks.push({
+          id: nextId(),
+          type: 'image',
+          slot_count: 1,
+          images: [],
+          title: '',
+          description: '',
+          uploading: false,
+          replaceSlot: null,
+          dragSlot: null,
+        })
+      }
+      renderBlocks()
+      var cards = blocksWrap.querySelectorAll('.hist-edit__card')
+      var last = cards[cards.length - 1]
+      if (last) {
+        if (scrollEl) {
+          var top = last.getBoundingClientRect().top - scrollEl.getBoundingClientRect().top + scrollEl.scrollTop
+          scrollEl.scrollTo({ top: Math.max(0, top - 8), behavior: 'smooth' })
+        } else {
+          last.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+        }
+        var focusable = last.querySelector('textarea, .hw-config__banner-slot-add')
+        if (focusable) focusable.focus()
+      }
+    })
+  })
+
+  document.querySelectorAll('[data-open-history-overlay]').forEach(function(btn) {
+    btn.addEventListener('click', open)
+  })
+  overlay.querySelectorAll('[data-hist-edit-close]').forEach(function(btn) {
+    btn.addEventListener('click', close)
+  })
+
+  form.addEventListener('submit', function(e) {
+    e.preventDefault()
+    showError('')
+
+    if (blocks.some(function(b) { return b.uploading })) {
+      showError('Patiente, une image est en cours d\'envoi.')
+      return
+    }
+
+    var payload = []
+    for (var i = 0; i < blocks.length; i++) {
+      var b = blocks[i]
+      if (b.type === 'text') {
+        var text = (b.content || '').trim()
+        if (!text) continue
+        if (text.length > TEXT_MAX) {
+          showError('Chaque bloc texte doit faire entre 1 et ' + TEXT_MAX + ' caractères.')
+          return
+        }
+        payload.push({ type: 'text', content: text })
+      } else if (b.type === 'image') {
+        var imgErr = getBlockImageSaveError(b)
+        if (imgErr) {
+          showError(imgErr)
+          return
+        }
+        var imgs = blockImagesPayload(b)
+        if (!imgs.length) continue
+        var imgItem = {
+          type: 'image',
+          slot_count: blockSlotCount(b),
+          images: imgs,
+        }
+        var seoTitle = (b.title || '').trim()
+        var seoDesc = (b.description || '').trim()
+        if (seoTitle) imgItem.title = seoTitle
+        if (seoDesc) imgItem.description = seoDesc
+        payload.push(imgItem)
+      }
+    }
+
+    fetch('/api/entity-history', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ blocks: payload }),
+    })
+      .then(function(res) {
+        if (!res.ok) throw new Error('save failed')
+        location.reload()
+      })
+      .catch(function() {
+        showError('Enregistrement impossible. Réessaie.')
+      })
+  })
+
+  renderBlocks()
+})()
+</script>
+
+<!-- is:global requis : les blocs sont injectés en JS (hors scope Astro). -->
+<style is:global>
+  .hist-edit[hidden] { display: none !important; }
+
+  .hist-edit {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 0;
+  }
+  @media (min-width: 640px) {
+    .hist-edit {
+      align-items: center;
+      padding: 24px;
+    }
+  }
+
+  .hist-edit__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(20, 22, 28, 0.42);
+    backdrop-filter: blur(6px);
+  }
+
+  .hist-edit__panel {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    width: 100%;
+    max-width: 620px;
+    height: 97dvh;
+    max-height: 97dvh;
+    margin: 0;
+    border-radius: 22px 22px 0 0;
+    background: var(--color-surface);
+    box-shadow: var(--shadow-shell);
+    overflow: hidden;
+  }
+  @media (min-width: 640px) {
+    .hist-edit__panel {
+      border-radius: 22px;
+      height: min(94vh, 920px);
+      max-height: min(94vh, 920px);
+    }
+  }
+
+  .hist-edit__head {
+    flex-shrink: 0;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 22px 22px 16px;
+    border-bottom: 1px solid var(--color-border-soft);
+    background: linear-gradient(180deg, var(--color-neutral-50) 0%, var(--color-surface) 100%);
+  }
+
+  .hist-edit__eyebrow {
+    margin: 0 0 4px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-neutral-400);
+  }
+
+  .hist-edit__title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--color-neutral-900);
+    line-height: 1.2;
+  }
+
+  .hist-edit__hint {
+    margin: 6px 0 0;
+    font-size: 13px;
+    line-height: 1.45;
+    color: var(--color-neutral-500);
+    max-width: 36ch;
+  }
+
+  .hist-edit__close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--color-surface);
+    box-shadow: var(--shadow-sm);
+    color: var(--color-neutral-600);
+    cursor: pointer;
+    transition: background 140ms ease, color 140ms ease;
+  }
+  .hist-edit__close:hover {
+    background: var(--color-panel);
+    color: var(--color-neutral-900);
+  }
+
+  .hist-edit__form {
+    display: grid;
+    grid-template-rows: minmax(0, 1fr) auto auto auto;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .hist-edit__scroll {
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+    touch-action: pan-y;
+  }
+
+  .hist-edit__canvas {
+    padding: 18px 18px 12px;
+  }
+
+  .hist-edit__canvas > .hist-edit__card + .hist-edit__card,
+  .hist-edit__canvas > .hist-edit__empty {
+    margin-top: 14px;
+  }
+
+  .hist-edit__empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 36px 24px 44px;
+    border-radius: 18px;
+    border: 1px dashed color-mix(in srgb, var(--color-border) 80%, transparent);
+    background: linear-gradient(165deg, var(--color-neutral-50) 0%, var(--color-surface) 55%);
+  }
+
+  .hist-edit__empty-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    background: var(--color-surface);
+    color: var(--color-neutral-400);
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 14px;
+  }
+
+  .hist-edit__empty-title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--color-neutral-800);
+  }
+
+  .hist-edit__empty-desc {
+    margin: 6px 0 0;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--color-neutral-500);
+    max-width: 28ch;
+  }
+
+  /* ——— Bloc carte ——— */
+  .hist-edit__card {
+    position: relative;
+    display: block;
+    flex-shrink: 0;
+    border-radius: 18px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.03), 0 8px 22px -14px rgb(20 22 28 / 0.3);
+    overflow: hidden;
+    transition: border-color 180ms ease, box-shadow 180ms ease;
+  }
+  .hist-edit__card:hover {
+    border-color: color-mix(in srgb, var(--color-border) 40%, var(--color-neutral-300));
+    box-shadow: 0 2px 8px rgb(0 0 0 / 0.05), 0 14px 28px -16px rgb(20 22 28 / 0.24);
+  }
+
+  .hist-edit__card-main {
+    padding: 14px 16px 16px;
+  }
+
+  .hist-edit__card-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .hist-edit__meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .hist-edit__index {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: var(--color-neutral-900);
+    color: #fff;
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .hist-edit__tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-family: var(--font-display);
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .hist-edit__tag--text {
+    background: #EEF0F3;
+    color: var(--color-neutral-700);
+  }
+  .hist-edit__tag--image {
+    background: var(--color-accent-soft);
+    color: var(--color-accent-strong);
+  }
+
+  .hist-edit__ctrls {
+    display: flex;
+    gap: 4px;
+    margin-left: auto;
+  }
+
+  .hist-edit__ctrl {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--color-neutral-500);
+    cursor: pointer;
+    transition: background 140ms ease, color 140ms ease;
+  }
+  .hist-edit__ctrl:hover:not(:disabled) {
+    background: var(--color-panel);
+    color: var(--color-neutral-800);
+  }
+  .hist-edit__ctrl:disabled {
+    opacity: 0.28;
+    cursor: default;
+  }
+  .hist-edit__ctrl--danger:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--color-error) 10%, transparent);
+    color: var(--color-error);
+  }
+
+  /* ——— Texte ——— */
+  .hist-edit__text-shell {
+    border-radius: 14px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    box-shadow: inset 0 1px 2px rgb(20 22 28 / 0.04);
+    overflow: hidden;
+    transition: border-color 160ms ease, box-shadow 160ms ease;
+  }
+  .hist-edit__text-shell:focus-within {
+    border-color: color-mix(in srgb, var(--color-accent) 40%, var(--color-border));
+    box-shadow: inset 0 1px 2px rgb(20 22 28 / 0.03), 0 0 0 3px var(--color-accent-tint);
+  }
+
+  .hist-edit__textarea {
+    display: block;
+    width: 100%;
+    min-height: 148px;
+    padding: 16px 18px 12px;
+    border: 0;
+    background: transparent;
+    resize: vertical;
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.65;
+    letter-spacing: -0.01em;
+    color: var(--color-neutral-900);
+    outline: none;
+  }
+  .hist-edit__textarea::placeholder {
+    color: var(--color-neutral-400);
+    font-size: 15px;
+  }
+
+  .hist-edit__text-foot {
+    display: flex;
+    justify-content: flex-end;
+    padding: 8px 14px 10px;
+    border-top: 1px solid var(--color-border-soft);
+    background: var(--color-surface);
+  }
+
+  .hist-edit__counter {
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    font-weight: 500;
+    color: var(--color-neutral-400);
+  }
+
+  /* ——— Image ——— */
+  .hist-edit__img-format {
+    margin-bottom: 12px;
+  }
+  .hist-edit__img-format-label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-neutral-400);
+  }
+  .hist-edit__img-format-picker {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 4px;
+  }
+  .hist-edit__img-format-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 8px;
+    border: 1px solid var(--color-border-soft);
+    border-radius: 12px;
+    background: var(--color-surface);
+    cursor: pointer;
+    transition: border-color 160ms ease, background 160ms ease;
+  }
+  .hist-edit__img-format-btn:hover {
+    border-color: var(--color-border);
+    background: var(--color-neutral-50);
+  }
+  .hist-edit__img-format-btn.is-active {
+    border-color: color-mix(in srgb, var(--color-accent) 45%, var(--color-border));
+    background: color-mix(in srgb, var(--color-accent-soft) 35%, var(--color-surface));
+  }
+  .hist-edit__layout-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-neutral-400);
+    transition: color 150ms ease;
+  }
+  .hist-edit__img-format-btn.is-active .hist-edit__layout-icon,
+  .hist-edit__img-format-btn:hover .hist-edit__layout-icon {
+    color: var(--color-accent);
+  }
+  .hist-edit__layout-icon i {
+    display: block;
+    border: 2px solid currentColor;
+    border-radius: 3px;
+    box-sizing: border-box;
+    background: transparent;
+  }
+  .hist-edit__layout-icon--landscape i {
+    width: 40px;
+    height: 22px;
+  }
+  .hist-edit__layout-icon--square i {
+    width: 22px;
+    height: 22px;
+  }
+
+  .hist-edit__dropzone {
+    display: block;
+    cursor: pointer;
+    border-radius: 16px;
+    border: 2px dashed color-mix(in srgb, var(--color-neutral-300) 85%, transparent);
+    background:
+      radial-gradient(120% 80% at 50% 0%, color-mix(in srgb, var(--color-accent-soft) 55%, transparent) 0%, transparent 70%),
+      var(--color-surface);
+    transition: border-color 180ms ease, background 180ms ease, transform 180ms ease;
+  }
+  .hist-edit__dropzone:hover,
+  .hist-edit__dropzone.is-hover {
+    border-color: var(--color-accent);
+    background:
+      radial-gradient(120% 80% at 50% 0%, color-mix(in srgb, var(--color-accent-soft) 80%, transparent) 0%, transparent 72%),
+      var(--color-surface);
+    transform: translateY(-1px);
+  }
+  .hist-edit__dropzone input {
+    display: none;
+  }
+
+  .hist-edit__dropzone-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 200px;
+    padding: 28px 24px;
+    text-align: center;
+  }
+  .hist-edit__dropzone--square .hist-edit__dropzone-inner {
+    min-height: 220px;
+    max-width: 280px;
+    margin: 0 auto;
+  }
+
+  .hist-edit__dropzone-ring {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 72px;
+    height: 72px;
+    border-radius: 20px;
+    background: var(--color-surface);
+    box-shadow: 0 4px 16px -8px rgb(20 22 28 / 0.28);
+    margin-bottom: 4px;
+  }
+
+  .hist-edit__dropzone-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-accent-strong);
+  }
+
+  .hist-edit__dropzone-title {
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--color-neutral-900);
+  }
+
+  .hist-edit__dropzone-hint {
+    font-size: 12px;
+    color: var(--color-neutral-500);
+  }
+
+  .hist-edit__dropzone-cta {
+    margin-top: 4px;
+    padding: 8px 16px;
+    border-radius: 999px;
+    background: var(--color-neutral-900);
+    color: #fff;
+    font-family: var(--font-display);
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .hist-edit__img-frame {
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+    background: var(--color-panel-2);
+    border: 1px solid var(--color-border);
+  }
+  .hist-edit__img-frame--landscape {
+    aspect-ratio: var(--hist-img-aspect, 16 / 9);
+  }
+  .hist-edit__img-frame--square {
+    aspect-ratio: 1 / 1;
+    max-width: 320px;
+    margin: 0 auto;
+  }
+  .hist-edit__img-frame img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .hist-edit__img-frame.is-uploading img {
+    opacity: 0.5;
+    filter: blur(2px);
+  }
+
+  .hist-edit__img-loader {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.62);
+    backdrop-filter: blur(4px);
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-neutral-700);
+  }
+
+  .hist-edit__spinner {
+    width: 22px;
+    height: 22px;
+    border: 2px solid var(--color-border);
+    border-top-color: var(--color-accent);
+    border-radius: 999px;
+    animation: hist-edit-spin 0.7s linear infinite;
+  }
+  @keyframes hist-edit-spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .hist-edit__img-toolbar {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px 12px;
+    background: linear-gradient(180deg, transparent 0%, rgba(20, 22, 28, 0.55) 100%);
+  }
+
+  .hist-edit__img-action {
+    display: inline-flex;
+    align-items: center;
+    padding: 9px 16px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(8px);
+    box-shadow: var(--shadow-md);
+    font-family: var(--font-display);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-neutral-900);
+    cursor: pointer;
+    transition: transform 140ms ease;
+  }
+  .hist-edit__img-action:hover {
+    transform: translateY(-1px);
+  }
+  .hist-edit__img-action input {
+    display: none;
+  }
+
+  .hist-edit__img-hit {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 160ms ease, background 160ms ease;
+  }
+  .hist-edit__img-frame:hover .hist-edit__img-hit,
+  .hist-edit__img-hit:focus-visible {
+    opacity: 1;
+    background: rgba(20, 22, 28, 0.28);
+  }
+  .hist-edit__img-hit-label {
+    padding: 9px 16px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(8px);
+    box-shadow: var(--shadow-md);
+    font-family: var(--font-display);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-neutral-900);
+  }
+
+  .hist-edit__img-advanced {
+    margin-top: 12px;
+    border: 0;
+    background: transparent;
+  }
+  .hist-edit__img-advanced-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 8px 0;
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-neutral-700);
+    cursor: pointer;
+    list-style: none;
+  }
+  .hist-edit__img-advanced-summary::-webkit-details-marker {
+    display: none;
+  }
+  .hist-edit__img-advanced-chevron {
+    flex-shrink: 0;
+    color: var(--color-neutral-500);
+    transition: transform 220ms ease, color 150ms ease;
+  }
+  .hist-edit__img-advanced[open] .hist-edit__img-advanced-chevron {
+    transform: rotate(180deg);
+    color: var(--color-neutral-700);
+  }
+  .hist-edit__img-advanced-body {
+    padding: 4px 0 0;
+  }
+  .hist-edit__img-alt-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .hist-edit__img-alt-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-neutral-700);
+  }
+  .hist-edit__optional {
+    font-weight: 400;
+    color: var(--color-neutral-400);
+  }
+  .hist-edit__img-alt-input {
+    width: 100%;
+    min-height: 40px;
+    padding: 10px 12px;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    background: var(--color-surface);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    color: var(--color-neutral-900);
+    outline: none;
+    transition: border-color 160ms ease, box-shadow 160ms ease;
+  }
+  .hist-edit__img-alt-input:focus {
+    border-color: color-mix(in srgb, var(--color-accent) 40%, var(--color-border));
+    box-shadow: 0 0 0 3px var(--color-accent-tint);
+  }
+
+  .hw-banner-crop[hidden] { display: none !important; }
+  .hw-banner-crop {
+    position: fixed;
+    inset: 0;
+    z-index: 300;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+  .hw-banner-crop__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, .55);
+  }
+  .hw-banner-crop__panel {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 520px;
+    max-height: 92vh;
+    overflow-y: auto;
+    padding: 20px;
+    border-radius: 16px;
+    background: var(--color-surface);
+    box-shadow: var(--shadow-lg);
+  }
+  .hw-banner-crop__title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 600;
+  }
+  .hw-banner-crop__hint {
+    margin: 6px 0 14px;
+    font-size: 13px;
+    color: var(--color-neutral-500);
+  }
+  .hw-banner-crop__stage {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 16px;
+    padding: 12px;
+    border-radius: 12px;
+    background: var(--color-panel);
+    overflow: auto;
+  }
+  .hw-banner-crop__frame {
+    position: relative;
+    display: inline-block;
+    line-height: 0;
+  }
+  .hw-banner-crop__frame img {
+    display: block;
+    max-width: 100%;
+    max-height: min(360px, 50vh);
+    width: auto;
+    height: auto;
+    user-select: none;
+    -webkit-user-drag: none;
+  }
+  .hw-banner-crop__box {
+    position: absolute;
+    box-sizing: border-box;
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, .45);
+    cursor: move;
+    touch-action: none;
+  }
+  .hw-banner-crop__handle {
+    position: absolute;
+    right: -7px;
+    bottom: -7px;
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--color-accent);
+    border-radius: 4px;
+    background: #fff;
+    cursor: nwse-resize;
+    touch-action: none;
+  }
+  .hw-banner-crop__foot {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+
+  /* ——— Composer (ajout) ——— */
+  .hist-edit__composer,
+  .hist-edit__error,
+  .hist-edit__foot {
+    flex-shrink: 0;
+  }
+
+  .hist-edit__composer {
+    padding: 10px 18px 6px;
+    border-top: 1px solid var(--color-border-soft);
+    background: var(--color-neutral-50);
+  }
+
+  .hist-edit__composer-label {
+    margin: 0 0 10px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-neutral-400);
+  }
+
+  .hist-edit__add-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .hist-edit__add-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--color-border);
+    border-radius: 14px;
+    background: var(--color-surface);
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+  }
+  .hist-edit__add-card:hover {
+    border-color: color-mix(in srgb, var(--color-accent) 40%, var(--color-border));
+    box-shadow: 0 4px 14px -8px rgb(20 22 28 / 0.35);
+    transform: translateY(-1px);
+  }
+
+  .hist-edit__add-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    color: var(--color-neutral-700);
+  }
+  .hist-edit__add-icon--text {
+    background: linear-gradient(145deg, #F3F4F6 0%, #E5E7EB 100%);
+  }
+  .hist-edit__add-icon--image {
+    background: linear-gradient(145deg, var(--color-accent-soft) 0%, #FAD9C8 100%);
+    color: var(--color-accent-strong);
+  }
+
+  .hist-edit__add-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    flex: 1;
+  }
+  .hist-edit__add-copy strong {
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-neutral-900);
+  }
+  .hist-edit__add-copy span {
+    font-size: 11px;
+    line-height: 1.35;
+    color: var(--color-neutral-500);
+  }
+
+  .hist-edit__add-plus {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 26px;
+    height: 26px;
+    border-radius: 999px;
+    background: var(--color-panel);
+    color: var(--color-neutral-500);
+  }
+
+  .hist-edit__error {
+    margin: 0;
+    padding: 0 18px 8px;
+    font-size: 13px;
+    color: var(--color-accent-strong);
+  }
+
+  .hist-edit__foot {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 14px 18px 18px;
+    border-top: 1px solid var(--color-border-soft);
+    background: color-mix(in srgb, var(--color-surface) 88%, transparent);
+    backdrop-filter: blur(10px);
+  }
+
+  .hist-edit__btn {
+    min-height: 42px;
+    padding: 0 20px;
+    border-radius: 12px;
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 0;
+    transition: background 140ms ease, transform 140ms ease;
+  }
+  .hist-edit__btn:active {
+    transform: scale(0.98);
+  }
+  .hist-edit__btn--ghost {
+    background: var(--color-panel);
+    color: var(--color-neutral-800);
+  }
+  .hist-edit__btn--ghost:hover {
+    background: var(--color-panel-2);
+  }
+  .hist-edit__btn--primary {
+    background: var(--color-neutral-900);
+    color: #fff;
+    box-shadow: 0 4px 14px -6px rgb(20 22 28 / 0.55);
+  }
+  .hist-edit__btn--primary:hover {
+    background: var(--color-cta-primary-hover);
+  }
+
+  /* ——— Bannière (même UI que widget Accueil) ——— */
+  .hist-edit__card-main .hw-config__field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-neutral-800);
+  }
+  .hist-edit__card-main .hw-config__input,
+  .hist-edit__card-main .hw-config__textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    background: var(--color-surface);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    color: var(--color-neutral-900);
+    outline: none;
+  }
+  .hist-edit__card-main .hw-config__textarea { resize: vertical; }
+  .hist-edit__card-main .hw-config__optional {
+    font-weight: 400;
+    color: var(--color-neutral-400);
+    font-size: 12px;
+  }
+  .hist-edit__card-main .hw-config__banner-layout-picker {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+    margin-bottom: 4px;
+  }
+  .hist-edit__card-main .hw-config__banner-layout-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 8px;
+    border: 1px solid var(--color-border-soft);
+    border-radius: 12px;
+    background: var(--color-surface);
+    cursor: pointer;
+  }
+  .hist-edit__card-main .hw-config__layout-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    color: var(--color-neutral-400);
+    transition: color .15s ease;
+  }
+  .hist-edit__card-main .hw-config__banner-layout-btn.is-active .hw-config__layout-icon,
+  .hist-edit__card-main .hw-config__banner-layout-btn:hover .hw-config__layout-icon {
+    color: var(--color-accent);
+  }
+  .hist-edit__card-main .hw-config__layout-icon i {
+    display: block;
+    border: 2px solid currentColor;
+    border-radius: 3px;
+    box-sizing: border-box;
+    background: transparent;
+  }
+  .hist-edit__card-main .hw-config__layout-icon--landscape i { width: 40px; height: 22px; }
+  .hist-edit__card-main .hw-config__layout-icon--duo i { width: 15px; height: 15px; }
+  .hist-edit__card-main .hw-config__layout-icon--trio i { width: 12px; height: 12px; }
+  .hist-edit__card-main .hw-config__banner-workspace.is-uploading {
+    opacity: 0.65;
+    pointer-events: none;
+  }
+  .hist-edit__card-main .hw-config__banner-workspace.has-error .hw-config__banner-slot--empty .hw-config__banner-slot-frame {
+    border-color: var(--color-accent);
+  }
+  .hist-edit__card-main .hw-config__banner-error {
+    margin: 8px 0 0;
+    font-size: 13px;
+    line-height: 1.4;
+    color: var(--color-accent);
+  }
+  .hist-edit__card-main .hw-config__banner-error[hidden] { display: none !important; }
+  .hist-edit__card-main .hw-config__banner-advanced {
+    margin-top: 8px;
+    border: 0;
+    background: transparent;
+  }
+  .hist-edit__card-main .hw-config__banner-advanced-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 0;
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-neutral-700);
+    cursor: pointer;
+    list-style: none;
+  }
+  .hist-edit__card-main .hw-config__banner-advanced-summary::-webkit-details-marker { display: none; }
+  .hist-edit__card-main .hw-config__banner-advanced-chevron {
+    flex-shrink: 0;
+    color: var(--color-neutral-500);
+    transition: transform .22s ease, color .15s ease;
+  }
+  .hist-edit__card-main .hw-config__banner-advanced[open] .hw-config__banner-advanced-chevron {
+    transform: rotate(180deg);
+    color: var(--color-neutral-700);
+  }
+  .hist-edit__card-main .hw-config__banner-advanced-body { padding: 4px 0 0; }
+  .hist-edit__card-main .hw-config__banner-advanced-body .hw-config__field:last-child { margin-bottom: 10px; }
+
+  .hist-edit__card-main .hw-config__banner-row {
+    display: grid;
+    gap: 8px;
+  }
+  .hist-edit__card-main .hw-config__banner-row--landscape { grid-template-columns: 1fr; }
+  .hist-edit__card-main .hw-config__banner-row--square { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .hist-edit__card-main .hw-config__banner-row--square.hw-config__banner-row--triple {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .hist-edit__card-main .hw-config__banner-slot {
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+  }
+  .hist-edit__card-main .hw-config__banner-slot--landscape:not(.hw-config__banner-slot--empty) {
+    aspect-ratio: var(--banner-aspect, 16 / 9);
+  }
+  .hist-edit__card-main .hw-config__banner-slot--square:not(.hw-config__banner-slot--empty) {
+    aspect-ratio: 1 / 1;
+  }
+  .hist-edit__card-main .hw-config__banner-slot-media {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    border-radius: inherit;
+    background: var(--color-panel);
+  }
+  .hist-edit__card-main .hw-config__banner-slot-media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+    pointer-events: none;
+  }
+  .hist-edit__card-main .hw-config__banner-slot--empty { border: 0; background: transparent; }
+  .hist-edit__card-main .hw-config__banner-slot-add {
+    display: block;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    color: var(--color-neutral-600);
+  }
+  .hist-edit__card-main .hw-config__banner-slot-frame {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px dashed var(--color-border);
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--color-panel) 88%, var(--color-neutral-200));
+  }
+  .hist-edit__card-main .hw-config__banner-slot-frame--landscape { aspect-ratio: 16 / 9; min-height: 72px; }
+  .hist-edit__card-main .hw-config__banner-slot-frame--square { aspect-ratio: 1 / 1; min-height: 72px; }
+  .hist-edit__card-main .hw-config__banner-slot-add:hover .hw-config__banner-slot-frame {
+    border-color: var(--color-accent);
+    background: color-mix(in srgb, var(--color-accent-soft) 45%, var(--color-panel));
+  }
+  .hist-edit__card-main .hw-config__banner-slot:not(.hw-config__banner-slot--empty) {
+    border-radius: 12px;
+    border: 1px solid var(--color-border);
+    background: var(--color-neutral-200);
+  }
+  .hist-edit__card-main .hw-config__banner-slot-hit {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+  }
+  .hist-edit__card-main .hw-config__banner-slot-edit {
+    position: absolute;
+    left: 8px;
+    bottom: 8px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    background: rgba(0, 0, 0, .55);
+    color: #fff;
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: 600;
+    opacity: 0;
+    transition: opacity .14s ease;
+  }
+  .hist-edit__card-main .hw-config__banner-slot-hit:hover .hw-config__banner-slot-edit,
+  .hist-edit__card-main .hw-config__banner-slot--warn .hw-config__banner-slot-edit { opacity: 1; }
+  .hist-edit__card-main .hw-config__banner-slot--warn {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 1px;
+  }
+  .hist-edit__card-main .hw-config__banner-slot-drag {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    z-index: 3;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 0;
+    border-radius: 7px;
+    background: rgba(0, 0, 0, .5);
+    color: #fff;
+    cursor: grab;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .hist-edit__card-main .hw-config__banner-slot-remove {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    z-index: 4;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 0;
+    border-radius: 7px;
+    background: rgba(0, 0, 0, .55);
+    color: #fff;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+  }
+  .hist-edit__card-main .hw-config__banner-slot.is-dragging { opacity: .45; }
+  .hist-edit__card-main .hw-config__banner-slot.is-drop-target {
+    outline: 2px dashed var(--color-accent);
+    outline-offset: 2px;
+  }
+</style>

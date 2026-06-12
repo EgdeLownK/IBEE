@@ -15,6 +15,8 @@ interface Props {
   /** Image de couverture (gallery_images[0]) — placeholder icône sinon. */
   coverImageUrl?: string | null
   entitySlug: string
+  /** URL d'édition dashboard — si fournie (owner), affiche "Modifier" au lieu de "Réserver". */
+  editHref?: string | null
 }
 
 const {
@@ -29,6 +31,7 @@ const {
   currency,
   coverImageUrl = null,
   entitySlug,
+  editHref = null,
 } = Astro.props
 
 const locationIcons: Record<string, { icon: string; label: string }> = {
@@ -47,7 +50,10 @@ function formatPrice(cents: number | null, curr: string) {
 const isFree = priceCents === null || priceCents === 0
 const hasPromo = !isFree && promoPriceCents != null && promoPriceCents > 0
 ---
-<a href={`/${entitySlug}/services/${slug}`} class="row" data-appointment-type={id}>
+<div class="row" data-appointment-type={id}>
+  {/* Lien étiré : toute la carte mène à la fiche service (sauf actions au-dessus) */}
+  <a href={`/${entitySlug}/services/${slug}`} class="row__stretch" aria-label={title}></a>
+
   {/* Vignette (cover de la galerie, placeholder icône sinon) */}
   <div class="row__thumb">
     {coverImageUrl ? (
@@ -58,7 +64,7 @@ const hasPromo = !isFree && promoPriceCents != null && promoPriceCents > 0
   </div>
 
   {/* Contenu */}
-  <div class="min-w-0 flex-1">
+  <div class="row__content min-w-0 flex-1">
     <h3 class="row__title m-0">{title}</h3>
     {description && <div class="row__desc">{description}</div>}
     <div class="row__metaline">
@@ -83,6 +89,33 @@ const hasPromo = !isFree && promoPriceCents != null && promoPriceCents > 0
     ) : (
       <span class="price-tag">{formatPrice(priceCents, currency)}</span>
     )}
-    <span class="pill pill--accent">Réserver</span>
+    {editHref ? (
+      <a href={editHref} class="row__edit pill pill--accent">Modifier</a>
+    ) : (
+      <span class="pill pill--accent">Réserver</span>
+    )}
   </div>
-</a>
+</div>
+
+<style>
+  .row { position: relative; }
+  .row__stretch {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    border-radius: inherit;
+  }
+  .row__thumb,
+  .row__content,
+  .row__right {
+    position: relative;
+    z-index: 1;
+    pointer-events: none;
+  }
+  /* Le bouton Modifier reste cliquable au-dessus du lien étiré */
+  .row__edit {
+    pointer-events: auto;
+    position: relative;
+    z-index: 2;
+  }
+</style>

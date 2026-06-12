@@ -1,0 +1,355 @@
+---
+/** Rendu d'un widget Accueil selon son type + config (contenu des menus existants). */
+import BannerWelcomeWidget from './BannerWelcomeWidget.astro'
+import BioWidget from './BioWidget.astro'
+import ShopWidget from './ShopWidget.astro'
+import ServiceWidget from './ServiceWidget.astro'
+import EventWidget from './EventWidget.astro'
+import NewsWidget from './NewsWidget.astro'
+import FaqWidget from './FaqWidget.astro'
+import WidgetEmptyState from './WidgetEmptyState.astro'
+import {
+  parseShopConfig,
+  parseAnnouncementConfig,
+  parseServiceConfig,
+  parseEventConfig,
+  parseNewsConfig,
+  parseBioConfig,
+  parseFaqConfig,
+  isWidgetConfigured,
+  normalizeWidgetConfig,
+} from '../home-widget-config.ts'
+import { widgetEmptyContent } from '../widget-empty-content.ts'
+
+type OpeningHourSlot = {
+  day_of_week: number
+  closed: boolean
+  start_time: string | null
+  end_time: string | null
+}
+
+type ContactInfo = {
+  contact_email: string | null
+  contact_email_public: boolean
+  contact_phone: string | null
+  contact_phone_public: boolean
+  message_enabled: boolean
+  opening_hours_enabled: boolean
+  opening_hours: OpeningHourSlot[]
+}
+
+interface HomeWidget {
+  id: string
+  type: string
+  config?: unknown
+}
+
+interface Product {
+  id: string
+  title: string
+  slug?: string
+  detailExcerpt?: string | null
+  reviewCount?: number
+  reviewAverage?: number
+  price_cents?: number | null
+  sale_price_cents?: number | null
+  sale_ends_at?: string | null
+  currency?: string
+  image_url?: string | null
+  category_id?: string | null
+  type?: string | null
+  physical_stock_quantity?: number | null
+}
+
+interface Category { id: string; name: string }
+
+interface Props {
+  widget: HomeWidget
+  entitySlug: string
+  entityName: string
+  contactInfo?: ContactInfo | null
+  isOwner?: boolean
+  products?: Product[]
+  categories?: Category[]
+  appointmentTypes?: { id: string; title: string; slug: string; detailExcerpt?: string | null; reviewCount?: number; reviewAverage?: number; duration_minutes: number; location_type: string; price_cents: number | null; promo_price_cents?: number | null; currency: string; description?: string | null; gallery_images?: string[] }[]
+  events?: { id: string; title: string; slug: string; detailExcerpt?: string | null; description?: string | null; start_at: string; end_at?: string | null; location_type: string; location_details?: string | null; price_cents: number | null; currency: string; capacity?: number | null; registrations_count?: number; gallery_images?: string[] }[]
+  publications?: { id: string; title: string; slug: string; content: string | null; published_at: string | null; publication_media?: { id: string; url: string; alt_text: string | null; position: number; width?: number | null; height?: number | null }[] }[]
+  faqItems?: { question: string; answer: string }[]
+  entityAvatarUrl?: string | null
+}
+
+const {
+  widget,
+  entitySlug,
+  entityName,
+  contactInfo = null,
+  isOwner = false,
+  products = [],
+  categories = [],
+  appointmentTypes = [],
+  events = [],
+  publications = [],
+  faqItems = [],
+  entityAvatarUrl = null,
+} = Astro.props
+
+const config = normalizeWidgetConfig(widget.config)
+const configured = isWidgetConfigured(widget.type, config)
+
+function emptyProps(
+  scenario: Parameters<typeof widgetEmptyContent>[1],
+  extra?: { categoryName?: string },
+) {
+  const content = widgetEmptyContent(widget.type, scenario, {
+    widgetId: widget.id,
+    categoryName: extra?.categoryName,
+  })
+  return {
+    message: content.visitorMessage,
+    ownerMessage: content.ownerMessage,
+    ctaLabel: content.ctaLabel,
+    ctaAction: content.ctaAction,
+    ctaValue: content.ctaValue,
+    isOwner,
+  }
+}
+
+function hasBioContent(ci: ContactInfo | null): boolean {
+  if (!ci) return false
+  const showEmail = ci.contact_email_public && !!ci.contact_email?.trim()
+  const showPhone = ci.contact_phone_public && !!ci.contact_phone?.trim()
+  const showMessage = ci.message_enabled
+  const hasHours = ci.opening_hours_enabled && (ci.opening_hours?.length ?? 0) > 0
+  return showEmail || showPhone || showMessage || hasHours
+}
+
+---
+{!configured && <WidgetEmptyState {...emptyProps('unconfigured')} />}
+
+{configured && widget.type === 'widget_shop' && (() => {
+  const cfg = parseShopConfig(config)!
+  if (cfg.mode === 'product') {
+    const p = products.find((x) => x.id === cfg.product_id)
+    if (!p) return <WidgetEmptyState {...emptyProps('missing_ref')} />
+    return (
+      <ShopWidget
+        entitySlug={entitySlug}
+        mode="product"
+        embedded
+        items={[{
+          title: p.title,
+          slug: p.slug,
+          imageUrl: p.image_url ?? null,
+          type: p.type,
+          price_cents: p.price_cents,
+          sale_price_cents: p.sale_price_cents,
+          sale_ends_at: p.sale_ends_at,
+          currency: p.currency,
+        }]}
+      />
+    )
+  }
+  const cat = categories.find((c) => c.id === cfg.category_id)
+  const shopItems = products
+    .filter((p) => p.category_id === cfg.category_id)
+    .slice(0, cfg.limit ?? 6)
+    .map((p) => ({
+      title: p.title,
+      slug: p.slug,
+      imageUrl: p.image_url ?? null,
+      detailExcerpt: p.detailExcerpt ?? null,
+      reviewCount: p.reviewCount ?? 0,
+      reviewAverage: p.reviewAverage ?? 0,
+      price_cents: p.price_cents,
+      sale_price_cents: p.sale_price_cents,
+      sale_ends_at: p.sale_ends_at,
+      currency: p.currency,
+      type: p.type,
+      physical_stock_quantity: p.physical_stock_quantity,
+    }))
+  if (shopItems.length === 0) {
+    return <WidgetEmptyState {...emptyProps('empty_category', { categoryName: cat?.name })} />
+  }
+  return (
+    <ShopWidget
+      entitySlug={entitySlug}
+      mode="category"
+      categoryTitle={cat?.name ?? 'Catégorie'}
+      items={shopItems}
+      moreHref={`/${entitySlug}#shop`}
+      embedded
+    />
+  )
+})()}
+
+{configured && widget.type === 'widget_announcement' && (() => {
+  const cfg = parseAnnouncementConfig(config)!
+  if (!cfg.images?.length) {
+    return <WidgetEmptyState {...emptyProps('no_images')} />
+  }
+  return (
+    <BannerWelcomeWidget
+      images={cfg.images}
+      seoTitle={cfg.title}
+    />
+  )
+})()}
+
+{configured && widget.type === 'widget_service' && (() => {
+  const cfg = parseServiceConfig(config)!
+  if (cfg.mode === 'service') {
+    const svc = appointmentTypes.find((s) => s.id === cfg.appointment_type_id)
+    if (!svc) return <WidgetEmptyState {...emptyProps('missing_ref')} />
+    return (
+      <ServiceWidget
+        entitySlug={entitySlug}
+        mode="service"
+        embedded
+        items={[{
+          title: svc.title,
+          slug: svc.slug,
+          imageUrl: svc.gallery_images?.[0] ?? null,
+          duration_minutes: svc.duration_minutes,
+          location_type: svc.location_type,
+          price_cents: svc.price_cents,
+          promo_price_cents: svc.promo_price_cents,
+          currency: svc.currency,
+        }]}
+      />
+    )
+  }
+  const serviceItems = appointmentTypes
+    .slice(0, cfg.limit ?? 6)
+    .map((svc) => ({
+      title: svc.title,
+      slug: svc.slug,
+      imageUrl: svc.gallery_images?.[0] ?? null,
+      detailExcerpt: svc.detailExcerpt ?? null,
+      reviewCount: svc.reviewCount ?? 0,
+      reviewAverage: svc.reviewAverage ?? 0,
+      duration_minutes: svc.duration_minutes,
+      location_type: svc.location_type,
+      price_cents: svc.price_cents,
+      promo_price_cents: svc.promo_price_cents,
+      currency: svc.currency,
+    }))
+  if (serviceItems.length === 0) {
+    return <WidgetEmptyState {...emptyProps('empty_pool')} />
+  }
+  return (
+    <ServiceWidget
+      entitySlug={entitySlug}
+      mode="category"
+      categoryTitle="Services"
+      items={serviceItems}
+      moreHref={`/${entitySlug}#appointments`}
+      embedded
+    />
+  )
+})()}
+
+{configured && widget.type === 'widget_event' && (() => {
+  const cfg = parseEventConfig(config)!
+  if (cfg.mode === 'featured') {
+    const ev = events.find((e) => e.id === cfg.event_id)
+    if (!ev) return <WidgetEmptyState {...emptyProps('missing_ref')} />
+    return (
+      <EventWidget
+        entitySlug={entitySlug}
+        mode="featured"
+        embedded
+        items={[{
+          title: ev.title,
+          slug: ev.slug,
+          imageUrl: ev.gallery_images?.[0] ?? null,
+          start_at: ev.start_at,
+          location_type: ev.location_type,
+          price_cents: ev.price_cents,
+          currency: ev.currency,
+        }]}
+      />
+    )
+  }
+  const eventItems = events
+    .slice(0, cfg.limit ?? 6)
+    .map((ev) => ({
+      title: ev.title,
+      slug: ev.slug,
+      imageUrl: ev.gallery_images?.[0] ?? null,
+      detailExcerpt: ev.detailExcerpt ?? null,
+      start_at: ev.start_at,
+      location_type: ev.location_type,
+      price_cents: ev.price_cents,
+      currency: ev.currency,
+      capacity: ev.capacity,
+      registrations_count: ev.registrations_count,
+    }))
+  if (eventItems.length === 0) {
+    return <WidgetEmptyState {...emptyProps('empty_pool')} />
+  }
+  return (
+    <EventWidget
+      entitySlug={entitySlug}
+      mode="category"
+      categoryTitle="Events"
+      items={eventItems}
+      moreHref={`/${entitySlug}#events`}
+      embedded
+    />
+  )
+})()}
+
+{configured && widget.type === 'widget_faq' && (() => {
+  parseFaqConfig(config)
+  if (faqItems.length === 0) {
+    return <WidgetEmptyState {...emptyProps('no_faq')} />
+  }
+  return <FaqWidget items={faqItems} embedded />
+})()}
+
+{configured && widget.type === 'widget_news' && (() => {
+  parseNewsConfig(config)
+  const latest = [...publications]
+    .filter((p) => p.published_at)
+    .sort((a, b) => new Date(b.published_at!).getTime() - new Date(a.published_at!).getTime())
+    .slice(0, 3)
+  if (latest.length === 0) {
+    return <WidgetEmptyState {...emptyProps('no_news')} />
+  }
+  const newsItems = latest.map((pub) => {
+    const media = [...(pub.publication_media ?? [])].sort((a, b) => a.position - b.position)
+    return {
+      title: pub.title,
+      slug: pub.slug,
+      publishedAt: pub.published_at!,
+      imageUrl: media[0]?.url ?? null,
+    }
+  })
+  return (
+    <NewsWidget
+      entitySlug={entitySlug}
+      items={newsItems}
+      showHeader={false}
+      embedded
+    />
+  )
+})()}
+
+{configured && widget.type === 'widget_bio' && (() => {
+  parseBioConfig(config)
+  if (!hasBioContent(contactInfo)) {
+    return <WidgetEmptyState {...emptyProps('no_bio')} />
+  }
+  return (
+    <BioWidget
+      openingHours={contactInfo?.opening_hours ?? []}
+      openingHoursEnabled={contactInfo?.opening_hours_enabled ?? false}
+      contactEmail={contactInfo?.contact_email ?? null}
+      contactEmailPublic={contactInfo?.contact_email_public ?? true}
+      contactPhone={contactInfo?.contact_phone ?? null}
+      contactPhonePublic={contactInfo?.contact_phone_public ?? true}
+      messageEnabled={contactInfo?.message_enabled ?? false}
+      messageHref={contactInfo?.message_enabled ? `/${entitySlug}/message` : null}
+    />
+  )
+})()}

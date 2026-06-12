@@ -1,5 +1,25 @@
 export { createClient } from './client'
 export { getEntityByUserId, getEntityBySlug, getEntityMenuSections, getEntityHomeWidgets, getEntityFaq } from './helpers'
+export {
+  MENU_SECTION_TYPES,
+  PROFILE_TAB_TYPES,
+  isMenuSectionType,
+  listMenuSectionStates,
+  activateEntityMenuSection,
+  deactivateEntityMenuSection,
+} from './menu-sections'
+export type { MenuSectionType, ProfileTabType } from './menu-sections'
+export {
+  getEntityHistory,
+  upsertEntityHistory,
+  getEntityContactInfo,
+  upsertEntityContactInfo,
+  upsertEntityFaq,
+  defaultOpeningHours,
+} from './profile-info'
+export type { OpeningHourSlot, EntityContactInfo, HistoryBlock, EntityFaqItemInput } from './profile-info'
+export { createEntityMessage } from './entity-messages'
+export type { EntityMessage } from './entity-messages'
 export { isFollowing, followEntity, unfollowEntity } from './follows'
 export { getPublicationsByEntity, getPublicationById, getPublicationByEntityAndSlug, createPublication, updatePublication, deletePublication } from './publications'
 export { getNotifications, getUnreadCount, markAsRead, markAllAsRead } from './notifications'
@@ -9,14 +29,15 @@ export { getAppointmentTypesByEntity, getAppointmentTypeById, getAppointmentType
 export type { ServiceContentBlock } from './appointments'
 export { listPublishedServiceReviews, getServiceReviewAggregates } from './service-reviews'
 export type { ServiceReviewAggregates } from './service-reviews'
-export { listUpcomingEvents, getEventBySlug, countEventRegistrations, createEvent, createEventRegistration, listEventRegistrations } from './events'
+export { listUpcomingEvents, listUpcomingEventsForOwner, getEventBySlug, countEventRegistrations, createEvent, createEventRegistration, listEventRegistrations } from './events'
 export type { EventRecord, EventContentBlock, EventFaqItem } from './events'
 export { getAvailabilitySchedule, setAvailabilitySchedule, getAvailabilityExceptions, addAvailabilityException, removeAvailabilityException, getAvailableSlots } from './availability'
 export { getBookingsByEntity, getBookingById, createBooking, updateBookingStatus, updateBookingNotes, getBookingStats, getBookingExtendedStats } from './bookings'
 export type { BookingAggregates, BookingExtendedStats } from './bookings'
 export { getClientsByEntity, getClientById, getClientBookings, updateClient, deleteClient } from './clients'
 export type { Client } from './clients'
-export { purgeEntityCache, purgePublicationCache } from './cache'
+export { purgeEntityCache, purgePublicationCache, getRevalidatePaths } from './cache'
+export type { RevalidatePathsOptions } from './cache'
 export type { Database } from './types'
 
 // Products

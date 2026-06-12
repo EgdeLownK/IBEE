@@ -1,0 +1,24 @@
+---
+description: Règles testing — Vitest, helpers supabase
+globs: **/*.test.ts,**/*.spec.ts,**/vitest.config.*
+alwaysApply: false
+---
+
+# Règles testing
+
+## Framework
+- **Vitest** exclusivement. Config dans chaque package (`vitest.config.ts`)
+- Pipeline Turbo : `pnpm test` exécute tous les tests
+
+## Quand écrire des tests
+- Chaque helper dans `packages/supabase/src/` doit avoir un test
+- Chaque utilitaire partagé doit avoir un test
+- Les composants UI ne sont PAS testés unitairement (validation visuelle navigateur)
+
+## Patterns
+- Mock du client Supabase via factory `createMockClient()`
+- Pas de tests d'intégration contre la vraie BDD (linked remote = prod)
+- Nommage : `[module].test.ts` à côté du source ou dans `__tests__/`
+
+## Chaîne de vérification
+Après chaque tâche d'implémentation : `pnpm type-check` → `pnpm test` → `pnpm build`

@@ -1,0 +1,77 @@
+---
+/** État vide d'un widget Accueil : invitation + CTA discret (owner). */
+interface Props {
+  message: string
+  ownerMessage?: string
+  ctaLabel?: string
+  /** Attribut data-* du bouton (ex. data-open-home-widget-config). */
+  ctaAction?: string
+  /** Valeur de l'attribut si nécessaire (ex. id du widget). */
+  ctaValue?: string
+  isOwner?: boolean
+}
+
+const {
+  message,
+  ownerMessage,
+  ctaLabel,
+  ctaAction,
+  ctaValue,
+  isOwner = false,
+} = Astro.props
+
+const text = isOwner ? (ownerMessage ?? message) : message
+const ctaAttrs = ctaAction
+  ? ctaValue != null && ctaValue !== ''
+    ? { [ctaAction]: ctaValue }
+    : { [ctaAction]: true }
+  : {}
+---
+<div class="widget-empty">
+  <p class="widget-empty__text">{text}</p>
+  {isOwner && ctaLabel && ctaAction && (
+    <button type="button" class="widget-empty__btn" {...ctaAttrs}>
+      {ctaLabel}
+    </button>
+  )}
+</div>
+
+<style>
+  .widget-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 28px 16px;
+    text-align: center;
+  }
+  .widget-empty__text {
+    margin: 0;
+    max-width: 320px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--color-neutral-500);
+  }
+  .widget-empty__btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 34px;
+    padding: 0 14px;
+    border: 1px dashed var(--color-border);
+    border-radius: 999px;
+    background: transparent;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--color-neutral-600);
+    cursor: pointer;
+    transition: border-color 120ms ease, color 120ms ease, background 120ms ease;
+  }
+  .widget-empty__btn:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+    background: color-mix(in srgb, var(--color-accent-soft) 35%, transparent);
+  }
+</style>

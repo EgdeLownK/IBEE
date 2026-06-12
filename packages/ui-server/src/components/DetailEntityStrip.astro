@@ -1,0 +1,218 @@
+---
+/** En-tête des pages détail : bannière entity + avatar.
+    title/subtitle optionnels → affichés à droite de l'avatar (façon profil web). */
+interface Props {
+  displayName: string
+  avatarUrl: string | null
+  profileHref?: string
+  /** Titre affiché à droite de l'avatar (ex : nom du produit). */
+  title?: string
+  /** Sous-titre sous le titre (ex : catégorie · type). */
+  subtitle?: string | null
+  /** Lien d'édition (owner) → CTA « Modifier » à droite du groupe profil. */
+  editHref?: string
+  /** Prix affiché (mobile uniquement) à gauche du CTA Modifier. */
+  priceText?: string | null
+}
+
+const { displayName, avatarUrl, profileHref = undefined, title = undefined, subtitle = null, editHref = undefined, priceText = null } = Astro.props
+
+const initials = displayName
+  .split(/\s+/)
+  .filter(Boolean)
+  .slice(0, 2)
+  .map((w) => w[0]!.toUpperCase())
+  .join('')
+---
+<header class="detail-entity-strip" aria-label={`Profil de ${displayName}`}>
+  <div class="profile-banner">
+    <div class="profile-banner__placeholder" aria-hidden="true">
+      <span class="profile-banner__label">BANNER IMAGE 800×172</span>
+    </div>
+  </div>
+
+  <div class="detail-entity-strip__avatar px-[22px] pb-0">
+    <div class="detail-entity-strip__group">
+      {profileHref ? (
+        <a href={profileHref} class="profile-avatar" aria-label={`Voir le profil de ${displayName}`}>
+          {avatarUrl ? (
+            <img src={avatarUrl} alt="" width="172" height="172" class="h-full w-full object-cover" />
+          ) : (
+            <span class="font-display text-[30px] font-semibold text-accent">{initials}</span>
+          )}
+        </a>
+      ) : (
+        <div class="profile-avatar">
+          {avatarUrl ? (
+            <img src={avatarUrl} alt={displayName} width="172" height="172" class="h-full w-full object-cover" />
+          ) : (
+            <span class="font-display text-[30px] font-semibold text-accent">{initials}</span>
+          )}
+        </div>
+      )}
+
+      {title && (
+        <div class="detail-entity-strip__id">
+          <h1 class="detail-entity-strip__title">{title}</h1>
+          {subtitle && <p class="detail-entity-strip__subtitle">{subtitle}</p>}
+        </div>
+      )}
+    </div>
+
+    {editHref && (
+      <div class="detail-entity-strip__buy">
+        {priceText && <span class="detail-entity-strip__price" data-sync-price>{priceText}</span>}
+        <a href={editHref} class="detail-entity-strip__cta">Modifier</a>
+      </div>
+    )}
+  </div>
+</header>
+
+<style>
+  /* Avatar à gauche (sous la cover, sans chevauchement) + texte à droite,
+     centrés verticalement sur le même axe horizontal. CTA poussé à droite. */
+  .detail-entity-strip__avatar {
+    margin-top: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .detail-entity-strip__group {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    min-width: 0;
+  }
+
+  .detail-entity-strip__id {
+    min-width: 0;
+    flex: 1;
+  }
+
+  /* Zone achat à droite du groupe profil.
+     Téléphone : masquée (prix + Modifier restent dans la card sous l'image).
+     Desktop/tablette : prix + Modifier sur la ligne de la photo de profil. */
+  .detail-entity-strip__buy {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  .detail-entity-strip__price {
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--color-neutral-900);
+    white-space: nowrap;
+  }
+
+  .detail-entity-strip__cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    min-height: 38px;
+    padding: 0 18px;
+    border-radius: 12px;
+    background: var(--color-accent);
+    color: #fff;
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: background .18s, transform .08s;
+  }
+  .detail-entity-strip__cta:hover { background: var(--color-accent-hover); }
+  .detail-entity-strip__cta:active { transform: translateY(1px); }
+
+  .detail-entity-strip__title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--color-neutral-900);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .detail-entity-strip__subtitle {
+    margin: 2px 0 0;
+    font-family: var(--font-sans);
+    font-size: 13.5px;
+    color: var(--color-neutral-500);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .detail-entity-strip .profile-avatar {
+    width: 86px;
+    height: 86px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: var(--color-accent-soft);
+    border: 4px solid var(--color-surface);
+    box-shadow: 0 6px 16px -8px rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  @media (min-width: 768px) {
+    .detail-entity-strip .profile-avatar {
+      width: 90px;
+      height: 90px;
+    }
+    /* Desktop/tablette : prix + Modifier remontent dans le strip. */
+    .detail-entity-strip__buy {
+      display: flex;
+    }
+    .detail-entity-strip__cta {
+      min-height: 40px;
+      padding: 0 22px;
+      font-size: 15px;
+    }
+  }
+
+  .detail-entity-strip .profile-banner {
+    width: 100%;
+    height: 172px;
+    overflow: hidden;
+    background: var(--color-panel);
+  }
+
+  .detail-entity-strip .profile-banner__placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-image: repeating-linear-gradient(
+      135deg,
+      var(--color-panel-2) 0,
+      var(--color-panel-2) 4px,
+      var(--color-panel) 4px,
+      var(--color-panel) 10px
+    );
+  }
+
+  .detail-entity-strip .profile-banner__label {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    letter-spacing: 0.05em;
+    color: var(--color-neutral-400);
+    background: var(--color-surface);
+    padding: 6px 14px;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--color-border);
+  }
+</style>

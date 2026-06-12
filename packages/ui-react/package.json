@@ -4,7 +4,20 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./profile": "./src/profile/index.ts",
+    "./profile/profile-styles.css": {
+      "style": "./src/profile/profile-styles.css",
+      "default": "./src/profile/profile-styles.css"
+    },
+    "./tokens.css": {
+      "style": "./src/tokens.css",
+      "default": "./src/tokens.css"
+    },
+    "./app-shell.css": {
+      "style": "./src/app-shell.css",
+      "default": "./src/app-shell.css"
+    }
   },
   "scripts": {
     "type-check": "tsc --noEmit"

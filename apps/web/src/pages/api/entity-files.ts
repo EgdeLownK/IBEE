@@ -1,3 +1,4 @@
+/** @deprecated Phase 9 — fichiers entity via dashboard. Rollback only. */
 import type { APIRoute } from 'astro'
 import { createAuthClient } from '../../lib/supabase/auth'
 import { getEntityByUserId, listEntityFiles, createEntityFile } from '@ibee/supabase'

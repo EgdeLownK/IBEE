@@ -1,0 +1,121 @@
+---
+import BannerWelcomeWidget from './BannerWelcomeWidget.astro'
+import type { HistoryBlock } from '../history-blocks.ts'
+
+interface Props {
+  entitySlug: string
+  displayName?: string
+  sectionTitle?: string
+  blocks?: HistoryBlock[]
+  /** @deprecated legacy — converti en un bloc texte. */
+  text?: string
+  hideTitle?: boolean
+  embedded?: boolean
+  moreHref?: string
+}
+
+const {
+  entitySlug,
+  displayName,
+  sectionTitle = 'Histoire',
+  blocks: blocksProp,
+  text,
+  hideTitle = false,
+  embedded = false,
+  moreHref,
+} = Astro.props
+
+const blocks: HistoryBlock[] = blocksProp?.length
+  ? blocksProp
+  : text?.trim()
+    ? [{ type: 'text', content: text.trim() }]
+    : displayName
+      ? [{ type: 'text', content: `Découvrez le parcours de ${displayName}.` }]
+      : []
+---
+{blocks.length > 0 && (
+  <section class:list={['hwidget', embedded && 'hwidget--embedded']}>
+    {!hideTitle && <h2 class="hwidget__title">{sectionTitle}</h2>}
+
+    <div class="hwidget__story">
+      {blocks.map((block) => (
+        block.type === 'text' ? (
+          <article class="hwidget__block hwidget__block--text">
+            <p class="hwidget__text">{block.content}</p>
+          </article>
+        ) : (
+          <figure class="hwidget__block hwidget__block--image">
+            <BannerWelcomeWidget
+              images={block.images ?? []}
+              seoTitle={block.title ?? ''}
+            />
+          </figure>
+        )
+      ))}
+    </div>
+
+    {moreHref && (
+      <div class="hwidget__foot">
+        <a href={moreHref} class="hwidget__more">Voir plus</a>
+      </div>
+    )}
+  </section>
+)}
+
+<style>
+  .hwidget {
+    margin-top: 26px;
+  }
+  .hwidget--embedded {
+    margin-top: 0;
+  }
+  .hwidget__title {
+    margin: 0 0 18px;
+    padding: 0 22px;
+    font-family: var(--font-display);
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--color-neutral-900);
+  }
+  .hwidget__story {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 0 22px 8px;
+  }
+  .hwidget--embedded .hwidget__story {
+    padding: 0;
+  }
+  .hwidget__foot {
+    display: flex;
+    justify-content: flex-end;
+    padding: 4px 22px 0;
+  }
+  .hwidget--embedded .hwidget__foot {
+    padding: 8px 0 0;
+  }
+  .hwidget__more {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-accent);
+    text-decoration: none;
+  }
+  .hwidget__more:hover {
+    text-decoration: underline;
+  }
+  .hwidget__block--text {
+    margin: 0;
+    padding: 0 2px;
+  }
+  .hwidget__text {
+    margin: 0;
+    font-size: 16px;
+    line-height: 1.7;
+    letter-spacing: -0.01em;
+    color: var(--color-neutral-700);
+    white-space: pre-wrap;
+  }
+  .hwidget__block--image {
+    margin: 0;
+  }
+</style>

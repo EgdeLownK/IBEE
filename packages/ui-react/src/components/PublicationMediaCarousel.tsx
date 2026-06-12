@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 type CarouselMedia = {
   url: string
+  type?: string | null
   alt_text?: string | null
   width?: number | null
   height?: number | null
@@ -73,17 +74,33 @@ export function PublicationMediaCarousel({ media }: Props) {
 
   if (media.length === 0) return null
 
-  if (media.length === 1) {
-    return (
-      <div className="overflow-hidden">
-        <img
-          src={media[0].url}
-          alt={media[0].alt_text ?? ''}
+  function renderSlide(m: CarouselMedia, i: number) {
+    if (m.type === 'video') {
+      return (
+        <video
+          key={i}
+          src={m.url}
           className="w-full"
-          style={getCropStyle(media[0].width, media[0].height)}
+          style={{ aspectRatio: '16/9', objectFit: 'cover', maxHeight: 400 }}
+          controls
+          playsInline
+          preload="metadata"
         />
-      </div>
+      )
+    }
+    return (
+      <img
+        key={i}
+        src={m.url}
+        alt={m.alt_text ?? ''}
+        className="w-full"
+        style={getCropStyle(m.width, m.height)}
+      />
     )
+  }
+
+  if (media.length === 1) {
+    return <div className="overflow-hidden">{renderSlide(media[0], 0)}</div>
   }
 
   return (
@@ -100,8 +117,14 @@ export function PublicationMediaCarousel({ media }: Props) {
         onKeyDown={handleKeyDown}
       >
         {media.map((m, i) => (
-          <div key={i} className="w-full flex-none snap-center" role="group" aria-roledescription="slide" aria-label={`Image ${i + 1} sur ${media.length}`}>
-            <img src={m.url} alt={m.alt_text ?? ''} className="w-full" style={getCropStyle(m.width, m.height)} />
+          <div
+            key={i}
+            className="w-full flex-none snap-center"
+            role="group"
+            aria-roledescription="slide"
+            aria-label={`Média ${i + 1} sur ${media.length}`}
+          >
+            {renderSlide(m, i)}
           </div>
         ))}
       </div>

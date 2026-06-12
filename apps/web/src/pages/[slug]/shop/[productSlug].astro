@@ -1,29 +1,22 @@
 ---
 import AppLayout from '../../../layouts/AppLayout.astro'
 import DetailTopBar from '@ibee/ui-server/src/components/DetailTopBar.astro'
+import DetailEntityStrip from '@ibee/ui-server/src/components/DetailEntityStrip.astro'
 import ProfileCard from '@ibee/ui-server/src/components/ProfileCard.astro'
-import ProfileHero from '@ibee/ui-server/src/components/ProfileHero.astro'
-import MenuTabs from '@ibee/ui-server/src/components/MenuTabs.astro'
 import ProductDetail from '@ibee/ui-server/src/components/ProductDetail.astro'
-import ProductCreateOverlay from '@ibee/ui-server/src/components/ProductCreateOverlay.astro'
-import ServiceCreateOverlay from '@ibee/ui-server/src/components/ServiceCreateOverlay.astro'
-import EventCreateOverlay from '@ibee/ui-server/src/components/EventCreateOverlay.astro'
 import ProductReviewsList from '@ibee/ui-server/src/components/ProductReviewsList.astro'
 import ProductFaq from '@ibee/ui-server/src/components/ProductFaq.astro'
 import ProductSchemaJsonLd from '@ibee/ui-server/src/components/ProductSchemaJsonLd.astro'
+import RelatedContent from '@ibee/ui-server/src/components/RelatedContent.astro'
 import { supabase } from '../../../lib/supabase/client'
 import { createAuthClient } from '../../../lib/supabase/auth'
 import {
   getEntityBySlug,
-  getEntityMenuSections,
-  getEntityFaq,
   getPublishedProductBySlug,
   lookupProductSlugHistory,
   listPublishedReviews,
   getReviewAggregates,
-  listQuestionsForModeration,
-  listProductCategories,
-  isFollowing as checkIsFollowing,
+  getEntityMenuSections,
 } from '@ibee/supabase'
 
 const { slug, productSlug } = Astro.params
@@ -48,7 +41,6 @@ if (!product) {
 
 const authClient = createAuthClient(Astro.request, Astro.cookies)
 const { data: { user } } = await authClient.auth.getUser()
-const isOwner = !!(user && entity.user_id && user.id === entity.user_id)
 
 // Filtres/tri avis depuis query params (rendu serveur)
 // rating : multi-sélection "4,5" → [5, 4] ; sort : recent (défaut) | oldest
@@ -66,56 +58,44 @@ const activeRatings = ratingParam
 const sortParam = Astro.url.searchParams.get('sort')
 const activeSort: 'recent' | 'oldest' = sortParam === 'oldest' ? 'oldest' : 'recent'
 
-// Lectures publiques (anon) — avis, agrégats, distribution + entête profil (desktop)
-const [reviews, aggregates, allRatings, menuSections, profileFaqItems, productCategories] = await Promise.all([
+// Lectures publiques (anon) — avis, agrégats, distribution
+const [reviews, aggregates, allRatings] = await Promise.all([
   listPublishedReviews(supabase, product.id, { ratings: activeRatings, sortBy: activeSort, limit: 50 }),
   getReviewAggregates(supabase, product.id),
-  // Distribution : on relit toutes les notes publiées (helper agrégats ne renvoie que count/average)
   listPublishedReviews(supabase, product.id, { limit: 500 }),
-  getEntityMenuSections(supabase, entity.id),
-  getEntityFaq(supabase, entity.id),
-  // Options de l'overlay de création (bouton « Ajouter contenu » du hero)
-  listProductCategories(supabase, entity.id),
 ])
-const productCategoryOptions = productCategories.map((c) => ({ id: c.id, name: c.name }))
-
-// Menu « Ajouter contenu » du hero (même logique que ProfilePage)
-const ALL_SECTION_TYPES = ['shop', 'appointments', 'events', 'news', 'history', 'faq'] as const
-const sectionTypeSet = new Set(menuSections.map((s) => s.type))
-const hasProfileFaqItems = Array.isArray(profileFaqItems) && profileFaqItems.length > 0
-const addContentSections = ALL_SECTION_TYPES.map((type) => ({
-  type,
-  active: sectionTypeSet.has(type) || (type === 'faq' && hasProfileFaqItems),
-}))
 
 const distribution: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
 for (const r of allRatings) {
   if (r.rating >= 1 && r.rating <= 5) distribution[r.rating] = (distribution[r.rating] ?? 0) + 1
 }
 
-// Lectures buyer-spécifiques (client authentifié) — uniquement si connecté
-let isFollowingEntity = false
-if (user && !isOwner) {
-  isFollowingEntity = await checkIsFollowing(supabase, user.id, entity.id)
-}
+// Section news active du profil → widget Actualités
+const menuSections = await getEntityMenuSections(supabase, entity.id)
+const hasNews = menuSections.some((s) => s.type === 'news')
 
-// Questions reçues (owner only — policy RLS product_questions_owner_select).
-// Privées : affichées uniquement au vendeur pour alimenter sa FAQ.
-let receivedQuestions: { id: string; question_text: string; created_at: string }[] = []
-if (isOwner) {
-  try {
-    receivedQuestions = await listQuestionsForModeration(authClient, product.id, { limit: 50 })
-  } catch {
-    receivedQuestions = []
-  }
-}
+// --- Mock data (en attendant le vrai croisement de contenus) ---
+// Section 1 : autres contenus DU profil (services / produits / events mixés).
+const profileRelated = [
+  { kind: 'service' as const, title: 'Séance de coaching', meta: 'Service · 60 min' },
+  { kind: 'product' as const, title: 'Guide complet (PDF)', meta: 'Produit · 19 €' },
+  { kind: 'event' as const, title: 'Atelier en ligne', meta: 'Événement · 12 juin' },
+  { kind: 'product' as const, title: 'Pack ressources', meta: 'Produit · 39 €' },
+  { kind: 'service' as const, title: 'Audit personnalisé', meta: 'Service · sur devis' },
+]
+// Section 2 : contenus similaires NON liés au compte (mixés).
+const similarRelated = [
+  { kind: 'product' as const, title: 'Produit similaire', meta: 'Produit · 24 €' },
+  { kind: 'event' as const, title: 'Événement à découvrir', meta: 'Événement · 20 juin' },
+  { kind: 'service' as const, title: 'Prestation similaire', meta: 'Service · 45 min' },
+  { kind: 'product' as const, title: 'Autre suggestion', meta: 'Produit · 15 €' },
+  { kind: 'service' as const, title: 'Service recommandé', meta: 'Service · 30 min' },
+]
 
 const siteUrl = import.meta.env.SITE_URL
 const profileUrl = `${siteUrl}/${entity.slug}`
 const productUrl = `${siteUrl}/${entity.slug}/shop/${product.slug}`
 const basePath = `/${entity.slug}/shop/${product.slug}`
-const dashboardUrl = import.meta.env.DASHBOARD_URL ?? 'http://localhost:3000'
-
 // Méta SEO depuis le produit
 const metaTitle = product.seo_title ?? `${product.title} — ${entity.display_name}`
 const metaDescription = product.seo_description ?? product.description_short
@@ -192,29 +172,6 @@ const customDetails = Array.isArray((product as { custom_details?: unknown }).cu
 const videoMedia = (product.product_media ?? []).find((m) => m.media_type === 'video') ?? null
 const video = videoMedia ? { url: videoMedia.url, name: product.title } : null
 
-// --- Prix pour l'actionbar sticky (mêmes IDs que le JS variantes de ProductDetail) ---
-function formatPrice(cents: number, currency: string): string {
-  if (cents === 0) return '0€'
-  try {
-    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency }).format(cents / 100)
-  } catch {
-    return `${(cents / 100).toFixed(2)} €`
-  }
-}
-const activeVariants = (product.product_variants ?? []).filter((v) => v.is_active)
-const variantPrices = activeVariants.map((v) => v.price_cents_override ?? product.price_cents)
-const minCents = variantPrices.length > 0 ? Math.min(...variantPrices) : product.price_cents
-const maxCents = variantPrices.length > 0 ? Math.max(...variantPrices) : product.price_cents
-const isMultiPrice = activeVariants.length > 0 && minCents !== maxCents
-const showSalePrice = saleActive && product.sale_price_cents != null
-const salePriceText = showSalePrice ? formatPrice(product.sale_price_cents as number, product.currency) : null
-const baseOriginalText = formatPrice(product.price_cents, product.currency)
-const initialPriceText = formatPrice(minCents, product.currency)
-const salePercentValue =
-  showSalePrice && product.price_cents > 0
-    ? Math.round((1 - (product.sale_price_cents as number) / product.price_cents) * 100)
-    : 0
-
 // Échantillon d'avis pour le JSON-LD (max 5, avec nom anonymisé faute de jointure auteur publique)
 const reviewSamples = reviews.slice(0, 5).map((r) => ({
   rating: r.rating,
@@ -254,37 +211,17 @@ Astro.response.headers.set('X-Robots-Tag', 'index, follow, max-snippet:-1, max-i
     />
   </Fragment>
 
-  <main class="md:py-8 sm:py-12">
-    <DetailTopBar backHref={`/${entity.slug}#shop`} title={product.title} />
-
+  <main class="profile-page">
     <ProfileCard>
-      {/* Entête profil (hero + menu) — desktop uniquement, le mobile garde la
-          fiche produit telle quelle. Les onglets renvoient vers le profil. */}
-      <div class="hidden md:block">
-        <ProfileHero
-          displayName={entity.display_name}
-          role={entity.role}
-          location={entity.location}
-          bio={entity.bio}
-          avatarUrl={entity.avatar_url}
-          createdAt={entity.created_at}
-          isOwner={isOwner}
-          isAuthenticated={!!user}
-          isFollowing={isFollowingEntity}
-          entityId={entity.id}
-          entitySlug={entity.slug}
-          followersCount={entity.followers_count}
-          dashboardUrl={dashboardUrl}
-          addContentSections={addContentSections}
-        />
-        <MenuTabs
-          sections={menuSections}
-          activeType="shop"
-          isOwner={isOwner}
-          hasFaq={hasProfileFaqItems}
-          baseHref={`/${entity.slug}`}
-        />
-      </div>
+      <DetailTopBar backHref={`/${entity.slug}#shop`} title={`Voir le profil de ${entity.display_name}`} />
+
+      <DetailEntityStrip
+        displayName={entity.display_name}
+        avatarUrl={entity.avatar_url}
+        profileHref={`/${entity.slug}`}
+        title={product.title}
+        subtitle={[categoryName, product.type === 'digital' ? 'Produit numérique' : 'Produit physique'].filter(Boolean).join(' · ')}
+      />
 
       <ProductDetail
         product={product}
@@ -294,42 +231,98 @@ Astro.response.headers.set('X-Robots-Tag', 'index, follow, max-snippet:-1, max-i
         saleActive={saleActive}
         customDetails={customDetails}
         aggregates={aggregates}
+        entitySlug={entity.slug}
+        hasNews={hasNews}
       />
 
-      <ProductFaq
-        faq={faq}
-        isOwner={isOwner}
-        receivedQuestions={receivedQuestions}
-      />
-
-      <ProductReviewsList
-        reviews={reviews}
-        aggregates={aggregates}
-        distribution={distribution}
-        activeRatings={activeRatings}
-        activeSort={activeSort}
-        basePath={basePath}
-      />
-    </ProfileCard>
-
-    {/* Actionbar sticky : prix (mis à jour par le JS variantes via les IDs) + CTA achat */}
-    <div class="actionbar mx-auto max-w-[800px] md:rounded-t-[18px]">
-      <div class="actionbar__price">
-        {salePriceText && salePercentValue > 0 && <span id="product-price-promo-label" class="label">Promo · -{salePercentValue}%</span>}
-        <span class="flex items-baseline gap-2">
-          <span id="product-price" class:list={['now', salePriceText && 'is-sale']}>{salePriceText ?? initialPriceText}</span>
-          {salePriceText && <span id="product-price-original" class="was">{baseOriginalText}</span>}
-          {isMultiPrice && <span id="product-price-from" class="text-xs text-neutral-500">à partir de</span>}
-        </span>
+      {/* Reco : d'abord les autres contenus du profil, puis des contenus similaires */}
+      <div class="product-related pb-2">
+        <RelatedContent title={`Autres contenus de ${entity.display_name}`} items={profileRelated} />
+        <RelatedContent title="À découvrir aussi" items={similarRelated} />
       </div>
-      <button type="button" disabled class="btn btn--lg flex-1" style="margin-left:auto;" title="L'achat en ligne arrive prochainement">
-        Bientôt disponible
-      </button>
-    </div>
 
-    {/* Overlays de création — déclenchés par « Ajouter contenu » du hero */}
-    {isOwner && <ProductCreateOverlay entitySlug={entity.slug} categories={productCategoryOptions} />}
-    {isOwner && <ServiceCreateOverlay entitySlug={entity.slug} />}
-    {isOwner && <EventCreateOverlay entitySlug={entity.slug} />}
+      <div class="product-sections px-[22px] pt-2 pb-6">
+        <section class="product-major-section">
+          <h2 class="product-major-section__title">Questions & avis</h2>
+          <div class="product-major-section__body">
+            <ProductFaq faq={faq} />
+            <ProductReviewsList
+              reviews={reviews}
+              aggregates={aggregates}
+              distribution={distribution}
+              activeRatings={activeRatings}
+              activeSort={activeSort}
+              basePath={basePath}
+            />
+          </div>
+        </section>
+      </div>
+    </ProfileCard>
   </main>
 </AppLayout>
+
+<style>
+  .product-sections {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .product-section-card {
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    padding: 0;
+  }
+  .product-major-section {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .product-major-section__title {
+    margin: 0;
+    display: block;
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 900;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--color-accent);
+  }
+  .product-major-section__body {
+    display: flex;
+    flex-direction: column;
+    gap: 26px;
+  }
+  .product-major-section :global(#avis .reviews-heading span) {
+    display: none;
+  }
+  .product-major-section :global(#faq .sec-h),
+  .product-major-section :global(#avis .reviews-heading h2) {
+    margin: 0 0 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0;
+    text-transform: none;
+    color: #2a2a2a;
+  }
+  .product-major-section :global(.sec) {
+    border-top: 0;
+    padding: 0;
+  }
+  .product-major-section :global(.review-item) {
+    border-bottom: 0;
+  }
+  .product-section-card :global(.sec) {
+    border-top: 0;
+    padding: 0;
+  }
+  @media (min-width: 768px) {
+    .product-section-card {
+      padding: 18px;
+    }
+  }
+</style>

@@ -1,14 +1,17 @@
 ---
-import { Clock, MapPin, Video, Phone, ArrowRight } from 'lucide-static'
+import AppointmentTypeCard from './AppointmentTypeCard.astro'
 
 interface ServiceItem {
   id: string
   title: string
   slug: string
+  description?: string | null
   duration_minutes: number
   location_type: string
   price_cents: number | null
+  promo_price_cents?: number | null
   currency: string
+  gallery_images?: string[] | null
 }
 
 interface Props {
@@ -19,46 +22,38 @@ interface Props {
 
 const { services, entitySlug, title = 'Autres services' } = Astro.props
 
-const locationIcons: Record<string, { icon: string; label: string }> = {
-  video: { icon: Video, label: 'Visio' },
-  in_person: { icon: MapPin, label: 'Sur place' },
-  phone: { icon: Phone, label: 'Telephone' },
-}
-
-function formatPrice(cents: number | null, currency: string) {
-  if (cents === null || cents === 0) return '0€'
-  return new Intl.NumberFormat('fr-FR', { style: 'currency', currency }).format(cents / 100)
-}
+// On réutilise le design du menu service (AppointmentTypeCard / .row), limité à 4.
+const visible = services.slice(0, 4)
 ---
-{services.length > 0 && (
-  <div>
-    <h2 class="text-sm font-semibold text-neutral-900 mb-3">{title}</h2>
-    <div class="space-y-2">
-      {services.map(svc => {
-        const loc = locationIcons[svc.location_type] ?? locationIcons.video
-        return (
-          <a
-            href={`/${entitySlug}/services/${svc.slug}`}
-            class="flex items-center gap-3 rounded-xl border border-neutral-200 bg-neutral-0 px-4 py-3 transition hover:border-accent hover:shadow-sm group"
-          >
-            <div class="min-w-0 flex-1">
-              <p class="text-sm font-medium text-neutral-900 group-hover:text-accent transition truncate">{svc.title}</p>
-              <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-neutral-500">
-                <span class="inline-flex items-center gap-1">
-                  <span class="flex h-3 w-3 items-center justify-center" set:html={Clock} />{svc.duration_minutes} min
-                </span>
-                <span class="inline-flex items-center gap-1">
-                  <span class="flex h-3 w-3 items-center justify-center" set:html={loc.icon} />{loc.label}
-                </span>
-              </div>
-            </div>
-            <div class="shrink-0 text-right">
-              <span class="text-sm font-semibold text-neutral-900">{formatPrice(svc.price_cents, svc.currency)}</span>
-            </div>
-            <span class="flex h-4 w-4 shrink-0 items-center justify-center text-neutral-300 group-hover:text-accent transition" set:html={ArrowRight} />
-          </a>
-        )
-      })}
+{visible.length > 0 && (
+  <div class="reco">
+    <h2 class="reco__title">{title}</h2>
+    <div class="flex flex-col gap-2">
+      {visible.map((svc) => (
+        <AppointmentTypeCard
+          id={svc.id}
+          title={svc.title}
+          slug={svc.slug}
+          description={svc.description ?? null}
+          durationMinutes={svc.duration_minutes}
+          locationType={svc.location_type}
+          priceCents={svc.price_cents}
+          promoPriceCents={svc.promo_price_cents ?? null}
+          currency={svc.currency}
+          coverImageUrl={svc.gallery_images?.[0] ?? null}
+          entitySlug={entitySlug}
+        />
+      ))}
     </div>
   </div>
 )}
+
+<style>
+  .reco__title {
+    margin: 0 0 14px;
+    font-family: var(--font-display);
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--color-neutral-900);
+  }
+</style>

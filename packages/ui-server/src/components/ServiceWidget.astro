@@ -1,0 +1,189 @@
+---
+/** Widget Service Accueil : carrousel catégorie (tile--rich) ou fiche service mise en avant. */
+import { CalendarClock, Star } from 'lucide-static'
+import WidgetFeatured from './WidgetFeatured.astro'
+import WidgetCategoryCarousel from './WidgetCategoryCarousel.astro'
+
+export type ServiceWidgetItem = {
+  title: string
+  slug?: string
+  imageUrl?: string | null
+  metaLabel?: string
+  detailExcerpt?: string | null
+  reviewCount?: number
+  reviewAverage?: number
+  duration_minutes?: number
+  location_type?: string
+  price_cents?: number | null
+  promo_price_cents?: number | null
+  currency?: string
+}
+
+interface Props {
+  entitySlug: string
+  mode: 'category' | 'service'
+  items: ServiceWidgetItem[]
+  categoryTitle?: string
+  moreHref?: string
+  embedded?: boolean
+}
+
+const {
+  entitySlug,
+  mode,
+  items,
+  categoryTitle = 'Services',
+  moreHref,
+  embedded = false,
+} = Astro.props
+
+const LOCATION_LABELS: Record<string, string> = {
+  video: 'Visio',
+  in_person: 'Sur place',
+  phone: 'Téléphone',
+}
+
+function formatPrice(cents: number | null | undefined, currency: string | undefined): string {
+  if (cents == null || cents === 0) return '0€'
+  const value = cents / 100
+  try {
+    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: currency || 'EUR' }).format(value)
+  } catch {
+    return `${value.toFixed(2)} €`
+  }
+}
+
+function metaLabel(item: ServiceWidgetItem): string {
+  if (item.metaLabel) return item.metaLabel
+  const loc = item.location_type ? (LOCATION_LABELS[item.location_type] ?? 'Visio') : null
+  const dur = item.duration_minutes != null ? `${item.duration_minutes} min` : null
+  if (dur && loc) return `${dur} · ${loc}`
+  return dur ?? loc ?? ''
+}
+
+function characteristicTags(item: ServiceWidgetItem): string[] {
+  const tags: string[] = []
+  if (item.duration_minutes != null) tags.push(`${item.duration_minutes} min`)
+  if (item.location_type) tags.push(LOCATION_LABELS[item.location_type] ?? 'Visio')
+  if (tags.length > 0) return tags
+  if (item.metaLabel) {
+    return item.metaLabel.split('·').map((s) => s.trim()).filter(Boolean)
+  }
+  return []
+}
+
+function hasPromo(item: ServiceWidgetItem): boolean {
+  return item.price_cents != null && item.price_cents > 0
+    && item.promo_price_cents != null && item.promo_price_cents > 0
+}
+
+const starRow = (rating: number) =>
+  Array.from({ length: 5 }, (_, i) => i < Math.round(rating))
+
+const featured = mode === 'service' && items[0]
+  ? (() => {
+      const item = items[0]
+      const promo = hasPromo(item)
+      return {
+        title: item.title,
+        tags: characteristicTags(item),
+        imageUrl: item.imageUrl ?? null,
+        href: item.slug ? `/${entitySlug}/services/${item.slug}` : `/${entitySlug}#appointments`,
+        promo,
+        priceLabel: formatPrice(promo ? item.promo_price_cents : item.price_cents, item.currency),
+        oldPriceLabel: promo ? formatPrice(item.price_cents, item.currency) : null,
+      }
+    })()
+  : null
+
+const tiles = mode === 'category'
+  ? items.map((item) => ({
+      item,
+      href: item.slug ? `/${entitySlug}/services/${item.slug}` : `/${entitySlug}#appointments`,
+      promo: hasPromo(item),
+    }))
+  : []
+---
+{mode === 'service' && featured ? (
+  <WidgetFeatured
+    embedded={embedded}
+    href={featured.href}
+    imageUrl={featured.imageUrl}
+    placeholderIcon={CalendarClock}
+    badgeLabel="Service"
+    title={featured.title}
+    tags={featured.tags}
+    priceLabel={featured.priceLabel}
+    oldPriceLabel={featured.oldPriceLabel}
+    promo={featured.promo}
+    ctaLabel="Réserver"
+  />
+) : tiles.length > 0 ? (
+  <WidgetCategoryCarousel
+    embedded={embedded}
+    categoryTitle={categoryTitle}
+    moreHref={moreHref}
+    showNav={tiles.length > 1}
+    navPrevLabel="Service précédent"
+    navNextLabel="Service suivant"
+  >
+    {tiles.map(({ item, href, promo }) => {
+      const excerpt = item.detailExcerpt?.trim() ?? ''
+      const reviewCount = item.reviewCount ?? 0
+      const reviewAverage = item.reviewAverage ?? 0
+      const showPrice = item.price_cents != null
+      return (
+        <div class="tile tile--rich wcat__tile">
+          <a class="tile__stretch" href={href} aria-label={item.title}></a>
+          <div class="tile__media">
+            {showPrice && (
+              <span class="tile__price-badge">
+                {promo ? (
+                  <>
+                    <span class="tile__price-now">{formatPrice(item.promo_price_cents, item.currency)}</span>
+                    <s class="tile__price-was">{formatPrice(item.price_cents, item.currency)}</s>
+                  </>
+                ) : (
+                  <span class="tile__price-now">{formatPrice(item.price_cents, item.currency)}</span>
+                )}
+              </span>
+            )}
+            {item.imageUrl ? (
+              <img src={item.imageUrl} alt={item.title} loading="lazy" />
+            ) : (
+              <div class="ph" aria-hidden="true">
+                <span class="flex h-6 w-6 items-center justify-center" set:html={CalendarClock} />
+              </div>
+            )}
+          </div>
+          <div class="tile__body">
+            <div class="tile__head">
+              <div class="tile__title">{item.title}</div>
+              <div class="tile__meta">{metaLabel(item)}</div>
+            </div>
+            {excerpt && (
+              <div class="tile__detail">
+                <p class="tile__detail-text">{excerpt}</p>
+              </div>
+            )}
+            <div class="tile__reviews">
+              {reviewCount > 0 ? (
+                <>
+                  <span class="tile__stars" aria-hidden="true">
+                    {starRow(reviewAverage).map((on) => (
+                      <span class:list={['tile__star', on && 'is-on']} set:html={Star} />
+                    ))}
+                  </span>
+                  <span class="tile__rating">{reviewAverage.toFixed(1).replace('.', ',')}</span>
+                  <span class="tile__review-count">({reviewCount} avis)</span>
+                </>
+              ) : (
+                <span class="tile__review-empty">Soyez le premier à noter</span>
+              )}
+            </div>
+          </div>
+        </div>
+      )
+    })}
+  </WidgetCategoryCarousel>
+) : null}

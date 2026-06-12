@@ -1,0 +1,26 @@
+{
+  "name": "@ibee/shared",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./entity-profile": "./src/entity-profile.ts",
+    "./faq-items": "./src/faq-items.ts",
+    "./history-blocks": "./src/history-blocks.ts",
+    "./home-widget-config": "./src/home-widget-config.ts",
+    "./widget-display-content": "./src/widget-display-content.ts",
+    "./widget-empty-content": "./src/widget-empty-content.ts",
+    "./presentation-fields": "./src/presentation-fields.ts",
+    "./product-create": "./src/product-create.ts",
+    "./service-create": "./src/service-create.ts",
+    "./event-create": "./src/event-create.ts",
+    "./banner-image-crop": "./src/lib/banner-image-crop.ts"
+  },
+  "scripts": {
+    "type-check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.0"
+  }
+}

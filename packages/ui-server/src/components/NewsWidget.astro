@@ -1,0 +1,314 @@
+---
+/** Carrousel horizontal d'actualités (pages détail + widget Accueil). */
+import { ChevronLeft, ChevronRight } from 'lucide-static'
+import { formatDistanceToNow } from 'date-fns'
+import { fr } from 'date-fns/locale'
+
+export type NewsWidgetItem = {
+  title: string
+  slug: string
+  publishedAt: string
+  imageUrl?: string | null
+}
+
+interface Props {
+  entitySlug: string
+  items?: NewsWidgetItem[]
+  showHeader?: boolean
+  embedded?: boolean
+}
+
+const { entitySlug, items: itemsProp, showHeader = true, embedded = false } = Astro.props
+
+const MOCK_ITEMS: NewsWidgetItem[] = [
+  { title: 'Une nouveauté à découvrir', slug: '', publishedAt: new Date(Date.now() - 2 * 86400000).toISOString() },
+  { title: 'Retour sur le mois écoulé', slug: '', publishedAt: new Date(Date.now() - 7 * 86400000).toISOString() },
+  { title: 'Coulisses du projet', slug: '', publishedAt: new Date(Date.now() - 21 * 86400000).toISOString() },
+  { title: 'Les prochaines sorties', slug: '', publishedAt: new Date(Date.now() - 30 * 86400000).toISOString() },
+  { title: 'Merci pour votre soutien', slug: '', publishedAt: new Date(Date.now() - 35 * 86400000).toISOString() },
+]
+
+const sourceItems = itemsProp?.length ? itemsProp : MOCK_ITEMS
+
+const items = sourceItems.map((item) => ({
+  title: item.title,
+  href: item.slug ? `/${entitySlug}/news/${item.slug}` : `/${entitySlug}#news`,
+  date: formatDistanceToNow(new Date(item.publishedAt), { addSuffix: true, locale: fr }),
+  imageUrl: item.imageUrl ?? null,
+}))
+---
+<section class:list={['nwidget', embedded && 'nwidget--embedded']} data-nwidget-root>
+  {showHeader && (
+    <div class="nwidget__head">
+      <h2 class="nwidget__title">Actualités</h2>
+      <a href={`/${entitySlug}#news`} class="nwidget__more">Voir plus</a>
+    </div>
+  )}
+
+  <div class="nwidget__carousel">
+    <div class="nwidget__track" data-nwidget-track>
+      {items.map((n) => (
+        <a href={n.href} class="nwidget__card">
+          <div class="nwidget__media" aria-hidden="true">
+            {n.imageUrl ? (
+              <img src={n.imageUrl} alt="" class="nwidget__img" loading="lazy" />
+            ) : null}
+            <span class="nwidget__badge">News</span>
+          </div>
+          <div class="nwidget__body">
+            <h3 class="nwidget__name">{n.title}</h3>
+            <p class="nwidget__meta">{n.date}</p>
+          </div>
+        </a>
+      ))}
+    </div>
+    {items.length > 1 && (
+      <>
+        <button type="button" class="nwidget__nav nwidget__nav--prev" data-nwidget-prev aria-label="Actualité précédente">
+          <span class="flex items-center justify-center" set:html={ChevronLeft} />
+        </button>
+        <button type="button" class="nwidget__nav nwidget__nav--next" data-nwidget-next aria-label="Actualité suivante">
+          <span class="flex items-center justify-center" set:html={ChevronRight} />
+        </button>
+      </>
+    )}
+  </div>
+</section>
+
+<style>
+  .nwidget {
+    margin-top: 26px;
+  }
+  .nwidget--embedded {
+    margin-top: 0;
+  }
+  .nwidget__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 0 0 14px;
+    padding: 0 22px;
+  }
+  .nwidget--embedded .nwidget__head {
+    padding: 0;
+  }
+  .nwidget__title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--color-neutral-900);
+  }
+  .nwidget__more {
+    flex-shrink: 0;
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-accent);
+    text-decoration: none;
+  }
+  .nwidget__carousel {
+    position: relative;
+  }
+  .nwidget__track {
+    display: flex;
+    gap: 14px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-padding-left: 22px;
+    padding: 0 22px 4px;
+    scrollbar-width: none;
+  }
+  .nwidget--embedded .nwidget__track {
+    scroll-padding-left: 0;
+    padding: 0 0 4px;
+  }
+  .nwidget__track::-webkit-scrollbar {
+    display: none;
+  }
+  .nwidget__card {
+    flex: 0 0 70%;
+    max-width: 240px;
+    scroll-snap-align: start;
+    border-radius: 14px;
+    overflow: hidden;
+    background: var(--color-panel);
+    text-decoration: none;
+    color: inherit;
+    transition: transform 160ms ease, box-shadow 160ms ease;
+  }
+  a.nwidget__card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-pop, 0 8px 24px rgba(0, 0, 0, 0.08));
+  }
+  .nwidget__media {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    background-image: repeating-linear-gradient(
+      135deg,
+      var(--color-panel-2) 0,
+      var(--color-panel-2) 4px,
+      var(--color-panel) 4px,
+      var(--color-panel) 10px
+    );
+  }
+  .nwidget__img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .nwidget__badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 1;
+    padding: 4px 9px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--color-surface) 92%, transparent);
+    backdrop-filter: blur(6px);
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--color-neutral-700);
+  }
+  .nwidget__body {
+    padding: 12px 14px 14px;
+  }
+  .nwidget__name {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-neutral-900);
+    line-height: 1.3;
+  }
+  .nwidget__meta {
+    margin: 6px 0 0;
+    font-size: 13px;
+    color: var(--color-neutral-500);
+  }
+
+  .nwidget__nav {
+    display: none;
+  }
+  @media (min-width: 768px) {
+    .nwidget__track {
+      cursor: grab;
+    }
+    .nwidget__track.is-grabbing {
+      cursor: grabbing;
+      scroll-behavior: auto;
+      user-select: none;
+    }
+    .nwidget__nav {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 3;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      border: 1px solid var(--color-border);
+      background: color-mix(in srgb, var(--color-surface) 92%, transparent);
+      backdrop-filter: blur(8px);
+      color: var(--color-neutral-800);
+      box-shadow: 0 6px 18px -10px rgba(0, 0, 0, .35);
+      cursor: pointer;
+      transition: background .16s ease, transform .08s ease, opacity .16s ease;
+    }
+    .nwidget__nav :global(svg) {
+      width: 20px;
+      height: 20px;
+    }
+    .nwidget__nav:hover {
+      background: var(--color-surface);
+    }
+    .nwidget__nav:active {
+      transform: translateY(-50%) scale(.94);
+    }
+    .nwidget__nav--prev {
+      left: 30px;
+    }
+    .nwidget__nav--next {
+      right: 30px;
+    }
+    .nwidget--embedded .nwidget__nav--prev {
+      left: 4px;
+    }
+    .nwidget--embedded .nwidget__nav--next {
+      right: 4px;
+    }
+    .nwidget__nav[disabled] {
+      opacity: 0;
+      pointer-events: none;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .nwidget__card {
+      flex-basis: 220px;
+    }
+  }
+</style>
+
+<script is:inline>
+(function() {
+  document.querySelectorAll('[data-nwidget-root]').forEach(function(root) {
+    var track = root.querySelector('[data-nwidget-track]')
+    if (!track) return
+    var prevBtn = root.querySelector('[data-nwidget-prev]')
+    var nextBtn = root.querySelector('[data-nwidget-next]')
+    var slideStep = function() {
+      var slide = track.querySelector('.nwidget__card')
+      var w = slide ? slide.getBoundingClientRect().width : track.clientWidth * 0.6
+      return w + 14
+    }
+    var updateNav = function() {
+      var max = track.scrollWidth - track.clientWidth
+      if (prevBtn) prevBtn.disabled = track.scrollLeft <= 1
+      if (nextBtn) nextBtn.disabled = track.scrollLeft >= max - 1
+    }
+    if (prevBtn) prevBtn.addEventListener('click', function() {
+      track.scrollBy({ left: -slideStep(), behavior: 'smooth' })
+    })
+    if (nextBtn) nextBtn.addEventListener('click', function() {
+      track.scrollBy({ left: slideStep(), behavior: 'smooth' })
+    })
+    track.addEventListener('scroll', updateNav)
+    window.addEventListener('resize', updateNav)
+    updateNav()
+
+    var isDown = false, startX = 0, startScroll = 0
+    track.addEventListener('pointerdown', function(e) {
+      if (e.pointerType === 'touch') return
+      isDown = true
+      startX = e.clientX
+      startScroll = track.scrollLeft
+      track.style.scrollSnapType = 'none'
+      track.classList.add('is-grabbing')
+    })
+    var onPointerMove = function(e) {
+      if (!isDown) return
+      track.scrollLeft = startScroll - (e.clientX - startX)
+    }
+    var endDrag = function() {
+      if (!isDown) return
+      isDown = false
+      track.style.scrollSnapType = ''
+      track.classList.remove('is-grabbing')
+    }
+    window.addEventListener('pointermove', onPointerMove)
+    window.addEventListener('pointerup', endDrag)
+    window.addEventListener('pointercancel', endDrag)
+    track.addEventListener('dragstart', function(e) { e.preventDefault() })
+  })
+})()
+</script>

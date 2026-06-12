@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-static'
 interface CarouselMedia {
   id: string
   url: string
+  type?: string | null
   alt_text: string | null
   width: number | null
   height: number | null
@@ -38,18 +39,29 @@ const sortedMedia = [...media].sort((a, b) => (a as any).position - (b as any).p
 
 {/* 0 images: nothing */}
 
-{/* 1 image: direct display, no carousel */}
+{/* 1 média : affichage direct */}
 {sortedMedia.length === 1 && (
   <div class="overflow-hidden">
-    <img
-      src={sortedMedia[0].url}
-      alt={sortedMedia[0].alt_text ?? ''}
-      class="w-full"
-      style={getCropStyle(sortedMedia[0].width, sortedMedia[0].height)}
-      loading="lazy"
-      width={sortedMedia[0].width ?? 800}
-      height={sortedMedia[0].height ?? 600}
-    />
+    {sortedMedia[0].type === 'video' ? (
+      <video
+        src={sortedMedia[0].url}
+        class="w-full"
+        style="aspect-ratio: 16/9; object-fit: cover; max-height: 400px;"
+        controls
+        playsinline
+        preload="metadata"
+      />
+    ) : (
+      <img
+        src={sortedMedia[0].url}
+        alt={sortedMedia[0].alt_text ?? ''}
+        class="w-full"
+        style={getCropStyle(sortedMedia[0].width, sortedMedia[0].height)}
+        loading="lazy"
+        width={sortedMedia[0].width ?? 800}
+        height={sortedMedia[0].height ?? 600}
+      />
+    )}
   </div>
 )}
 
@@ -71,15 +83,26 @@ const sortedMedia = [...media].sort((a, b) => (a as any).position - (b as any).p
           aria-roledescription="slide"
           aria-label={`Image ${i + 1} sur ${sortedMedia.length}`}
         >
-          <img
-            src={m.url}
-            alt={m.alt_text ?? ''}
-            class="w-full"
-            style={getCropStyle(m.width, m.height)}
-            loading={i === 0 ? 'eager' : 'lazy'}
-            width={m.width ?? 800}
-            height={m.height ?? 600}
-          />
+          {m.type === 'video' ? (
+            <video
+              src={m.url}
+              class="w-full"
+              style="aspect-ratio: 16/9; object-fit: cover; max-height: 400px;"
+              controls
+              playsinline
+              preload="metadata"
+            />
+          ) : (
+            <img
+              src={m.url}
+              alt={m.alt_text ?? ''}
+              class="w-full"
+              style={getCropStyle(m.width, m.height)}
+              loading={i === 0 ? 'eager' : 'lazy'}
+              width={m.width ?? 800}
+              height={m.height ?? 600}
+            />
+          )}
         </div>
       ))}
     </div>

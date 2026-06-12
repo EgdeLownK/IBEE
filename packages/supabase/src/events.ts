@@ -58,6 +58,28 @@ export async function listUpcomingEvents(
   return (data ?? []) as EventRecord[]
 }
 
+/**
+ * Events à venir pour l'owner (publiés + brouillons). Requiert client authentifié
+ * (RLS events_owner_select). Les events passés restent exclus.
+ */
+export async function listUpcomingEventsForOwner(
+  client: SupabaseClient<Database>,
+  entityId: string,
+  opts: { limit?: number } = {}
+) {
+  const { limit = 24 } = opts
+  const { data, error } = await client
+    .from('events')
+    .select('*')
+    .eq('entity_id', entityId)
+    .gte('start_at', new Date().toISOString())
+    .order('start_at', { ascending: true })
+    .limit(limit)
+
+  if (error) throw error
+  return (data ?? []) as EventRecord[]
+}
+
 /** Event par slug (clé métier). Renvoie aussi les non publiés — gate côté page. */
 export async function getEventBySlug(
   client: SupabaseClient<Database>,

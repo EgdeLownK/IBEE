@@ -1,9 +1,11 @@
 ---
-import { Clock, MapPin, Video, Phone, CalendarDays, ChevronLeft, LogIn, Check as CheckIcon } from 'lucide-static'
+import { CalendarDays } from 'lucide-static'
 import AppLayout from '../../../layouts/AppLayout.astro'
 import DetailTopBar from '@ibee/ui-server/src/components/DetailTopBar.astro'
+import DetailEntityStrip from '@ibee/ui-server/src/components/DetailEntityStrip.astro'
 import ProfileCard from '@ibee/ui-server/src/components/ProfileCard.astro'
-import RecommendedServices from '@ibee/ui-server/src/components/RecommendedServices.astro'
+import EntityDetailBody from '@ibee/ui-server/src/components/EntityDetailBody.astro'
+import RelatedContent from '@ibee/ui-server/src/components/RelatedContent.astro'
 import ProductFaq from '@ibee/ui-server/src/components/ProductFaq.astro'
 import ProductReviewsList from '@ibee/ui-server/src/components/ProductReviewsList.astro'
 import { supabase } from '../../../lib/supabase/client'
@@ -11,10 +13,9 @@ import { createAuthClient } from '../../../lib/supabase/auth'
 import {
   getEntityBySlug,
   getAppointmentTypeBySlug,
-  getAppointmentTypesByEntity,
-  getEntityByUserId,
   listPublishedServiceReviews,
   getServiceReviewAggregates,
+  getEntityMenuSections,
 } from '@ibee/supabase'
 
 const { slug, serviceSlug } = Astro.params
@@ -29,15 +30,6 @@ if (!service || !service.is_active) return new Response(null, { status: 404 })
 
 const authClient = createAuthClient(Astro.request, Astro.cookies)
 const { data: { user } } = await authClient.auth.getUser()
-
-// Utilisateur connecte : recuperer ses infos
-let bookerEntity: { display_name: string; slug: string } | null = null
-if (user) {
-  bookerEntity = await getEntityByUserId(supabase, user.id)
-}
-const isLoggedIn = !!user
-const bookerName = bookerEntity?.display_name ?? ''
-const bookerEmail = user?.email ?? ''
 
 // Filtres/tri avis depuis query params (rendu serveur, même pattern que produit)
 const ratingParam = Astro.url.searchParams.get('rating')
@@ -54,15 +46,12 @@ const activeRatings = ratingParam
 const sortParam = Astro.url.searchParams.get('sort')
 const activeSort: 'recent' | 'oldest' = sortParam === 'oldest' ? 'oldest' : 'recent'
 
-// Autres services pour le widget recommandations + avis
-const [allTypes, reviews, aggregates, allRatings] = await Promise.all([
-  getAppointmentTypesByEntity(supabase, entity.id, { activeOnly: true }),
+const [reviews, aggregates, allRatings, menuSections] = await Promise.all([
   listPublishedServiceReviews(supabase, service.id, { ratings: activeRatings, sortBy: activeSort, limit: 50 }),
   getServiceReviewAggregates(supabase, service.id),
-  // Distribution : on relit toutes les notes publiées
   listPublishedServiceReviews(supabase, service.id, { limit: 500 }),
+  getEntityMenuSections(supabase, entity.id),
 ])
-const otherServices = allTypes.filter(t => t.id !== service.id)
 
 const distribution: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
 for (const r of allRatings) {
@@ -84,8 +73,7 @@ const faq = Array.isArray(service.faq)
 const siteUrl = import.meta.env.SITE_URL
 const profileUrl = `${siteUrl}/${entity.slug}`
 const serviceUrl = `${siteUrl}/${entity.slug}/services/${service.slug}`
-const dashboardUrl = import.meta.env.DASHBOARD_URL ?? 'http://localhost:3000'
-
+// Description (meta + schema) à partir des content_blocks / description legacy
 type ContentBlock =
   | { type: 'text'; content: string }
   | { type: 'image'; url: string; alt: string }
@@ -101,27 +89,77 @@ if (Array.isArray(service.content_blocks) && service.content_blocks.length > 0) 
     else blocks = [{ type: 'text', content: service.description }]
   } catch { blocks = [{ type: 'text', content: service.description }] }
 }
-
-const textContent = blocks.filter((b): b is { type: 'text'; content: string } => b.type === 'text' && !!b.content).map(b => b.content).join(' ')
+type DetailContentBlock = { type: 'text'; content: string } | { type: 'image'; url: string; alt?: string }
+const detailContentBlocks: DetailContentBlock[] = blocks.flatMap((b): DetailContentBlock[] => {
+  if (b.type === 'text' && b.content) return [{ type: 'text', content: b.content }]
+  if (b.type === 'image' && b.url) return [{ type: 'image', url: b.url, alt: b.alt }]
+  if (b.type === 'list' && Array.isArray(b.items) && b.items.length > 0) {
+    return [{ type: 'text', content: b.items.map((item) => `• ${item}`).join('\n') }]
+  }
+  return []
+})
+const textContent = detailContentBlocks.filter((b): b is { type: 'text'; content: string } => b.type === 'text').map((b) => b.content).join(' ')
 const description = textContent ? textContent.slice(0, 160) + (textContent.length > 160 ? '...' : '') : `${service.title} — Service par ${entity.display_name}`
 
 function formatPrice(cents: number | null, currency: string) {
   if (cents === null || cents === 0) return '0€'
   return new Intl.NumberFormat('fr-FR', { style: 'currency', currency }).format(cents / 100)
 }
-
-// Initiales de l'organisateur (mini-header)
-const entityInitials = entity.display_name
-  .split(/\s+/)
-  .filter(Boolean)
-  .slice(0, 2)
-  .map((w: string) => w[0]!.toUpperCase())
-  .join('')
 const priceText = formatPrice(service.price_cents, service.currency)
-const locationLabels: Record<string, { icon: string; label: string }> = {
-  video: { icon: Video, label: 'Visioconference' }, in_person: { icon: MapPin, label: 'Sur place' }, phone: { icon: Phone, label: 'Telephone' },
+const locationLabels: Record<string, string> = {
+  video: 'Visioconférence',
+  in_person: 'Sur place',
+  phone: 'Téléphone',
 }
-const loc = locationLabels[service.location_type] ?? locationLabels.video
+const locLabel = locationLabels[service.location_type] ?? 'Visioconférence'
+
+// Médias (galerie service) → carrousel ; sinon placeholder
+const serviceMedia = Array.isArray((service as { gallery_images?: unknown }).gallery_images)
+  ? ((service as { gallery_images?: unknown }).gallery_images as unknown[])
+      .filter((u): u is string => typeof u === 'string')
+      .map((url) => ({ url }))
+  : []
+
+const reviewCount = aggregates.count
+const reviewAverage = aggregates.average
+
+// Caractéristiques (Avis · Prix · Durée · Lieu)
+const stats = [
+  {
+    label: reviewCount > 0 ? `${reviewCount} avis` : 'Avis',
+    value: reviewCount > 0 ? reviewAverage.toFixed(1).replace('.', ',') : '—',
+    stars: reviewAverage,
+    href: '#avis',
+  },
+  { label: 'Prix', value: priceText, valueSmall: true, valueDark: true },
+  { label: 'Durée', value: `${service.duration_minutes} min`, valueSmall: true },
+  { label: 'Lieu', value: locLabel, valueSmall: true },
+]
+
+// Lignes de l'accordéon Information
+const detailRows = [
+  { label: 'Durée', value: `${service.duration_minutes} min` },
+  { label: 'Lieu', value: locLabel },
+  { label: 'Tarif', value: priceText },
+]
+
+const hasNews = menuSections.some((s) => s.type === 'news')
+
+// --- Mock data (reco) — même traitement que la page produit ---
+const profileRelated = [
+  { kind: 'service' as const, title: 'Séance de coaching', meta: 'Service · 60 min' },
+  { kind: 'product' as const, title: 'Guide complet (PDF)', meta: 'Produit · 19 €' },
+  { kind: 'event' as const, title: 'Atelier en ligne', meta: 'Événement · 12 juin' },
+  { kind: 'product' as const, title: 'Pack ressources', meta: 'Produit · 39 €' },
+  { kind: 'service' as const, title: 'Audit personnalisé', meta: 'Service · sur devis' },
+]
+const similarRelated = [
+  { kind: 'service' as const, title: 'Prestation similaire', meta: 'Service · 45 min' },
+  { kind: 'event' as const, title: 'Événement à découvrir', meta: 'Événement · 20 juin' },
+  { kind: 'product' as const, title: 'Produit similaire', meta: 'Produit · 24 €' },
+  { kind: 'service' as const, title: 'Service recommandé', meta: 'Service · 30 min' },
+  { kind: 'product' as const, title: 'Autre suggestion', meta: 'Produit · 15 €' },
+]
 
 const serviceSchema = { '@context': 'https://schema.org', '@graph': [{ '@type': 'Service', '@id': `${serviceUrl}#service`, name: service.title, ...(textContent && { description: textContent.slice(0, 500) }), url: serviceUrl, provider: { '@type': 'Person', '@id': `${profileUrl}#person`, name: entity.display_name, url: profileUrl, ...(entity.avatar_url && { image: entity.avatar_url }) }, ...(service.price_cents !== null && service.price_cents > 0 && { offers: { '@type': 'Offer', price: (service.price_cents / 100).toFixed(2), priceCurrency: service.currency, availability: 'https://schema.org/InStock' } }) }] }
 
@@ -131,405 +169,106 @@ Astro.response.headers.set('X-Robots-Tag', 'index, follow, max-snippet:-1, max-i
 <AppLayout title={`${service.title} — ${entity.display_name} — IBEE`} description={description} image={entity.avatar_url ?? undefined} url={serviceUrl} type="website" user={user} profileUrl={profileUrl} showSidebar={true}>
   <Fragment slot="head"><script is:inline type="application/ld+json" set:html={JSON.stringify(serviceSchema)} /></Fragment>
 
-  <main class="md:py-8 sm:py-12">
-    <DetailTopBar backHref={`/${entity.slug}#appointments`} title={service.title} />
-
+  <main class="profile-page">
     <ProfileCard>
-      {/* ===== Cover 16/9 ===== */}
-      <a href={`/${entity.slug}`} class="relative block">
-        {entity.avatar_url ? (
-          <div class="aspect-video w-full overflow-hidden bg-neutral-100">
-            <img src={entity.avatar_url} alt={entity.display_name} class="h-full w-full object-cover" />
-          </div>
-        ) : (
-          <div class="flex aspect-video w-full items-center justify-center bg-accent-soft">
-            <span class="font-display text-[64px] font-bold text-accent opacity-85">{entity.display_name.charAt(0).toUpperCase()}</span>
-          </div>
-        )}
-        <div class="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-white to-transparent"></div>
-      </a>
+      <DetailTopBar backHref={`/${entity.slug}#appointments`} title={`Voir le profil de ${entity.display_name}`} />
 
-      {/* ===== Organisateur + titre + pills ===== */}
-      <div class="px-[22px] pt-[18px] pb-1.5">
-        <a href={`/${entity.slug}`} class="flex items-center gap-2.5 no-underline text-inherit group w-fit">
-          <span class="flex h-[34px] w-[34px] shrink-0 items-center justify-center overflow-hidden rounded-full bg-accent-soft font-display text-sm font-semibold text-accent">
-            {entity.avatar_url ? <img src={entity.avatar_url} alt={entity.display_name} class="h-full w-full object-cover" /> : entityInitials}
-          </span>
-          <span>
-            <span class="block text-[13px] font-semibold text-neutral-900 group-hover:text-accent transition">{entity.display_name}</span>
-            {entity.role && <span class="block text-[11.5px] text-neutral-500">{entity.role}</span>}
-          </span>
-        </a>
-
-        <h1 class="mt-3.5 mb-0 font-display text-[22px] font-semibold leading-tight text-neutral-900">{service.title}</h1>
-        <div class="mt-3 flex flex-wrap gap-2">
-          <span class="pill">
-            <span class="flex h-3.5 w-3.5 items-center justify-center" set:html={Clock} />{service.duration_minutes} min
-          </span>
-          <span class="pill">
-            <span class="flex h-3.5 w-3.5 items-center justify-center" set:html={loc.icon} />{loc.label}
-          </span>
-          <span class="pill pill--accent font-semibold">{priceText}</span>
-        </div>
-      </div>
-
-      {/* ===== Description ===== */}
-      {blocks.length > 0 && (
-        <div class="px-[22px] pt-4 pb-1.5">
-          <div class="space-y-3.5">
-            {blocks.map(block => (
-              <div>
-                {block.type === 'text' && block.content && <p class="m-0 text-sm leading-relaxed text-neutral-600 whitespace-pre-wrap">{block.content}</p>}
-                {block.type === 'image' && block.url && <img src={block.url} alt={block.alt || service.title} class="w-full rounded-[14px] object-cover" loading="lazy" />}
-                {block.type === 'list' && block.items.filter(Boolean).length > 0 && (
-                  <ul class="m-0 flex list-none flex-col gap-2 p-0 text-sm text-neutral-700">
-                    {block.items.filter(Boolean).map(item => (
-                      <li class="flex items-start gap-2.5"><span class="mt-0.5 flex h-[17px] w-[17px] shrink-0 items-center justify-center text-accent" set:html={CheckIcon} />{item}</li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* ===== Réservation (flow existant, 3 étapes) ===== */}
-      <section id="booking-panel" class="sec scroll-mt-20" style="margin-top:22px;">
-
-          {/* Step 0 : Identite (non connecte seulement) */}
-          <div id="step-identity" style={isLoggedIn ? 'display:none;' : ''}>
-            <div class="mb-4 flex items-center justify-between">
-              <h2 class="text-base font-semibold text-neutral-900">Vos informations</h2>
-              <div class="flex items-center gap-1.5">
-                <span class="flex h-2 w-2 rounded-full bg-accent"></span>
-                <span class="flex h-2 w-2 rounded-full bg-neutral-200"></span>
-                <span class="flex h-2 w-2 rounded-full bg-neutral-200"></span>
-              </div>
-            </div>
-
-            {/* Option : se connecter */}
-            <a href={`${dashboardUrl}/login?redirect=${encodeURIComponent(serviceUrl)}`} class="mb-5 flex items-center gap-3 rounded-xl border border-neutral-200 px-4 py-3 transition hover:border-accent hover:bg-accent/5 group">
-              <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent">
-                <span class="flex h-4 w-4 items-center justify-center" set:html={LogIn} />
-              </span>
-              <div class="flex-1">
-                <p class="text-sm font-medium text-neutral-900 group-hover:text-accent transition">Se connecter / Creer un compte</p>
-                <p class="text-xs text-neutral-500">Reservez plus rapidement avec votre compte IBEE.</p>
-              </div>
-            </a>
-
-            <div class="mb-4 flex items-center gap-3">
-              <div class="h-px flex-1 bg-neutral-200"></div>
-              <span class="text-xs text-neutral-400">ou remplissez vos coordonnees</span>
-              <div class="h-px flex-1 bg-neutral-200"></div>
-            </div>
-
-            {/* Formulaire identite */}
-            <div class="space-y-3" id="identity-fields">
-              <div>
-                <label class="field-label">Nom complet *</label>
-                <input id="id-name" type="text" required autocomplete="name" class="field" placeholder="Jean Dupont" />
-              </div>
-              <div>
-                <label class="field-label">Email *</label>
-                <input id="id-email" type="email" required autocomplete="email" class="field" placeholder="jean@exemple.com" />
-              </div>
-              <div>
-                <label class="field-label">Telephone</label>
-                <input id="id-phone" type="tel" autocomplete="tel" class="field" placeholder="06 12 34 56 78" />
-              </div>
-              <button type="button" id="btn-identity-next" class="btn btn--accent btn--block mt-1">
-                Choisir un creneau
-              </button>
-            </div>
-          </div>
-
-          {/* Step 1 : Calendrier + creneaux */}
-          <div id="step-calendar" style={isLoggedIn ? '' : 'display:none;'}>
-            <div class="mb-4 flex items-center justify-between">
-              {!isLoggedIn ? (
-                <button type="button" id="back-identity" class="rounded-lg p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 transition">
-                  <span class="flex h-4 w-4 items-center justify-center" set:html={ChevronLeft} />
-                </button>
-              ) : <div class="w-7"></div>}
-              <h2 class="text-base font-semibold text-neutral-900">Choisir un creneau</h2>
-              <div class="flex items-center gap-1.5">
-                {!isLoggedIn && <span class="flex h-2 w-2 rounded-full bg-accent"></span>}
-                <span class="flex h-2 w-2 rounded-full bg-accent"></span>
-                <span class="flex h-2 w-2 rounded-full bg-neutral-200"></span>
-              </div>
-            </div>
-            <div id="booking-calendar"></div>
-            <div class="mt-5">
-              <p class="mb-2 text-xs font-medium text-neutral-500 uppercase tracking-wider">Creneaux</p>
-              <div id="booking-slots" class="grid grid-cols-3 gap-2 sm:grid-cols-4">
-                <p class="col-span-full text-sm text-neutral-400">Chargement...</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Step 2 : Recap + confirmation */}
-          <div id="step-recap" style="display:none;">
-            <div class="mb-4 flex items-center justify-between">
-              <button type="button" id="back-calendar" class="rounded-lg p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 transition">
-                <span class="flex h-4 w-4 items-center justify-center" set:html={ChevronLeft} />
-              </button>
-              <h2 class="text-base font-semibold text-neutral-900">Confirmer</h2>
-              <div class="flex items-center gap-1.5">
-                {!isLoggedIn && <span class="flex h-2 w-2 rounded-full bg-accent"></span>}
-                <span class="flex h-2 w-2 rounded-full bg-accent"></span>
-                <span class="flex h-2 w-2 rounded-full bg-accent"></span>
-              </div>
-            </div>
-
-            {/* Recap */}
-            <div class="space-y-3 mb-6">
-              <div class="rounded-xl bg-neutral-50 border border-neutral-200 p-4 space-y-2">
-                <p class="text-sm font-semibold text-neutral-900">{service.title}</p>
-                <div class="flex items-center gap-2 text-xs text-neutral-600">
-                  <span class="flex h-3.5 w-3.5 items-center justify-center text-neutral-400" set:html={CalendarDays} />
-                  <span id="recap-datetime-final"></span>
-                </div>
-                <div class="flex items-center gap-2 text-xs text-neutral-600">
-                  <span class="flex h-3.5 w-3.5 items-center justify-center text-neutral-400" set:html={Clock} />
-                  {service.duration_minutes} min — {loc.label}
-                </div>
-                {service.price_cents !== null && service.price_cents > 0 && (
-                  <p class="text-sm font-semibold text-neutral-900 pt-1">{priceText}</p>
-                )}
-              </div>
-              <div class="rounded-xl bg-neutral-50 border border-neutral-200 p-4">
-                <p class="text-xs font-medium text-neutral-500 mb-1">Vos coordonnees</p>
-                <p class="text-sm text-neutral-900" id="recap-name"></p>
-                <p class="text-sm text-neutral-600" id="recap-email"></p>
-                <p class="text-sm text-neutral-600" id="recap-phone-display"></p>
-              </div>
-            </div>
-
-            <form id="booking-form">
-              <input type="hidden" name="entityId" value={entity.id} />
-              <input type="hidden" name="typeId" value={service.id} />
-              <input type="hidden" name="startAt" id="booking-start-at" />
-              <input type="hidden" name="endAt" id="booking-end-at" />
-              <input type="hidden" name="name" id="form-name" />
-              <input type="hidden" name="email" id="form-email" />
-              <input type="hidden" name="phone" id="form-phone" />
-              <button type="submit" id="booking-submit" class="btn btn--accent btn--block">
-                Confirmer le rendez-vous
-              </button>
-              <p class="mt-2 text-center text-xs text-neutral-400">Vous recevrez un email de confirmation.</p>
-            </form>
-          </div>
-      </section>
-
-      {/* Widget recommandations */}
-      {otherServices.length > 0 && (
-        <section class="sec">
-          <RecommendedServices services={otherServices} entitySlug={entity.slug} />
-        </section>
-      )}
-
-      {/* FAQ du service (accordéon natif + JSON-LD FAQPage) */}
-      <ProductFaq faq={faq} />
-
-      {/* Avis (lecture seule — le dépôt viendra avec l'historique de réservations) */}
-      <ProductReviewsList
-        reviews={reviews}
-        aggregates={aggregates}
-        distribution={distribution}
-        activeRatings={activeRatings}
-        activeSort={activeSort}
-        basePath={`/${entity.slug}/services/${service.slug}`}
+      <DetailEntityStrip
+        displayName={entity.display_name}
+        avatarUrl={entity.avatar_url}
+        profileHref={`/${entity.slug}`}
+        title={service.title}
+        subtitle={[`${service.duration_minutes} min`, locLabel].filter(Boolean).join(' · ')}
       />
-    </ProfileCard>
 
-    {/* Actionbar sticky : prix + CTA vers la réservation */}
-    <div class="actionbar mx-auto max-w-[800px] md:rounded-t-[18px]">
-      <div class="actionbar__price">
-        <span class="label">{service.duration_minutes} min · {loc.label}</span>
-        <span class="now">{priceText}</span>
+      <EntityDetailBody
+        title={service.title}
+        media={serviceMedia}
+        placeholderIcon={CalendarDays}
+        stats={stats}
+        priceText={priceText}
+        ctaHref={`/${entity.slug}/services/${service.slug}/booking`}
+        ctaLabel="Réserver"
+        detailRows={detailRows}
+        entitySlug={entity.slug}
+        entityKind="service"
+        contentBlocks={detailContentBlocks}
+        hasNews={hasNews}
+      />
+
+      {/* Reco : autres contenus du profil, puis contenus similaires */}
+      <div class="product-related pb-2">
+        <RelatedContent title={`Autres contenus de ${entity.display_name}`} items={profileRelated} />
+        <RelatedContent title="À découvrir aussi" items={similarRelated} />
       </div>
-      <a href="#booking-panel" id="booking-cta" class="btn btn--accent btn--lg flex-1" style="margin-left:auto;">Voir les disponibilités</a>
-    </div>
+
+      <div class="product-sections px-[22px] pt-2 pb-6">
+        <section class="product-major-section">
+          <h2 class="product-major-section__title">Questions &amp; avis</h2>
+          <div class="product-major-section__body">
+            <ProductFaq faq={faq} />
+            <ProductReviewsList
+              reviews={reviews}
+              aggregates={aggregates}
+              distribution={distribution}
+              activeRatings={activeRatings}
+              activeSort={activeSort}
+              basePath={`/${entity.slug}/services/${service.slug}`}
+            />
+          </div>
+        </section>
+      </div>
+    </ProfileCard>
   </main>
 </AppLayout>
 
-<script is:inline define:vars={{ entityId: entity.id, serviceId: service.id, entitySlug: entity.slug, serviceSlugVar: service.slug, isLoggedIn, bookerName, bookerEmail }}>
-(function() {
-  var steps = ['step-identity','step-calendar','step-recap']
-
-  function showStep(id) {
-    steps.forEach(function(s) { var el = document.getElementById(s); if (el) el.style.display = s === id ? '' : 'none' })
-    var panel = document.getElementById('booking-panel')
-    if (panel) panel.scrollTop = 0
+<style>
+  .product-sections {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
   }
-
-  // State
-  var guestName = bookerName
-  var guestEmail = bookerEmail
-  var guestPhone = ''
-  var selectedDate = ''
-  var availableDaysSet = {}
-  var currentMonth = new Date()
-  var calendarContainer = document.getElementById('booking-calendar')
-  var slotsContainer = document.getElementById('booking-slots')
-
-  // CTA actionbar → scroll vers la réservation
-  var bookingCta = document.getElementById('booking-cta')
-  if (bookingCta) bookingCta.addEventListener('click', function(e) {
-    e.preventDefault()
-    document.getElementById('booking-panel').scrollIntoView({ behavior: 'smooth' })
-  })
-
-  // Step identity -> calendar
-  var btnNext = document.getElementById('btn-identity-next')
-  if (btnNext) {
-    btnNext.addEventListener('click', function() {
-      var n = document.getElementById('id-name').value.trim()
-      var e = document.getElementById('id-email').value.trim()
-      if (!n || !e) { alert('Nom et email sont obligatoires.'); return }
-      guestName = n; guestEmail = e; guestPhone = document.getElementById('id-phone').value.trim()
-      currentMonth = new Date(); loadAvailableDays(); showStep('step-calendar')
-    })
+  .product-major-section {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
   }
-
-  // Back buttons
-  var backId = document.getElementById('back-identity')
-  if (backId) backId.addEventListener('click', function() { showStep('step-identity') })
-  document.getElementById('back-calendar').addEventListener('click', function() { showStep('step-calendar') })
-
-  // Init for logged-in users
-  if (isLoggedIn) { currentMonth = new Date(); loadAvailableDays() }
-
-  // Available days
-  function loadAvailableDays() {
-    var monthStr = currentMonth.getFullYear() + '-' + String(currentMonth.getMonth() + 1).padStart(2, '0')
-    fetch('/api/bookings/available-days?entityId=' + entityId + '&typeId=' + serviceId + '&month=' + monthStr)
-      .then(function(r) { return r.json() })
-      .then(function(data) {
-        availableDaysSet = {}
-        ;(data.days || []).forEach(function(d) { availableDaysSet[d] = true })
-        renderCalendar()
-        // Pre-select first available day
-        var sortedDays = (data.days || []).sort()
-        if (sortedDays.length > 0) { selectedDate = sortedDays[0]; renderCalendar(); loadSlots(sortedDays[0]) }
-      })
-      .catch(function() { renderCalendar() })
+  .product-major-section__title {
+    margin: 0;
+    display: block;
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 900;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--color-accent);
   }
-
-  // Calendar
-  function renderCalendar() {
-    var year = currentMonth.getFullYear(), month = currentMonth.getMonth()
-    var firstDay = new Date(year, month, 1).getDay()
-    var daysInMonth = new Date(year, month + 1, 0).getDate()
-    var today = new Date(); today.setHours(0,0,0,0)
-    var monthNames = ['Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre']
-
-    while (calendarContainer.firstChild) calendarContainer.removeChild(calendarContainer.firstChild)
-
-    var header = document.createElement('div'); header.className = 'flex items-center justify-between mb-3'
-    var prev = document.createElement('button'); prev.type = 'button'; prev.className = 'rounded-lg p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-900 transition'; prev.textContent = '\u2190'
-    var titleEl = document.createElement('span'); titleEl.className = 'text-sm font-semibold text-neutral-900'; titleEl.textContent = monthNames[month] + ' ' + year
-    var next = document.createElement('button'); next.type = 'button'; next.className = 'rounded-lg p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-900 transition'; next.textContent = '\u2192'
-    prev.addEventListener('click', function() { currentMonth.setMonth(currentMonth.getMonth() - 1); loadAvailableDays() })
-    next.addEventListener('click', function() { currentMonth.setMonth(currentMonth.getMonth() + 1); loadAvailableDays() })
-    header.appendChild(prev); header.appendChild(titleEl); header.appendChild(next)
-    calendarContainer.appendChild(header)
-
-    var dayRow = document.createElement('div'); dayRow.className = 'grid grid-cols-7 gap-1 text-center text-xs font-medium text-neutral-400 mb-1'
-    ;['D','L','M','M','J','V','S'].forEach(function(d) { var el = document.createElement('div'); el.className = 'py-1'; el.textContent = d; dayRow.appendChild(el) })
-    calendarContainer.appendChild(dayRow)
-
-    var grid = document.createElement('div'); grid.className = 'grid grid-cols-7 gap-1'
-    for (var i = 0; i < firstDay; i++) grid.appendChild(document.createElement('div'))
-    for (var d = 1; d <= daysInMonth; d++) {
-      var dateObj = new Date(year, month, d)
-      var dateStr = year + '-' + String(month + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0')
-      var isPast = dateObj < today
-      var isAvailable = !!availableDaysSet[dateStr]
-      var isSelected = dateStr === selectedDate
-      var isDisabled = isPast || !isAvailable
-
-      var cell = document.createElement(isDisabled ? 'div' : 'button')
-      if (!isDisabled) cell.type = 'button'
-      cell.textContent = String(d)
-
-      if (isSelected && !isDisabled) {
-        cell.className = 'flex h-9 w-full items-center justify-center rounded-lg text-sm font-semibold bg-accent text-white'
-      } else if (isDisabled) {
-        cell.className = 'flex h-9 w-full items-center justify-center rounded-lg text-sm text-neutral-200'
-      } else {
-        cell.className = 'flex h-9 w-full items-center justify-center rounded-lg text-sm font-medium text-neutral-900 hover:bg-accent/10 transition'
-      }
-
-      if (!isDisabled) {
-        cell.addEventListener('click', (function(ds) { return function() { selectedDate = ds; renderCalendar(); loadSlots(ds) } })(dateStr))
-      }
-      grid.appendChild(cell)
-    }
-    calendarContainer.appendChild(grid)
+  .product-major-section__body {
+    display: flex;
+    flex-direction: column;
+    gap: 26px;
   }
-
-  // Slots
-  function loadSlots(date) {
-    while (slotsContainer.firstChild) slotsContainer.removeChild(slotsContainer.firstChild)
-    var loading = document.createElement('p'); loading.className = 'col-span-full text-sm text-neutral-400'; loading.textContent = 'Chargement...'
-    slotsContainer.appendChild(loading)
-
-    fetch('/api/bookings/slots?entityId=' + entityId + '&typeId=' + serviceId + '&date=' + date)
-      .then(function(r) { return r.json() })
-      .then(function(data) {
-        while (slotsContainer.firstChild) slotsContainer.removeChild(slotsContainer.firstChild)
-        if (!data.slots || data.slots.length === 0) { var msg = document.createElement('p'); msg.className = 'col-span-full text-sm text-neutral-400'; msg.textContent = 'Aucun creneau ce jour.'; slotsContainer.appendChild(msg); return }
-        var tz = Intl.DateTimeFormat().resolvedOptions().timeZone
-        data.slots.forEach(function(slot) {
-          var time = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit', timeZone: tz }).format(new Date(slot.start))
-          var btn = document.createElement('button'); btn.type = 'button'
-          btn.className = 'rounded-lg border border-neutral-200 py-2 text-sm font-medium text-neutral-900 transition hover:border-accent hover:text-accent'
-          btn.textContent = time
-          btn.addEventListener('click', function() {
-            document.getElementById('booking-start-at').value = slot.start
-            document.getElementById('booking-end-at').value = slot.end
-            var dateF = new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: tz }).format(new Date(slot.start))
-            var t1 = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit', timeZone: tz }).format(new Date(slot.start))
-            var t2 = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit', timeZone: tz }).format(new Date(slot.end))
-            var recapText = dateF.charAt(0).toUpperCase() + dateF.slice(1) + ', ' + t1 + ' \u2014 ' + t2
-
-            // Fill recap
-            document.getElementById('recap-datetime-final').textContent = recapText
-            document.getElementById('recap-name').textContent = guestName
-            document.getElementById('recap-email').textContent = guestEmail
-            var phoneDisp = document.getElementById('recap-phone-display')
-            phoneDisp.textContent = guestPhone || ''
-            phoneDisp.style.display = guestPhone ? '' : 'none'
-            document.getElementById('form-name').value = guestName
-            document.getElementById('form-email').value = guestEmail
-            document.getElementById('form-phone').value = guestPhone
-
-            showStep('step-recap')
-          })
-          slotsContainer.appendChild(btn)
-        })
-      })
-      .catch(function() {
-        while (slotsContainer.firstChild) slotsContainer.removeChild(slotsContainer.firstChild)
-        var e = document.createElement('p'); e.className = 'col-span-full text-sm text-error'; e.textContent = 'Erreur de chargement.'
-        slotsContainer.appendChild(e)
-      })
+  .product-major-section :global(#avis .reviews-heading span) {
+    display: none;
   }
-
-  // Submit
-  document.getElementById('booking-form').addEventListener('submit', function(e) {
-    e.preventDefault(); var form = e.target; var btn = document.getElementById('booking-submit')
-    btn.disabled = true; btn.textContent = 'Envoi...'
-    fetch('/api/bookings/create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ appointment_type_id: form.typeId.value, entity_id: form.entityId.value, booker_name: form.name.value, booker_email: form.email.value, booker_phone: form.phone.value || null, booker_message: null, start_at: form.startAt.value, end_at: form.endAt.value }) })
-      .then(function(r) { return r.json() })
-      .then(function(data) {
-        if (data.error) { alert(data.error); btn.disabled = false; btn.textContent = 'Confirmer le rendez-vous'; return }
-        window.location.href = '/' + entitySlug + '/services/' + serviceSlugVar + '/confirmed?name=' + encodeURIComponent(form.name.value) + '&date=' + encodeURIComponent(document.getElementById('recap-datetime-final').textContent)
-      })
-      .catch(function() { alert('Erreur.'); btn.disabled = false; btn.textContent = 'Confirmer le rendez-vous' })
-  })
-})()
-</script>
+  .product-major-section :global(#faq .sec-h),
+  .product-major-section :global(#avis .reviews-heading h2) {
+    margin: 0 0 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0;
+    text-transform: none;
+    color: #2a2a2a;
+  }
+  .product-major-section :global(.sec) {
+    border-top: 0;
+    padding: 0;
+  }
+  .product-major-section :global(.review-item) {
+    border-bottom: 0;
+  }
+</style>

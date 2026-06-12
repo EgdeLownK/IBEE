@@ -6,7 +6,6 @@ import {
   Users,
   Plug,
   X,
-  ChevronDown,
   LogIn,
 } from 'lucide-static'
 
@@ -28,10 +27,6 @@ interface Props {
 const { user, currentUserEntity, currentPath, dashboardUrl, projectLabel } = Astro.props
 const isConnected = !!user && !!currentUserEntity
 
-// Profile web : 3 états selon l'utilisateur
-//  - pas connecté → login dashboard
-//  - connecté sans entity → racine dashboard (résout l'entity et redirige)
-//  - connecté avec entity → son profile public
 const profileWebHref = !user
   ? `${dashboardUrl}/login`
   : currentUserEntity
@@ -71,79 +66,75 @@ const outilsItems: SidebarItem[] = [
 ]
 
 const isActive = (item: SidebarItem) => (item.match ? item.match(currentPath) : currentPath === item.href)
-const projectDisplay = projectLabel ?? (isConnected && currentUserEntity ? currentUserEntity.display_name : 'Projet 1')
 ---
 {/* Backdrop mobile */}
 <div
-  class="main-rail-backdrop fixed inset-0 z-40 bg-black/40 opacity-0 pointer-events-none transition-opacity duration-200 md:hidden"
+  class="main-rail-backdrop fixed inset-0 z-40 bg-black/40 opacity-0 pointer-events-none transition-opacity duration-200 min-[1200px]:hidden"
   onclick="document.documentElement.setAttribute('data-drawer-open','false')"
 />
 
-{/* Placeholder desktop — reserves space in flex flow for the fixed rail */}
-<div class="hidden md:block w-[260px] shrink-0" aria-hidden="true" />
+{/* Placeholder — réserve l'espace du rail fixe dans le flux flex */}
+<div class="main-rail-spacer hidden min-[1200px]:block" aria-hidden="true" />
 
 {/* Sidebar */}
 <aside
   data-main-rail
-  class="main-rail fixed top-0 left-0 z-50 flex h-screen w-[280px] -translate-x-full flex-col transition-transform duration-200 md:z-40 md:w-[260px] md:translate-x-0"
+  class="main-rail fixed top-0 left-0 z-50 flex h-screen w-[280px] -translate-x-full flex-col transition-transform duration-200 min-[1200px]:z-40 min-[1200px]:w-[260px] min-[1200px]:translate-x-0"
   aria-label="Navigation principale"
 >
-  {/* Header zone — Projet selector */}
-  <div class="flex h-[65px] shrink-0 items-center justify-between px-[25px]">
-    <button type="button" class="app-header__project">
-      <span class="truncate max-w-[180px]">{projectDisplay}</span>
-      <span class="flex h-4 w-4 items-center justify-center text-neutral-500" set:html={ChevronDown} />
-    </button>
+  <div class="main-rail__head flex h-[65px] shrink-0 items-center justify-end px-[25px] min-[1200px]:hidden">
     <button
       type="button"
       onclick="document.documentElement.setAttribute('data-drawer-open','false')"
-      class="flex h-8 w-8 items-center justify-center rounded-md text-neutral-600 transition hover:bg-panel md:hidden"
+      class="main-rail__close flex h-8 w-8 items-center justify-center rounded-md text-neutral-600 transition hover:bg-panel"
       aria-label="Fermer le menu"
     >
       <span class="flex h-5 w-5 items-center justify-center" set:html={X} />
     </button>
   </div>
 
-  {/* Navigation */}
-  <nav class="sidebar-nav flex-1 overflow-y-auto" onclick="if(window.innerWidth < 768) document.documentElement.setAttribute('data-drawer-open','false')">
-    {/* Section "Espace" */}
+  <nav class="sidebar-nav flex-1 overflow-y-auto" onclick="if(window.innerWidth < 1200) document.documentElement.setAttribute('data-drawer-open','false')">
     <div class="sidebar__section">
       <p class="sidebar__label">Espace</p>
       {espaceItems.map((item) => (
         <a
           href={item.href}
           class:list={['sidebar__item', isActive(item) && 'is-active']}
+          title={item.label}
+          aria-label={item.label}
         >
-          <span class="flex h-5 w-5 shrink-0 items-center justify-center" set:html={item.icon} />
-          <span class="truncate">{item.label}</span>
+          <span class="sidebar__item-icon flex h-5 w-5 shrink-0 items-center justify-center" set:html={item.icon} />
+          <span class="sidebar__item-text truncate">{item.label}</span>
         </a>
       ))}
     </div>
 
-    {/* Section "Outils" */}
     <div class="sidebar__section">
       <p class="sidebar__label">Outils</p>
       {outilsItems.map((item) => (
         <a
           href={item.href}
           class:list={['sidebar__item', isActive(item) && 'is-active']}
+          title={item.label}
+          aria-label={item.label}
         >
-          <span class="flex h-5 w-5 shrink-0 items-center justify-center" set:html={item.icon} />
-          <span class="truncate">{item.label}</span>
+          <span class="sidebar__item-icon flex h-5 w-5 shrink-0 items-center justify-center" set:html={item.icon} />
+          <span class="sidebar__item-text truncate">{item.label}</span>
         </a>
       ))}
     </div>
   </nav>
 
-  {/* Footer — Login si non connecté */}
   {!isConnected && (
-    <div class="shrink-0 p-[22px]">
+    <div class="main-rail__foot shrink-0 p-[22px]">
       <a
         href={`${dashboardUrl}/login`}
-        class="flex w-full items-center justify-center gap-2 rounded-full bg-cta-primary px-4 py-2.5 text-sm font-medium text-white transition duration-200 hover:bg-accent"
+        class="sidebar__login flex w-full items-center justify-center gap-2 rounded-full bg-cta-primary px-4 py-2.5 text-sm font-medium text-white transition duration-200 hover:bg-accent"
+        aria-label="Se connecter"
+        title="Se connecter"
       >
         <span class="flex h-5 w-5 shrink-0 items-center justify-center" set:html={LogIn} />
-        <span>Se connecter</span>
+        <span class="sidebar__login-text">Se connecter</span>
       </a>
     </div>
   )}
@@ -153,6 +144,15 @@ const projectDisplay = projectLabel ?? (isConnected && currentUserEntity ? curre
   .main-rail {
     background: var(--color-surface);
     box-shadow: var(--shadow-card);
+    top: 0;
+    height: 100vh;
+  }
+
+  @media (min-width: 1200px) {
+    .main-rail {
+      top: var(--app-header-height);
+      height: calc(100vh - var(--app-header-height));
+    }
   }
 
   .sidebar-nav {

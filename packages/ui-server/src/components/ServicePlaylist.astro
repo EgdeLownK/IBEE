@@ -1,0 +1,296 @@
+---
+import { Search, CalendarClock, Star, X } from 'lucide-static'
+import SectionEmptyState from './SectionEmptyState.astro'
+
+interface Service {
+  id: string
+  title: string
+  slug: string
+  detailExcerpt?: string | null
+  reviewCount?: number
+  reviewAverage?: number
+  duration_minutes: number
+  location_type: string
+  price_cents: number | null
+  promo_price_cents?: number | null
+  currency: string
+  gallery_images?: string[]
+}
+
+interface Props {
+  services?: Service[]
+  isOwner?: boolean
+  entitySlug?: string
+  dashboardUrl?: string
+}
+
+const { services = [], isOwner = false, entitySlug, dashboardUrl } = Astro.props
+
+const LOCATION_LABELS: Record<string, string> = {
+  video: 'Visio',
+  in_person: 'Sur place',
+  phone: 'Téléphone',
+}
+
+function formatPrice(cents: number | null | undefined, currency: string | undefined): string {
+  if (cents == null || cents === 0) return '0€'
+  const value = cents / 100
+  try {
+    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: currency || 'EUR' }).format(value)
+  } catch {
+    return `${value.toFixed(2)} €`
+  }
+}
+
+function metaLabel(svc: Service): string {
+  const loc = LOCATION_LABELS[svc.location_type] ?? 'Visio'
+  return `${svc.duration_minutes} min · ${loc}`
+}
+
+function hasPromo(svc: Service): boolean {
+  return svc.price_cents != null && svc.price_cents > 0
+    && svc.promo_price_cents != null && svc.promo_price_cents > 0
+}
+
+const starRow = (rating: number) =>
+  Array.from({ length: 5 }, (_, i) => i < Math.round(rating))
+---
+<section class="spl">
+  {services.length === 0 ? (
+    <SectionEmptyState
+      icon={CalendarClock}
+      title="Aucun service pour le moment"
+      description="Aucun service réservable pour l'instant."
+      ownerDescription="Propose ton premier service réservable."
+      ctaLabel="Ajouter un service"
+      ctaAction="data-open-service-overlay"
+      isOwner={isOwner}
+    />
+  ) : (
+    <div class="spl__inner" data-svc-pl>
+      <div class="spl__bar">
+        <span class="spl__count">
+          <b data-svc-pl-count>{services.length}</b> service{services.length > 1 ? 's' : ''}
+        </span>
+        <div class="spl__searchwrap" data-svc-pl-search-wrap>
+          <button type="button" class="spl__search-btn" data-svc-pl-search-toggle aria-expanded="false" aria-label="Rechercher">
+            <span class="spl__icon" data-svc-pl-icon-search set:html={Search} />
+            <span class="spl__icon" data-svc-pl-icon-close hidden set:html={X} />
+          </button>
+          <input
+            type="search"
+            class="spl__search-input"
+            placeholder="Rechercher un service…"
+            aria-label="Rechercher un service"
+            data-svc-pl-search
+          />
+        </div>
+      </div>
+
+      <div class="grid-tiles">
+        {services.map((svc) => {
+          const href = entitySlug && svc.slug ? `/${entitySlug}/services/${svc.slug}` : null
+          const editHref = isOwner && dashboardUrl ? `${dashboardUrl}/services/${svc.id}` : null
+          const cover = svc.gallery_images?.[0] ?? null
+          const promo = hasPromo(svc)
+          const excerpt = svc.detailExcerpt?.trim() ?? ''
+          const reviewCount = svc.reviewCount ?? 0
+          const reviewAverage = svc.reviewAverage ?? 0
+          const showPrice = svc.price_cents != null
+          return (
+            <div class="tile tile--rich" data-svc-pl-item data-svc-pl-name={svc.title.toLowerCase()}>
+              {href && <a class="tile__stretch" href={href} aria-label={svc.title}></a>}
+              <div class="tile__media">
+                {showPrice && (
+                  <span class="tile__price-badge">
+                    {promo ? (
+                      <>
+                        <span class="tile__price-now">{formatPrice(svc.promo_price_cents, svc.currency)}</span>
+                        <s class="tile__price-was">{formatPrice(svc.price_cents, svc.currency)}</s>
+                      </>
+                    ) : (
+                      <span class="tile__price-now">{formatPrice(svc.price_cents, svc.currency)}</span>
+                    )}
+                  </span>
+                )}
+                {cover ? (
+                  <img src={cover} alt={svc.title} loading="lazy" />
+                ) : (
+                  <div class="ph" aria-hidden="true">
+                    <span class="flex h-6 w-6 items-center justify-center" set:html={CalendarClock} />
+                  </div>
+                )}
+              </div>
+              <div class="tile__body">
+                <div class="tile__head">
+                  <div class="tile__title">{svc.title}</div>
+                  <div class="tile__meta">{metaLabel(svc)}</div>
+                </div>
+
+                {excerpt && (
+                  <div class="tile__detail">
+                    <p class="tile__detail-text">{excerpt}</p>
+                  </div>
+                )}
+
+                <div class="tile__reviews">
+                  {reviewCount > 0 ? (
+                    <>
+                      <span class="tile__stars" aria-hidden="true">
+                        {starRow(reviewAverage).map((on) => (
+                          <span class:list={['tile__star', on && 'is-on']} set:html={Star} />
+                        ))}
+                      </span>
+                      <span class="tile__rating">{reviewAverage.toFixed(1).replace('.', ',')}</span>
+                      <span class="tile__review-count">({reviewCount} avis)</span>
+                    </>
+                  ) : (
+                    <span class="tile__review-empty">Soyez le premier à noter</span>
+                  )}
+                </div>
+              </div>
+
+              {editHref && (
+                <div class="tile__edit-wrap">
+                  <a href={editHref} class="tile__edit">Modifier</a>
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+
+      <p class="spl__noresults" data-svc-pl-noresults hidden>Aucun service ne correspond.</p>
+    </div>
+  )}
+</section>
+
+<script is:inline>
+(function () {
+  var root = document.querySelector('[data-svc-pl]')
+  if (!root) return
+  var searchInput = root.querySelector('[data-svc-pl-search]')
+  var searchWrap = root.querySelector('[data-svc-pl-search-wrap]')
+  var searchToggle = root.querySelector('[data-svc-pl-search-toggle]')
+  var iconSearch = root.querySelector('[data-svc-pl-icon-search]')
+  var iconClose = root.querySelector('[data-svc-pl-icon-close]')
+  var items = root.querySelectorAll('[data-svc-pl-item]')
+  var noResults = root.querySelector('[data-svc-pl-noresults]')
+  var countEl = root.querySelector('[data-svc-pl-count]')
+
+  function apply() {
+    var q = (searchInput.value || '').trim().toLowerCase()
+    var visible = 0
+    items.forEach(function (item) {
+      var show = !q || (item.getAttribute('data-svc-pl-name') || '').indexOf(q) !== -1
+      item.hidden = !show
+      if (show) visible++
+    })
+    if (noResults) noResults.hidden = visible > 0
+    if (countEl) countEl.textContent = String(visible)
+  }
+
+  function setSearchOpen(open) {
+    if (searchWrap) searchWrap.classList.toggle('is-open', open)
+    if (iconSearch) iconSearch.hidden = open
+    if (iconClose) iconClose.hidden = !open
+    if (searchToggle) {
+      searchToggle.setAttribute('aria-expanded', open ? 'true' : 'false')
+      searchToggle.setAttribute('aria-label', open ? 'Fermer la recherche' : 'Rechercher')
+    }
+    if (open) {
+      searchInput.focus()
+    } else {
+      searchInput.value = ''
+      apply()
+    }
+  }
+
+  if (searchInput) searchInput.addEventListener('input', apply)
+  if (searchInput) searchInput.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') setSearchOpen(false)
+  })
+  if (searchToggle) searchToggle.addEventListener('click', function () {
+    setSearchOpen(!searchWrap.classList.contains('is-open'))
+  })
+})()
+</script>
+
+<style>
+  .spl {
+    padding: 4px 22px 28px;
+  }
+  .spl__inner {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .spl__bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 38px;
+  }
+  .spl__count {
+    font-size: 13px;
+    color: var(--color-neutral-500);
+  }
+  .spl__count b {
+    color: var(--color-neutral-900);
+    font-weight: 600;
+  }
+  .spl__searchwrap {
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    width: 38px;
+    overflow: hidden;
+    transition: width .25s ease;
+  }
+  .spl__searchwrap.is-open {
+    width: 100%;
+    max-width: 320px;
+  }
+  .spl__search-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: 0;
+    background: none;
+    color: var(--color-neutral-500);
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: color 120ms;
+  }
+  .spl__search-btn:hover { color: var(--color-accent); }
+  .spl__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 15px;
+    height: 15px;
+  }
+  .spl__search-input {
+    border: 0;
+    outline: none;
+    font-size: 13px;
+    font-family: inherit;
+    width: 100%;
+    min-width: 0;
+    background: none;
+    padding: 9px 12px 9px 0;
+    color: var(--color-neutral-900);
+  }
+  .spl__search-input::-webkit-search-cancel-button { display: none; }
+  .spl__noresults {
+    text-align: center;
+    color: var(--color-neutral-400);
+    font-size: 13px;
+    padding: 28px 0;
+    margin: 0;
+  }
+</style>

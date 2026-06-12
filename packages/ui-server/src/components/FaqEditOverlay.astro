@@ -1,0 +1,591 @@
+---
+/** Overlay owner : éditeur FAQ (questions/réponses en accordéon, max 10). */
+import { X, Plus, ChevronDown, Trash2, ArrowUp, ArrowDown } from 'lucide-static'
+import type { FaqItemInput } from '../faq-items.ts'
+
+interface Props {
+  initialItems?: FaqItemInput[]
+}
+
+const { initialItems = [] } = Astro.props
+const initialJson = JSON.stringify(initialItems)
+---
+<div class="faq-edit" data-faq-edit-overlay hidden>
+  <div class="faq-edit__backdrop" data-faq-edit-close></div>
+  <div class="faq-edit__panel" role="dialog" aria-labelledby="faq-edit-title" aria-modal="true">
+    <header class="faq-edit__head">
+      <div class="faq-edit__head-text">
+        <p class="faq-edit__eyebrow">Menu F.A.Q</p>
+        <h2 id="faq-edit-title" class="faq-edit__title">Questions fréquentes</h2>
+        <p class="faq-edit__hint">
+          Chaque question s'affiche en menu dépliant sur l'accueil et dans le menu F.A.Q.
+        </p>
+      </div>
+      <button type="button" class="faq-edit__close" data-faq-edit-close aria-label="Fermer">
+        <span class="flex h-5 w-5 items-center justify-center" set:html={X} />
+      </button>
+    </header>
+
+    <form class="faq-edit__form" data-faq-edit-form>
+      <div class="faq-edit__scroll">
+        <div class="faq-edit__list" data-faq-items></div>
+        <p class="faq-edit__empty" data-faq-empty hidden>Aucune question pour l'instant.</p>
+      </div>
+
+      <div class="faq-edit__composer">
+        <div class="faq-edit__composer-row">
+          <button type="button" class="faq-edit__add" data-faq-add>
+            <span class="flex h-4 w-4 items-center justify-center" set:html={Plus} />
+            <span>Ajouter une question</span>
+          </button>
+          <span class="faq-edit__count" data-faq-count>0/10</span>
+        </div>
+      </div>
+
+      <p class="faq-edit__error" data-faq-error hidden></p>
+
+      <footer class="faq-edit__foot">
+        <button type="button" class="faq-edit__btn faq-edit__btn--ghost" data-faq-edit-close>Annuler</button>
+        <button type="submit" class="faq-edit__btn faq-edit__btn--primary">Enregistrer</button>
+      </footer>
+    </form>
+  </div>
+</div>
+
+<script is:inline define:vars={{ initialJson, chevronDown: ChevronDown, trashIcon: Trash2, arrowUp: ArrowUp, arrowDown: ArrowDown }}>
+(function() {
+  var overlay = document.querySelector('[data-faq-edit-overlay]')
+  if (!overlay) return
+
+  var form = overlay.querySelector('[data-faq-edit-form]')
+  var listEl = overlay.querySelector('[data-faq-items]')
+  var emptyEl = overlay.querySelector('[data-faq-empty]')
+  var addBtn = overlay.querySelector('[data-faq-add]')
+  var countEl = overlay.querySelector('[data-faq-count]')
+  var errorEl = overlay.querySelector('[data-faq-error]')
+  var scrollEl = overlay.querySelector('.faq-edit__scroll')
+
+  var MAX = 10
+  var Q_MAX = 200
+  var A_MAX = 1000
+
+  var items = []
+  try {
+    var parsed = JSON.parse(initialJson)
+    if (Array.isArray(parsed)) {
+      items = parsed.map(function(it) {
+        return {
+          question: typeof it.question === 'string' ? it.question : '',
+          answer: typeof it.answer === 'string' ? it.answer : '',
+        }
+      })
+    }
+  } catch (e) {
+    items = []
+  }
+
+  function icon(svg) {
+    var span = document.createElement('span')
+    span.className = 'flex h-4 w-4 items-center justify-center'
+    span.innerHTML = svg
+    return span
+  }
+
+  function showError(msg) {
+    if (!errorEl) return
+    if (!msg) {
+      errorEl.hidden = true
+      errorEl.textContent = ''
+      return
+    }
+    errorEl.hidden = false
+    errorEl.textContent = msg
+  }
+
+  function lockPageScroll() {
+    document.documentElement.style.overflow = 'hidden'
+    document.body.style.overflow = 'hidden'
+  }
+
+  function unlockPageScroll() {
+    document.documentElement.style.overflow = ''
+    document.body.style.overflow = ''
+  }
+
+  function open() {
+    overlay.hidden = false
+    lockPageScroll()
+    if (!overlay.parentElement || overlay.parentElement !== document.body) {
+      document.body.appendChild(overlay)
+    }
+    showError('')
+    render()
+  }
+
+  function close() {
+    overlay.hidden = true
+    unlockPageScroll()
+    showError('')
+  }
+
+  function render() {
+    if (!listEl) return
+    listEl.innerHTML = ''
+
+    items.forEach(function(item, i) {
+      var details = document.createElement('details')
+      details.className = 'faq-edit__item'
+      details.open = true
+
+      var summary = document.createElement('summary')
+      summary.className = 'faq-edit__summary'
+
+      var qInput = document.createElement('input')
+      qInput.type = 'text'
+      qInput.className = 'faq-edit__q'
+      qInput.maxLength = Q_MAX
+      qInput.placeholder = 'Ta question (ex : Comment réserver un rendez-vous ?)'
+      qInput.value = item.question
+      qInput.addEventListener('click', function(e) { e.stopPropagation() })
+      qInput.addEventListener('keydown', function(e) { e.stopPropagation() })
+      qInput.addEventListener('input', function() { item.question = qInput.value })
+      summary.appendChild(qInput)
+
+      var actions = document.createElement('div')
+      actions.className = 'faq-edit__actions'
+
+      var upBtn = document.createElement('button')
+      upBtn.type = 'button'
+      upBtn.className = 'faq-edit__icon-btn'
+      upBtn.setAttribute('aria-label', 'Monter')
+      upBtn.disabled = i === 0
+      upBtn.appendChild(icon(arrowUp))
+      upBtn.addEventListener('click', function(e) {
+        e.preventDefault()
+        e.stopPropagation()
+        if (i === 0) return
+        var tmp = items[i - 1]
+        items[i - 1] = items[i]
+        items[i] = tmp
+        render()
+      })
+      actions.appendChild(upBtn)
+
+      var downBtn = document.createElement('button')
+      downBtn.type = 'button'
+      downBtn.className = 'faq-edit__icon-btn'
+      downBtn.setAttribute('aria-label', 'Descendre')
+      downBtn.disabled = i === items.length - 1
+      downBtn.appendChild(icon(arrowDown))
+      downBtn.addEventListener('click', function(e) {
+        e.preventDefault()
+        e.stopPropagation()
+        if (i >= items.length - 1) return
+        var tmp2 = items[i + 1]
+        items[i + 1] = items[i]
+        items[i] = tmp2
+        render()
+      })
+      actions.appendChild(downBtn)
+
+      var delBtn = document.createElement('button')
+      delBtn.type = 'button'
+      delBtn.className = 'faq-edit__icon-btn faq-edit__icon-btn--danger'
+      delBtn.setAttribute('aria-label', 'Supprimer')
+      delBtn.appendChild(icon(trashIcon))
+      delBtn.addEventListener('click', function(e) {
+        e.preventDefault()
+        e.stopPropagation()
+        items.splice(i, 1)
+        render()
+      })
+      actions.appendChild(delBtn)
+
+      summary.appendChild(actions)
+      summary.appendChild(icon(chevronDown))
+      details.appendChild(summary)
+
+      var body = document.createElement('div')
+      body.className = 'faq-edit__body'
+
+      var aInput = document.createElement('textarea')
+      aInput.className = 'faq-edit__a'
+      aInput.rows = 4
+      aInput.maxLength = A_MAX
+      aInput.placeholder = 'Ta réponse...'
+      aInput.value = item.answer
+      aInput.addEventListener('input', function() { item.answer = aInput.value })
+      body.appendChild(aInput)
+
+      details.appendChild(body)
+      listEl.appendChild(details)
+    })
+
+    if (emptyEl) emptyEl.hidden = items.length > 0
+    if (countEl) countEl.textContent = items.length + '/' + MAX
+    if (addBtn) addBtn.style.display = items.length >= MAX ? 'none' : ''
+  }
+
+  if (addBtn) {
+    addBtn.addEventListener('click', function() {
+      if (items.length >= MAX) return
+      items.push({ question: '', answer: '' })
+      render()
+      var last = listEl && listEl.lastElementChild
+      if (last) {
+        if (scrollEl) {
+          var top = last.getBoundingClientRect().top - scrollEl.getBoundingClientRect().top + scrollEl.scrollTop
+          scrollEl.scrollTo({ top: Math.max(0, top - 8), behavior: 'smooth' })
+        }
+        var focusable = last.querySelector('.faq-edit__q')
+        if (focusable) focusable.focus()
+      }
+    })
+  }
+
+  document.querySelectorAll('[data-open-faq-overlay]').forEach(function(btn) {
+    btn.addEventListener('click', open)
+  })
+
+  document.addEventListener('ibee:open-faq-edit', open)
+
+  overlay.querySelectorAll('[data-faq-edit-close]').forEach(function(btn) {
+    btn.addEventListener('click', close)
+  })
+
+  if (form) {
+    form.addEventListener('submit', function(e) {
+      e.preventDefault()
+      showError('')
+
+      var payload = []
+      for (var i = 0; i < items.length; i++) {
+        var it = items[i]
+        var question = (it.question || '').trim()
+        var answer = (it.answer || '').trim()
+        if (!question && !answer) continue
+        if (question.length < 1 || question.length > Q_MAX) {
+          showError('Chaque question doit faire entre 1 et ' + Q_MAX + ' caractères.')
+          return
+        }
+        if (answer.length < 1 || answer.length > A_MAX) {
+          showError('Chaque réponse doit faire entre 1 et ' + A_MAX + ' caractères.')
+          return
+        }
+        payload.push({ question: question, answer: answer })
+      }
+
+      if (payload.length > MAX) {
+        showError('Maximum ' + MAX + ' questions.')
+        return
+      }
+
+      fetch('/api/entity-faq', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items: payload }),
+      })
+        .then(function(res) {
+          if (!res.ok) throw new Error('save failed')
+          var base = location.pathname.split('?')[0]
+          location.href = base + '?_=' + Date.now() + '#home'
+        })
+        .catch(function() {
+          showError('Enregistrement impossible. Réessaie.')
+        })
+    })
+  }
+
+  render()
+})()
+</script>
+
+<style is:global>
+  .faq-edit[hidden] { display: none !important; }
+
+  .faq-edit {
+    position: fixed;
+    inset: 0;
+    z-index: 210;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 0;
+  }
+  @media (min-width: 640px) {
+    .faq-edit {
+      align-items: center;
+      padding: 24px;
+    }
+  }
+
+  .faq-edit__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(20, 22, 28, 0.42);
+    backdrop-filter: blur(6px);
+  }
+
+  .faq-edit__panel {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    width: 100%;
+    max-width: 640px;
+    max-height: 97dvh;
+    background: var(--color-surface, #fff);
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 24px 64px rgba(15, 18, 28, 0.18);
+    overflow: hidden;
+  }
+  @media (min-width: 640px) {
+    .faq-edit__panel {
+      max-height: min(94vh, 820px);
+      border-radius: 20px;
+    }
+  }
+
+  .faq-edit__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 20px 20px 12px;
+    border-bottom: 1px solid var(--color-border, #e8eaef);
+  }
+
+  .faq-edit__eyebrow {
+    margin: 0 0 4px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--color-neutral-400, #9aa0ad);
+  }
+
+  .faq-edit__title {
+    margin: 0;
+    font-family: var(--font-display, inherit);
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--color-neutral-900, #14161c);
+  }
+
+  .faq-edit__hint {
+    margin: 6px 0 0;
+    font-size: 13px;
+    line-height: 1.45;
+    color: var(--color-neutral-500, #6b7280);
+  }
+
+  .faq-edit__close {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--color-panel, #f4f5f7);
+    color: var(--color-neutral-700, #3d4450);
+    cursor: pointer;
+  }
+
+  .faq-edit__form {
+    display: grid;
+    grid-template-rows: minmax(0, 1fr) auto auto auto;
+    min-height: 0;
+  }
+
+  .faq-edit__scroll {
+    min-height: 0;
+    overflow-y: auto;
+    padding: 12px 20px 8px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .faq-edit__list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .faq-edit__empty {
+    margin: 24px 0;
+    text-align: center;
+    font-size: 14px;
+    color: var(--color-neutral-400, #9aa0ad);
+  }
+
+  .faq-edit__item {
+    border: 1px solid var(--color-border, #e8eaef);
+    border-radius: 14px;
+    background: var(--color-panel, #f8f9fb);
+    overflow: hidden;
+  }
+
+  .faq-edit__item[open] .faq-edit__summary > span:last-child svg {
+    transform: rotate(180deg);
+  }
+
+  .faq-edit__summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    cursor: pointer;
+    list-style: none;
+  }
+  .faq-edit__summary::-webkit-details-marker { display: none; }
+
+  .faq-edit__q {
+    flex: 1;
+    min-width: 0;
+    padding: 10px 12px;
+    border: 1px solid var(--color-border, #e8eaef);
+    border-radius: 10px;
+    background: var(--color-surface, #fff);
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-neutral-900, #14161c);
+    outline: none;
+  }
+  .faq-edit__q:focus {
+    border-color: var(--color-accent, #5b6cff);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent, #5b6cff) 18%, transparent);
+  }
+  .faq-edit__q::placeholder {
+    font-weight: 500;
+    color: var(--color-neutral-400, #9aa0ad);
+  }
+
+  .faq-edit__actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+
+  .faq-edit__icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--color-neutral-500, #6b7280);
+    cursor: pointer;
+  }
+  .faq-edit__icon-btn:hover:not(:disabled) {
+    background: rgba(0, 0, 0, 0.05);
+  }
+  .faq-edit__icon-btn:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+  .faq-edit__icon-btn--danger:hover:not(:disabled) {
+    color: #c0392b;
+    background: rgba(192, 57, 43, 0.08);
+  }
+
+  .faq-edit__body {
+    padding: 0 12px 12px;
+    border-top: 1px solid var(--color-border, #e8eaef);
+  }
+
+  .faq-edit__a {
+    width: 100%;
+    margin-top: 10px;
+    padding: 10px 12px;
+    border: 1px solid var(--color-border, #e8eaef);
+    border-radius: 10px;
+    background: var(--color-surface, #fff);
+    font-family: inherit;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--color-neutral-800, #2a2f3a);
+    resize: vertical;
+    outline: none;
+  }
+  .faq-edit__a:focus {
+    border-color: var(--color-accent, #5b6cff);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent, #5b6cff) 18%, transparent);
+  }
+
+  .faq-edit__composer {
+    padding: 8px 20px 4px;
+    border-top: 1px solid var(--color-border, #e8eaef);
+  }
+
+  .faq-edit__composer-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .faq-edit__add {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 40px;
+    padding: 0 14px;
+    border: 1px dashed var(--color-border, #d0d4dc);
+    border-radius: 12px;
+    background: transparent;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-neutral-700, #3d4450);
+    cursor: pointer;
+  }
+  .faq-edit__add:hover {
+    border-color: var(--color-accent, #5b6cff);
+    color: var(--color-accent, #5b6cff);
+  }
+
+  .faq-edit__count {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-neutral-400, #9aa0ad);
+  }
+
+  .faq-edit__error {
+    margin: 0;
+    padding: 0 20px 8px;
+    font-size: 13px;
+    color: #c0392b;
+  }
+
+  .faq-edit__foot {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 12px 20px 20px;
+  }
+
+  .faq-edit__btn {
+    min-height: 42px;
+    padding: 0 18px;
+    border-radius: 12px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .faq-edit__btn--ghost {
+    border: 1px solid var(--color-border, #e8eaef);
+    background: transparent;
+    color: var(--color-neutral-700, #3d4450);
+  }
+  .faq-edit__btn--primary {
+    border: 0;
+    background: var(--color-accent, #5b6cff);
+    color: #fff;
+  }
+</style>

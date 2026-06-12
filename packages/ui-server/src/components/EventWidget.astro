@@ -1,0 +1,173 @@
+---
+/** Widget Event Accueil : carrousel catégorie (tile--rich) ou fiche event mise en avant. */
+import { Zap } from 'lucide-static'
+import WidgetFeatured from './WidgetFeatured.astro'
+import WidgetCategoryCarousel from './WidgetCategoryCarousel.astro'
+
+export type EventWidgetItem = {
+  title: string
+  slug?: string
+  imageUrl?: string | null
+  detailExcerpt?: string | null
+  start_at: string
+  location_type: string
+  price_cents?: number | null
+  currency?: string
+  capacity?: number | null
+  registrations_count?: number
+}
+
+interface Props {
+  entitySlug: string
+  mode: 'category' | 'featured'
+  items: EventWidgetItem[]
+  categoryTitle?: string
+  moreHref?: string
+  embedded?: boolean
+}
+
+const {
+  entitySlug,
+  mode,
+  items,
+  categoryTitle = 'Events',
+  moreHref,
+  embedded = false,
+} = Astro.props
+
+const LOCATION_LABELS: Record<string, string> = {
+  online: 'En ligne',
+  in_person: 'Sur place',
+}
+
+function formatPrice(cents: number | null | undefined, currency: string | undefined): string {
+  if (cents == null || cents === 0) return '0€'
+  const value = cents / 100
+  try {
+    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: currency || 'EUR' }).format(value)
+  } catch {
+    return `${value.toFixed(2)} €`
+  }
+}
+
+function metaLabel(item: EventWidgetItem): string {
+  return LOCATION_LABELS[item.location_type] ?? 'En ligne'
+}
+
+function dateBadge(startAt: string) {
+  const start = new Date(startAt)
+  return {
+    day: new Intl.DateTimeFormat('fr-FR', { day: 'numeric' }).format(start),
+    month: new Intl.DateTimeFormat('fr-FR', { month: 'short' }).format(start).replace('.', ''),
+    tag: new Intl.DateTimeFormat('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' }).format(start),
+  }
+}
+
+function remainingPlaces(item: EventWidgetItem): number | null {
+  if (item.capacity == null) return null
+  const count = item.registrations_count ?? 0
+  return Math.max(0, item.capacity - count)
+}
+
+function isEventFull(remaining: number | null): boolean {
+  return remaining !== null && remaining < 1
+}
+
+function showLowPlacesBadge(remaining: number | null): boolean {
+  return remaining !== null && remaining > 0 && remaining < 6
+}
+
+const featured = mode === 'featured' && items[0]
+  ? (() => {
+      const item = items[0]
+      const badge = dateBadge(item.start_at)
+      return {
+        title: item.title,
+        imageUrl: item.imageUrl ?? null,
+        href: item.slug ? `/${entitySlug}/events/${item.slug}` : `/${entitySlug}#events`,
+        tags: [badge.tag, metaLabel(item)],
+        priceLabel: formatPrice(item.price_cents, item.currency),
+      }
+    })()
+  : null
+
+const tiles = mode === 'category'
+  ? items.map((item) => ({
+      item,
+      href: item.slug ? `/${entitySlug}/events/${item.slug}` : `/${entitySlug}#events`,
+      badge: dateBadge(item.start_at),
+      remaining: remainingPlaces(item),
+    }))
+  : []
+---
+{mode === 'featured' && featured ? (
+  <WidgetFeatured
+    embedded={embedded}
+    href={featured.href}
+    imageUrl={featured.imageUrl}
+    placeholderIcon={Zap}
+    badgeLabel="Event"
+    title={featured.title}
+    tags={featured.tags}
+    priceLabel={featured.priceLabel}
+    ctaLabel="Participer"
+  />
+) : tiles.length > 0 ? (
+  <WidgetCategoryCarousel
+    embedded={embedded}
+    categoryTitle={categoryTitle}
+    moreHref={moreHref}
+    showNav={tiles.length > 1}
+    navPrevLabel="Event précédent"
+    navNextLabel="Event suivant"
+  >
+    {tiles.map(({ item, href, badge, remaining }) => {
+      const excerpt = item.detailExcerpt?.trim() ?? ''
+      const isFull = isEventFull(remaining)
+      const lowPlaces = showLowPlacesBadge(remaining)
+      const showPrice = item.price_cents != null
+      return (
+        <div class="tile tile--rich wcat__tile">
+          <a class="tile__stretch" href={href} aria-label={item.title}></a>
+          <div class="tile__media">
+            {isFull ? (
+              <span class="tile__badge tile__badge--dark">Complet</span>
+            ) : lowPlaces ? (
+              <span class="tile__badge">{remaining} place{remaining! > 1 ? 's' : ''}</span>
+            ) : null}
+            {showPrice && (
+              <span class="tile__price-badge">
+                <span class="tile__price-now">{formatPrice(item.price_cents, item.currency)}</span>
+              </span>
+            )}
+            {item.imageUrl ? (
+              <img src={item.imageUrl} alt={item.title} loading="lazy" />
+            ) : (
+              <div class="ph" aria-hidden="true">
+                <span class="flex h-6 w-6 items-center justify-center" set:html={Zap} />
+              </div>
+            )}
+            <span class="tile__date-badge" aria-hidden="true">
+              <span class="tile__date-d">{badge.day}</span>
+              <span class="tile__date-m">{badge.month}</span>
+            </span>
+          </div>
+          <div class="tile__body">
+            <div class="tile__head">
+              <div class="tile__title">{item.title}</div>
+              <div class="tile__meta">{metaLabel(item)}</div>
+            </div>
+            {excerpt && (
+              <div class="tile__detail">
+                <p class="tile__detail-text">{excerpt}</p>
+              </div>
+            )}
+            <div class="tile__reviews">
+              <span class="tile__review-empty">Soyez le premier à noter</span>
+            </div>
+          </div>
+        </div>
+      )
+    })}
+  </WidgetCategoryCarousel>
+) : null}

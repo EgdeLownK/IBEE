@@ -1,34 +1,168 @@
 ---
-import { Pencil, EyeOff } from 'lucide-static'
+import { MoreVertical, Pencil, Trash2, ArrowUp, ArrowDown } from 'lucide-static'
+
+type WidgetEditMode = 'config' | 'faq' | 'none'
 
 interface Props {
   title: string
   isOwner?: boolean
-  editHref?: string
+  widgetId?: string
+  /** config = overlay réglages ; faq = éditeur de contenu ; none = automatique. */
+  editMode?: WidgetEditMode
+  /** Au moins un élément sélectionné / contenu affiché → pas de fond gris. */
+  filled?: boolean
+  /** Menu Monter/Descendre (owner). */
+  sortable?: boolean
+  canMoveUp?: boolean
+  canMoveDown?: boolean
 }
 
-const { title, isOwner = false, editHref } = Astro.props
+const {
+  title,
+  isOwner = false,
+  widgetId,
+  editMode = 'config',
+  filled = false,
+  sortable = false,
+  canMoveUp = false,
+  canMoveDown = false,
+} = Astro.props
+const showEdit = isOwner && editMode !== 'none'
+const menuId = widgetId ? `widget-menu-${widgetId}` : undefined
+const editAttr =
+  editMode === 'faq' ? 'data-open-faq-overlay' : 'data-open-home-widget-config'
+const editLabel =
+  editMode === 'config' ? 'Modifier le widget' : 'Modifier le contenu'
 ---
-<article class="widget">
-  <header class="widget__head">
-    <h3 class="widget__title">{title}</h3>
-    {isOwner && (
-      <div class="flex items-center gap-2">
-        <a href={editHref ?? '#'} class="widget__action">
-          <span class="flex h-3.5 w-3.5 items-center justify-center" set:html={Pencil} />
-          <span>Modifier</span>
-        </a>
-        <button type="button" class="widget__action" data-widget-hide>
-          <span class="flex h-3.5 w-3.5 items-center justify-center" set:html={EyeOff} />
-          <span>Masquer</span>
+{sortable && widgetId ? (
+  <div
+    class="widget-sort-item"
+    data-widget-sort-item
+    data-widget-id={widgetId}
+  >
+    <article class:list={['widget', filled && 'widget--filled']}>
+      <header class="widget__head">
+        <h3 class="widget__title">{title}</h3>
+        {menuId && (
+          <button
+            type="button"
+            class="widget__menu-trigger"
+            popovertarget={menuId}
+            style={`anchor-name: --${menuId};`}
+            data-widget-menu-toggle
+            aria-haspopup="menu"
+            aria-label="Options du widget"
+          >
+            <span class="flex h-5 w-5 items-center justify-center" set:html={MoreVertical} />
+          </button>
+        )}
+      </header>
+      <div class="widget__body">
+        <slot />
+      </div>
+    </article>
+    {menuId && (
+      <div id={menuId} popover="auto" class="widget-menu" style={`position-anchor: --${menuId};`} data-widget-menu role="menu">
+        <button
+          type="button"
+          class="widget-menu__item"
+          role="menuitem"
+          data-widget-move="up"
+          data-widget-id={widgetId}
+          disabled={!canMoveUp}
+          aria-label="Monter le widget"
+        >
+          <span class="flex h-4 w-4 items-center justify-center" set:html={ArrowUp} />
+          <span>Monter</span>
+        </button>
+        <button
+          type="button"
+          class="widget-menu__item"
+          role="menuitem"
+          data-widget-move="down"
+          data-widget-id={widgetId}
+          disabled={!canMoveDown}
+          aria-label="Descendre le widget"
+        >
+          <span class="flex h-4 w-4 items-center justify-center" set:html={ArrowDown} />
+          <span>Descendre</span>
+        </button>
+        {showEdit && (
+          <button
+            type="button"
+            class="widget-menu__item"
+            role="menuitem"
+            {...{ [editAttr]: editMode === 'config' ? widgetId : '' }}
+            aria-label={editLabel}
+          >
+            <span class="flex h-4 w-4 items-center justify-center" set:html={Pencil} />
+            <span>Modifier</span>
+          </button>
+        )}
+        <button
+          type="button"
+          class="widget-menu__item widget-menu__item--danger"
+          role="menuitem"
+          data-widget-delete={widgetId}
+          aria-label="Supprimer le widget"
+        >
+          <span class="flex h-4 w-4 items-center justify-center" set:html={Trash2} />
+          <span>Supprimer</span>
         </button>
       </div>
     )}
-  </header>
-  <div class="widget__body">
-    <slot />
   </div>
-</article>
+) : (
+  <>
+    <article class:list={['widget', filled && 'widget--filled']}>
+      <header class="widget__head">
+        <h3 class="widget__title">{title}</h3>
+        {isOwner && widgetId && menuId && (
+          <button
+            type="button"
+            class="widget__menu-trigger"
+            popovertarget={menuId}
+            style={`anchor-name: --${menuId};`}
+            data-widget-menu-toggle
+            aria-haspopup="menu"
+            aria-label="Options du widget"
+          >
+            <span class="flex h-5 w-5 items-center justify-center" set:html={MoreVertical} />
+          </button>
+        )}
+      </header>
+      <div class="widget__body">
+        <slot />
+      </div>
+    </article>
+    {isOwner && widgetId && menuId && (
+      <div id={menuId} popover="auto" class="widget-menu" style={`position-anchor: --${menuId};`} data-widget-menu role="menu">
+        {showEdit && (
+          <button
+            type="button"
+            class="widget-menu__item"
+            role="menuitem"
+            {...{ [editAttr]: editMode === 'config' ? widgetId : '' }}
+            aria-label={editLabel}
+          >
+            <span class="flex h-4 w-4 items-center justify-center" set:html={Pencil} />
+            <span>Modifier</span>
+          </button>
+        )}
+        <button
+          type="button"
+          class="widget-menu__item widget-menu__item--danger"
+          role="menuitem"
+          data-widget-delete={widgetId}
+          aria-label="Supprimer le widget"
+        >
+          <span class="flex h-4 w-4 items-center justify-center" set:html={Trash2} />
+          <span>Supprimer</span>
+        </button>
+      </div>
+    )}
+  </>
+)}
 
 <style>
   .widget {
@@ -36,9 +170,15 @@ const { title, isOwner = false, editHref } = Astro.props
     border-radius: 14px;
     padding: 16px;
     border: 1px solid transparent;
-    transition: border-color 160ms, box-shadow 160ms;
+    transition: border-color 160ms, box-shadow 160ms, background 160ms;
   }
-  .widget:hover {
+  .widget--filled {
+    background: transparent;
+    border-color: transparent;
+    padding-left: 0;
+    padding-right: 0;
+  }
+  .widget:not(.widget--filled):hover {
     box-shadow: var(--shadow-card);
   }
   .widget__head {
@@ -59,24 +199,22 @@ const { title, isOwner = false, editHref } = Astro.props
     flex-direction: column;
     gap: 8px;
   }
-  .widget__action {
+  .widget__menu-trigger {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 28px;
     height: 28px;
-    padding: 0 12px;
+    padding: 0;
+    border: 0;
     border-radius: 999px;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--color-neutral-700);
     background: var(--color-surface);
-    border: 1px solid transparent;
+    color: var(--color-neutral-500);
     cursor: pointer;
-    text-decoration: none;
     transition: background 120ms, color 120ms;
-    font-family: inherit;
   }
-  .widget__action:hover {
+  .widget__menu-trigger:hover {
     background: var(--color-panel-2);
     color: var(--color-neutral-900);
   }

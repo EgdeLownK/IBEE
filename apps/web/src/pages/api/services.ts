@@ -1,3 +1,4 @@
+/** @deprecated Phase 9 — services via dashboard (`service-actions`). Rollback only. */
 import type { APIRoute } from 'astro'
 import { createAuthClient } from '../../lib/supabase/auth'
 import {

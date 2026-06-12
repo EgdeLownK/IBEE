@@ -1,0 +1,64 @@
+import type { Metadata } from 'next'
+import { unstable_noStore as noStore } from 'next/cache'
+import { notFound, redirect } from 'next/navigation'
+import { ProfileJsonLd } from '@/components/public/ProfileJsonLd'
+import { PublicProfilePage } from '@/components/public/PublicProfilePage'
+import { loadPublicProfileBySlug } from '@/lib/load-public-profile'
+
+export const revalidate = 86400
+
+type PageProps = {
+  params: Promise<{ slug: string }>
+  searchParams: Promise<{ preview?: string }>
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { slug } = await params
+  const data = await loadPublicProfileBySlug(slug)
+  if (!data) return { title: 'Profil introuvable' }
+
+  const title = `${data.entity.display_name} — IBEE`
+  const description = data.entity.bio ?? `${data.entity.display_name} sur IBEE`
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url: data.profileUrl,
+      type: 'profile',
+      images: data.entity.avatar_url ? [{ url: data.entity.avatar_url }] : undefined,
+    },
+    alternates: { canonical: data.profileUrl },
+    robots: { index: true, follow: true },
+  }
+}
+
+export default async function PublicProfileRoute({ params, searchParams }: PageProps) {
+  const { slug } = await params
+  const { preview } = await searchParams
+
+  if (!slug || slug.startsWith('__')) notFound()
+
+  const data = await loadPublicProfileBySlug(slug)
+  if (!data) notFound()
+
+  const isPreview = preview === '1'
+  if (isPreview) noStore()
+  if (data.isOwner && !isPreview) {
+    redirect('/dashboard/site')
+  }
+
+  return (
+    <>
+      <ProfileJsonLd
+        entity={data.entity}
+        siteUrl={data.siteUrl}
+        profileUrl={data.profileUrl}
+        faqItems={data.faqActive ? data.faqItems : []}
+      />
+      <PublicProfilePage data={data} />
+    </>
+  )
+}

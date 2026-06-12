@@ -1,3 +1,4 @@
+/** @deprecated Phase 9 — uploads via dashboard Server Actions. Rollback only. */
 import type { APIRoute } from 'astro'
 import { createAuthClient } from '../../lib/supabase/auth'
 import { getEntityByUserId } from '@ibee/supabase'

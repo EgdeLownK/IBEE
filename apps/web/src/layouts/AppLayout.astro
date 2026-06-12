@@ -41,6 +41,8 @@ if (user) {
 
 const dashboardUrl = import.meta.env.DASHBOARD_URL ?? 'http://localhost:3000'
 const isEmbed = Astro.url.searchParams.get('embed') === 'true'
+const headerProjectLabel =
+  projectLabel ?? (currentUserEntity ? currentUserEntity.display_name : null)
 ---
 <BaseLayout {...layoutProps}>
   <slot name="head" slot="head" />
@@ -62,37 +64,39 @@ const isEmbed = Astro.url.searchParams.get('embed') === 'true'
       </script>
     </div>
   ) : (
-    <div class="flex min-h-screen bg-background">
-      {showSidebar && (
-        <GlobalSidebar
-          user={user}
-          currentUserEntity={currentUserEntity}
-          currentPath={Astro.url.pathname}
-          dashboardUrl={dashboardUrl}
-          projectLabel={projectLabel}
-        />
-      )}
-      <div class="relative flex flex-1 flex-col min-w-0">
-        <GlobalHeader
-          projectLabel={projectLabel}
-          profileUrl={profileUrl}
-          avatarUrl={currentUserEntity?.avatar_url}
-          displayName={currentUserEntity?.display_name}
-          currentUserSlug={currentUserEntity?.slug}
-          dashboardUrl={dashboardUrl}
-          isAuthenticated={!!user}
-          unreadCount={unreadCount}
-          notifications={notifications}
-        />
-        <div class="flex-1 overflow-auto pb-[100px]">
-          <slot />
+    <div class="flex min-h-screen flex-col bg-background">
+      <GlobalHeader
+        projectLabel={headerProjectLabel}
+        profileUrl={profileUrl}
+        avatarUrl={currentUserEntity?.avatar_url}
+        displayName={currentUserEntity?.display_name}
+        currentUserSlug={currentUserEntity?.slug}
+        dashboardUrl={dashboardUrl}
+        isAuthenticated={!!user}
+        unreadCount={unreadCount}
+        notifications={notifications}
+      />
+      <div class="flex min-h-0 flex-1">
+        {showSidebar && (
+          <GlobalSidebar
+            user={user}
+            currentUserEntity={currentUserEntity}
+            currentPath={Astro.url.pathname}
+            dashboardUrl={dashboardUrl}
+            projectLabel={projectLabel}
+          />
+        )}
+        <div class="relative flex min-h-0 min-w-0 flex-1 flex-col">
+          <div class="app-layout__content flex-1 overflow-auto pb-[100px]">
+            <slot />
+          </div>
+          <FloatingNavPill
+            currentPath={Astro.url.pathname}
+            currentUserSlug={currentUserEntity?.slug}
+            isAuthenticated={!!user}
+            dashboardUrl={dashboardUrl}
+          />
         </div>
-        <FloatingNavPill
-          currentPath={Astro.url.pathname}
-          currentUserSlug={currentUserEntity?.slug}
-          isAuthenticated={!!user}
-          dashboardUrl={dashboardUrl}
-        />
       </div>
     </div>
   )}

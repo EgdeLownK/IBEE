@@ -1,40 +1,41 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import { Toaster } from "sonner";
-import "./globals.css";
+import type { Metadata } from 'next'
+import { Poppins, Roboto } from 'next/font/google'
+import { Toaster } from 'sonner'
+import './globals.css'
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
+const poppins = Poppins({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-poppins',
+  display: 'swap',
+})
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+const roboto = Roboto({
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '700'],
+  variable: '--font-roboto',
+  display: 'swap',
+})
 
 export const metadata: Metadata = {
   title: {
-    default: "IBEE \u2014 Dashboard",
-    template: "%s \u2014 IBEE",
+    default: 'IBEE',
+    template: '%s — IBEE',
   },
-  description: "\u00c9ditez votre profil IBEE",
-};
+  description: 'La plateforme des solopreneurs',
+}
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: React.ReactNode
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">
+    <html lang="fr" className={`${poppins.variable} ${roboto.variable} h-full antialiased`}>
+      <body className="flex min-h-full flex-col">
         {children}
         <Toaster position="bottom-right" richColors />
       </body>
     </html>
-  );
+  )
 }

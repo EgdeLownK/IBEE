@@ -1,82 +1,79 @@
 ---
-interface Props {
-  title?: string
-  description?: string
-  ctaLabel?: string
-  ctaHref?: string
-  secondaryLabel?: string
-  secondaryHref?: string
-  isOwner?: boolean
+export type BannerImage = {
+  url: string
+  aspect_ratio: number
 }
 
-const {
-  title = 'Bienvenue',
-  description = '',
-  ctaLabel,
-  ctaHref,
-  secondaryLabel,
-  secondaryHref,
-} = Astro.props
+interface Props {
+  images?: BannerImage[]
+  /** Non affiché — utilisé pour l'attribut alt (SEO). */
+  seoTitle?: string
+}
+
+const { images = [], seoTitle = '' } = Astro.props
+
+const hasImages = images.length > 0
+const imgAlt = seoTitle.trim()
 ---
-<div class="banner-welcome">
-  <h4 class="banner-welcome__title">{title}</h4>
-  {description && (
-    <p class="banner-welcome__desc">{description}</p>
-  )}
-  {(ctaLabel || secondaryLabel) && (
-    <div class="banner-welcome__actions">
-      {ctaLabel && ctaHref && (
-        <a href={ctaHref} class="btn btn--accent">{ctaLabel}</a>
-      )}
-      {secondaryLabel && secondaryHref && (
-        <a href={secondaryHref} class="banner-welcome__link">{secondaryLabel}</a>
-      )}
+{hasImages && (
+  <div class="banner-welcome">
+    <div class:list={['banner-welcome__gallery', `banner-welcome__gallery--count-${Math.min(images.length, 3)}`]}>
+      {images.map((img, index) => (
+        <div
+          class="banner-welcome__media"
+          style={`--banner-aspect: ${images.length === 1 ? img.aspect_ratio : 1}`}
+        >
+          <img
+            src={img.url}
+            alt={index === 0 && imgAlt ? imgAlt : ''}
+            loading="lazy"
+            class="banner-welcome__img"
+          />
+        </div>
+      ))}
     </div>
-  )}
-</div>
+  </div>
+)}
 
 <style>
   .banner-welcome {
-    background: var(--color-accent-soft);
+    overflow: hidden;
+  }
+
+  .banner-welcome__gallery {
+    display: grid;
+    gap: 6px;
+  }
+
+  .banner-welcome__gallery--count-1 {
+    grid-template-columns: 1fr;
+  }
+
+  .banner-welcome__gallery--count-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .banner-welcome__gallery--count-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  @media (max-width: 520px) {
+    .banner-welcome__gallery--count-3 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  .banner-welcome__media {
+    aspect-ratio: var(--banner-aspect, 16 / 9);
+    overflow: hidden;
     border-radius: 12px;
-    padding: 20px 22px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+    background: var(--color-panel);
   }
 
-  .banner-welcome__title {
-    font-family: var(--font-display);
-    font-weight: 600;
-    font-size: 18px;
-    color: var(--color-neutral-900);
-    margin: 0;
-  }
-
-  .banner-welcome__desc {
-    font-size: 14px;
-    line-height: 1.5;
-    color: var(--color-neutral-700);
-    margin: 0;
-  }
-
-  .banner-welcome__actions {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    margin-top: 8px;
-  }
-
-  /* .btn / .btn--accent : classes globales du design system (global.css) */
-
-  .banner-welcome__link {
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--color-neutral-900);
-    text-decoration: none;
-    transition: color 120ms;
-  }
-  .banner-welcome__link:hover {
-    color: var(--color-accent);
+  .banner-welcome__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
   }
 </style>

@@ -17,7 +17,6 @@ export async function login(formData: FormData) {
   }
 
   revalidatePath('/', 'layout')
-  // La racine du dashboard redirige vers le profil web de l'utilisateur (nouvelle surface unique)
   redirect('/')
 }
 
@@ -34,6 +33,5 @@ export async function signup(formData: FormData) {
   }
 
   revalidatePath('/', 'layout')
-  // La racine du dashboard redirige vers le profil web de l'utilisateur (nouvelle surface unique)
   redirect('/')
 }

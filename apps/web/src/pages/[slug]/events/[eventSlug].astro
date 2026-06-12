@@ -1,13 +1,15 @@
 ---
-import { Clock, MapPin, Globe, CalendarDays, Users, Check, MessageCircle } from 'lucide-static'
+import { CalendarDays } from 'lucide-static'
 import AppLayout from '../../../layouts/AppLayout.astro'
 import DetailTopBar from '@ibee/ui-server/src/components/DetailTopBar.astro'
+import DetailEntityStrip from '@ibee/ui-server/src/components/DetailEntityStrip.astro'
 import ProfileCard from '@ibee/ui-server/src/components/ProfileCard.astro'
+import EntityDetailBody from '@ibee/ui-server/src/components/EntityDetailBody.astro'
+import RelatedContent from '@ibee/ui-server/src/components/RelatedContent.astro'
 import ProductFaq from '@ibee/ui-server/src/components/ProductFaq.astro'
-import EventCardCompact from '@ibee/ui-server/src/components/EventCardCompact.astro'
 import { supabase } from '../../../lib/supabase/client'
 import { createAuthClient } from '../../../lib/supabase/auth'
-import { getEntityBySlug, getEventBySlug, countEventRegistrations, listUpcomingEvents } from '@ibee/supabase'
+import { getEntityBySlug, getEventBySlug, countEventRegistrations, getEntityMenuSections } from '@ibee/supabase'
 
 const { slug, eventSlug } = Astro.params
 if (!slug || !eventSlug) return new Response(null, { status: 404 })
@@ -16,11 +18,11 @@ if (slug.startsWith('__')) return new Response(null, { status: 404 })
 const entity = await getEntityBySlug(supabase, slug)
 if (!entity) return new Response(null, { status: 404 })
 
-const event = await getEventBySlug(supabase, entity.id, eventSlug)
-if (!event || !event.is_published) return new Response(null, { status: 404 })
-
 const authClient = createAuthClient(Astro.request, Astro.cookies)
 const { data: { user } } = await authClient.auth.getUser()
+
+const event = await getEventBySlug(supabase, entity.id, eventSlug)
+if (!event || !event.is_published) return new Response(null, { status: 404 })
 
 // Jauge (RPC SECURITY DEFINER — la table inscriptions est owner-only)
 let registrationsCount = 0
@@ -36,7 +38,6 @@ const isPast = new Date(event.start_at).getTime() <= Date.now()
 const siteUrl = import.meta.env.SITE_URL
 const profileUrl = `${siteUrl}/${entity.slug}`
 const eventUrl = `${siteUrl}/${entity.slug}/events/${event.slug}`
-
 // Dates formatées (fr-FR)
 const start = new Date(event.start_at)
 const dateLabel = new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(start)
@@ -47,31 +48,52 @@ const endTimeLabel = event.end_at
   ? new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' }).format(new Date(event.end_at))
   : null
 
-const locationLabels: Record<string, { icon: string; label: string }> = {
-  online: { icon: Globe, label: 'En ligne' },
-  in_person: { icon: MapPin, label: 'Sur place' },
+const locationLabels: Record<string, string> = {
+  online: 'En ligne',
+  in_person: 'Sur place',
 }
-const loc = locationLabels[event.location_type] ?? locationLabels.online
+const locLabel = locationLabels[event.location_type] ?? 'En ligne'
 
 function formatPrice(cents: number | null, curr: string) {
   if (cents === null || cents === 0) return '0€'
   return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: curr }).format(cents / 100)
 }
 const priceText = formatPrice(event.price_cents, event.currency)
-const isFree = event.price_cents === null || event.price_cents === 0
 
-// Initiales de l'organisateur (mini-header)
-const entityInitials = entity.display_name
-  .split(/\s+/)
-  .filter(Boolean)
-  .slice(0, 2)
-  .map((w: string) => w[0]!.toUpperCase())
-  .join('')
+const statusAvailable = !isPast && !isFull
 
-// Narrowing kit contenu (mêmes patterns que produit/service)
-const highlights = Array.isArray(event.highlights)
-  ? (event.highlights as unknown[]).filter((h): h is string => typeof h === 'string' && h.length > 0)
+// Bandeau stats (Date / Lieu / Places)
+const placesStat = remaining !== null
+  ? { value: isFull ? 'Complet' : String(remaining), sub: isFull ? undefined : 'places restantes' }
+  : { value: isPast ? 'Terminé' : 'Ouvert', sub: undefined }
+const stats = [
+  { label: 'Date', value: `${dayChip} ${monthChip}`, valueSmall: true },
+  { label: 'Prix', value: priceText, valueSmall: true, valueDark: true },
+  { label: 'Lieu', value: locLabel, valueSmall: true },
+  { label: 'Places', value: placesStat.value, valueSmall: true, state: (statusAvailable ? 'success' : 'error') as 'success' | 'error' },
+]
+
+// Lignes de l'accordéon "Information générale" (date / horaire / lieu / capacité)
+const detailRows: { label: string; value: string }[] = [
+  { label: 'Date', value: dateLabel },
+  { label: 'Horaire', value: endTimeLabel ? `${timeLabel} — ${endTimeLabel}` : timeLabel },
+  { label: 'Lieu', value: event.location_details ? `${locLabel} · ${event.location_details}` : locLabel },
+  ...(remaining !== null ? [{ label: 'Places', value: isFull ? 'Complet' : `${remaining} restante${remaining > 1 ? 's' : ''}` }] : []),
+]
+
+// FAQ (narrowing défensif)
+const faq = Array.isArray(event.faq)
+  ? (event.faq as unknown[]).flatMap((f): { question: string; answer: string }[] => {
+      if (!f || typeof f !== 'object') return []
+      const item = f as Record<string, unknown>
+      if (typeof item.question === 'string' && typeof item.answer === 'string') {
+        return [{ question: item.question, answer: item.answer }]
+      }
+      return []
+    })
   : []
+
+// Description (meta + schema)
 type ContentBlock = { type: 'text'; content: string } | { type: 'image'; url: string; alt?: string }
 const blocks: ContentBlock[] = Array.isArray(event.content_blocks)
   ? (event.content_blocks as unknown[]).flatMap((b): ContentBlock[] => {
@@ -84,28 +106,33 @@ const blocks: ContentBlock[] = Array.isArray(event.content_blocks)
       return []
     })
   : []
-const faq = Array.isArray(event.faq)
-  ? (event.faq as unknown[]).flatMap((f): { question: string; answer: string }[] => {
-      if (!f || typeof f !== 'object') return []
-      const item = f as Record<string, unknown>
-      if (typeof item.question === 'string' && typeof item.answer === 'string') {
-        return [{ question: item.question, answer: item.answer }]
-      }
-      return []
-    })
-  : []
-
-// Autres events à venir du même profil (limit explicite : "tous", pas le défaut 24)
-let otherEvents: Awaited<ReturnType<typeof listUpcomingEvents>> = []
-try {
-  otherEvents = (await listUpcomingEvents(supabase, entity.id, { limit: 100 })).filter((e) => e.id !== event.id)
-} catch {
-  otherEvents = []
-}
-
-const coverImage = event.gallery_images?.[0] ?? null
 const textContent = blocks.filter((b): b is { type: 'text'; content: string } => b.type === 'text').map((b) => b.content).join(' ')
 const metaDescription = event.description ?? (textContent ? textContent.slice(0, 160) : `${event.title} — Event par ${entity.display_name}`)
+
+// Médias (galerie event) → carrousel ; sinon placeholder
+const eventMedia = Array.isArray(event.gallery_images)
+  ? (event.gallery_images as unknown[]).filter((u): u is string => typeof u === 'string').map((url) => ({ url }))
+  : []
+const coverImage = eventMedia[0]?.url ?? null
+
+const menuSections = await getEntityMenuSections(supabase, entity.id)
+const hasNews = menuSections.some((s) => s.type === 'news')
+
+// --- Mock data (reco) — même traitement que la page produit ---
+const profileRelated = [
+  { kind: 'event' as const, title: 'Atelier en ligne', meta: 'Événement · 12 juin' },
+  { kind: 'service' as const, title: 'Séance de coaching', meta: 'Service · 60 min' },
+  { kind: 'product' as const, title: 'Guide complet (PDF)', meta: 'Produit · 19 €' },
+  { kind: 'event' as const, title: 'Conférence annuelle', meta: 'Événement · 5 juillet' },
+  { kind: 'product' as const, title: 'Pack ressources', meta: 'Produit · 39 €' },
+]
+const similarRelated = [
+  { kind: 'event' as const, title: 'Événement à découvrir', meta: 'Événement · 20 juin' },
+  { kind: 'service' as const, title: 'Prestation similaire', meta: 'Service · 45 min' },
+  { kind: 'product' as const, title: 'Produit similaire', meta: 'Produit · 24 €' },
+  { kind: 'event' as const, title: 'Autre rendez-vous', meta: 'Événement · 1 août' },
+  { kind: 'service' as const, title: 'Service recommandé', meta: 'Service · 30 min' },
+]
 
 // JSON-LD Event — schéma riche pour Google/LLMs (GEO/AEO)
 const eventSchema = {
@@ -137,9 +164,6 @@ const eventSchema = {
 }
 
 // Cache CDN réservé aux visiteurs anonymes : le formulaire varie selon l'auth
-// (1-clic sans champs si connecté). Une version connectée mise en cache et servie
-// à un anonyme casserait l'inscription — l'inverse (anonyme servie à un connecté)
-// dégrade proprement : les champs nom/email restent fonctionnels.
 if (user) {
   Astro.response.headers.set('Cache-Control', 'private, no-store')
 } else {
@@ -161,258 +185,93 @@ Astro.response.headers.set('X-Robots-Tag', 'index, follow, max-snippet:-1, max-i
     <script is:inline type="application/ld+json" set:html={JSON.stringify(eventSchema)} />
   </Fragment>
 
-  <main class="md:py-8 sm:py-12">
-    <DetailTopBar backHref={`/${entity.slug}#events`} title={event.title} />
-
+  <main class="profile-page">
     <ProfileCard>
-      {/* ===== Cover 16/9 + datechip + prix ===== */}
-      <div class="relative aspect-video w-full overflow-hidden bg-neutral-100">
-        {coverImage ? (
-          <img src={coverImage} alt={event.title} class="h-full w-full object-cover" />
-        ) : (
-          <div class="ph" aria-hidden="true">
-            <span class="flex h-14 w-14 items-center justify-center" set:html={CalendarDays} />
-          </div>
-        )}
-        <span class="datechip" style="top:14px;left:14px;padding:6px 12px;">
-          <span class="d" style="font-size:22px;">{dayChip}</span>
-          <span class="m">{monthChip}</span>
-        </span>
-        <span class="pill absolute" style="top:14px;right:14px;background:var(--color-surface);box-shadow:0 2px 6px rgba(0,0,0,.12);font-weight:600;">{priceText}</span>
+      <DetailTopBar backHref={`/${entity.slug}#events`} title={`Voir le profil de ${entity.display_name}`} />
+
+      <DetailEntityStrip
+        displayName={entity.display_name}
+        avatarUrl={entity.avatar_url}
+        profileHref={`/${entity.slug}`}
+        title={event.title}
+        subtitle={[`${dayChip} ${monthChip}`, locLabel].filter(Boolean).join(' · ')}
+      />
+
+      <EntityDetailBody
+        title={event.title}
+        media={eventMedia}
+        placeholderIcon={CalendarDays}
+        stats={stats}
+        priceText={priceText}
+        detailRows={detailRows}
+        entitySlug={entity.slug}
+        entityKind="event"
+        contentBlocks={blocks}
+        fallbackText={event.description}
+        hasNews={hasNews}
+      />
+
+      {/* Reco : autres contenus du profil, puis contenus similaires */}
+      <div class="product-related pb-2">
+        <RelatedContent title={`Autres contenus de ${entity.display_name}`} items={profileRelated} />
+        <RelatedContent title="À découvrir aussi" items={similarRelated} />
       </div>
 
-      {/* ===== Organisateur + titre + infos ===== */}
-      <div class="px-[22px] pt-[18px] pb-1.5">
-        <a href={`/${entity.slug}`} class="flex items-center gap-2.5 no-underline text-inherit group w-fit">
-          <span class="flex h-[34px] w-[34px] shrink-0 items-center justify-center overflow-hidden rounded-full bg-accent-soft font-display text-sm font-semibold text-accent">
-            {entity.avatar_url ? <img src={entity.avatar_url} alt={entity.display_name} class="h-full w-full object-cover" /> : entityInitials}
-          </span>
-          <span>
-            <span class="block text-[13px] font-semibold text-neutral-900 group-hover:text-accent transition">{entity.display_name}</span>
-            {entity.role && <span class="block text-[11.5px] text-neutral-500">{entity.role}</span>}
-          </span>
-        </a>
-
-        <h1 class="mt-3.5 mb-0 font-display text-[22px] font-semibold leading-tight text-neutral-900">{event.title}</h1>
-        {event.description && <p class="mt-2 mb-0 text-sm leading-normal text-neutral-600">{event.description}</p>}
-
-        {/* Carte infos pratiques */}
-        <ul class="mt-4 mb-0 list-none rounded-[14px] border border-[var(--color-border)] px-4 py-1.5 m-0 p-0 text-sm text-neutral-900">
-          <li class="flex items-center gap-3 border-b border-[var(--color-border)] py-2.5">
-            <span class="flex h-[18px] w-[18px] shrink-0 items-center justify-center text-accent" set:html={CalendarDays} />
-            <span class="capitalize">{dateLabel}</span>
-          </li>
-          <li class="flex items-center gap-3 border-b border-[var(--color-border)] py-2.5">
-            <span class="flex h-[18px] w-[18px] shrink-0 items-center justify-center text-accent" set:html={Clock} />
-            {timeLabel}{endTimeLabel ? ` — ${endTimeLabel}` : ''}
-          </li>
-          <li class:list={['flex items-center gap-3 py-2.5', (remaining !== null && !isPast) && 'border-b border-[var(--color-border)]']}>
-            <span class="flex h-[18px] w-[18px] shrink-0 items-center justify-center text-accent" set:html={loc.icon} />
-            {loc.label}{event.location_details ? ` · ${event.location_details}` : ''}
-          </li>
-          {remaining !== null && !isPast && (
-            <li class="flex items-center gap-3 py-2.5">
-              <span class="flex h-[18px] w-[18px] shrink-0 items-center justify-center text-accent" set:html={Users} />
-              {isFull ? 'Complet' : `${remaining} place${remaining > 1 ? 's' : ''} restante${remaining > 1 ? 's' : ''}`}
-            </li>
-          )}
-        </ul>
-      </div>
-
-      {/* ===== Participation ===== */}
-      <section id="participate" class="sec scroll-mt-20" style="margin-top:22px;">
-        {isPast ? (
-          <div class="flex flex-col items-center justify-center gap-2 py-10 text-center">
-            <span class="flex h-12 w-12 items-center justify-center rounded-full bg-neutral-100 text-neutral-400" set:html={CalendarDays} />
-            <h2 class="m-0 text-base font-semibold text-neutral-900">Événement terminé</h2>
-            <p class="m-0 max-w-sm text-sm text-neutral-500">Cet event a déjà eu lieu. Découvre les prochains events de {entity.display_name} sur son profil.</p>
-            <a href={`/${entity.slug}#events`} class="btn btn--accent mt-2">Voir les prochains events</a>
-          </div>
-        ) : isFull ? (
-          <div class="flex flex-col items-center justify-center gap-2 py-10 text-center">
-            <span class="flex h-12 w-12 items-center justify-center rounded-full bg-neutral-100 text-neutral-400" set:html={Users} />
-            <h2 class="m-0 text-base font-semibold text-neutral-900">Complet</h2>
-            <p class="m-0 max-w-sm text-sm text-neutral-500">Toutes les places ont été réservées. Suis {entity.display_name} pour ne pas rater les prochains events.</p>
-          </div>
-        ) : (
-          <div>
-            <h2 class="sec-h m-0">Participer</h2>
-            <p class="mt-1 mb-0 text-sm text-neutral-500">
-              {isFree ? 'Participation gratuite — tu recevras les détails par email.' : `Participation : ${priceText} — les modalités de paiement te seront communiquées.`}
-              {user && ' Tu participeras avec ton compte IBEE.'}
-            </p>
-
-            <div id="register-success" class="mt-5 hidden rounded-[14px] bg-accent-soft px-4 py-4 text-sm text-accent">
-              <p class="m-0 flex items-center gap-2 font-semibold">
-                <span class="flex h-4 w-4 items-center justify-center" set:html={Check} />
-                Participation confirmée !
-              </p>
-              <p class="mt-1 mb-0">Tu es inscrit·e à « {event.title} ». À très vite !</p>
+      {/* Grande section "Questions" (label orange, même style que produit) */}
+      {faq.length > 0 && (
+        <div class="product-sections px-[22px] pt-2 pb-6">
+          <section class="product-major-section">
+            <h2 class="product-major-section__title">Questions</h2>
+            <div class="product-major-section__body">
+              <ProductFaq faq={faq} />
             </div>
-
-            <form id="register-form" data-event-id={event.id} class="mt-5 space-y-3">
-              {!user && (
-                <>
-                  <div>
-                    <label class="field-label">Nom complet *</label>
-                    <input name="name" type="text" required autocomplete="name" maxlength="200" class="field" placeholder="Jean Dupont" />
-                  </div>
-                  <div>
-                    <label class="field-label">Email *</label>
-                    <input name="email" type="email" required autocomplete="email" maxlength="320" class="field" placeholder="jean@exemple.com" />
-                  </div>
-                </>
-              )}
-              {/* Champ question — déplié par le bouton icône, envoyé avec la participation */}
-              <div id="message-wrapper" class="hidden">
-                <label class="field-label">Ta question <span class="font-normal text-neutral-400">(envoyée avec ta participation)</span></label>
-                <textarea name="message" rows="2" maxlength="2000" class="field resize-none" placeholder="Une question pour l'organisateur ?"></textarea>
-              </div>
-              <p id="register-error" class="hidden text-sm text-error"></p>
-              <div class="flex gap-2.5">
-                <button type="submit" id="register-submit" class="btn btn--accent flex-1">
-                  Participer
-                </button>
-                <button type="button" id="message-toggle" aria-label="Poser une question" aria-expanded="false" class="iconbtn h-12 w-12">
-                  <span class="flex h-5 w-5 items-center justify-center" set:html={MessageCircle} />
-                </button>
-              </div>
-            </form>
-          </div>
-        )}
-      </section>
-
-      {/* Points forts */}
-      {highlights.length > 0 && (
-        <section class="sec">
-          <h2 class="sec-h mt-0 mb-3">Ce qui t'attend</h2>
-          <ul class="m-0 grid list-none gap-2.5 p-0 sm:grid-cols-2">
-            {highlights.map((h) => (
-              <li class="flex items-start gap-2 text-[13.5px] text-neutral-700">
-                <span class="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center text-accent" set:html={Check} />
-                {h}
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      {/* Contenu détaillé */}
-      {blocks.length > 0 && (
-        <section class="sec">
-          <h2 class="sec-h mt-0 mb-2">À propos de cet event</h2>
-          <div class="space-y-3">
-            {blocks.map((block) =>
-              block.type === 'text' ? (
-                <p class="m-0 whitespace-pre-wrap text-sm leading-relaxed text-neutral-600">{block.content}</p>
-              ) : (
-                <img src={block.url} alt={block.alt ?? event.title} class="w-full rounded-[14px] object-cover" loading="lazy" />
-              )
-            )}
-          </div>
-        </section>
-      )}
-
-      {/* Autres events à venir du même profil */}
-      {otherEvents.length > 0 && (
-        <section class="sec">
-          <h2 class="sec-h mt-0 mb-3">Autres événements à venir</h2>
-          <div class="grid gap-2.5 sm:grid-cols-2">
-            {otherEvents.map((e) => (
-              <EventCardCompact
-                title={e.title}
-                slug={e.slug}
-                startAt={e.start_at}
-                locationType={e.location_type}
-                priceCents={e.price_cents}
-                currency={e.currency}
-                entitySlug={entity.slug}
-              />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* FAQ (accordéon natif + JSON-LD FAQPage) */}
-      <ProductFaq faq={faq} />
-    </ProfileCard>
-
-    {/* Actionbar sticky : rappel des places + CTA vers le formulaire */}
-    {!isPast && !isFull && (
-      <div class="actionbar mx-auto max-w-[800px] md:rounded-t-[18px]">
-        <div class="actionbar__price">
-          {remaining !== null && <span class="label">{remaining} place{remaining > 1 ? 's' : ''} restante{remaining > 1 ? 's' : ''}</span>}
-          <span class="now">{priceText}</span>
+          </section>
         </div>
-        <a href="#participate" class="btn btn--accent btn--lg flex-1" style="margin-left:auto;">Participer</a>
-      </div>
-    )}
+      )}
+    </ProfileCard>
   </main>
 </AppLayout>
 
-{/* Exception JS justifiée : soumission de la participation (POST /api/events/register)
-    + dépliage du champ question. Tout le contenu reste rendu serveur.
-    Connecté : aucun champ nom/email — l'API dérive les infos du compte (cookies). */}
-<script is:inline>
-(function () {
-  var form = document.getElementById('register-form')
-  if (!form) return
-  var errorEl = document.getElementById('register-error')
-  var successEl = document.getElementById('register-success')
-  var submitBtn = document.getElementById('register-submit')
-
-  // Toggle du champ question
-  var messageToggle = document.getElementById('message-toggle')
-  var messageWrapper = document.getElementById('message-wrapper')
-  messageToggle.addEventListener('click', function () {
-    var opened = messageWrapper.classList.toggle('hidden')
-    messageToggle.setAttribute('aria-expanded', opened ? 'false' : 'true')
-    if (!opened) form.querySelector('[name="message"]').focus()
-  })
-
-  form.addEventListener('submit', function (e) {
-    e.preventDefault()
-    errorEl.classList.add('hidden')
-    // Champs nom/email présents uniquement pour les visiteurs non connectés
-    var nameInput = form.querySelector('[name="name"]')
-    var emailInput = form.querySelector('[name="email"]')
-    var name = nameInput ? nameInput.value.trim() : null
-    var email = emailInput ? emailInput.value.trim() : null
-    if (nameInput && (!name || !email)) {
-      errorEl.textContent = 'Nom et email sont obligatoires.'
-      errorEl.classList.remove('hidden')
-      return
-    }
-    submitBtn.disabled = true
-    submitBtn.textContent = 'Participation...'
-    fetch('/api/events/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        eventId: form.getAttribute('data-event-id'),
-        name: name,
-        email: email,
-        message: form.querySelector('[name="message"]').value.trim() || null,
-      }),
-    })
-      .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, data: d } }) })
-      .then(function (res) {
-        if (!res.ok) {
-          errorEl.textContent = (res.data && res.data.error) || 'Erreur lors de l\'inscription.'
-          errorEl.classList.remove('hidden')
-          submitBtn.disabled = false
-          submitBtn.textContent = 'Participer'
-          return
-        }
-        successEl.classList.remove('hidden')
-        form.classList.add('hidden')
-      })
-      .catch(function () {
-        errorEl.textContent = 'Erreur réseau. Réessaie.'
-        errorEl.classList.remove('hidden')
-        submitBtn.disabled = false
-        submitBtn.textContent = 'Participer'
-      })
-  })
-})()
-</script>
+<style>
+  .product-sections {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .product-major-section {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .product-major-section__title {
+    margin: 0;
+    display: block;
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 900;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--color-accent);
+  }
+  .product-major-section__body {
+    display: flex;
+    flex-direction: column;
+    gap: 26px;
+  }
+  .product-major-section :global(#faq .sec-h) {
+    margin: 0 0 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0;
+    text-transform: none;
+    color: #2a2a2a;
+  }
+  .product-major-section :global(.sec) {
+    border-top: 0;
+    padding: 0;
+  }
+</style>

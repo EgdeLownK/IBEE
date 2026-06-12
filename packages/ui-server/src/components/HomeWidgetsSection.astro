@@ -1,0 +1,526 @@
+---
+/** Section Accueil : widgets dynamiques (entity_home_widgets) + bouton owner
+    « Ajouter un widget » (shop, service, event, news, bio, F.A.Q, annonce). */
+import { Plus } from 'lucide-static'
+import WidgetCard from './WidgetCard.astro'
+import HomeWidgetRenderer from './HomeWidgetRenderer.astro'
+import HomeWidgetConfigOverlay from './HomeWidgetConfigOverlay.astro'
+import {
+  isSingleInstanceHomeWidget,
+} from '../home-widget-config.ts'
+import { widgetHasDisplayContent } from '../widget-display-content.ts'
+
+interface HomeWidget {
+  id: string
+  type: string
+  position: number
+  config?: unknown
+}
+
+interface Publication {
+  id: string
+  title: string
+  slug: string
+  content: string | null
+  published_at: string | null
+  publication_media?: { id: string; url: string; alt_text: string | null; position: number; width?: number | null; height?: number | null }[]
+}
+
+interface Props {
+  entityId: string
+  entitySlug: string
+  entityName: string
+  entityAvatarUrl?: string | null
+  contactInfo?: {
+    contact_email: string | null
+    contact_email_public: boolean
+    contact_phone: string | null
+    contact_phone_public: boolean
+    message_enabled: boolean
+    opening_hours_enabled: boolean
+    opening_hours: { day_of_week: number; closed: boolean; start_time: string | null; end_time: string | null }[]
+  } | null
+  widgets: HomeWidget[]
+  isOwner?: boolean
+  shopProducts?: { id: string; title: string; slug?: string; detailExcerpt?: string | null; reviewCount?: number; reviewAverage?: number; price_cents?: number | null; sale_price_cents?: number | null; sale_ends_at?: string | null; currency?: string; image_url?: string | null; category_id?: string | null; type?: string | null; physical_stock_quantity?: number | null }[]
+  productCategories?: { id: string; name: string }[]
+  appointmentTypes?: { id: string; title: string; slug: string; detailExcerpt?: string | null; reviewCount?: number; reviewAverage?: number; duration_minutes: number; location_type: string; price_cents: number | null; promo_price_cents?: number | null; currency: string; description?: string | null; gallery_images?: string[] }[]
+  events?: { id: string; title: string; slug: string; detailExcerpt?: string | null; description?: string | null; start_at: string; end_at?: string | null; location_type: string; location_details?: string | null; price_cents: number | null; currency: string; capacity?: number | null; registrations_count?: number; gallery_images?: string[] }[]
+  publications?: Publication[]
+  faqItems?: { question: string; answer: string }[]
+}
+
+const {
+  entityId,
+  entitySlug,
+  entityName,
+  entityAvatarUrl = null,
+  contactInfo = null,
+  widgets = [],
+  isOwner = false,
+  shopProducts = [],
+  productCategories = [],
+  appointmentTypes = [],
+  events = [],
+  publications = [],
+  faqItems = [],
+} = Astro.props
+
+const WIDGET_DEFS = [
+  { type: 'widget_shop', label: 'Shop' },
+  { type: 'widget_service', label: 'Service' },
+  { type: 'widget_event', label: 'Event' },
+  { type: 'widget_news', label: 'News' },
+  { type: 'widget_bio', label: 'Bio' },
+  { type: 'widget_faq', label: 'F.A.Q' },
+  { type: 'widget_announcement', label: 'Bannière' },
+] as const
+
+const labelByType = Object.fromEntries(WIDGET_DEFS.map((w) => [w.type, w.label]))
+
+function widgetEditMode(type: string): 'config' | 'faq' | 'none' {
+  if (type === 'widget_news') return 'none'
+  if (type === 'widget_faq') return 'faq'
+  return 'config'
+}
+const existingSingleInstanceTypes = new Set(
+  widgets.filter((w) => isSingleInstanceHomeWidget(w.type)).map((w) => w.type),
+)
+const sortedWidgets = [...widgets]
+  .filter((w) => w.type !== 'widget_history')
+  .sort((a, b) => a.position - b.position)
+
+const widgetCountByType = sortedWidgets.reduce<Record<string, number>>((acc, w) => {
+  acc[w.type] = (acc[w.type] ?? 0) + 1
+  return acc
+}, {})
+
+function widgetCardTitle(widget: HomeWidget, index: number): string {
+  const base = labelByType[widget.type] ?? widget.type
+  if ((widgetCountByType[widget.type] ?? 0) <= 1) return base
+  const sameTypeIndex = sortedWidgets.slice(0, index + 1).filter((w) => w.type === widget.type).length
+  return `${base} ${sameTypeIndex}`
+}
+
+const addMenuId = `home-widgets-add-${entityId}`
+
+const PRODUCT_STATUS_LABELS: Record<string, string> = {
+  draft: 'Brouillon',
+  archived: 'Archivé',
+}
+
+const SERVICE_LOCATION_LABELS: Record<string, string> = {
+  video: 'Visio',
+  in_person: 'Sur place',
+  phone: 'Téléphone',
+}
+
+function formatPickerPrice(cents: number | null | undefined, currency?: string | null): string | null {
+  if (cents == null) return null
+  const value = cents / 100
+  try {
+    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: currency || 'EUR' }).format(value)
+  } catch {
+    return `${value.toFixed(2)} €`
+  }
+}
+
+function productSaleActive(p: (typeof shopProducts)[number]): boolean {
+  if (p.sale_price_cents == null) return false
+  if (!p.sale_ends_at) return true
+  return new Date(p.sale_ends_at).getTime() > Date.now()
+}
+
+function productPickerTags(p: (typeof shopProducts)[number]): string[] {
+  const tags: string[] = []
+  tags.push(p.type === 'digital' ? 'Numérique' : 'Physique')
+  const cat = productCategories.find((c) => c.id === p.category_id)
+  if (cat?.name) tags.push(cat.name)
+  const onSale = productSaleActive(p)
+  const price = formatPickerPrice(onSale ? p.sale_price_cents : p.price_cents, p.currency)
+  if (price) tags.push(price)
+  if (onSale && p.price_cents != null && p.price_cents > 0) {
+    const pct = Math.round((1 - (p.sale_price_cents as number) / p.price_cents) * 100)
+    if (pct > 0) tags.push(`-${pct}%`)
+  }
+  if (isOwner && p.status && p.status !== 'published') {
+    tags.push(PRODUCT_STATUS_LABELS[p.status] ?? p.status)
+  }
+  if (p.type !== 'digital') {
+    const q = p.physical_stock_quantity
+    if (q === 0) tags.push('Épuisé')
+    else if (q != null && q <= 5) tags.push(`Plus que ${q}`)
+  }
+  return tags
+}
+
+function servicePickerTags(s: (typeof appointmentTypes)[number]): string[] {
+  const tags: string[] = []
+  tags.push(`${s.duration_minutes} min`)
+  tags.push(SERVICE_LOCATION_LABELS[s.location_type] ?? 'Visio')
+  const promo = s.price_cents != null && s.price_cents > 0
+    && s.promo_price_cents != null && s.promo_price_cents > 0
+  const price = formatPickerPrice(promo ? s.promo_price_cents : s.price_cents, s.currency)
+  if (price) tags.push(price)
+  return tags
+}
+
+const pickerData = {
+  widgets: sortedWidgets.map((w) => ({ id: w.id, type: w.type, config: w.config ?? {} })),
+  products: shopProducts.map((p) => ({ id: p.id, title: p.title, tags: productPickerTags(p) })),
+  categories: productCategories.map((c) => ({ id: c.id, name: c.name })),
+  services: appointmentTypes.map((s) => ({ id: s.id, title: s.title, tags: servicePickerTags(s) })),
+  events: events.map((e) => ({ id: e.id, title: e.title })),
+  contactInfo: contactInfo ?? {
+    contact_email: null,
+    contact_email_public: true,
+    contact_phone: null,
+    contact_phone_public: true,
+    message_enabled: false,
+    opening_hours_enabled: false,
+    opening_hours: [],
+  },
+}
+---
+<div data-section="home" class="profile-section">
+  <div class="profile-section__widgets" data-widget-sort-list={isOwner ? '' : undefined}>
+    {sortedWidgets.map((w, index) => (
+      <WidgetCard
+        title={widgetCardTitle(w, index)}
+        isOwner={isOwner}
+        widgetId={w.id}
+        editMode={widgetEditMode(w.type)}
+        filled={widgetHasDisplayContent(w, {
+          products: shopProducts,
+          appointmentTypes,
+          events,
+          publications,
+          faqItems,
+          contactInfo: contactInfo ?? null,
+        })}
+        sortable={isOwner}
+        canMoveUp={index > 0}
+        canMoveDown={index < sortedWidgets.length - 1}
+      >
+        <HomeWidgetRenderer
+          widget={w}
+          entitySlug={entitySlug}
+          entityName={entityName}
+          entityAvatarUrl={entityAvatarUrl}
+          contactInfo={contactInfo}
+          isOwner={isOwner}
+          products={shopProducts}
+          categories={productCategories}
+          appointmentTypes={appointmentTypes}
+          events={events}
+          publications={publications}
+          faqItems={faqItems}
+        />
+      </WidgetCard>
+    ))}
+
+    {isOwner && (
+      <div class="home-widgets__add">
+        <button
+          type="button"
+          class="home-widgets__add-btn"
+          popovertarget={addMenuId}
+          style={`anchor-name: --${addMenuId};`}
+        >
+          <span class="flex h-4 w-4 items-center justify-center" set:html={Plus} />
+          <span>Ajouter un widget</span>
+        </button>
+
+        <div id={addMenuId} popover="auto" class="hw-menu" style={`position-anchor: --${addMenuId};`} data-home-widget-menu>
+          <p class="hw-menu__label">Choisir un widget</p>
+          {WIDGET_DEFS.map((w) => {
+            const singleInstance = isSingleInstanceHomeWidget(w.type)
+            const already = singleInstance && existingSingleInstanceTypes.has(w.type)
+            return (
+              <button
+                type="button"
+                class="hw-menu__item"
+                data-add-home-widget={w.type}
+                disabled={already}
+                title={already ? 'Ce widget est déjà sur l\'accueil' : undefined}
+              >
+                <span class="flex h-4 w-4 items-center justify-center" set:html={Plus} />
+                <span>{w.label}</span>
+                {already && <span class="hw-menu__soon">Ajouté</span>}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+    )}
+  </div>
+
+  {isOwner && <HomeWidgetConfigOverlay pickerData={pickerData} />}
+</div>
+
+<style>
+  .profile-section {
+    padding: 4px 22px 28px;
+  }
+  .profile-section__widgets {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .home-widgets__add {
+    display: flex;
+    justify-content: center;
+    padding-top: 4px;
+  }
+  .home-widgets__add-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 42px;
+    padding: 0 20px;
+    border: 1px dashed var(--color-border);
+    border-radius: 12px;
+    background: transparent;
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-neutral-700);
+    cursor: pointer;
+    transition: border-color .15s ease, color .15s ease, background .15s ease;
+  }
+  .home-widgets__add-btn:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+    background: color-mix(in srgb, var(--color-accent-soft) 40%, transparent);
+  }
+
+  .hw-menu {
+    min-width: 200px;
+    margin: 0;
+    padding: 6px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 14px;
+    box-shadow: var(--shadow-lg);
+    position: fixed;
+    position-area: bottom span-left;
+    position-try-fallbacks: flip-block;
+    margin-top: 8px;
+  }
+  .hw-menu__label {
+    margin: 4px 10px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: var(--color-neutral-400);
+  }
+  .hw-menu__item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 9px 10px;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    font-family: inherit;
+    font-size: 14px;
+    color: var(--color-neutral-800);
+    text-align: left;
+    cursor: pointer;
+  }
+  .hw-menu__item:hover:not(:disabled) {
+    background: var(--color-panel);
+  }
+  .hw-menu__item:disabled {
+    opacity: 0.45;
+    cursor: default;
+  }
+  .hw-menu__soon {
+    margin-left: auto;
+    font-size: 11px;
+    color: var(--color-neutral-400);
+  }
+</style>
+
+<script is:inline>
+(function() {
+  function reloadHome() {
+    var base = location.pathname.split('?')[0]
+    location.href = base + '?_=' + Date.now() + '#home'
+  }
+
+  function closeAllWidgetMenus() {
+    document.querySelectorAll('[data-widget-menu]').forEach(function(menu) {
+      if (menu.hidePopover) menu.hidePopover()
+    })
+  }
+
+  function bindWidgetMenus() {
+    document.querySelectorAll('[data-widget-menu]').forEach(function(menu) {
+      if (menu.dataset.menuBound === '1') return
+      menu.dataset.menuBound = '1'
+
+      menu.addEventListener('toggle', function(e) {
+        if (!e.newState || e.newState !== 'open') return
+        document.querySelectorAll('[data-widget-menu]').forEach(function(other) {
+          if (other !== menu && other.hidePopover) other.hidePopover()
+        })
+      })
+
+      menu.querySelectorAll('.widget-menu__item').forEach(function(item) {
+        item.addEventListener('click', function() {
+          if (menu.hidePopover) menu.hidePopover()
+        })
+      })
+    })
+  }
+
+  bindWidgetMenus()
+
+  if (!window.__ibeeWidgetMenuScrollBound) {
+    window.__ibeeWidgetMenuScrollBound = true
+    window.addEventListener('resize', closeAllWidgetMenus)
+    window.addEventListener('scroll', closeAllWidgetMenus, true)
+  }
+
+  var sortList = document.querySelector('[data-widget-sort-list]')
+  var sortSaving = false
+
+  function getWidgetOrder() {
+    if (!sortList) return []
+    return Array.from(sortList.querySelectorAll('[data-widget-sort-item]'))
+      .map(function(el) { return el.getAttribute('data-widget-id') })
+      .filter(Boolean)
+  }
+
+  function updateMoveButtons() {
+    if (!sortList) return
+    var items = Array.from(sortList.querySelectorAll('[data-widget-sort-item]'))
+    items.forEach(function(item, index) {
+      var id = item.getAttribute('data-widget-id')
+      if (!id) return
+      var up = item.querySelector('[data-widget-move="up"][data-widget-id="' + id + '"]')
+      var down = item.querySelector('[data-widget-move="down"][data-widget-id="' + id + '"]')
+      if (up) up.disabled = index === 0
+      if (down) down.disabled = index === items.length - 1
+    })
+  }
+
+  function applyOrderToDom(order) {
+    if (!sortList) return
+    var byId = {}
+    sortList.querySelectorAll('[data-widget-sort-item]').forEach(function(el) {
+      var id = el.getAttribute('data-widget-id')
+      if (id) byId[id] = el
+    })
+    var addBlock = sortList.querySelector('.home-widgets__add')
+    order.forEach(function(id) {
+      if (byId[id]) sortList.insertBefore(byId[id], addBlock)
+    })
+    updateMoveButtons()
+  }
+
+  function ordersEqual(a, b) {
+    return a.length === b.length && a.every(function(id, i) { return id === b[i] })
+  }
+
+  function persistOrder(nextOrder) {
+    var current = getWidgetOrder()
+    if (ordersEqual(current, nextOrder)) return
+    applyOrderToDom(nextOrder)
+    saveWidgetOrder(nextOrder)
+  }
+
+  function moveWidgetInOrder(id, direction) {
+    var order = getWidgetOrder()
+    var idx = order.indexOf(id)
+    if (idx < 0) return
+    var next = direction === 'up' ? idx - 1 : idx + 1
+    if (next < 0 || next >= order.length) return
+    order.splice(idx, 1)
+    order.splice(next, 0, id)
+    persistOrder(order)
+  }
+
+  function saveWidgetOrder(order) {
+    if (sortSaving) return
+    sortSaving = true
+    fetch('/api/home-widgets', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ order: order }),
+    })
+      .then(function(res) {
+        if (!res.ok) throw new Error('reorder failed')
+      })
+      .catch(function() {
+        alert('Impossible de réorganiser les widgets. La page va se recharger.')
+        reloadHome()
+      })
+      .finally(function() {
+        sortSaving = false
+      })
+  }
+
+  if (sortList) {
+    document.querySelectorAll('[data-widget-move]').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var id = btn.getAttribute('data-widget-id')
+        var dir = btn.getAttribute('data-widget-move')
+        if (!id || !dir || btn.disabled) return
+        var menu = btn.closest('[data-widget-menu]')
+        if (menu && menu.hidePopover) menu.hidePopover()
+        moveWidgetInOrder(id, dir)
+      })
+    })
+  }
+
+  document.querySelectorAll('[data-widget-delete]').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var id = btn.getAttribute('data-widget-delete')
+      if (!id) return
+      if (!confirm('Supprimer ce widget de l\'accueil ?')) return
+      btn.disabled = true
+      fetch('/api/home-widgets', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: id }),
+      })
+        .then(function(res) {
+          if (!res.ok) throw new Error('delete failed')
+          reloadHome()
+        })
+        .catch(function() {
+          btn.disabled = false
+          alert('Impossible de supprimer ce widget. Réessaie.')
+        })
+    })
+  })
+
+  var addMenu = document.querySelector('[data-home-widget-menu]')
+  if (!addMenu) return
+  addMenu.querySelectorAll('[data-add-home-widget]').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      if (btn.disabled) return
+      var type = btn.getAttribute('data-add-home-widget')
+      if (!type) return
+      btn.disabled = true
+      fetch('/api/home-widgets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: type }),
+      })
+        .then(function(res) {
+          if (!res.ok) throw new Error('add failed')
+          reloadHome()
+        })
+        .catch(function() {
+          btn.disabled = false
+          alert('Impossible d\'ajouter ce widget. Réessaie.')
+        })
+    })
+  })
+})()
+</script>

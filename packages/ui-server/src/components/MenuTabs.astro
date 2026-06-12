@@ -1,5 +1,5 @@
 ---
-import { House, ShoppingBag, CalendarDays, Zap, Newspaper, BookOpen, MessageCircleQuestion } from 'lucide-static'
+import { House, ShoppingBag, CalendarDays, Zap, Newspaper, BookOpen } from 'lucide-static'
 
 interface Section {
   type: string
@@ -9,18 +9,12 @@ interface Section {
 interface Props {
   sections: Section[]
   activeType?: string
-  isOwner?: boolean
-  hasFaq?: boolean
-  /** Préfixe des liens (ex : "/slug" depuis une page produit). Vide = ancres
-      locales "#type" gérées par le script de tab-switching du profil. */
+  /** Préfixe des liens (ex : "/slug" depuis une page produit). Vide = ancres locales. */
   baseHref?: string
 }
 
-const { sections, activeType = 'home', hasFaq = false, baseHref = '' } = Astro.props
+const { sections, activeType = 'home', baseHref = '' } = Astro.props
 
-// 7 types canoniques (sans "Informations" qui devient une page dédiée /:slug/informations).
-// La gestion activation/désactivation des sections vit dans le menu
-// « Ajouter contenu » du hero (owner) — plus de bouton "+" ici.
 const labels: Record<string, string> = {
   home: 'Accueil',
   shop: 'Shop',
@@ -28,12 +22,10 @@ const labels: Record<string, string> = {
   events: 'Event',
   news: 'News',
   history: 'Histoire',
-  faq: 'FAQ',
 }
 
-const allTypes = ['home', 'shop', 'appointments', 'events', 'news', 'history', 'faq'] as const
+const allTypes = ['home', 'shop', 'appointments', 'events', 'news', 'history'] as const
 
-// Icônes par type
 const icons: Record<string, string> = {
   home: House,
   shop: ShoppingBag,
@@ -41,27 +33,21 @@ const icons: Record<string, string> = {
   events: Zap,
   news: Newspaper,
   history: BookOpen,
-  faq: MessageCircleQuestion,
 }
 
-const activeTypes = new Set<string>(sections.map(s => s.type))
-// La section "home" est implicite — toujours présente sur tout profile
+const activeTypes = new Set<string>(sections.map((s) => s.type))
 activeTypes.add('home')
-if (hasFaq) activeTypes.add('faq')
 
 const visibleTabs = allTypes
-  .filter(t => activeTypes.has(t))
-  .map(type => ({
+  .filter((t) => activeTypes.has(t))
+  .map((type) => ({
     type,
     label: labels[type] ?? type,
     icon: icons[type],
   }))
 ---
-{/* Tabs icône + texte, alignés à gauche, scroll horizontal si dépassement
-    (même pattern que les stories). L'onglet actif est signalé par sa couleur.
-    Pas de sticky : le profil vit sous le header global de l'app. */}
-<nav aria-label="Navigation du profil" class="profile-tabs-wrap">
-  <div class="segtabs no-scrollbar">
+<nav aria-label="Navigation du profil" class="profile-tabs-wrap" data-profile-tabs>
+  <div class="segtabs no-scrollbar" data-profile-tabs-track>
     {visibleTabs.map((tab) => {
       const isActive = tab.type === activeType
       return (
@@ -78,10 +64,3 @@ const visibleTabs = allTypes
   </div>
 </nav>
 
-<style>
-  /* Le padding horizontal vit sur .segtabs (élément scrollable) pour que
-     le dernier onglet ne soit pas coupé en fin de scroll. */
-  .profile-tabs-wrap {
-    padding: 20px 0 16px;
-  }
-</style>
