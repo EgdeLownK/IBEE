@@ -1,0 +1,28 @@
+.ibee-brain
+SecondBrain
+node_modules
+.turbo
+.next
+.wrangler
+.git
+*.png
+*.PNG
+*.jpg
+*.jpeg
+*.html
+design-claude-extracted.html
+profile-mockup.html
+template_decoded.html
+template_raw.json
+tailwind-play.js
+bessi-mountains-736886_1920.jpg
+images.jpg
+.tmp-*
+_thumb-*
+IBEE Profile*
+IBEE Profil*
+rapport-*
+etat-stack*
+docs/plans
+*.md
+!apps/platform/**/*.md

@@ -6,19 +6,11 @@
     "supabase/**"
   ],
   "workspaces": {
-    "apps/dashboard": {
+    "apps/platform": {
       "entry": [
         "src/app/**/page.tsx",
         "src/app/**/layout.tsx",
         "next.config.{ts,js,mjs}"
-      ],
-      "project": "src/**/*.{ts,tsx}"
-    },
-    "apps/web": {
-      "entry": [
-        "src/pages/**/*.astro",
-        "src/pages/**/*.{ts,tsx}",
-        "astro.config.{ts,mjs}"
       ],
       "project": "src/**/*.{ts,tsx}"
     },

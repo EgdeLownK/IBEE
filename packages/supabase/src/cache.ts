@@ -1,10 +1,9 @@
 /**
  * Invalidation cache public IBEE.
  *
- * - Vercel / Next.js : `getRevalidatePaths` + `revalidatePath` côté dashboard.
- * - Astro / Cloudflare Pages (transition) : `purgeEntityCache` / `purgePublicationCache`.
+ * - Production (Vercel) : `getRevalidatePaths` + `revalidatePath` côté platform.
+ * - `purgeEntityCache` / `purgePublicationCache` : no-op hors Cloudflare Pages (legacy).
  *
- * La purge Cloudflare est ignorée sur Vercel et en dev (vars absentes).
  * Ne throw jamais — la mutation Supabase est déjà committée.
  */
 
@@ -60,11 +59,7 @@ function publicationPurgeUrls(
 }
 
 async function purgeUrls(urls: string[], label: string): Promise<void> {
-  if (!isCloudflarePurgeEnabled()) {
-    const reason = process.env.VERCEL ? 'vercel' : 'dev'
-    console.log(`[cache] purge skip (${reason}) — ${label}`)
-    return
-  }
+  if (!isCloudflarePurgeEnabled()) return
 
   const zoneId = process.env.CLOUDFLARE_ZONE_ID!
   const apiToken = process.env.CLOUDFLARE_API_TOKEN!
@@ -91,12 +86,16 @@ async function purgeUrls(urls: string[], label: string): Promise<void> {
   }
 }
 
-/** Purge Cloudflare cache pour une entity (profil + homepage). */
+/**
+ * @deprecated Astro / Cloudflare Pages uniquement. Sur Vercel, utiliser `revalidatePath`.
+ */
 export async function purgeEntityCache(slug: string, siteUrl: string): Promise<void> {
   await purgeUrls(entityPurgeUrls(slug, siteUrl), `/${slug}`)
 }
 
-/** Purge Cloudflare cache pour une publication (permalien + profil + homepage). */
+/**
+ * @deprecated Astro / Cloudflare Pages uniquement. Sur Vercel, utiliser `revalidatePath`.
+ */
 export async function purgePublicationCache(
   entitySlug: string,
   publicationSlug: string,

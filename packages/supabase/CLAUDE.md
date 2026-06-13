@@ -1,6 +1,6 @@
 # packages/supabase — Client & helpers BDD
 
-Package partagé entre apps/web et apps/dashboard. Types auto-générés, helpers typés.
+Package partagé utilisé par `apps/platform`. Types auto-générés, helpers typés.
 
 ## Structure
 - `src/types.ts` — types auto-générés (ne jamais éditer manuellement)

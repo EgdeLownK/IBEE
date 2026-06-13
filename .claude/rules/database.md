@@ -7,7 +7,7 @@ paths:
 
 - RLS activé sur toutes les tables sans exception — écrire la policy dans la même migration
 - Jamais de clé `service_role` côté client, uniquement `anon` key dans le navigateur
-- Jamais de `service_role` dans `apps/web` — uniquement dans `apps/dashboard` côté serveur
+- Jamais de `service_role` côté client — uniquement dans `apps/platform` côté serveur
 - Migrations dans `supabase/migrations/` — jamais de modification directe en production
 - Mode CLI linked remote-only : on travaille contre la prod, pas de Docker local
 - Workflow après migration : Killian fait `db push` → vérifier schéma → `gen types` :

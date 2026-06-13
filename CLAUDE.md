@@ -10,19 +10,18 @@ Lire `.ibee-brain/_BRAIN-STATE.md` — statut projet, prochains chantiers, bloca
 ## Commandes
 
 ```bash
-pnpm dev                    # Dev local (web:4321 + dashboard:3000)
+pnpm dev                    # Dev local Next.js (:3000)
 pnpm type-check              # Vérification TypeScript
 pnpm test                   # Tests unitaires (Vitest)
-pnpm build                  # Build complet
+pnpm build                  # Build production (@ibee/platform)
 ```
 
 ## Structure
 
 ```
-apps/web/              Astro SSR (profils publics, Cloudflare Pages)
-apps/dashboard/        Next.js App Router (back-office, Vercel)
-packages/ui-server/    Composants Astro + Tailwind v4 (zéro React)
-packages/ui-react/     Composants React + Radix UI
+apps/platform/         Next.js 16 — app unifiée (public SEO + studio owner, Vercel)
+packages/shared/       Logique métier TS pure (wizards, widgets, validation)
+packages/ui-react/     Composants React + design system profil
 packages/supabase/     Client Supabase + types + helpers
 supabase/migrations/   Migrations SQL
 .ibee-brain/          Second brain du projet (vision, décisions, features, marché)
@@ -31,6 +30,7 @@ supabase/migrations/   Migrations SQL
 ## Environnement
 
 - Package manager : **pnpm exclusivement** (hook force-pnpm.sh)
+- Dev local : `apps/platform/.env.local` (voir `.env.example`)
 
 ## Configuration MCP
 
@@ -85,17 +85,17 @@ Le brain (`.ibee-brain/`) est la mémoire long terme du projet.
 - `technique/` — règles tech, stack, pièges, opérations brain, guide entretiens, setup Claude Code, commandes gstack
 - `marche/` — intelligence marché, concurrents, entretiens
 
-## Doctrine des surfaces (post cutover phase 9)
+## Doctrine des surfaces (post-migration Astro → Next)
 
-| Surface | Rôle | Édition owner |
-|---------|------|----------------|
-| `apps/dashboard` | Studio React `/dashboard/site` | Oui — Server Actions, uploads, wizards |
-| `apps/web` | SSR public SEO/CDN | Non — visiteur + auth légère (follow, commentaires, réservations) |
+| Surface | URL | Rôle |
+|---------|-----|------|
+| Public | `/{slug}`, pages détail, explore… | SSR/ISR SEO, interactions visiteur |
+| Studio | `/dashboard/site` | Édition owner — Server Actions |
+| Preview owner | `/{slug}?preview=1` | Aperçu public sans redirect studio |
 
-- Owner sur `/{slug}` sans `?preview=1` → redirect dashboard.
-- Aperçu public owner : `/{slug}?preview=1`.
-- Astro : pas de `isOwner`, pas de `Cache-Control: private` sur le profil, fetch `publicOnly` uniquement.
-- APIs `apps/web/src/pages/api/*` owner : dépréciées (conservées pour rollback).
+- Owner sur `/{slug}` sans `?preview=1` → redirect `/dashboard/site`.
+- Cache prod : `revalidatePath` (Vercel) — pas de purge Cloudflare.
+- Invalidation : `revalidatePublicPaths` / `revalidateAfterEntityMutation` dans les mutations.
 
 ## Règle d'or
 

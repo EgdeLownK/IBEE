@@ -2,8 +2,8 @@
   "name": "ibee",
   "private": true,
   "scripts": {
-    "dev": "turbo run dev",
-    "build": "turbo run build",
+    "dev": "pnpm --filter @ibee/platform dev",
+    "build": "pnpm --filter @ibee/platform build",
     "lint": "turbo run lint",
     "type-check": "turbo run type-check",
     "test": "turbo run test",
