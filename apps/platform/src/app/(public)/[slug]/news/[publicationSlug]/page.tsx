@@ -3,6 +3,7 @@ import { unstable_noStore as noStore } from 'next/cache'
 import { notFound } from 'next/navigation'
 import { PublicationArticleJsonLd } from '@/components/public/PublicationArticleJsonLd'
 import { PublicationDetailPage } from '@/components/public/PublicationDetailPage'
+import { TrackPageView } from '@/components/analytics/TrackPageView'
 import { loadPublicPublication } from '@/lib/load-public-publication'
 
 export const revalidate = 86400
@@ -56,6 +57,15 @@ export default async function PublicationDetailRoute({ params, searchParams }: P
         siteUrl={data.siteUrl}
       />
       <PublicationDetailPage data={data} />
+      <TrackPageView
+        events={[
+          {
+            entity_id: data.entity.id,
+            event_type: 'publication_view',
+            resource_id: data.publication.id,
+          },
+        ]}
+      />
     </>
   )
 }

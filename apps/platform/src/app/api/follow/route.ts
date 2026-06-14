@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePublicPaths } from '@/lib/revalidate-public'
-import { followEntity, getEntityBySlug } from '@ibee/supabase'
+import { followEntity, getEntityBySlug, trackEvent } from '@ibee/supabase'
 
 export async function POST(request: Request) {
   const supabase = await createClient()
@@ -22,6 +22,10 @@ export async function POST(request: Request) {
 
   try {
     await followEntity(supabase, user.id, entityId)
+    await trackEvent(supabase, {
+      entity_id: entityId,
+      event_type: 'follow',
+    })
 
     const entity = await getEntityBySlug(supabase, slug)
     revalidatePublicPaths(slug)

@@ -3,6 +3,7 @@
 import { BarChart3, Heart, MessageCircle, Share2 } from 'lucide-react'
 import Link from 'next/link'
 import { PublicationMediaCarousel } from '@ibee/ui-react'
+import { trackAnalyticsEvents } from '@/lib/analytics-client'
 
 type Media = {
   id: string
@@ -18,9 +19,19 @@ interface Props {
   content: string | null
   media: Media[]
   commentsCount: number
+  entityId: string
+  publicationId: string
+  shareUrl: string
 }
 
-export function PublicationDetail({ content, media, commentsCount }: Props) {
+export function PublicationDetail({
+  content,
+  media,
+  commentsCount,
+  entityId,
+  publicationId,
+  shareUrl,
+}: Props) {
   const sortedMedia = [...media].sort((a, b) => a.position - b.position)
   const carouselMedia = sortedMedia.map((m) => ({
     url: m.url,
@@ -29,6 +40,27 @@ export function PublicationDetail({ content, media, commentsCount }: Props) {
     width: m.width,
     height: m.height,
   }))
+
+  async function handleShare() {
+    trackAnalyticsEvents([
+      {
+        entity_id: entityId,
+        event_type: 'publication_share',
+        resource_id: publicationId,
+      },
+    ])
+
+    try {
+      if (navigator.share) {
+        await navigator.share({ url: shareUrl })
+        return
+      }
+      await navigator.clipboard.writeText(shareUrl)
+      window.alert('Lien copié dans le presse-papiers.')
+    } catch {
+      window.alert('Copiez le lien de cette publication depuis votre navigateur.')
+    }
+  }
 
   return (
     <div className="pub-detail">
@@ -69,12 +101,7 @@ export function PublicationDetail({ content, media, commentsCount }: Props) {
           type="button"
           aria-label="Partager cette publication"
           className="pub-detail__engage-btn"
-          title="La fonctionnalité de partage arrive bientôt"
-          onClick={() =>
-            window.alert(
-              'La fonctionnalité de partage arrive bientôt.\nEn attendant, copiez le lien de cette publication depuis votre navigateur.'
-            )
-          }
+          onClick={() => void handleShare()}
         >
           <Share2 className="h-4 w-4" aria-hidden="true" />
         </button>

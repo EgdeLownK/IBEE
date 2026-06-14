@@ -1,0 +1,546 @@
+/* Page Analyse — parité prototype IBEE Profile (standalone) */
+
+.analyse-page {
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 28px 24px 40px;
+}
+
+@media (max-width: 799px) {
+  .analyse-page {
+    padding: 20px 16px 32px;
+  }
+}
+
+.anal-head {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.anal-head__title {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 24px;
+  color: var(--color-neutral-600);
+  margin: 0;
+  flex: 1;
+  min-width: 180px;
+}
+
+.anal-period {
+  display: inline-flex;
+  background: var(--color-panel);
+  padding: 3px;
+  border-radius: 10px;
+}
+
+.anal-period__btn {
+  padding: 7px 18px;
+  border: none;
+  border-radius: 8px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-neutral-500);
+  background: transparent;
+  cursor: pointer;
+  transition: background 120ms, color 120ms;
+}
+
+.anal-period__btn.is-on {
+  background: var(--color-surface);
+  color: var(--color-neutral-900);
+  box-shadow: var(--shadow-card);
+}
+
+.anal-export,
+.dash-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border: none;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-neutral-900);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+  cursor: pointer;
+}
+
+.anal-scope {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  margin-bottom: 18px;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+}
+
+.anal-scope::-webkit-scrollbar {
+  display: none;
+}
+
+.anal-scope__tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 16px;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--color-panel);
+  color: var(--color-neutral-500);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 120ms, color 120ms, transform 80ms;
+}
+
+.anal-scope__tab:hover {
+  color: var(--color-neutral-900);
+}
+
+.anal-scope__tab.is-on {
+  background: var(--color-accent);
+  color: #fff;
+}
+
+.anal-scope__tab:active {
+  transform: scale(0.97);
+}
+
+.anal-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 899px) {
+  .anal-kpis {
+    grid-template-columns: 1fr;
+  }
+}
+
+.anal-kpi {
+  background: var(--color-surface);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid transparent;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 120ms, background 120ms;
+}
+
+.anal-kpi:hover {
+  background: var(--color-panel);
+}
+
+.anal-kpi.is-on {
+  background: var(--color-accent-tint);
+  border-color: transparent;
+}
+
+.anal-kpi.is-on .anal-kpi__label {
+  color: var(--color-neutral-700);
+  font-weight: 600;
+}
+
+.anal-kpi__label {
+  font-size: 13px;
+  color: var(--color-neutral-500);
+  margin-bottom: 6px;
+}
+
+.anal-kpi__value {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1.1;
+  color: var(--color-neutral-900);
+}
+
+.anal-kpi__delta {
+  margin-top: auto;
+  padding-top: 10px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.anal-kpi__compare {
+  margin-left: 6px;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--color-neutral-500);
+}
+
+.anal-kpi__delta.is-up {
+  color: #2c8d4a;
+}
+
+.anal-kpi__delta.is-down {
+  color: #c63b3b;
+}
+
+.anal-chart {
+  background: var(--color-surface);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  padding: 22px 26px;
+  margin-bottom: 16px;
+}
+
+.anal-chart__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.anal-chart__metric {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-neutral-500);
+  letter-spacing: 0.01em;
+}
+
+.anal-chart__nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.anal-chart__range {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-neutral-500);
+  text-align: center;
+}
+
+.anal-chart__nav-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 10px;
+  background: var(--color-panel);
+  color: var(--color-neutral-700);
+  cursor: pointer;
+  transition: background 120ms, color 120ms, opacity 120ms;
+}
+
+.anal-chart__nav-btn:hover:not(:disabled) {
+  background: var(--color-panel-2);
+  color: var(--color-neutral-900);
+}
+
+.anal-chart__nav-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.anal-chart__filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 10px;
+  background: var(--color-panel);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-neutral-900);
+  cursor: pointer;
+}
+
+.anal-chart__bars {
+  display: grid;
+  align-items: end;
+  gap: 14px;
+  min-height: 280px;
+  padding: 8px 8px 0;
+}
+
+@media (max-width: 599px) {
+  .anal-chart__bars {
+    gap: 8px;
+    min-height: 250px;
+  }
+}
+
+.anal-bar {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  height: 100%;
+  min-height: 240px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  border-radius: 12px 12px 0 0;
+  padding: 0 2px;
+  transition: background 120ms;
+}
+
+.anal-bar:hover {
+  background: var(--color-panel);
+}
+
+.anal-bar__value {
+  flex-shrink: 0;
+  min-height: 18px;
+  padding-bottom: 6px;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--color-neutral-500);
+  text-align: center;
+}
+
+.anal-bar.is-on .anal-bar__value {
+  color: var(--color-accent);
+}
+
+.anal-bar__track {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  width: 100%;
+  min-height: 0;
+}
+
+.anal-bar__fill {
+  width: 100%;
+  background: var(--color-panel-2);
+  border-radius: 10px 10px 0 0;
+  transition: height 320ms cubic-bezier(0.2, 0.8, 0.2, 1), background 160ms;
+}
+
+.anal-bar:hover .anal-bar__fill {
+  background: var(--color-accent-tint);
+}
+
+.anal-bar.is-on .anal-bar__fill {
+  background: var(--color-accent);
+}
+
+.anal-bar__day {
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-neutral-500);
+  text-align: center;
+  line-height: 1.2;
+}
+
+.anal-bar.is-on .anal-bar__day {
+  color: var(--color-accent);
+}
+
+.anal-chart__hint {
+  margin-top: 16px;
+  font-size: 13px;
+  color: var(--color-neutral-500);
+}
+
+.anal-chart__stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid var(--color-border-soft);
+}
+
+@media (max-width: 799px) {
+  .anal-chart__stats {
+    grid-template-columns: 1fr;
+  }
+}
+
+.anal-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px;
+  background: var(--color-panel);
+  border-radius: 12px;
+}
+
+.anal-stat__label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-neutral-500);
+  line-height: 1.35;
+}
+
+.anal-stat__value {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--color-neutral-900);
+  line-height: 1.1;
+}
+
+.anal-bottom {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.anal-card {
+  background: var(--color-surface);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  padding: 22px 24px;
+  display: flex;
+  flex-direction: column;
+}
+
+.anal-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.anal-card__title {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.anal-card__more {
+  align-self: center;
+  margin-top: 16px;
+  padding: 10px 22px;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--color-panel);
+  color: var(--color-neutral-500);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 120ms, color 120ms;
+}
+
+.anal-card__more:hover {
+  background: var(--color-panel-2);
+  color: var(--color-neutral-900);
+}
+
+.anal-top {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.anal-top__row {
+  display: grid;
+  grid-template-columns: 24px 1fr auto;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 8px;
+  border: none;
+  border-radius: 10px;
+  text-align: left;
+  background: transparent;
+  cursor: pointer;
+  transition: background 120ms;
+}
+
+.anal-top__row:hover {
+  background: var(--color-panel);
+}
+
+.anal-top__row.is-on {
+  background: var(--color-accent-tint);
+}
+
+.anal-top__row.is-on .anal-top__rank,
+.anal-top__row.is-on .anal-top__name,
+.anal-top__row.is-on .anal-top__pct {
+  color: var(--color-accent);
+}
+
+.anal-top__rank {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--color-accent);
+  text-align: center;
+}
+
+.anal-top__col {
+  min-width: 0;
+}
+
+.anal-top__name {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.anal-top__bar {
+  height: 5px;
+  background: var(--color-panel);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.anal-top__fill {
+  height: 100%;
+  background: var(--color-accent);
+  border-radius: 3px;
+  transition: width 320ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.anal-top__nums {
+  text-align: right;
+}
+
+.anal-top__pct {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.anal-top__count {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--color-neutral-500);
+  margin-top: 2px;
+}

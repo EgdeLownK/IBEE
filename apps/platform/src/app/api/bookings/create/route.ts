@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { createBooking } from '@ibee/supabase'
+import { createBooking, trackEvent } from '@ibee/supabase'
 
 export async function POST(request: Request) {
   try {
@@ -30,6 +30,13 @@ export async function POST(request: Request) {
       booker_message: booker_message || null,
       start_at,
       end_at,
+    })
+
+    await trackEvent(supabase, {
+      entity_id,
+      event_type: 'booking_created',
+      resource_id: booking.id,
+      metadata: { appointment_type_id },
     })
 
     return NextResponse.json({ success: true, booking })

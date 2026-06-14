@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { toggleWishlist } from '@ibee/supabase'
+import { toggleWishlist, trackEvent } from '@ibee/supabase'
 
 export async function POST(request: Request) {
   const supabase = await createClient()
@@ -38,6 +38,23 @@ export async function POST(request: Request) {
       variant_id: variantId ?? null,
       price_cents_at_add: Math.round(priceCents),
     })
+
+    if (added) {
+      const { data: product } = await supabase
+        .from('products')
+        .select('entity_id')
+        .eq('id', productId)
+        .maybeSingle()
+
+      if (product?.entity_id) {
+        await trackEvent(supabase, {
+          entity_id: product.entity_id,
+          event_type: 'wishlist_add',
+          resource_id: productId,
+          metadata: variantId ? { variant_id: variantId } : {},
+        })
+      }
+    }
 
     return NextResponse.json({ in_wishlist: added })
   } catch (err) {

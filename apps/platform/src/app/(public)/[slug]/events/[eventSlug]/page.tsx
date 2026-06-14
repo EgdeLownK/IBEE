@@ -3,6 +3,7 @@ import { unstable_noStore as noStore } from 'next/cache'
 import { notFound } from 'next/navigation'
 import { EventDetailPage } from '@/components/public/detail/EventDetailPage'
 import { EventSchemaJsonLd } from '@/components/public/detail/EventSchemaJsonLd'
+import { TrackPageView } from '@/components/analytics/TrackPageView'
 import { loadPublicEvent } from '@/lib/load-public-event'
 import { createClient } from '@/lib/supabase/server'
 
@@ -59,6 +60,15 @@ export default async function EventDetailRoute({ params, searchParams }: PagePro
     <>
       <EventSchemaJsonLd data={data} />
       <EventDetailPage data={data} />
+      <TrackPageView
+        events={[
+          {
+            entity_id: data.entity.id,
+            event_type: 'event_view',
+            resource_id: data.event.id,
+          },
+        ]}
+      />
     </>
   )
 }

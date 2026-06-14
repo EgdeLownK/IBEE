@@ -3,6 +3,7 @@ import { unstable_noStore as noStore } from 'next/cache'
 import { notFound, permanentRedirect } from 'next/navigation'
 import { ProductDetailPage } from '@/components/public/detail/ProductDetailPage'
 import { ProductSchemaJsonLd } from '@/components/public/detail/ProductSchemaJsonLd'
+import { TrackPageView } from '@/components/analytics/TrackPageView'
 import { loadPublicProduct } from '@/lib/load-public-product'
 
 export const revalidate = 86400
@@ -60,6 +61,15 @@ export default async function ProductDetailRoute({ params, searchParams }: PageP
     <>
       <ProductSchemaJsonLd data={data} />
       <ProductDetailPage data={data} />
+      <TrackPageView
+        events={[
+          {
+            entity_id: data.entity.id,
+            event_type: 'product_view',
+            resource_id: data.product.id,
+          },
+        ]}
+      />
     </>
   )
 }

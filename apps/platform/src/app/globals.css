@@ -6,6 +6,9 @@
 @import "../../../../packages/ui-react/src/profile/history-edit-styles.css";
 @import "../../../../packages/ui-react/src/profile/product-create-styles.css";
 @import "../../../../packages/ui-react/src/profile/profile-general-styles.css";
+@import "../../../../packages/ui-react/src/dashboard/analyse-styles.css";
+@import "../../../../packages/ui-react/src/dashboard/drive-styles.css";
+@import "../../../../packages/ui-react/src/dashboard/team-styles.css";
 
 @source "../../../../packages/ui-react/src/**/*.{ts,tsx}";
 

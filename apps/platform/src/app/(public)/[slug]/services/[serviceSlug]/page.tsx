@@ -3,6 +3,7 @@ import { unstable_noStore as noStore } from 'next/cache'
 import { notFound } from 'next/navigation'
 import { ServiceDetailPage } from '@/components/public/detail/ServiceDetailPage'
 import { ServiceSchemaJsonLd } from '@/components/public/detail/ServiceSchemaJsonLd'
+import { TrackPageView } from '@/components/analytics/TrackPageView'
 import { loadPublicService } from '@/lib/load-public-service'
 
 export const revalidate = 86400
@@ -50,6 +51,15 @@ export default async function ServiceDetailRoute({ params, searchParams }: PageP
     <>
       <ServiceSchemaJsonLd data={data} />
       <ServiceDetailPage data={data} />
+      <TrackPageView
+        events={[
+          {
+            entity_id: data.entity.id,
+            event_type: 'service_view',
+            resource_id: data.service.id,
+          },
+        ]}
+      />
     </>
   )
 }

@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { getEntityByUserId, getNotifications, getUnreadCount } from '@ibee/supabase'
+import { getNotifications, getUnreadCount } from '@ibee/supabase'
+import { loadAccountShellData } from '@/lib/account-shell-data'
 import { AppShell } from '@/components/dashboard/AppShell'
 import type { HeaderNotification } from '@/components/dashboard/GlobalHeader'
 
@@ -18,8 +19,8 @@ export default async function DashboardLayout({
     redirect('/login')
   }
 
-  const entity = await getEntityByUserId(supabase, user.id)
-  if (!entity) {
+  const accountData = await loadAccountShellData(supabase)
+  if (!accountData) {
     await supabase.auth.signOut()
     redirect('/login')
   }
@@ -33,9 +34,7 @@ export default async function DashboardLayout({
 
   return (
     <AppShell
-      displayName={entity.display_name}
-      slug={entity.slug}
-      avatarUrl={entity.avatar_url}
+      accountData={accountData}
       webUrl={webUrl}
       unreadCount={unreadCount}
       notifications={notifications as HeaderNotification[]}

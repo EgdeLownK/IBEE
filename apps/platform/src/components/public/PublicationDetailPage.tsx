@@ -32,6 +32,9 @@ export function PublicationDetailPage({ data }: Props) {
           content={data.publication.content}
           media={data.publication.publication_media}
           commentsCount={data.publication.comments_count}
+          entityId={data.entity.id}
+          publicationId={data.publication.id}
+          shareUrl={data.publicationUrl}
         />
 
         <div className="px-[22px] pb-6">

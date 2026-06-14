@@ -1,8 +1,10 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { isAnalyticsSectionType } from '@ibee/shared'
 import { ProfileStudioSections } from '@/components/profile/ProfileStudioSections'
 import type { PublicProfileData } from '@/lib/load-public-profile'
+import { trackAnalyticsEvents } from '@/lib/analytics-client'
 import { PublicProfileMenuTabs } from './PublicProfileMenuTabs'
 import { PublicProfileHome } from './PublicProfileHome'
 
@@ -13,6 +15,7 @@ interface Props {
 export function PublicProfileTabsController({ data }: Props) {
   const [activeType, setActiveType] = useState('home')
   const [tabsReady, setTabsReady] = useState(false)
+  const trackedSection = useRef<string | null>(null)
 
   const visibleTypes = useMemo(() => {
     const types = new Set<string>(['home'])
@@ -31,6 +34,20 @@ export function PublicProfileTabsController({ data }: Props) {
     window.addEventListener('hashchange', syncFromHash)
     return () => window.removeEventListener('hashchange', syncFromHash)
   }, [visibleTypes])
+
+  useEffect(() => {
+    if (!tabsReady || !isAnalyticsSectionType(activeType)) return
+    if (trackedSection.current === activeType) return
+    trackedSection.current = activeType
+
+    trackAnalyticsEvents([
+      {
+        entity_id: data.entity.id,
+        event_type: 'section_view',
+        section_type: activeType,
+      },
+    ])
+  }, [activeType, data.entity.id, tabsReady])
 
   function handleTabChange(type: string) {
     setActiveType(type)

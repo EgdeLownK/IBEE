@@ -20,7 +20,7 @@ export {
 export type { OpeningHourSlot, EntityContactInfo, HistoryBlock, EntityFaqItemInput } from './profile-info'
 export { createEntityMessage } from './entity-messages'
 export type { EntityMessage } from './entity-messages'
-export { isFollowing, followEntity, unfollowEntity } from './follows'
+export { isFollowing, followEntity, unfollowEntity, countFollowsInWindow } from './follows'
 export { getPublicationsByEntity, getPublicationById, getPublicationByEntityAndSlug, createPublication, updatePublication, deletePublication } from './publications'
 export { getNotifications, getUnreadCount, markAsRead, markAllAsRead } from './notifications'
 export { getCommentsByPublication, createComment, updateComment, deleteComment } from './comments'
@@ -38,6 +38,32 @@ export { getClientsByEntity, getClientById, getClientBookings, updateClient, del
 export type { Client } from './clients'
 export { purgeEntityCache, purgePublicationCache, getRevalidatePaths } from './cache'
 export type { RevalidatePathsOptions } from './cache'
+export {
+  trackEvent,
+  trackEvents,
+  listAnalyticsEvents,
+  countDistinctVisitors,
+  countEvents,
+  groupCountByResource,
+  groupCountBySection,
+  computeDelta,
+} from './analytics'
+export type { AnalyticsEventRow } from './analytics'
+export {
+  ensureDefaultTeamRoles,
+  listTeamRoles,
+  saveTeamRoles,
+  isTeamRoleInUse,
+  listTeamMembers,
+  listTeamInvitations,
+  createTeamInvitation,
+  updateTeamMemberRole,
+  removeTeamMember,
+  touchTeamInvitation,
+  teamEmailAlreadyUsed,
+  getOwnerRole,
+} from './team'
+export type { TeamRoleRecord, TeamRoleSaveInput } from './team'
 export type { Database } from './types'
 
 // Products

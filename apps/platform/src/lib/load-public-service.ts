@@ -99,6 +99,7 @@ export async function loadPublicService(
 
   return {
     entity: {
+      id: entity.id,
       slug: entity.slug,
       display_name: entity.display_name,
       avatar_url: entity.avatar_url,

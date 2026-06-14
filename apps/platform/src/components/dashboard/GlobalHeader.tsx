@@ -1,13 +1,26 @@
 'use client'
 
 import { useEffect, useState, useTransition } from 'react'
-import { Bell, BookOpen, ChevronDown, LogOut, Menu, Sun, UserCircle } from 'lucide-react'
+import { usePathname, useRouter } from 'next/navigation'
+import {
+  Bell,
+  ChevronDown,
+  Folder,
+  Lock,
+  LogOut,
+  Menu,
+  Sun,
+  User,
+  Wallet,
+} from 'lucide-react'
 import { logout } from '@/app/dashboard/actions'
 import {
   markAllNotificationsReadAction,
   markNotificationReadAction,
 } from '@/app/dashboard/notification-actions'
-import { toggleAppDrawer } from './GlobalSidebar'
+import { useAccountContext } from './AccountContext'
+import { toggleAppDrawer } from './MainRail'
+import { getNavZone, shouldShowSidebar } from '@/lib/nav-zone'
 
 export type HeaderNotification = {
   id: string
@@ -25,17 +38,21 @@ export type HeaderNotification = {
 }
 
 interface Props {
-  projectLabel?: string | null
   webUrl: string
   webProfileUrl?: string
-  avatarUrl?: string | null
-  displayName?: string
-  slug?: string
   unreadCount?: number
   notifications?: HeaderNotification[]
   isAuthenticated?: boolean
   loginUrl?: string
 }
+
+const HEADER_MENU = [
+  { href: '#revenue', label: 'Revenus', icon: Wallet },
+  { href: '/dashboard/site/general', label: 'Mon compte', icon: User },
+  { href: '/dashboard/drive', label: 'Drive', icon: Folder, switchToPersonal: true },
+  { href: '/notifications', label: 'Notifications', icon: Bell },
+  { href: '#privacy', label: 'Confidentialité', icon: Lock },
+] as const
 
 function formatBadge(n: number) {
   if (n > 99) return '99+'
@@ -75,25 +92,41 @@ function getNotifUrl(n: HeaderNotification) {
   return '/notifications'
 }
 
+function personalInitial(name: string) {
+  return name.trim().charAt(0).toUpperCase() || '?'
+}
+
 export function GlobalHeader({
-  projectLabel,
   webUrl,
   webProfileUrl = '/',
-  avatarUrl = null,
-  displayName = '',
-  slug = '',
   unreadCount: initialUnread = 0,
   notifications = [],
   isAuthenticated = true,
   loginUrl = '/login',
 }: Props) {
+  const router = useRouter()
+  const pathname = usePathname() ?? '/'
+  const {
+    personalAccount,
+    projectAccounts,
+    projectLabel,
+    mode,
+    activeProjectId,
+    setPersonalMode,
+    setProjectMode,
+    isPersonalMode,
+  } = useAccountContext()
+
+  const showSidebar = isAuthenticated && shouldShowSidebar(getNavZone(pathname, isPersonalMode))
+
   const [clock, setClock] = useState('--:--')
   const [unreadCount, setUnreadCount] = useState(initialUnread)
   const [pending, startTransition] = useTransition()
 
-  const initial = displayName ? displayName.charAt(0).toUpperCase() : '?'
   const avatarMenuId = 'header-avatar-menu'
+  const projectMenuId = 'header-project-menu'
   const notifPopoverId = 'header-notif-popover'
+  const personalInitials = personalInitial(personalAccount.displayName)
 
   useEffect(() => {
     setUnreadCount(initialUnread)
@@ -125,24 +158,35 @@ export function GlobalHeader({
     })
   }
 
+  function handleMenuNavigate(href: string, switchToPersonal?: boolean) {
+    if (switchToPersonal) setPersonalMode()
+    if (href.startsWith('/')) router.push(href)
+  }
+
   return (
     <header className="app-header">
       <div className="flex items-center gap-2">
+        {showSidebar ? (
+          <button
+            type="button"
+            onClick={toggleAppDrawer}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-neutral-600 transition hover:bg-panel min-[1200px]:hidden"
+            aria-label="Ouvrir le menu"
+          >
+            <Menu className="h-5 w-5" aria-hidden="true" />
+          </button>
+        ) : null}
+
         <button
           type="button"
-          onClick={toggleAppDrawer}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-neutral-600 transition hover:bg-panel min-[1200px]:hidden"
-          aria-label="Ouvrir le menu"
+          popoverTarget={projectMenuId}
+          style={{ anchorName: `--${projectMenuId}` } as React.CSSProperties}
+          className="app-header__project"
+          aria-label="Changer de compte"
         >
-          <Menu className="h-5 w-5" aria-hidden="true" />
+          <span className="truncate max-w-[200px] min-[1200px]:max-w-[280px]">{projectLabel}</span>
+          <ChevronDown className="h-4 w-4 text-neutral-500" aria-hidden="true" />
         </button>
-
-        {projectLabel && (
-          <button type="button" className="app-header__project">
-            <span className="truncate max-w-[200px] min-[1200px]:max-w-[280px]">{projectLabel}</span>
-            <ChevronDown className="h-4 w-4 text-neutral-500" aria-hidden="true" />
-          </button>
-        )}
       </div>
 
       <a href="/" className="app-header__brand" aria-label="Accueil IBEE">
@@ -173,151 +217,226 @@ export function GlobalHeader({
             </a>
 
             <button
-          type="button"
-          popoverTarget={notifPopoverId}
-          style={{ anchorName: `--${notifPopoverId}` } as React.CSSProperties}
-          className="relative hidden h-9 w-9 shrink-0 items-center justify-center rounded-full text-neutral-600 transition hover:bg-panel md:flex"
-          aria-label="Notifications"
-        >
-          <Bell className="h-5 w-5" aria-hidden="true" />
-          {unreadCount > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-accent px-1 text-[10px] font-bold text-white">
-              {formatBadge(unreadCount)}
-            </span>
-          )}
-        </button>
-
-        <div
-          id={notifPopoverId}
-          popover="auto"
-          className="notif-popover"
-          style={{ positionAnchor: `--${notifPopoverId}` } as React.CSSProperties}
-        >
-          <div className="flex items-center justify-between border-b border-neutral-100 px-4 py-3">
-            <h2 className="text-base font-semibold text-neutral-900">Notifications</h2>
-            {unreadCount > 0 && (
-              <button
-                type="button"
-                disabled={pending}
-                onClick={handleMarkAllRead}
-                className="text-xs font-medium uppercase tracking-wide text-accent transition hover:text-accent-hover"
-              >
-                Tout marquer lu
-              </button>
-            )}
-          </div>
-
-          {notifications.length === 0 ? (
-            <div className="flex flex-col items-center gap-2 px-4 py-8 text-center">
-              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-panel-2 text-neutral-400">
-                <Bell className="h-5 w-5" aria-hidden="true" />
-              </span>
-              <p className="text-sm text-neutral-400">Pas de notifications</p>
-            </div>
-          ) : (
-            <div className="max-h-[400px] overflow-y-auto">
-              {notifications.map((n) => {
-                const actorInitial = n.actor_entity?.display_name?.charAt(0).toUpperCase() ?? '?'
-                return (
-                  <a
-                    key={n.id}
-                    href={getNotifUrl(n)}
-                    onClick={() => {
-                      if (!n.read_at) handleNotifClick(n.id)
-                    }}
-                    className="notif-item flex items-center gap-3 px-4 py-3 transition hover:bg-panel"
-                  >
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-accent-soft">
-                      {n.actor_entity?.avatar_url ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={n.actor_entity.avatar_url} alt="" className="h-full w-full object-cover" />
-                      ) : (
-                        <span className="text-sm font-semibold text-accent">{actorInitial}</span>
-                      )}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm text-neutral-900">{getNotifText(n)}</p>
-                      <p className="text-xs text-neutral-400">{formatNotifDate(n.created_at)}</p>
-                    </div>
-                    {!n.read_at && <span className="h-2 w-2 shrink-0 rounded-full bg-accent" />}
-                  </a>
-                )
-              })}
-            </div>
-          )}
-
-          {notifications.length > 0 && (
-            <div className="border-t border-neutral-100 px-4 py-2.5 text-center">
-              <a
-                href="/notifications"
-                className="text-xs font-medium text-accent transition hover:text-accent-hover"
-              >
-                Afficher tout
-              </a>
-            </div>
-          )}
-        </div>
-
-        <button
-          type="button"
-          popoverTarget={avatarMenuId}
-          style={{ anchorName: `--${avatarMenuId}` } as React.CSSProperties}
-          className="app-header__avatar"
-          aria-label="Mon compte"
-        >
-          {avatarUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={avatarUrl} alt={displayName} className="h-full w-full rounded-full object-cover" />
-          ) : (
-            <span className="flex h-full w-full items-center justify-center rounded-full bg-accent-soft text-sm font-semibold text-accent">
-              {initial}
-            </span>
-          )}
-        </button>
-
-        <div
-          id={avatarMenuId}
-          popover="auto"
-          className="app-menu"
-          style={{ positionAnchor: `--${avatarMenuId}` } as React.CSSProperties}
-        >
-          <div className="app-menu__profile">
-            <div className="app-menu__avatar">
-              {avatarUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={avatarUrl} alt={displayName} className="h-full w-full rounded-full object-cover" />
-              ) : (
-                <span className="flex h-full w-full items-center justify-center rounded-full bg-accent-soft text-base font-semibold text-accent">
-                  {initial}
+              type="button"
+              popoverTarget={notifPopoverId}
+              style={{ anchorName: `--${notifPopoverId}` } as React.CSSProperties}
+              className="relative hidden h-9 w-9 shrink-0 items-center justify-center rounded-full text-neutral-600 transition hover:bg-panel md:flex"
+              aria-label="Notifications"
+            >
+              <Bell className="h-5 w-5" aria-hidden="true" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-accent px-1 text-[10px] font-bold text-white">
+                  {formatBadge(unreadCount)}
                 </span>
               )}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="app-menu__name truncate">{displayName}</p>
-              <p className="app-menu__handle truncate text-xs text-neutral-500">@{slug}</p>
-            </div>
-          </div>
-
-          <hr className="app-menu__divider" />
-
-          <a href={webProfileUrl} className="app-menu__item">
-            <UserCircle className="h-5 w-5 shrink-0" aria-hidden="true" />
-            <span>Voir mon profil</span>
-          </a>
-          <a href="/explore" className="app-menu__item app-menu__item--soft">
-            <BookOpen className="h-5 w-5 shrink-0" aria-hidden="true" />
-            <span>Explorer</span>
-          </a>
-
-          <hr className="app-menu__divider" />
-
-          <form action={logout}>
-            <button type="submit" className="app-menu__item app-menu__item--soft w-full text-left">
-              <LogOut className="h-5 w-5 shrink-0" aria-hidden="true" />
-              <span>Se déconnecter</span>
             </button>
-          </form>
-        </div>
+
+            <div
+              id={notifPopoverId}
+              popover="auto"
+              className="notif-popover"
+              style={{ positionAnchor: `--${notifPopoverId}` } as React.CSSProperties}
+            >
+              <div className="flex items-center justify-between border-b border-neutral-100 px-4 py-3">
+                <h2 className="text-base font-semibold text-neutral-900">Notifications</h2>
+                {unreadCount > 0 && (
+                  <button
+                    type="button"
+                    disabled={pending}
+                    onClick={handleMarkAllRead}
+                    className="text-xs font-medium uppercase tracking-wide text-accent transition hover:text-accent-hover"
+                  >
+                    Tout marquer lu
+                  </button>
+                )}
+              </div>
+
+              {notifications.length === 0 ? (
+                <div className="flex flex-col items-center gap-2 px-4 py-8 text-center">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-panel-2 text-neutral-400">
+                    <Bell className="h-5 w-5" aria-hidden="true" />
+                  </span>
+                  <p className="text-sm text-neutral-400">Pas de notifications</p>
+                </div>
+              ) : (
+                <div className="max-h-[400px] overflow-y-auto">
+                  {notifications.map((n) => {
+                    const actorInitial = n.actor_entity?.display_name?.charAt(0).toUpperCase() ?? '?'
+                    return (
+                      <a
+                        key={n.id}
+                        href={getNotifUrl(n)}
+                        onClick={() => {
+                          if (!n.read_at) handleNotifClick(n.id)
+                        }}
+                        className="notif-item flex items-center gap-3 px-4 py-3 transition hover:bg-panel"
+                      >
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-accent-soft">
+                          {n.actor_entity?.avatar_url ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={n.actor_entity.avatar_url}
+                              alt=""
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <span className="text-sm font-semibold text-accent">{actorInitial}</span>
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm text-neutral-900">{getNotifText(n)}</p>
+                          <p className="text-xs text-neutral-400">{formatNotifDate(n.created_at)}</p>
+                        </div>
+                        {!n.read_at && <span className="h-2 w-2 shrink-0 rounded-full bg-accent" />}
+                      </a>
+                    )
+                  })}
+                </div>
+              )}
+
+              {notifications.length > 0 && (
+                <div className="border-t border-neutral-100 px-4 py-2.5 text-center">
+                  <a
+                    href="/notifications"
+                    className="text-xs font-medium text-accent transition hover:text-accent-hover"
+                  >
+                    Afficher tout
+                  </a>
+                </div>
+              )}
+            </div>
+
+            <div
+              id={projectMenuId}
+              popover="auto"
+              className="app-menu app-menu--project"
+              style={{ positionAnchor: `--${projectMenuId}` } as React.CSSProperties}
+            >
+              <p className="app-menu__section-label">Comptes</p>
+              <button
+                type="button"
+                className={`app-menu__account-item${mode === 'personal' ? ' is-active' : ''}`}
+                onClick={() => {
+                  setPersonalMode()
+                  document.getElementById(projectMenuId)?.hidePopover()
+                }}
+              >
+                <span className="app-menu__account-dot app-menu__account-dot--personal" />
+                <span className="min-w-0 flex-1 text-left">
+                  <span className="app-menu__account-name">Compte perso</span>
+                  <span className="app-menu__account-meta">{personalAccount.displayName}</span>
+                </span>
+              </button>
+              {projectAccounts.map((project) => (
+                <button
+                  key={project.id}
+                  type="button"
+                  className={`app-menu__account-item${
+                    mode === 'project' && activeProjectId === project.id ? ' is-active' : ''
+                  }`}
+                  onClick={() => {
+                    setProjectMode(project.id)
+                    document.getElementById(projectMenuId)?.hidePopover()
+                  }}
+                >
+                  <span
+                    className="app-menu__account-dot"
+                    style={{ background: project.color }}
+                  />
+                  <span className="min-w-0 flex-1 text-left">
+                    <span className="app-menu__account-name">{project.name}</span>
+                    {project.role ? (
+                      <span className="app-menu__account-meta">{project.role}</span>
+                    ) : null}
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            <div className="app-header__avatar-wrap">
+              <button
+                type="button"
+                popoverTarget={avatarMenuId}
+                style={{ anchorName: `--${avatarMenuId}` } as React.CSSProperties}
+                className="app-header__avatar"
+                aria-label="Menu compte personnel"
+              >
+                {personalAccount.avatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={personalAccount.avatarUrl}
+                    alt={personalAccount.displayName}
+                    className="h-full w-full rounded-full object-cover"
+                  />
+                ) : (
+                  <span className="app-header__avatar-fallback">{personalInitials}</span>
+                )}
+              </button>
+
+              <div
+                id={avatarMenuId}
+                popover="auto"
+                className="app-menu"
+                style={{ positionAnchor: `--${avatarMenuId}` } as React.CSSProperties}
+              >
+                <div className="app-menu__profile">
+                  <div className="app-menu__avatar">
+                    {personalAccount.avatarUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={personalAccount.avatarUrl}
+                        alt={personalAccount.displayName}
+                        className="h-full w-full rounded-full object-cover"
+                      />
+                    ) : (
+                      <span className="app-menu__avatar-fallback">{personalInitials}</span>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="app-menu__name truncate">{personalAccount.displayName}</p>
+                    <p className="app-menu__handle truncate">{personalAccount.handle}</p>
+                  </div>
+                </div>
+
+                <hr className="app-menu__divider" />
+
+                {HEADER_MENU.map((item) => {
+                  const Icon = item.icon
+                  const isHashLink = item.href.startsWith('#')
+                  if (isHashLink) {
+                    return (
+                      <button key={item.label} type="button" className="app-menu__item">
+                        <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
+                        <span>{item.label}</span>
+                      </button>
+                    )
+                  }
+                  return (
+                    <button
+                      key={item.label}
+                      type="button"
+                      className="app-menu__item"
+                      onClick={() => {
+                        handleMenuNavigate(item.href, 'switchToPersonal' in item && item.switchToPersonal)
+                        document.getElementById(avatarMenuId)?.hidePopover()
+                      }}
+                    >
+                      <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
+                      <span>{item.label}</span>
+                    </button>
+                  )
+                })}
+
+                <hr className="app-menu__divider" />
+
+                <form action={logout}>
+                  <button type="submit" className="app-menu__item app-menu__item--soft w-full text-left">
+                    <LogOut className="h-4 w-4 shrink-0" aria-hidden="true" />
+                    <span>Se déconnecter</span>
+                  </button>
+                </form>
+              </div>
+            </div>
           </>
         ) : (
           <a

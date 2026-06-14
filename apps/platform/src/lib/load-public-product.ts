@@ -34,6 +34,7 @@ export type PublishedProductVariant = Database['public']['Tables']['product_vari
 
 export type PublicProductData = {
   entity: {
+    id: string
     slug: string
     display_name: string
     avatar_url: string | null
@@ -161,6 +162,7 @@ export async function loadPublicProduct(
 
   const data: PublicProductData = {
     entity: {
+      id: entity.id,
       slug: entity.slug,
       display_name: entity.display_name,
       avatar_url: entity.avatar_url,

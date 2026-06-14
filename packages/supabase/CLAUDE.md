@@ -20,5 +20,5 @@ entity, entity_menu_sections, entity_home_widgets, entity_global_features, entit
 
 ## Régénérer les types
 ```bash
-pnpm supabase gen types typescript --project-id ztblirxxptdwqobmervk > packages/supabase/src/types.ts
+pnpm gen-types
 ```

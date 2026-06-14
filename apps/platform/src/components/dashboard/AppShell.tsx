@@ -2,36 +2,35 @@
 
 import { useEffect } from 'react'
 import { usePathname } from 'next/navigation'
+import type { AccountShellData } from '@/lib/account-shell-data'
+import { getNavZone, shouldShowSidebar } from '@/lib/nav-zone'
 import type { HeaderNotification } from './GlobalHeader'
+import { AccountContextProvider, useAccountContext } from './AccountContext'
 import { GlobalHeader } from './GlobalHeader'
-import { GlobalSidebar } from './GlobalSidebar'
 import { FloatingNavPill } from './FloatingNavPill'
+import { ZoneSidebar } from './ZoneSidebar'
 
 interface Props {
   children: React.ReactNode
-  displayName: string
-  slug: string
-  avatarUrl: string | null
+  accountData: AccountShellData
   webUrl: string
   unreadCount: number
   notifications: HeaderNotification[]
-  webProfileActive?: boolean
-  showSidebar?: boolean
 }
 
-export function AppShell({
+function AppShellInner({
   children,
-  displayName,
-  slug,
-  avatarUrl,
   webUrl,
   unreadCount,
   notifications,
-  webProfileActive = false,
-  showSidebar = true,
-}: Props) {
-  const webProfileUrl = `/${slug}`
+}: Omit<Props, 'accountData'>) {
   const pathname = usePathname() ?? '/'
+  const { isPersonalMode, activeProject } = useAccountContext()
+  const zone = getNavZone(pathname, isPersonalMode)
+  const showSidebar = shouldShowSidebar(zone)
+  const webProfileUrl = `/${activeProject.slug}`
+  const webProfileActive =
+    pathname === webProfileUrl || pathname.startsWith(`${webProfileUrl}/`)
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -46,29 +45,39 @@ export function AppShell({
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <GlobalHeader
-        projectLabel={displayName}
         webUrl={webUrl}
         webProfileUrl={webProfileUrl}
-        avatarUrl={avatarUrl}
-        displayName={displayName}
-        slug={slug}
         unreadCount={unreadCount}
         notifications={notifications}
       />
       <div className="flex min-h-0 flex-1">
-        {showSidebar ? (
-          <GlobalSidebar webProfileUrl={webProfileUrl} webProfileActive={webProfileActive} />
-        ) : null}
+        {showSidebar ? <ZoneSidebar /> : null}
         <div className="relative flex min-h-0 min-w-0 flex-1 flex-col">
           <div className="app-layout__content flex-1 overflow-auto pb-[100px]">{children}</div>
-        <FloatingNavPill
-          webProfileUrl={webProfileUrl}
-          webProfileActive={webProfileActive}
-          currentPath={pathname}
-          isAuthenticated
-        />
+          <FloatingNavPill
+            webProfileUrl={webProfileUrl}
+            webProfileActive={webProfileActive}
+            currentPath={pathname}
+            isAuthenticated
+          />
         </div>
       </div>
     </div>
+  )
+}
+
+export function AppShell({
+  children,
+  accountData,
+  webUrl,
+  unreadCount,
+  notifications,
+}: Props) {
+  return (
+    <AccountContextProvider data={accountData}>
+      <AppShellInner webUrl={webUrl} unreadCount={unreadCount} notifications={notifications}>
+        {children}
+      </AppShellInner>
+    </AccountContextProvider>
   )
 }

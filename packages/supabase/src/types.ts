@@ -551,41 +551,51 @@ export type Database = {
         }
         Relationships: []
       }
-      entity_messages: {
+      entity_analytics_events: {
         Row: {
-          body: string
-          created_at: string
           entity_id: string
+          event_type: Database["public"]["Enums"]["analytics_event_type"]
           id: string
-          sender_email: string
-          sender_name: string
-          sender_user_id: string | null
+          metadata: Json
+          occurred_at: string
+          resource_id: string | null
+          section_type: Database["public"]["Enums"]["menu_section_type"] | null
+          visitor_key: string | null
         }
         Insert: {
-          body: string
-          created_at?: string
           entity_id: string
+          event_type: Database["public"]["Enums"]["analytics_event_type"]
           id?: string
-          sender_email: string
-          sender_name: string
-          sender_user_id?: string | null
+          metadata?: Json
+          occurred_at?: string
+          resource_id?: string | null
+          section_type?: Database["public"]["Enums"]["menu_section_type"] | null
+          visitor_key?: string | null
         }
         Update: {
-          body?: string
-          created_at?: string
           entity_id?: string
+          event_type?: Database["public"]["Enums"]["analytics_event_type"]
           id?: string
-          sender_email?: string
-          sender_name?: string
-          sender_user_id?: string | null
+          metadata?: Json
+          occurred_at?: string
+          resource_id?: string | null
+          section_type?: Database["public"]["Enums"]["menu_section_type"] | null
+          visitor_key?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "entity_messages_entity_id_fkey"
+            foreignKeyName: "entity_analytics_events_entity_id_fkey"
             columns: ["entity_id"]
             isOneToOne: false
             referencedRelation: "entity"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entity_analytics_events_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "publication_comments_with_author"
+            referencedColumns: ["author_entity_id"]
           },
         ]
       }
@@ -913,6 +923,51 @@ export type Database = {
           },
         ]
       }
+      entity_messages: {
+        Row: {
+          body: string
+          created_at: string
+          entity_id: string
+          id: string
+          sender_email: string
+          sender_name: string
+          sender_user_id: string | null
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          entity_id: string
+          id?: string
+          sender_email: string
+          sender_name: string
+          sender_user_id?: string | null
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          entity_id?: string
+          id?: string
+          sender_email?: string
+          sender_name?: string
+          sender_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entity_messages_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entity"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entity_messages_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "publication_comments_with_author"
+            referencedColumns: ["author_entity_id"]
+          },
+        ]
+      }
       entity_product_categories: {
         Row: {
           created_at: string
@@ -948,6 +1003,179 @@ export type Database = {
           },
           {
             foreignKeyName: "entity_product_categories_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "publication_comments_with_author"
+            referencedColumns: ["author_entity_id"]
+          },
+        ]
+      }
+      entity_team_invitations: {
+        Row: {
+          created_at: string
+          email: string
+          entity_id: string
+          id: string
+          invited_by: string
+          role_id: string
+          status: Database["public"]["Enums"]["entity_team_invite_status"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          entity_id: string
+          id?: string
+          invited_by: string
+          role_id: string
+          status?: Database["public"]["Enums"]["entity_team_invite_status"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          entity_id?: string
+          id?: string
+          invited_by?: string
+          role_id?: string
+          status?: Database["public"]["Enums"]["entity_team_invite_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entity_team_invitations_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entity"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entity_team_invitations_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "publication_comments_with_author"
+            referencedColumns: ["author_entity_id"]
+          },
+          {
+            foreignKeyName: "entity_team_invitations_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "entity_team_roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      entity_team_members: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          email: string
+          entity_id: string
+          id: string
+          joined_at: string
+          role_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          email: string
+          entity_id: string
+          id?: string
+          joined_at?: string
+          role_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          email?: string
+          entity_id?: string
+          id?: string
+          joined_at?: string
+          role_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entity_team_members_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entity"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entity_team_members_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "publication_comments_with_author"
+            referencedColumns: ["author_entity_id"]
+          },
+          {
+            foreignKeyName: "entity_team_members_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "entity_team_roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      entity_team_roles: {
+        Row: {
+          bg: string
+          created_at: string
+          entity_id: string
+          fg: string
+          id: string
+          inviteable: boolean
+          label: string
+          locked: boolean
+          permissions: Json
+          position: number
+          role_key: string
+          updated_at: string
+        }
+        Insert: {
+          bg: string
+          created_at?: string
+          entity_id: string
+          fg: string
+          id?: string
+          inviteable?: boolean
+          label: string
+          locked?: boolean
+          permissions?: Json
+          position?: number
+          role_key: string
+          updated_at?: string
+        }
+        Update: {
+          bg?: string
+          created_at?: string
+          entity_id?: string
+          fg?: string
+          id?: string
+          inviteable?: boolean
+          label?: string
+          locked?: boolean
+          permissions?: Json
+          position?: number
+          role_key?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entity_team_roles_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entity"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entity_team_roles_entity_id_fkey"
             columns: ["entity_id"]
             isOneToOne: false
             referencedRelation: "publication_comments_with_author"
@@ -2030,6 +2258,18 @@ export type Database = {
       unaccent: { Args: { "": string }; Returns: string }
     }
     Enums: {
+      analytics_event_type:
+        | "profile_view"
+        | "section_view"
+        | "publication_view"
+        | "product_view"
+        | "service_view"
+        | "event_view"
+        | "booking_created"
+        | "follow"
+        | "unfollow"
+        | "wishlist_add"
+        | "publication_share"
       appointment_location_type: "in_person" | "video" | "phone"
       booking_status:
         | "pending"
@@ -2044,6 +2284,11 @@ export type Database = {
         | "specific_products"
         | "specific_categories"
       discount_code_type: "percentage" | "fixed_amount" | "free_shipping"
+      entity_team_invite_status:
+        | "pending"
+        | "accepted"
+        | "expired"
+        | "cancelled"
       event_location_type: "online" | "in_person"
       event_registration_status: "confirmed" | "cancelled"
       global_feature_type: "faq"
@@ -2214,6 +2459,19 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      analytics_event_type: [
+        "profile_view",
+        "section_view",
+        "publication_view",
+        "product_view",
+        "service_view",
+        "event_view",
+        "booking_created",
+        "follow",
+        "unfollow",
+        "wishlist_add",
+        "publication_share",
+      ],
       appointment_location_type: ["in_person", "video", "phone"],
       booking_status: [
         "pending",
@@ -2230,6 +2488,12 @@ export const Constants = {
         "specific_categories",
       ],
       discount_code_type: ["percentage", "fixed_amount", "free_shipping"],
+      entity_team_invite_status: [
+        "pending",
+        "accepted",
+        "expired",
+        "cancelled",
+      ],
       event_location_type: ["online", "in_person"],
       event_registration_status: ["confirmed", "cancelled"],
       global_feature_type: ["faq"],

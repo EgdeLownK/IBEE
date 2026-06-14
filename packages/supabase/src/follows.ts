@@ -41,3 +41,20 @@ export async function unfollowEntity(
 
   if (error) throw error
 }
+
+export async function countFollowsInWindow(
+  client: SupabaseClient<Database>,
+  entityId: string,
+  from: string,
+  to: string
+) {
+  const { count, error } = await client
+    .from('follows')
+    .select('*', { count: 'exact', head: true })
+    .eq('followed_entity_id', entityId)
+    .gte('created_at', from)
+    .lte('created_at', to)
+
+  if (error) throw error
+  return count ?? 0
+}

@@ -3,6 +3,7 @@ import { unstable_noStore as noStore } from 'next/cache'
 import { notFound, redirect } from 'next/navigation'
 import { ProfileJsonLd } from '@/components/public/ProfileJsonLd'
 import { PublicProfilePage } from '@/components/public/PublicProfilePage'
+import { TrackPageView } from '@/components/analytics/TrackPageView'
 import { loadPublicProfileBySlug } from '@/lib/load-public-profile'
 
 export const revalidate = 86400
@@ -59,6 +60,9 @@ export default async function PublicProfileRoute({ params, searchParams }: PageP
         faqItems={data.faqActive ? data.faqItems : []}
       />
       <PublicProfilePage data={data} />
+      <TrackPageView
+        events={[{ entity_id: data.entity.id, event_type: 'profile_view' }]}
+      />
     </>
   )
 }

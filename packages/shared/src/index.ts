@@ -94,3 +94,17 @@ export type {
 } from './event-create'
 export { validateEntityProfile, buildEntityProfileUpdate } from './entity-profile'
 export type { EntityProfileInput, ValidationResult as EntityProfileValidationResult } from './entity-profile'
+export {
+  ANALYTICS_EVENT_TYPES,
+  ANALYTICS_SECTION_TYPES,
+  isAnalyticsEventType,
+  isAnalyticsSectionType,
+  validateTrackEventPayload,
+  validateTrackEventsBody,
+} from './analytics'
+export type {
+  AnalyticsEventType,
+  AnalyticsSectionType,
+  TrackEventPayload,
+  TrackEventsBody,
+} from './analytics'
