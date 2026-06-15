@@ -2,15 +2,14 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidateAfterEntityMutation } from '@/lib/revalidate-public'
+import { digitalFormatFromName } from '@/lib/drive-file-policy'
 import {
   addProductMedia,
-  createEntityFile,
   createProduct,
   createProductVariant,
   getEntityByUserId,
   getEntityFileById,
   getOrCreateProductCategory,
-  listEntityFiles,
   listProductCategories,
   purgeEntityCache,
 } from '@ibee/supabase'
@@ -51,9 +50,7 @@ function resolveUploadMediaType(file: File): { mediaType: 'image' | 'video'; con
 }
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024
 const MAX_VIDEO_BYTES = 200 * 1024 * 1024
-const MAX_FILE_BYTES = 200 * 1024 * 1024
 
-const DIGITAL_FORMATS = ['pdf', 'epub', 'mp4', 'mp3', 'zip', 'other']
 const PHYSICAL_CONDITIONS = ['new', 'like_new', 'very_good', 'good', 'acceptable']
 
 function slugify(input: string): string {
@@ -64,11 +61,6 @@ function slugify(input: string): string {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
     .slice(0, 80)
-}
-
-function digitalFormatFromName(name: string): string {
-  const ext = (name.split('.').pop() || '').toLowerCase()
-  return DIGITAL_FORMATS.includes(ext) ? ext : 'other'
 }
 
 function isUniqueViolation(err: unknown): boolean {
@@ -124,93 +116,6 @@ export async function uploadProductMediaAction(formData: FormData) {
   } catch (err) {
     console.error('[uploadProductMediaAction]', err)
     return { ok: false as const, error: "Erreur lors de l'envoi du fichier." }
-  }
-}
-
-export type EntityFileDto = {
-  id: string
-  name: string
-  mime_type: string | null
-  size_bytes: number
-  created_at: string
-}
-
-export async function listEntityFilesAction() {
-  try {
-    const supabase = await createClient()
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-    if (!user) return { ok: false as const, error: 'Non authentifié.' }
-
-    const entity = await getEntityByUserId(supabase, user.id)
-    if (!entity) return { ok: false as const, error: 'Profil introuvable.' }
-
-    const files = await listEntityFiles(supabase, entity.id)
-    const dto: EntityFileDto[] = files.map((f) => ({
-      id: f.id,
-      name: f.name,
-      mime_type: f.mime_type,
-      size_bytes: f.size_bytes,
-      created_at: f.created_at,
-    }))
-    return { ok: true as const, files: dto }
-  } catch (err) {
-    console.error('[listEntityFilesAction]', err)
-    return { ok: false as const, error: 'Erreur lors du chargement des fichiers.' }
-  }
-}
-
-export async function uploadEntityFileAction(formData: FormData) {
-  const file = formData.get('file')
-  if (!(file instanceof File) || file.size === 0) {
-    return { ok: false as const, error: 'Aucun fichier fourni.' }
-  }
-  if (file.size > MAX_FILE_BYTES) {
-    return { ok: false as const, error: 'Le fichier ne doit pas dépasser 200 Mo.' }
-  }
-
-  try {
-    const supabase = await createClient()
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-    if (!user) return { ok: false as const, error: 'Non authentifié.' }
-
-    const entity = await getEntityByUserId(supabase, user.id)
-    if (!entity) return { ok: false as const, error: 'Profil introuvable.' }
-
-    const ext = (file.name.split('.').pop() || 'bin').toLowerCase().replace(/[^a-z0-9]/g, '') || 'bin'
-    const path = `${user.id}/${crypto.randomUUID()}.${ext}`
-
-    const { error: uploadError } = await supabase.storage
-      .from('product-files')
-      .upload(path, file, { contentType: file.type || 'application/octet-stream' })
-
-    if (uploadError) {
-      console.error('[uploadEntityFileAction]', uploadError)
-      return { ok: false as const, error: "Erreur lors de l'envoi du fichier." }
-    }
-
-    const created = await createEntityFile(supabase, {
-      entity_id: entity.id,
-      name: file.name,
-      storage_path: path,
-      mime_type: file.type || null,
-      size_bytes: file.size,
-    })
-
-    const dto: EntityFileDto = {
-      id: created.id,
-      name: created.name,
-      mime_type: created.mime_type,
-      size_bytes: created.size_bytes,
-      created_at: created.created_at,
-    }
-    return { ok: true as const, file: dto }
-  } catch (err) {
-    console.error('[uploadEntityFileAction]', err)
-    return { ok: false as const, error: "Erreur lors de l'enregistrement du fichier." }
   }
 }
 

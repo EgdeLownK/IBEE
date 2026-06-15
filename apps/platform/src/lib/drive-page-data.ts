@@ -1,23 +1,20 @@
 import 'server-only'
 
-import { listEntityFiles } from '@ibee/supabase'
-import { buildAccountShellData, type ProjectAccount } from '@/lib/account-shell-data'
+import {
+  getDrivePreviewKind,
+  DRIVE_QUOTA_BYTES,
+  DRIVE_QUOTA_GB,
+} from '@/lib/drive-file-policy'
+import {
+  listEntityFiles,
+  listEntityFileIdsLinkedToProducts,
+  listAllEntityFolders,
+  sumEntityFilesBytes,
+  sumUserDriveBytes,
+} from '@ibee/supabase'
+import { buildAccountShellData } from '@/lib/account-shell-data'
 import { getDashboardContext, type DashboardContext } from '@/lib/dashboard-context'
-import type {
-  DriveFileRow,
-  DriveFolder,
-  DrivePageData,
-  DriveProfile,
-} from '@/lib/drive-data'
-
-const ACCOUNT_QUOTA_GB = 50
-
-const MOCK_FOLDERS: DriveFolder[] = [
-  { name: 'Photos clients', count: 142 },
-  { name: 'Factures 2025', count: 38 },
-  { name: 'Contrats', count: 12 },
-  { name: 'Branding', count: 24 },
-]
+import type { DriveFileRow, DriveFolderRow, DrivePageData, DriveProfile, DriveUploadTarget } from '@/lib/drive-data'
 
 function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} o`
@@ -40,6 +37,10 @@ function formatRelativeDate(iso: string): string {
   return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
 }
 
+function isDemoProfileId(id: string): boolean {
+  return id.startsWith('demo-project-')
+}
+
 export async function loadDrivePageData(): Promise<DrivePageData | null> {
   const ctx = await getDashboardContext()
   if (!ctx) return null
@@ -48,81 +49,82 @@ export async function loadDrivePageData(): Promise<DrivePageData | null> {
 
 export async function loadDrivePageDataFromContext(ctx: DashboardContext): Promise<DrivePageData> {
   const shell = buildAccountShellData(ctx.user, ctx.entity)
-  const { supabase, entity } = ctx
+  const { supabase, entity, user } = ctx
 
-  const files = await listEntityFiles(supabase, entity.id)
-  const usedBytes = files.reduce((sum, file) => sum + file.size_bytes, 0)
-  const usedGbReal = usedBytes / 1_000_000_000
+  const [files, folders, linkedIds, accountUsedBytes] = await Promise.all([
+    listEntityFiles(supabase, entity.id),
+    listAllEntityFolders(supabase, entity.id),
+    listEntityFileIdsLinkedToProducts(supabase, entity.id),
+    sumUserDriveBytes(supabase, user.id),
+  ])
 
-  const profiles: DriveProfile[] = shell.projectAccounts.map((project, index) => {
-    const isPrimary = project.id === entity.id
-    const mockUsed = [8.4, 5.1, 3.2][index] ?? 2.4
-    const mockFiles = [216, 132, 74][index] ?? 48
-    return {
-      id: project.id,
-      name: project.name,
-      role: project.role,
-      avatarUrl: project.avatarUrl,
-      usedGb: isPrimary && usedGbReal > 0 ? usedGbReal : mockUsed,
-      fileCount: isPrimary ? files.length || mockFiles : mockFiles,
-      color: project.color,
-    }
-  })
+  const profileColor =
+    shell.projectAccounts.find((p) => p.id === entity.id)?.color ?? 'var(--color-accent)'
 
-  const primaryProfile = profiles.find((p) => p.id === entity.id) ?? profiles[0]
-  const profileColor = primaryProfile.color
+  const profiles: DriveProfile[] = await Promise.all(
+    shell.projectAccounts.map(async (project) => {
+      const isDemo = isDemoProfileId(project.id)
+      const isPrimary = project.id === entity.id
+      let usedBytes = 0
+      let fileCount = 0
 
-  const realRecent: DriveFileRow[] = files.slice(0, 8).map((file) => ({
+      if (!isDemo && isPrimary) {
+        usedBytes = await sumEntityFilesBytes(supabase, project.id)
+        fileCount = files.length
+      }
+
+      return {
+        id: project.id,
+        name: project.name,
+        role: project.role,
+        avatarUrl: project.avatarUrl,
+        usedGb: usedBytes / 1_000_000_000,
+        fileCount,
+        color: project.color,
+      }
+    }),
+  )
+
+  const folderRows: DriveFolderRow[] = folders.map((folder) => ({
+    id: folder.id,
+    name: folder.name,
+    parentId: folder.parent_id,
+    fileCount: files.filter((file) => file.folder_id === folder.id).length,
+    subfolderCount: folders.filter((child) => child.parent_id === folder.id).length,
+  }))
+
+  const driveFiles: DriveFileRow[] = files.map((file) => ({
     id: file.id,
     name: file.name,
+    mimeType: file.mime_type,
+    previewKind: getDrivePreviewKind(file.mime_type, file.name),
     profileName: entity.display_name,
     profileColor,
+    profileId: entity.id,
+    folderId: file.folder_id,
     sizeLabel: formatFileSize(file.size_bytes),
     modifiedLabel: formatRelativeDate(file.created_at),
+    linkedToProduct: linkedIds.has(file.id),
   }))
 
-  const crossProfileRecent = buildCrossProfileRecent(shell.projectAccounts, entity.display_name, realRecent)
+  const uploadTargets: DriveUploadTarget[] = shell.projectAccounts
+    .filter((project) => !isDemoProfileId(project.id))
+    .map((project) => ({
+      entityId: project.id,
+      name: project.name,
+      isDemo: false,
+    }))
 
-  const folders = MOCK_FOLDERS.map((folder) => ({
-    ...folder,
-    count: files.length > 0 ? Math.max(1, Math.round(folder.count * 0.15)) : folder.count,
-  }))
-
-  const totalUsedGb = profiles.reduce((sum, profile) => sum + profile.usedGb, 0)
+  const totalUsedGb = accountUsedBytes / 1_000_000_000
 
   return {
+    entityId: entity.id,
     profiles,
-    recentFiles: crossProfileRecent,
-    folders,
-    quotaGb: ACCOUNT_QUOTA_GB,
+    folders: folderRows,
+    files: driveFiles,
+    uploadTargets,
+    quotaGb: DRIVE_QUOTA_GB,
     totalUsedGb,
+    quotaFull: accountUsedBytes >= DRIVE_QUOTA_BYTES,
   }
-}
-
-function buildCrossProfileRecent(
-  projects: ProjectAccount[],
-  primaryName: string,
-  realRecent: DriveFileRow[]
-): DriveFileRow[] {
-  if (realRecent.length > 0) return realRecent
-
-  const samples = [
-    { name: 'Contrat bail studio.pdf', profileIndex: 0, sizeLabel: '2,4 Mo', modifiedLabel: 'il y a 1 j' },
-    { name: 'Packaging cire mate.ai', profileIndex: 1, sizeLabel: '18 Mo', modifiedLabel: 'il y a 2 j' },
-    { name: 'Support formation J1.pptx', profileIndex: 2, sizeLabel: '9,7 Mo', modifiedLabel: 'il y a 3 j' },
-    { name: 'Photos campagne automne.zip', profileIndex: 1, sizeLabel: '240 Mo', modifiedLabel: 'il y a 5 j' },
-    { name: 'Planning équipe.xlsx', profileIndex: 0, sizeLabel: '82 Ko', modifiedLabel: '21 oct.' },
-  ]
-
-  return samples.map((sample, index) => {
-    const project = projects[sample.profileIndex] ?? projects[0]
-    return {
-      id: `mock-recent-${index}`,
-      name: sample.name,
-      profileName: project?.name ?? primaryName,
-      profileColor: project?.color ?? 'var(--color-accent)',
-      sizeLabel: sample.sizeLabel,
-      modifiedLabel: sample.modifiedLabel,
-    }
-  })
 }

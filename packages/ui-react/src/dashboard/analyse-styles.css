@@ -25,6 +25,135 @@
   animation: dash-skeleton-pulse 1.4s ease-in-out infinite;
 }
 
+/* Skeletons chargement (route + changement scope/période) */
+
+.anal-skeleton-line,
+.anal-skeleton-scope-tab,
+.anal-skeleton-bar__fill {
+  background: color-mix(in srgb, var(--color-neutral-300) 55%, var(--color-surface));
+  border-radius: 8px;
+  animation: dash-skeleton-pulse 1.4s ease-in-out infinite;
+}
+
+.anal-skeleton-line--xs {
+  height: 10px;
+  width: 72%;
+  margin: 0 auto;
+}
+
+.anal-skeleton-line--sm {
+  height: 12px;
+  width: 42%;
+}
+
+.anal-skeleton-line--md {
+  height: 14px;
+  width: 58%;
+  margin-top: 10px;
+}
+
+.anal-skeleton-line--lg {
+  height: 30px;
+  width: 48%;
+  margin-top: 8px;
+}
+
+.anal-skeleton-line--title {
+  height: 16px;
+  width: 180px;
+  margin-bottom: 14px;
+}
+
+.anal-skeleton-line--page-title {
+  height: 34px;
+  width: min(280px, 55vw);
+}
+
+.anal-skeleton-line--export {
+  height: 34px;
+  width: 108px;
+  margin-left: auto;
+}
+
+.anal-skeleton-line--period {
+  height: 30px;
+  width: 168px;
+}
+
+.anal-skeleton-line--nav {
+  height: 34px;
+  width: 34px;
+  border-radius: 999px;
+}
+
+.anal-skeleton-line--range {
+  height: 16px;
+  width: min(220px, 42vw);
+}
+
+.anal-skeleton-line--rank {
+  width: 18px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.anal-skeleton-line--rank-main {
+  flex: 1;
+  height: 14px;
+}
+
+.anal-skeleton-line--rank-side {
+  width: 52px;
+  height: 28px;
+  flex-shrink: 0;
+}
+
+.anal-skeleton-kpi {
+  pointer-events: none;
+  min-height: 118px;
+}
+
+.anal-skeleton-chart {
+  pointer-events: none;
+}
+
+.anal-skeleton-chart__bars {
+  min-height: 180px;
+  align-items: end;
+}
+
+.anal-skeleton-bar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-height: 160px;
+}
+
+.anal-skeleton-bar__fill {
+  width: 100%;
+  max-width: 42px;
+  min-height: 28px;
+  border-radius: 10px 10px 4px 4px;
+}
+
+.anal-skeleton-scope-tab {
+  height: 36px;
+  width: 108px;
+  border-radius: 999px;
+}
+
+.anal-skeleton-card {
+  pointer-events: none;
+}
+
+.anal-skeleton-ranking-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+}
+
 .anal-head__error {
   margin: -8px 0 12px;
   font-size: 13px;

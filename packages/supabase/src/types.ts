@@ -765,6 +765,7 @@ export type Database = {
         Row: {
           created_at: string
           entity_id: string
+          folder_id: string | null
           id: string
           mime_type: string | null
           name: string
@@ -774,6 +775,7 @@ export type Database = {
         Insert: {
           created_at?: string
           entity_id: string
+          folder_id?: string | null
           id?: string
           mime_type?: string | null
           name: string
@@ -783,6 +785,7 @@ export type Database = {
         Update: {
           created_at?: string
           entity_id?: string
+          folder_id?: string | null
           id?: string
           mime_type?: string | null
           name?: string
@@ -803,6 +806,62 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "publication_comments_with_author"
             referencedColumns: ["author_entity_id"]
+          },
+          {
+            foreignKeyName: "entity_files_folder_id_fkey"
+            columns: ["folder_id"]
+            isOneToOne: false
+            referencedRelation: "entity_folders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      entity_folders: {
+        Row: {
+          created_at: string
+          entity_id: string
+          id: string
+          name: string
+          parent_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          entity_id: string
+          id?: string
+          name: string
+          parent_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          entity_id?: string
+          id?: string
+          name?: string
+          parent_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entity_folders_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entity"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entity_folders_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "publication_comments_with_author"
+            referencedColumns: ["author_entity_id"]
+          },
+          {
+            foreignKeyName: "entity_folders_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "entity_folders"
+            referencedColumns: ["id"]
           },
         ]
       }

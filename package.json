@@ -25,6 +25,7 @@
       "supabase",
       "esbuild",
       "sharp",
+      "ffmpeg-static",
       "workerd",
       "unrs-resolver"
     ]

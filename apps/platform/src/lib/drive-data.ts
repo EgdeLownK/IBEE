@@ -1,3 +1,5 @@
+import type { DrivePreviewKind } from '@/lib/drive-file-policy'
+
 export type DriveProfile = {
   id: string
   name: string
@@ -8,26 +10,43 @@ export type DriveProfile = {
   color: string
 }
 
+export type DriveFolderRow = {
+  id: string
+  name: string
+  parentId: string | null
+  fileCount: number
+  subfolderCount: number
+}
+
+export type DriveUploadTarget = {
+  entityId: string
+  name: string
+  isDemo: boolean
+}
+
 export type DriveFileRow = {
   id: string
   name: string
+  mimeType: string | null
+  previewKind: DrivePreviewKind
   profileName: string
   profileColor: string
+  profileId: string
+  folderId: string | null
   sizeLabel: string
   modifiedLabel: string
-}
-
-export type DriveFolder = {
-  name: string
-  count: number
+  linkedToProduct: boolean
 }
 
 export type DrivePageData = {
+  entityId: string
   profiles: DriveProfile[]
-  recentFiles: DriveFileRow[]
-  folders: DriveFolder[]
+  folders: DriveFolderRow[]
+  files: DriveFileRow[]
+  uploadTargets: DriveUploadTarget[]
   quotaGb: number
   totalUsedGb: number
+  quotaFull: boolean
 }
 
 function formatGo(gb: number): string {

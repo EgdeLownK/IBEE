@@ -6,8 +6,9 @@ import { toast } from 'sonner'
 import { PHYSICAL_CONDITIONS } from '@ibee/shared'
 import {
   listEntityFilesAction,
-  uploadEntityFileAction,
-} from '@/app/dashboard/site/product-actions'
+} from '@/lib/entity-file-actions'
+import { DRIVE_MAX_FILE_MB } from '@/lib/drive-file-policy'
+import { uploadDriveFile } from '@/lib/drive-upload-client'
 import type { ProductCreateFormState } from '../types'
 import { formatFileSize, nextId } from '../utils'
 
@@ -44,21 +45,24 @@ export function StepTypeSpecific({ form, updateForm, onChange }: Props) {
 
   async function handleFileUpload(file: File) {
     updateForm((prev) => ({ ...prev, digitalFileUploading: true }))
-    const fd = new FormData()
-    fd.append('file', file)
-    const result = await uploadEntityFileAction(fd)
-    if (result.ok) {
-      updateForm((prev) => ({
-        ...prev,
-        digitalFileUploading: false,
-        digitalFileId: result.file.id,
-        digitalFile: result.file,
-        entityFiles: [result.file, ...prev.entityFiles.filter((f) => f.id !== result.file.id)],
-      }))
-    } else {
+    try {
+      const result = await uploadDriveFile(file)
+      if (result.ok) {
+        updateForm((prev) => ({
+          ...prev,
+          digitalFileUploading: false,
+          digitalFileId: result.file.id,
+          digitalFile: result.file,
+          entityFiles: [result.file, ...prev.entityFiles.filter((f) => f.id !== result.file.id)],
+        }))
+      } else {
+        updateForm((prev) => ({ ...prev, digitalFileUploading: false }))
+        toast.error(result.error)
+        onChange({ fieldErrors: { ...form.fieldErrors, digital_file_id: result.error } })
+      }
+    } catch {
       updateForm((prev) => ({ ...prev, digitalFileUploading: false }))
-      toast.error(result.error)
-      onChange({ fieldErrors: { ...form.fieldErrors, digital_file_id: result.error } })
+      toast.error('Erreur lors de la préparation du fichier.')
     }
   }
 
@@ -125,7 +129,8 @@ export function StepTypeSpecific({ form, updateForm, onChange }: Props) {
             }}
           />
           <p className="pco__hint-block">
-            Jusqu&apos;à 200 Mo. Stocké en privé — livré à l&apos;acheteur après l&apos;achat.
+            Jusqu&apos;à {DRIVE_MAX_FILE_MB} Mo. Vidéos lourdes envoyées en direct puis compressées côté
+            serveur. Stocké en privé — livré à l&apos;acheteur après l&apos;achat.
           </p>
           {err('digital_file_id') ? <p className="pco__error">{err('digital_file_id')}</p> : null}
         </div>

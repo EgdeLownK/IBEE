@@ -17,7 +17,7 @@ function createMockClient(response: MockResponse) {
   const chainable: Record<string, unknown> = {
     then: (resolve: (value: MockResponse) => unknown) => resolve(response),
   }
-  for (const m of ['select', 'eq', 'order', 'insert']) {
+  for (const m of ['select', 'eq', 'order', 'insert', 'is', 'in']) {
     chainable[m] = vi.fn().mockReturnValue(chainable)
   }
   chainable.maybeSingle = vi.fn().mockResolvedValue(response)
@@ -31,6 +31,7 @@ function createMockClient(response: MockResponse) {
 const FILE_ROW = {
   id: 'f1',
   entity_id: 'e1',
+  folder_id: null,
   name: 'guide.pdf',
   storage_path: 'u1/123-guide.pdf',
   mime_type: 'application/pdf',
@@ -57,6 +58,18 @@ describe('listEntityFiles', () => {
     expect(fromMock).toHaveBeenCalledWith('entity_files')
     expect(chainable.eq).toHaveBeenCalledWith('entity_id', 'e1')
     expect(chainable.order).toHaveBeenCalledWith('created_at', { ascending: false })
+  })
+
+  it('filters root files when folderId is null', async () => {
+    const { client, chainable } = createMockClient({ data: [], error: null })
+    await listEntityFiles(client, 'e1', { folderId: null })
+    expect(chainable.is).toHaveBeenCalledWith('folder_id', null)
+  })
+
+  it('filters by folder when folderId is provided', async () => {
+    const { client, chainable } = createMockClient({ data: [], error: null })
+    await listEntityFiles(client, 'e1', { folderId: 'folder-1' })
+    expect(chainable.eq).toHaveBeenCalledWith('folder_id', 'folder-1')
   })
 
   it('throws on error', async () => {

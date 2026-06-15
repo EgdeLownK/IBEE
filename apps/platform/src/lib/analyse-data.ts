@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import {
   fetchAnalyseScopeRaw,
   fetchAnalyseRankingChartBuckets,
+  type AnalyseWebScopeRaw,
 } from '@ibee/supabase'
 import type { Database } from '@ibee/supabase'
 import type { AnalyseBarPoint, AnalysePeriod, PeriodWindow } from '@/lib/analyse-period'
@@ -76,11 +77,6 @@ function asNumber(value: unknown, fallback = 0) {
   return Number.isFinite(n) ? n : fallback
 }
 
-function asStringArray(value: unknown): string[] {
-  if (!Array.isArray(value)) return []
-  return value.filter((item): item is string => typeof item === 'string')
-}
-
 function parseBucketRows(value: unknown): { bucket_index: number; value: number }[] {
   if (!Array.isArray(value)) return []
   return value.map((row) => {
@@ -90,6 +86,28 @@ function parseBucketRows(value: unknown): { bucket_index: number; value: number 
       value: asNumber(item.value),
     }
   })
+}
+
+function asAnalyseWebScopeRaw(raw: Record<string, unknown>): AnalyseWebScopeRaw {
+  const sectionRows = Array.isArray(raw.section_counts) ? raw.section_counts : []
+  return {
+    visitors_cur: asNumber(raw.visitors_cur),
+    visitors_prev: asNumber(raw.visitors_prev),
+    members_cur: asNumber(raw.members_cur),
+    members_prev: asNumber(raw.members_prev),
+    unsubscribed_cur: asNumber(raw.unsubscribed_cur),
+    unsubscribed_prev: asNumber(raw.unsubscribed_prev),
+    section_counts: sectionRows.map((row) => {
+      const item = row as { section_type?: string; count?: unknown }
+      return {
+        section_type: String(item.section_type ?? ''),
+        count: asNumber(item.count),
+      }
+    }),
+    visitor_buckets: parseBucketRows(raw.visitor_buckets),
+    unsubscribed_buckets: parseBucketRows(raw.unsubscribed_buckets),
+    member_buckets: parseBucketRows(raw.member_buckets),
+  }
 }
 
 function computeDelta(current: number, previous: number) {
@@ -173,7 +191,7 @@ async function fetchScopeRaw(
 }
 
 function buildWebPayload(
-  raw: Record<string, unknown>,
+  raw: AnalyseWebScopeRaw,
   period: AnalysePeriod,
   offset: number,
   rankingLimit: number
@@ -187,14 +205,12 @@ function buildWebPayload(
   const unsubscribedCur = asNumber(raw.unsubscribed_cur)
   const unsubscribedPrev = asNumber(raw.unsubscribed_prev)
 
-  const sectionRows = Array.isArray(raw.section_counts) ? raw.section_counts : []
-  const sectionEntries = sectionRows.map((row) => {
-    const item = row as { section_type?: string; count?: unknown }
-    const id = String(item.section_type ?? '')
+  const sectionEntries = raw.section_counts.map((row) => {
+    const id = row.section_type
     return {
       id: `section-${id}`,
       label: SECTION_LABELS[id] ?? id,
-      count: asNumber(item.count),
+      count: row.count,
     }
   })
   const sectionTotal = sectionEntries.reduce((sum, entry) => sum + entry.count, 0)
@@ -209,12 +225,15 @@ function buildWebPayload(
   const chartSeries: Record<string, AnalyseBarPoint[]> = {
     'kpi:visitors': mergeBucketRows(
       buildBucketLabels(period, current),
-      parseBucketRows(raw.visitor_buckets)
+      raw.visitor_buckets
     ),
-    'kpi:members': bucketTimestamps(asStringArray(raw.follow_timestamps), period, current),
+    'kpi:members': mergeBucketRows(
+      buildBucketLabels(period, current),
+      raw.member_buckets
+    ),
     'kpi:unsubscribed': mergeBucketRows(
       buildBucketLabels(period, current),
-      parseBucketRows(raw.unsubscribed_buckets)
+      raw.unsubscribed_buckets
     ),
   }
 
@@ -619,7 +638,7 @@ export async function loadAnalyseScopeData(
 
   switch (opts.scope) {
     case 'web':
-      return buildWebPayload(raw, opts.period, opts.offset, rankingLimit)
+      return buildWebPayload(asAnalyseWebScopeRaw(raw), opts.period, opts.offset, rankingLimit)
     case 'service':
       return buildServicePayload(raw, opts.period, opts.offset, rankingLimit)
     case 'shop':
@@ -629,7 +648,7 @@ export async function loadAnalyseScopeData(
     case 'news':
       return buildNewsPayload(raw, opts.period, opts.offset, rankingLimit)
     default:
-      return buildWebPayload(raw, opts.period, opts.offset, rankingLimit)
+      return buildWebPayload(asAnalyseWebScopeRaw(raw), opts.period, opts.offset, rankingLimit)
   }
 }
 

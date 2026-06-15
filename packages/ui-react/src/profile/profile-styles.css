@@ -2190,4 +2190,29 @@
   cursor: default;
 }
 
+.profile-hero-skeleton {
+  display: flex;
+  gap: 16px;
+  align-items: flex-end;
+  padding: 0 20px;
+  margin-top: -40px;
+  margin-bottom: 20px;
+}
+
+.profile-hero-skeleton__text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 10px;
+  padding-bottom: 8px;
+}
+
+.profile-tabs-skeleton {
+  display: flex;
+  gap: 8px;
+  padding: 0 16px 16px;
+  overflow: hidden;
+  flex-wrap: wrap;
+}
+
 @import "./detail-styles.css";

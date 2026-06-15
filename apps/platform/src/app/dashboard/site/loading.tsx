@@ -1,5 +1,5 @@
-import { DashboardPageSkeleton } from '@/components/dashboard/DashboardPageSkeleton'
+import { ProfileStudioPageSkeleton } from '@/components/profile/ProfileStudioPageSkeleton'
 
 export default function SiteLoading() {
-  return <DashboardPageSkeleton />
+  return <ProfileStudioPageSkeleton />
 }

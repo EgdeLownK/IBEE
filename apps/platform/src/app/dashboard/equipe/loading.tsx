@@ -1,5 +1,5 @@
-import { DashboardPageSkeleton } from '@/components/dashboard/DashboardPageSkeleton'
+import { TeamPageSkeleton } from '@/components/dashboard/team/TeamPageSkeleton'
 
 export default function EquipeLoading() {
-  return <DashboardPageSkeleton />
+  return <TeamPageSkeleton />
 }

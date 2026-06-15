@@ -159,6 +159,20 @@ export type AnalyseScopeRpc = 'web' | 'service' | 'shop' | 'event' | 'news'
 
 export type AnalyseBucketRow = { bucket_index: number; value: number }
 
+/** Payload RPC `get_analyse_web_data` — buckets agrégés côté SQL (pas de timestamps bruts). */
+export type AnalyseWebScopeRaw = {
+  visitors_cur: number
+  visitors_prev: number
+  members_cur: number
+  members_prev: number
+  unsubscribed_cur: number
+  unsubscribed_prev: number
+  section_counts: { section_type: string; count: number }[]
+  visitor_buckets: AnalyseBucketRow[]
+  unsubscribed_buckets: AnalyseBucketRow[]
+  member_buckets: AnalyseBucketRow[]
+}
+
 export async function fetchAnalyseScopeRaw(
   client: Client,
   entityId: string,

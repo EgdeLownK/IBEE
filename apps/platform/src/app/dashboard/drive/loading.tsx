@@ -1,5 +1,5 @@
-import { DashboardPageSkeleton } from '@/components/dashboard/DashboardPageSkeleton'
+import { DrivePageSkeleton } from '@/components/dashboard/drive/DrivePageSkeleton'
 
 export default function DriveLoading() {
-  return <DashboardPageSkeleton />
+  return <DrivePageSkeleton />
 }

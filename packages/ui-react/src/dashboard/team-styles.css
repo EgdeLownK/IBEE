@@ -614,4 +614,21 @@
   line-height: 1.5;
 }
 
+.team-skeleton-row {
+  display: grid;
+  grid-template-columns: 44px 1fr auto auto;
+  gap: 16px;
+  align-items: center;
+  padding: 14px 0;
+  border-top: 1px solid var(--color-border-soft);
+}
 
+.team-skeleton-row:first-of-type {
+  border-top: none;
+}
+
+.team-skeleton-row__main {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}

@@ -29,6 +29,22 @@ export async function getEntityBySlug(
   return data
 }
 
+export async function getEntityOwnedByUser(
+  client: SupabaseClient<Database>,
+  entityId: string,
+  userId: string,
+) {
+  const { data, error } = await client
+    .from('entity')
+    .select('*')
+    .eq('id', entityId)
+    .eq('user_id', userId)
+    .maybeSingle()
+
+  if (error) throw error
+  return data
+}
+
 export async function getEntityMenuSections(
   client: SupabaseClient<Database>,
   entityId: string

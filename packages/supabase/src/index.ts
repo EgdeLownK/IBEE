@@ -1,5 +1,5 @@
 export { createClient } from './client'
-export { getEntityByUserId, getEntityBySlug, getEntityMenuSections, getEntityHomeWidgets, getEntityFaq } from './helpers'
+export { getEntityByUserId, getEntityBySlug, getEntityOwnedByUser, getEntityMenuSections, getEntityHomeWidgets, getEntityFaq } from './helpers'
 export {
   MENU_SECTION_TYPES,
   PROFILE_TAB_TYPES,
@@ -56,7 +56,7 @@ export {
   groupCountBySection,
   computeDelta,
 } from './analytics'
-export type { AnalyticsEventRow, AnalyseScopeRpc, AnalyseBucketRow } from './analytics'
+export type { AnalyticsEventRow, AnalyseScopeRpc, AnalyseBucketRow, AnalyseWebScopeRaw } from './analytics'
 export {
   ensureDefaultTeamRoles,
   listTeamRoles,
@@ -137,7 +137,23 @@ export {
   listEntityFiles,
   getEntityFileById,
   createEntityFile,
+  sumEntityFilesBytes,
+  listEntityFileIdsLinkedToProducts,
+  isEntityFileLinkedToProduct,
+  deleteEntityFileRecord,
+  updateEntityFile,
 } from './entity-files'
+
+export {
+  listEntityFolders,
+  listAllEntityFolders,
+  getEntityFolderById,
+  createEntityFolder,
+  updateEntityFolder,
+  deleteEntityFolder,
+  countEntityFolderChildren,
+  sumUserDriveBytes,
+} from './entity-folders'
 
 export {
   getMyWishlist,
