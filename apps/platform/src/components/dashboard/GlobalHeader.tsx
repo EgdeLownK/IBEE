@@ -19,6 +19,7 @@ import {
   markNotificationReadAction,
 } from '@/app/dashboard/notification-actions'
 import { useAccountContext } from './AccountContext'
+import { useOptionalDashboardNavigation } from './DashboardNavigationContext'
 import { toggleAppDrawer } from './MainRail'
 import { getNavZone, shouldShowSidebar } from '@/lib/nav-zone'
 
@@ -40,8 +41,6 @@ export type HeaderNotification = {
 interface Props {
   webUrl: string
   webProfileUrl?: string
-  unreadCount?: number
-  notifications?: HeaderNotification[]
   isAuthenticated?: boolean
   loginUrl?: string
 }
@@ -99,13 +98,12 @@ function personalInitial(name: string) {
 export function GlobalHeader({
   webUrl,
   webProfileUrl = '/',
-  unreadCount: initialUnread = 0,
-  notifications = [],
   isAuthenticated = true,
   loginUrl = '/login',
 }: Props) {
   const router = useRouter()
   const pathname = usePathname() ?? '/'
+  const dashboardNav = useOptionalDashboardNavigation()
   const {
     personalAccount,
     projectAccounts,
@@ -120,7 +118,8 @@ export function GlobalHeader({
   const showSidebar = isAuthenticated && shouldShowSidebar(getNavZone(pathname, isPersonalMode))
 
   const [clock, setClock] = useState('--:--')
-  const [unreadCount, setUnreadCount] = useState(initialUnread)
+  const [unreadCount, setUnreadCount] = useState(0)
+  const [notifications, setNotifications] = useState<HeaderNotification[]>([])
   const [pending, startTransition] = useTransition()
 
   const avatarMenuId = 'header-avatar-menu'
@@ -129,8 +128,23 @@ export function GlobalHeader({
   const personalInitials = personalInitial(personalAccount.displayName)
 
   useEffect(() => {
-    setUnreadCount(initialUnread)
-  }, [initialUnread])
+    if (!isAuthenticated) return
+
+    let cancelled = false
+
+    void fetch('/api/dashboard/notifications')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: { unreadCount?: number; notifications?: HeaderNotification[] } | null) => {
+        if (cancelled || !data) return
+        setUnreadCount(data.unreadCount ?? 0)
+        setNotifications(data.notifications ?? [])
+      })
+      .catch(() => {})
+
+    return () => {
+      cancelled = true
+    }
+  }, [isAuthenticated])
 
   useEffect(() => {
     function tick() {
@@ -147,20 +161,35 @@ export function GlobalHeader({
   function handleMarkAllRead() {
     startTransition(async () => {
       const res = await markAllNotificationsReadAction()
-      if (res.ok) setUnreadCount(0)
+      if (res.ok) {
+        setUnreadCount(0)
+        setNotifications((prev) =>
+          prev.map((n) => ({ ...n, read_at: n.read_at ?? new Date().toISOString() }))
+        )
+      }
     })
   }
 
   function handleNotifClick(id: string) {
     startTransition(async () => {
-      await markNotificationReadAction(id)
-      setUnreadCount((c) => Math.max(0, c - 1))
+      const res = await markNotificationReadAction(id)
+      if (res.ok) {
+        setUnreadCount((c) => Math.max(0, c - 1))
+        setNotifications((prev) =>
+          prev.map((n) =>
+            n.id === id ? { ...n, read_at: n.read_at ?? new Date().toISOString() } : n
+          )
+        )
+      }
     })
   }
 
   function handleMenuNavigate(href: string, switchToPersonal?: boolean) {
     if (switchToPersonal) setPersonalMode()
-    if (href.startsWith('/')) router.push(href)
+    if (href.startsWith('/')) {
+      dashboardNav?.startNavigation()
+      router.push(href)
+    }
   }
 
   return (

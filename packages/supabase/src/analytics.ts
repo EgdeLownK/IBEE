@@ -73,6 +73,188 @@ export async function listAnalyticsEvents(
   return (data ?? []) as AnalyticsEventRow[]
 }
 
+type AnalyticsWindowFilter = {
+  eventTypes: AnalyticsEventType[]
+  from: string
+  to: string
+  sectionType?: MenuSectionType | null
+  resourceId?: string | null
+}
+
+export async function countEventsInWindow(
+  client: Client,
+  entityId: string,
+  opts: AnalyticsWindowFilter
+): Promise<number> {
+  const { data, error } = await client.rpc('count_analytics_events', {
+    p_entity_id: entityId,
+    p_event_types: opts.eventTypes,
+    p_from: opts.from,
+    p_to: opts.to,
+    p_section_type: opts.sectionType ?? undefined,
+    p_resource_id: opts.resourceId ?? undefined,
+  })
+  if (error) throw error
+  return Number(data ?? 0)
+}
+
+export async function countDistinctVisitorsInWindow(
+  client: Client,
+  entityId: string,
+  opts: AnalyticsWindowFilter
+): Promise<number> {
+  const { data, error } = await client.rpc('count_analytics_distinct_visitors', {
+    p_entity_id: entityId,
+    p_event_types: opts.eventTypes,
+    p_from: opts.from,
+    p_to: opts.to,
+    p_section_type: opts.sectionType ?? undefined,
+    p_resource_id: opts.resourceId ?? undefined,
+  })
+  if (error) throw error
+  return Number(data ?? 0)
+}
+
+export async function groupCountBySectionInWindow(
+  client: Client,
+  entityId: string,
+  opts: Pick<AnalyticsWindowFilter, 'eventTypes' | 'from' | 'to'>
+) {
+  const { data, error } = await client.rpc('group_analytics_by_section', {
+    p_entity_id: entityId,
+    p_event_types: opts.eventTypes,
+    p_from: opts.from,
+    p_to: opts.to,
+  })
+  if (error) throw error
+  const map = new Map<string, number>()
+  for (const row of data ?? []) {
+    if (row.section_type) map.set(row.section_type, Number(row.event_count))
+  }
+  return map
+}
+
+export async function groupCountByResourceInWindow(
+  client: Client,
+  entityId: string,
+  opts: Pick<AnalyticsWindowFilter, 'eventTypes' | 'from' | 'to'>
+) {
+  const { data, error } = await client.rpc('group_analytics_by_resource', {
+    p_entity_id: entityId,
+    p_event_types: opts.eventTypes,
+    p_from: opts.from,
+    p_to: opts.to,
+  })
+  if (error) throw error
+  const map = new Map<string, number>()
+  for (const row of data ?? []) {
+    if (row.resource_id) map.set(row.resource_id, Number(row.event_count))
+  }
+  return map
+}
+
+export type AnalyticsBucketPeriod = 'week' | 'month' | 'year'
+
+export type AnalyseScopeRpc = 'web' | 'service' | 'shop' | 'event' | 'news'
+
+export type AnalyseBucketRow = { bucket_index: number; value: number }
+
+export async function fetchAnalyseScopeRaw(
+  client: Client,
+  entityId: string,
+  opts: {
+    scope: AnalyseScopeRpc
+    from: string
+    to: string
+    prevFrom: string
+    prevTo: string
+    period: AnalyticsBucketPeriod
+  }
+): Promise<Record<string, unknown>> {
+  const { data, error } = await client.rpc('get_analyse_scope_data', {
+    p_entity_id: entityId,
+    p_scope: opts.scope,
+    p_from: opts.from,
+    p_to: opts.to,
+    p_prev_from: opts.prevFrom,
+    p_prev_to: opts.prevTo,
+    p_period: opts.period,
+  })
+  if (error) throw error
+  return (data ?? {}) as Record<string, unknown>
+}
+
+export async function fetchAnalyseRankingChartBuckets(
+  client: Client,
+  entityId: string,
+  opts: {
+    scope: 'web' | 'shop' | 'news'
+    from: string
+    to: string
+    period: AnalyticsBucketPeriod
+    sectionType?: MenuSectionType | null
+    resourceId?: string | null
+  }
+): Promise<AnalyseBucketRow[]> {
+  const { data, error } = await client.rpc('get_analyse_ranking_chart_buckets', {
+    p_entity_id: entityId,
+    p_scope: opts.scope,
+    p_from: opts.from,
+    p_to: opts.to,
+    p_period: opts.period,
+    p_section_type: opts.sectionType ?? undefined,
+    p_resource_id: opts.resourceId ?? undefined,
+  })
+  if (error) throw error
+  const rows = (data ?? []) as { bucket_index: number; value: number }[]
+  return rows.map((row) => ({
+    bucket_index: Number(row.bucket_index),
+    value: Number(row.value),
+  }))
+}
+
+export async function bucketEventsInWindow(
+  client: Client,
+  entityId: string,
+  opts: AnalyticsWindowFilter & { period: AnalyticsBucketPeriod }
+) {
+  const { data, error } = await client.rpc('bucket_analytics_events', {
+    p_entity_id: entityId,
+    p_event_types: opts.eventTypes,
+    p_from: opts.from,
+    p_to: opts.to,
+    p_period: opts.period,
+    p_section_type: opts.sectionType ?? undefined,
+    p_resource_id: opts.resourceId ?? undefined,
+  })
+  if (error) throw error
+  return (data ?? []).map((row) => ({
+    bucket_index: Number(row.bucket_index),
+    value: Number(row.event_count),
+  }))
+}
+
+export async function bucketDistinctVisitorsInWindow(
+  client: Client,
+  entityId: string,
+  opts: AnalyticsWindowFilter & { period: AnalyticsBucketPeriod }
+) {
+  const { data, error } = await client.rpc('bucket_analytics_distinct_visitors', {
+    p_entity_id: entityId,
+    p_event_types: opts.eventTypes,
+    p_from: opts.from,
+    p_to: opts.to,
+    p_period: opts.period,
+    p_section_type: opts.sectionType ?? undefined,
+    p_resource_id: opts.resourceId ?? undefined,
+  })
+  if (error) throw error
+  return (data ?? []).map((row) => ({
+    bucket_index: Number(row.bucket_index),
+    value: Number(row.event_count),
+  }))
+}
+
 export function countDistinctVisitors(events: AnalyticsEventRow[]) {
   const keys = new Set<string>()
   for (const event of events) {

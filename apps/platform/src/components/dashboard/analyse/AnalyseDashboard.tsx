@@ -1,7 +1,6 @@
 'use client'
 
-import { useRouter, useSearchParams } from 'next/navigation'
-import { useEffect, useMemo, useState, useTransition } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from 'react'
 import type { LucideIcon } from 'lucide-react'
 import {
   Briefcase,
@@ -14,7 +13,17 @@ import {
   ShoppingBag,
   Upload,
 } from 'lucide-react'
-import { getChartColumnCount, getMinPeriodOffset, getPeriodWindow, type AnalysePeriod } from '@/lib/analyse-period'
+import {
+  fetchAnalyseRankingChartAction,
+  fetchAnalyseScopeAction,
+} from '@/app/dashboard/analyse/analyse-actions'
+import {
+  getChartColumnCount,
+  getMinPeriodOffset,
+  getPeriodWindow,
+  type AnalyseBarPoint,
+  type AnalysePeriod,
+} from '@/lib/analyse-period'
 import type { AnalyseScopePayload } from '@/lib/analyse-data'
 
 type Scope = AnalyseScopePayload['scope']
@@ -25,8 +34,10 @@ type ChartSeries = {
 }
 
 type Props = {
+  entityId: string
   accountCreatedAt: string
   data: AnalyseScopePayload
+  initialRankingLimit?: number
 }
 
 const SCOPES: { id: Scope; label: string; Icon: LucideIcon }[] = [
@@ -58,16 +69,119 @@ function seriesKey(series: ChartSeries) {
   return `${series.source}:${series.id}`
 }
 
-export function AnalyseDashboard({ accountCreatedAt, data }: Props) {
-  const router = useRouter()
-  const searchParams = useSearchParams()
+function buildAnalyseQuery(input: {
+  scope: Scope
+  period: AnalysePeriod
+  offset: number
+  rankingLimit: number
+}) {
+  const params = new URLSearchParams()
+  params.set('scope', input.scope)
+  params.set('period', input.period)
+  params.set('offset', String(input.offset))
+  if (input.rankingLimit !== 4) {
+    params.set('rankingLimit', String(input.rankingLimit))
+  }
+  return params.toString()
+}
+
+function scopeCacheKey(input: {
+  scope: Scope
+  period: AnalysePeriod
+  offset: number
+  rankingLimit: number
+}) {
+  return `${input.scope}|${input.period}|${input.offset}|${input.rankingLimit}`
+}
+
+function syncAnalyseUrl(input: {
+  scope: Scope
+  period: AnalysePeriod
+  offset: number
+  rankingLimit: number
+}) {
+  const qs = buildAnalyseQuery(input)
+  window.history.replaceState(null, '', `/dashboard/analyse?${qs}`)
+}
+
+export function AnalyseDashboard({
+  entityId,
+  accountCreatedAt,
+  data: initialData,
+  initialRankingLimit = 4,
+}: Props) {
+  const [data, setData] = useState(initialData)
+  const [rankingLimit, setRankingLimit] = useState(initialRankingLimit)
+  const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
-  const [chartSeries, setChartSeries] = useState<ChartSeries>(() => defaultChartSeries(data))
+  const [rankingChartPending, setRankingChartPending] = useState(false)
+  const [extraCharts, setExtraCharts] = useState<Record<string, AnalyseBarPoint[]>>({})
+  const cacheRef = useRef(new Map<string, AnalyseScopePayload>())
+  const inflightRef = useRef(
+    new Map<string, ReturnType<typeof fetchAnalyseScopeAction>>()
+  )
+  const [chartSeries, setChartSeries] = useState<ChartSeries>(() =>
+    defaultChartSeries(initialData)
+  )
   const [selectedBar, setSelectedBar] = useState<number | null>(null)
+
+  useEffect(() => {
+    cacheRef.current.set(
+      scopeCacheKey({
+        scope: initialData.scope,
+        period: initialData.period,
+        offset: initialData.offset,
+        rankingLimit: initialRankingLimit,
+      }),
+      initialData
+    )
+  }, [initialData, initialRankingLimit])
 
   const scope = data.scope
   const period = data.period
   const periodOffset = data.offset
+
+  const fetchScope = useCallback(
+    (payload: {
+      scope: Scope
+      period: AnalysePeriod
+      offset: number
+      rankingLimit: number
+    }) => {
+      const key = scopeCacheKey(payload)
+      const cached = cacheRef.current.get(key)
+      if (cached) {
+        return Promise.resolve({ ok: true as const, data: cached })
+      }
+
+      const inflight = inflightRef.current.get(key)
+      if (inflight) return inflight
+
+      const promise = fetchAnalyseScopeAction({ entityId, ...payload }).then((result) => {
+        inflightRef.current.delete(key)
+        if (result.ok) cacheRef.current.set(key, result.data)
+        return result
+      })
+      inflightRef.current.set(key, promise)
+      return promise
+    },
+    [entityId]
+  )
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      for (const tab of SCOPES) {
+        if (tab.id === initialData.scope) continue
+        void fetchScope({
+          scope: tab.id,
+          period: initialData.period,
+          offset: 0,
+          rankingLimit: 4,
+        })
+      }
+    }, 500)
+    return () => clearTimeout(timer)
+  }, [entityId, fetchScope, initialData.period, initialData.scope])
 
   const minOffset = useMemo(
     () => getMinPeriodOffset(period, accountCreatedAt),
@@ -75,7 +189,11 @@ export function AnalyseDashboard({ accountCreatedAt, data }: Props) {
   )
 
   const activeSeriesKey = seriesKey(chartSeries)
-  const chartBars = data.chartSeries[activeSeriesKey] ?? data.chartSeries[`kpi:${data.kpis[0]?.id}`] ?? []
+  const chartBars =
+    data.chartSeries[activeSeriesKey] ??
+    extraCharts[activeSeriesKey] ??
+    data.chartSeries[`kpi:${data.kpis[0]?.id}`] ??
+    []
   const activeLabel =
     chartSeries.source === 'kpi'
       ? data.kpis.find((k) => k.id === chartSeries.id)?.k ?? data.metric
@@ -95,25 +213,64 @@ export function AnalyseDashboard({ accountCreatedAt, data }: Props) {
   const canGoBack = periodOffset > minOffset
   const canGoForward = periodOffset < 0
 
-  function pushParams(updates: Record<string, string | number>) {
-    const params = new URLSearchParams(searchParams.toString())
-    for (const [key, value] of Object.entries(updates)) {
-      params.set(key, String(value))
+  function loadScope(next: {
+    scope?: Scope
+    period?: AnalysePeriod
+    offset?: number
+    rankingLimit?: number
+  }) {
+    const payload = {
+      scope: next.scope ?? scope,
+      period: next.period ?? period,
+      offset: next.offset ?? periodOffset,
+      rankingLimit: next.rankingLimit ?? rankingLimit,
     }
+
+    setError(null)
+    syncAnalyseUrl(payload)
+
+    const cached = cacheRef.current.get(scopeCacheKey(payload))
+    if (cached) {
+      setData(cached)
+      setExtraCharts({})
+      if (next.rankingLimit != null) {
+        setRankingLimit(next.rankingLimit)
+      }
+      return
+    }
+
     startTransition(() => {
-      router.push(`/dashboard/analyse?${params.toString()}`)
+      void fetchScope(payload).then((result) => {
+        if (!result.ok) {
+          setError(result.error)
+          return
+        }
+        setData(result.data)
+        setExtraCharts({})
+        if (next.rankingLimit != null) {
+          setRankingLimit(next.rankingLimit)
+        }
+      })
+    })
+  }
+
+  function prefetchScope(targetScope: Scope) {
+    void fetchScope({
+      scope: targetScope,
+      period,
+      offset: targetScope === scope ? periodOffset : 0,
+      rankingLimit: targetScope === scope ? rankingLimit : 4,
     })
   }
 
   function handleScopeChange(next: Scope) {
-    setChartSeries({ source: 'kpi', id: data.kpis[0]?.id ?? 'visitors' })
     setSelectedBar(null)
-    pushParams({ scope: next, offset: 0 })
+    loadScope({ scope: next, offset: 0, rankingLimit: 4 })
   }
 
   function handlePeriodChange(next: AnalysePeriod) {
     setSelectedBar(null)
-    pushParams({ period: next, offset: 0 })
+    loadScope({ period: next, offset: 0 })
   }
 
   function selectKpi(id: string) {
@@ -124,19 +281,40 @@ export function AnalyseDashboard({ accountCreatedAt, data }: Props) {
   function selectRanking(id: string) {
     setChartSeries({ source: 'ranking', id })
     setSelectedBar(null)
+
+    const key = `ranking:${id}`
+    if (data.chartSeries[key] || extraCharts[key]) return
+
+    setRankingChartPending(true)
+    void fetchAnalyseRankingChartAction({
+      entityId,
+      scope,
+      period,
+      offset: periodOffset,
+      rankingItemId: id,
+    })
+      .then((result) => {
+        if (!result.ok) return
+        setExtraCharts((prev) => ({ ...prev, [key]: result.data }))
+      })
+      .finally(() => setRankingChartPending(false))
   }
 
   function handleShowMore() {
-    const current = Number(searchParams.get('rankingLimit') ?? '4')
-    pushParams({ rankingLimit: current + 6 })
+    const nextLimit = Math.min(20, rankingLimit + 6)
+    loadScope({ rankingLimit: nextLimit })
   }
 
+  const exportQuery = buildAnalyseQuery({ scope, period, offset: periodOffset, rankingLimit })
+
+  const contentLoading = pending || rankingChartPending
+
   return (
-    <main className={`analyse-page${pending ? ' is-loading' : ''}`}>
+    <main className="analyse-page">
       <div className="anal-head">
         <h1 className="anal-head__title">Analyse globale</h1>
         <a
-          href={`/dashboard/analyse/export?scope=${scope}&period=${period}&offset=${periodOffset}`}
+          href={`/dashboard/analyse/export?${exportQuery}`}
           className="anal-export"
         >
           <Upload className="h-3.5 w-3.5" aria-hidden="true" />
@@ -144,6 +322,8 @@ export function AnalyseDashboard({ accountCreatedAt, data }: Props) {
           <ChevronDown className="h-2.5 w-2.5" aria-hidden="true" />
         </a>
       </div>
+
+      {error ? <p className="anal-head__error">{error}</p> : null}
 
       <div className="anal-scope" role="tablist" aria-label="Périmètre">
         {SCOPES.map((s) => {
@@ -155,6 +335,8 @@ export function AnalyseDashboard({ accountCreatedAt, data }: Props) {
               role="tab"
               aria-selected={scope === s.id}
               className={`anal-scope__tab${scope === s.id ? ' is-on' : ''}`}
+              onMouseEnter={() => prefetchScope(s.id)}
+              onFocus={() => prefetchScope(s.id)}
               onClick={() => handleScopeChange(s.id)}
             >
               <Icon className="h-3.5 w-3.5" aria-hidden="true" />
@@ -164,7 +346,7 @@ export function AnalyseDashboard({ accountCreatedAt, data }: Props) {
         })}
       </div>
 
-      <div className="anal-kpis" role="listbox" aria-label="Indicateurs">
+      <div className={`anal-kpis${pending ? ' is-loading' : ''}`} role="listbox" aria-label="Indicateurs">
         {data.kpis.map((kpi) => {
           const isOn = chartSeries.source === 'kpi' && chartSeries.id === kpi.id
           return (
@@ -187,7 +369,7 @@ export function AnalyseDashboard({ accountCreatedAt, data }: Props) {
         })}
       </div>
 
-      <div className="anal-chart">
+      <div className={`anal-chart${contentLoading ? ' is-loading' : ''}`}>
         <div className="anal-chart__top">
           <p className="anal-chart__metric">{activeLabel}</p>
           <div className="anal-period" role="tablist" aria-label="Période">
@@ -198,6 +380,7 @@ export function AnalyseDashboard({ accountCreatedAt, data }: Props) {
                 role="tab"
                 aria-selected={period === p.id}
                 className={`anal-period__btn${period === p.id ? ' is-on' : ''}`}
+                disabled={pending}
                 onClick={() => handlePeriodChange(p.id)}
               >
                 {p.label}
@@ -214,7 +397,7 @@ export function AnalyseDashboard({ accountCreatedAt, data }: Props) {
             disabled={!canGoBack || pending}
             onClick={() => {
               setSelectedBar(null)
-              pushParams({ offset: periodOffset - 1 })
+              loadScope({ offset: periodOffset - 1 })
             }}
           >
             <ChevronLeft className="h-4 w-4" aria-hidden="true" />
@@ -230,7 +413,7 @@ export function AnalyseDashboard({ accountCreatedAt, data }: Props) {
             disabled={!canGoForward || pending}
             onClick={() => {
               setSelectedBar(null)
-              pushParams({ offset: periodOffset + 1 })
+              loadScope({ offset: periodOffset + 1 })
             }}
           >
             <ChevronRight className="h-4 w-4" aria-hidden="true" />
@@ -278,7 +461,7 @@ export function AnalyseDashboard({ accountCreatedAt, data }: Props) {
         ) : null}
       </div>
 
-      <div className="anal-bottom">
+      <div className={`anal-bottom${pending ? ' is-loading' : ''}`}>
         <div className="anal-card">
           <div className="anal-card__head">
             <div className="anal-card__title">{data.ranking.title}</div>
@@ -311,7 +494,12 @@ export function AnalyseDashboard({ accountCreatedAt, data }: Props) {
             })}
           </div>
           {data.ranking.hasMore ? (
-            <button type="button" className="anal-card__more" onClick={handleShowMore}>
+            <button
+              type="button"
+              className="anal-card__more"
+              disabled={pending}
+              onClick={handleShowMore}
+            >
               Afficher plus
             </button>
           ) : null}

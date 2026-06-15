@@ -1,7 +1,6 @@
 'use client'
 
 import type { ReactNode } from 'react'
-import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   ChartColumnBig,
@@ -10,6 +9,7 @@ import {
   Plug,
   Users,
 } from 'lucide-react'
+import { DashboardNavLink } from './DashboardNavLink'
 import { MainRail, closeAppDrawer } from './MainRail'
 
 type SidebarItem = {
@@ -100,17 +100,13 @@ function renderItem(item: SidebarItem) {
   }
 
   return (
-    <Link
+    <DashboardNavLink
       key={item.href + item.label}
       href={item.href}
       className={className}
-      title={item.label}
-      aria-label={item.label}
-      onClick={() => {
-        if (window.innerWidth < 1200) closeAppDrawer()
-      }}
+      label={item.label}
     >
       {content}
-    </Link>
+    </DashboardNavLink>
   )
 }

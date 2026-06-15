@@ -7,6 +7,39 @@ const MONTHS_SHORT_FR = [
   'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc',
 ] as const
 
+export function buildBucketLabels(period: AnalysePeriod, window: PeriodWindow): string[] {
+  if (period === 'week') {
+    return Array.from({ length: 7 }, (_, i) => {
+      const day = new Date(window.start)
+      day.setDate(day.getDate() + i)
+      return `${DAYS_FR[i]} ${day.getDate()}`
+    })
+  }
+
+  if (period === 'month') {
+    const daysInMonth = window.end.getDate()
+    const chunkCount = getChartColumnCount(period, window)
+    return Array.from({ length: chunkCount }, (_, i) => {
+      const fromDay = i * 7 + 1
+      const toDay = Math.min(fromDay + 6, daysInMonth)
+      return fromDay === toDay ? `${fromDay}` : `${fromDay}–${toDay}`
+    })
+  }
+
+  return [...MONTHS_SHORT_FR]
+}
+
+export function mergeBucketRows(
+  labels: string[],
+  rows: { bucket_index: number; value: number }[]
+): AnalyseBarPoint[] {
+  const map = new Map(rows.map((row) => [row.bucket_index, row.value]))
+  return labels.map((label, index) => ({
+    label,
+    value: map.get(index) ?? 0,
+  }))
+}
+
 function parseTs(value: string) {
   return new Date(value).getTime()
 }

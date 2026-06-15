@@ -41,6 +41,14 @@ export type { RevalidatePathsOptions } from './cache'
 export {
   trackEvent,
   trackEvents,
+  countEventsInWindow,
+  countDistinctVisitorsInWindow,
+  groupCountBySectionInWindow,
+  groupCountByResourceInWindow,
+  bucketEventsInWindow,
+  bucketDistinctVisitorsInWindow,
+  fetchAnalyseScopeRaw,
+  fetchAnalyseRankingChartBuckets,
   listAnalyticsEvents,
   countDistinctVisitors,
   countEvents,
@@ -48,7 +56,7 @@ export {
   groupCountBySection,
   computeDelta,
 } from './analytics'
-export type { AnalyticsEventRow } from './analytics'
+export type { AnalyticsEventRow, AnalyseScopeRpc, AnalyseBucketRow } from './analytics'
 export {
   ensureDefaultTeamRoles,
   listTeamRoles,

@@ -4,7 +4,6 @@ import { useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import type { AccountShellData } from '@/lib/account-shell-data'
 import { getNavZone, shouldShowSidebar } from '@/lib/nav-zone'
-import type { HeaderNotification } from '@/components/dashboard/GlobalHeader'
 import { GlobalHeader } from '@/components/dashboard/GlobalHeader'
 import { FloatingNavPill } from '@/components/dashboard/FloatingNavPill'
 import { ZoneSidebar } from '@/components/dashboard/ZoneSidebar'
@@ -13,17 +12,10 @@ import { AccountContextProvider, useAccountContext } from '@/components/dashboar
 interface Props {
   children: React.ReactNode
   accountData: AccountShellData | null
-  unreadCount: number
-  notifications: HeaderNotification[]
   webUrl: string
 }
 
-function PublicShellInner({
-  children,
-  unreadCount,
-  notifications,
-  webUrl,
-}: Omit<Props, 'accountData'>) {
+function PublicShellInner({ children, webUrl }: Omit<Props, 'accountData'>) {
   const pathname = usePathname() ?? '/'
   const { isPersonalMode, activeProject } = useAccountContext()
   const zone = getNavZone(pathname, isPersonalMode)
@@ -34,12 +26,7 @@ function PublicShellInner({
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <GlobalHeader
-        webUrl={webUrl}
-        webProfileUrl={webProfileUrl}
-        unreadCount={unreadCount}
-        notifications={notifications}
-      />
+      <GlobalHeader webUrl={webUrl} webProfileUrl={webProfileUrl} />
       <div className="flex min-h-0 flex-1">
         {showSidebar ? <ZoneSidebar /> : null}
         <div className="relative flex min-h-0 min-w-0 flex-1 flex-col">
@@ -56,7 +43,7 @@ function PublicShellInner({
   )
 }
 
-export function PublicShell({ children, accountData, unreadCount, notifications, webUrl }: Props) {
+export function PublicShell({ children, accountData, webUrl }: Props) {
   const pathname = usePathname() ?? '/'
 
   useEffect(() => {
@@ -72,13 +59,7 @@ export function PublicShell({ children, accountData, unreadCount, notifications,
   if (accountData) {
     return (
       <AccountContextProvider data={accountData}>
-        <PublicShellInner
-          unreadCount={unreadCount}
-          notifications={notifications}
-          webUrl={webUrl}
-        >
-          {children}
-        </PublicShellInner>
+        <PublicShellInner webUrl={webUrl}>{children}</PublicShellInner>
       </AccountContextProvider>
     )
   }

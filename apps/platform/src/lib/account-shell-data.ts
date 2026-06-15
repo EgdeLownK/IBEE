@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import type { User } from '@supabase/supabase-js'
 import { getEntityByUserId } from '@ibee/supabase'
 import type { Database } from '@ibee/supabase'
 
@@ -40,18 +41,9 @@ const DEMO_PROJECT_ACCOUNTS: Omit<ProjectAccount, 'id' | 'slug'>[] = [
   },
 ]
 
-export async function loadAccountShellData(
-  supabase: SupabaseClient<Database>
-): Promise<AccountShellData | null> {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+type EntityRow = Database['public']['Tables']['entity']['Row']
 
-  if (!user) return null
-
-  const entity = await getEntityByUserId(supabase, user.id)
-  if (!entity) return null
-
+export function buildAccountShellData(user: User, entity: EntityRow): AccountShellData {
   const emailLocal = user.email?.split('@')[0] ?? 'utilisateur'
   const personalName =
     (user.user_metadata?.full_name as string | undefined)?.trim() ||
@@ -83,4 +75,19 @@ export async function loadAccountShellData(
     projectAccounts: [primaryProject, ...demoProjects],
     primaryProjectId: entity.id,
   }
+}
+
+/** Compat public layout — préférer getDashboardAccountShell() côté dashboard. */
+export async function loadAccountShellData(
+  supabase: SupabaseClient<Database>
+): Promise<AccountShellData | null> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return null
+
+  const entity = await getEntityByUserId(supabase, user.id)
+  if (!entity) return null
+
+  return buildAccountShellData(user, entity)
 }

@@ -1,12 +1,11 @@
 import { redirect } from 'next/navigation'
-import { getEntityByUserId } from '@ibee/supabase'
 import {
   loadAnalyseScopeData,
   parseAnalyseOffset,
   parseAnalysePeriod,
   parseAnalyseScope,
 } from '@/lib/analyse-data'
-import { createClient } from '@/lib/supabase/server'
+import { getDashboardContext } from '@/lib/dashboard-context'
 
 function csvEscape(value: string) {
   if (value.includes('"') || value.includes(',') || value.includes('\n')) {
@@ -16,22 +15,15 @@ function csvEscape(value: string) {
 }
 
 export async function GET(request: Request) {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) redirect('/login')
-
-  const entity = await getEntityByUserId(supabase, user.id)
-  if (!entity) redirect('/login')
+  const ctx = await getDashboardContext()
+  if (!ctx) redirect('/login')
 
   const url = new URL(request.url)
   const scope = parseAnalyseScope(url.searchParams.get('scope') ?? undefined)
   const period = parseAnalysePeriod(url.searchParams.get('period') ?? undefined)
   const offset = parseAnalyseOffset(url.searchParams.get('offset') ?? undefined)
 
-  const data = await loadAnalyseScopeData(supabase, entity.id, {
+  const data = await loadAnalyseScopeData(ctx.supabase, ctx.entity.id, {
     scope,
     period,
     offset,

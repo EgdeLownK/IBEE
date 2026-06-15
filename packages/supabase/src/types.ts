@@ -551,6 +551,51 @@ export type Database = {
         }
         Relationships: []
       }
+      entity_analytics_daily: {
+        Row: {
+          day: string
+          dimension_key: string
+          distinct_count: number
+          entity_id: string
+          event_count: number
+          event_type: Database["public"]["Enums"]["analytics_event_type"]
+          updated_at: string
+        }
+        Insert: {
+          day: string
+          dimension_key?: string
+          distinct_count?: number
+          entity_id: string
+          event_count?: number
+          event_type: Database["public"]["Enums"]["analytics_event_type"]
+          updated_at?: string
+        }
+        Update: {
+          day?: string
+          dimension_key?: string
+          distinct_count?: number
+          entity_id?: string
+          event_count?: number
+          event_type?: Database["public"]["Enums"]["analytics_event_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entity_analytics_daily_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entity"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entity_analytics_daily_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "publication_comments_with_author"
+            referencedColumns: ["author_entity_id"]
+          },
+        ]
+      }
       entity_analytics_events: {
         Row: {
           entity_id: string
@@ -598,6 +643,24 @@ export type Database = {
             referencedColumns: ["author_entity_id"]
           },
         ]
+      }
+      entity_analytics_rollup_state: {
+        Row: {
+          id: number
+          last_completed_day: string
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          last_completed_day?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          last_completed_day?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       entity_contact_info: {
         Row: {
@@ -2225,9 +2288,116 @@ export type Database = {
       }
     }
     Functions: {
+      analytics_event_bucket_index: {
+        Args: {
+          p_from: string
+          p_occurred_at: string
+          p_period: string
+          p_to: string
+        }
+        Returns: number
+      }
+      analytics_rollup_cutoff: { Args: never; Returns: string }
+      backfill_entity_analytics_daily: {
+        Args: { p_from_day: string; p_to_day: string }
+        Returns: Json
+      }
+      bucket_analytics_distinct_visitors: {
+        Args: {
+          p_entity_id: string
+          p_event_types: Database["public"]["Enums"]["analytics_event_type"][]
+          p_from: string
+          p_period: string
+          p_resource_id?: string
+          p_section_type?: Database["public"]["Enums"]["menu_section_type"]
+          p_to: string
+        }
+        Returns: {
+          bucket_index: number
+          event_count: number
+        }[]
+      }
+      bucket_analytics_distinct_visitors_hybrid: {
+        Args: {
+          p_entity_id: string
+          p_event_types: Database["public"]["Enums"]["analytics_event_type"][]
+          p_from: string
+          p_period: string
+          p_resource_id?: string
+          p_section_type?: Database["public"]["Enums"]["menu_section_type"]
+          p_to: string
+        }
+        Returns: {
+          bucket_index: number
+          event_count: number
+        }[]
+      }
+      bucket_analytics_events: {
+        Args: {
+          p_entity_id: string
+          p_event_types: Database["public"]["Enums"]["analytics_event_type"][]
+          p_from: string
+          p_period: string
+          p_resource_id?: string
+          p_section_type?: Database["public"]["Enums"]["menu_section_type"]
+          p_to: string
+        }
+        Returns: {
+          bucket_index: number
+          event_count: number
+        }[]
+      }
+      bucket_analytics_events_hybrid: {
+        Args: {
+          p_entity_id: string
+          p_event_types: Database["public"]["Enums"]["analytics_event_type"][]
+          p_from: string
+          p_period: string
+          p_resource_id?: string
+          p_section_type?: Database["public"]["Enums"]["menu_section_type"]
+          p_to: string
+        }
+        Returns: {
+          bucket_index: number
+          event_count: number
+        }[]
+      }
       check_comment_rate_limit: {
         Args: { p_user_id: string }
         Returns: boolean
+      }
+      count_analytics_distinct_visitors: {
+        Args: {
+          p_entity_id: string
+          p_event_types: Database["public"]["Enums"]["analytics_event_type"][]
+          p_from: string
+          p_resource_id?: string
+          p_section_type?: Database["public"]["Enums"]["menu_section_type"]
+          p_to: string
+        }
+        Returns: number
+      }
+      count_analytics_events: {
+        Args: {
+          p_entity_id: string
+          p_event_types: Database["public"]["Enums"]["analytics_event_type"][]
+          p_from: string
+          p_resource_id?: string
+          p_section_type?: Database["public"]["Enums"]["menu_section_type"]
+          p_to: string
+        }
+        Returns: number
+      }
+      count_analytics_events_hybrid: {
+        Args: {
+          p_entity_id: string
+          p_event_types: Database["public"]["Enums"]["analytics_event_type"][]
+          p_from: string
+          p_resource_id?: string
+          p_section_type?: Database["public"]["Enums"]["menu_section_type"]
+          p_to: string
+        }
+        Returns: number
       }
       count_event_registrations: {
         Args: { p_event_id: string }
@@ -2245,7 +2415,134 @@ export type Database = {
         Args: { email_input: string }
         Returns: string
       }
+      get_analyse_event_data: {
+        Args: {
+          p_entity_id: string
+          p_from: string
+          p_period: string
+          p_prev_from: string
+          p_prev_to: string
+          p_to: string
+        }
+        Returns: Json
+      }
+      get_analyse_news_data: {
+        Args: {
+          p_entity_id: string
+          p_from: string
+          p_period: string
+          p_prev_from: string
+          p_prev_to: string
+          p_to: string
+        }
+        Returns: Json
+      }
+      get_analyse_ranking_chart_buckets: {
+        Args: {
+          p_entity_id: string
+          p_from: string
+          p_period: string
+          p_resource_id?: string
+          p_scope: string
+          p_section_type?: Database["public"]["Enums"]["menu_section_type"]
+          p_to: string
+        }
+        Returns: Json
+      }
+      get_analyse_scope_data: {
+        Args: {
+          p_entity_id: string
+          p_from: string
+          p_period: string
+          p_prev_from: string
+          p_prev_to: string
+          p_scope: string
+          p_to: string
+        }
+        Returns: Json
+      }
+      get_analyse_service_data: {
+        Args: {
+          p_entity_id: string
+          p_from: string
+          p_period: string
+          p_prev_from: string
+          p_prev_to: string
+          p_to: string
+        }
+        Returns: Json
+      }
+      get_analyse_shop_data: {
+        Args: {
+          p_entity_id: string
+          p_from: string
+          p_period: string
+          p_prev_from: string
+          p_prev_to: string
+          p_to: string
+        }
+        Returns: Json
+      }
+      get_analyse_web_data: {
+        Args: {
+          p_entity_id: string
+          p_from: string
+          p_period: string
+          p_prev_from: string
+          p_prev_to: string
+          p_to: string
+        }
+        Returns: Json
+      }
       get_user_entity_ids: { Args: never; Returns: string[] }
+      group_analytics_by_resource: {
+        Args: {
+          p_entity_id: string
+          p_event_types: Database["public"]["Enums"]["analytics_event_type"][]
+          p_from: string
+          p_to: string
+        }
+        Returns: {
+          event_count: number
+          resource_id: string
+        }[]
+      }
+      group_analytics_by_resource_hybrid: {
+        Args: {
+          p_entity_id: string
+          p_event_types: Database["public"]["Enums"]["analytics_event_type"][]
+          p_from: string
+          p_to: string
+        }
+        Returns: {
+          event_count: number
+          resource_id: string
+        }[]
+      }
+      group_analytics_by_section: {
+        Args: {
+          p_entity_id: string
+          p_event_types: Database["public"]["Enums"]["analytics_event_type"][]
+          p_from: string
+          p_to: string
+        }
+        Returns: {
+          event_count: number
+          section_type: Database["public"]["Enums"]["menu_section_type"]
+        }[]
+      }
+      group_analytics_by_section_hybrid: {
+        Args: {
+          p_entity_id: string
+          p_event_types: Database["public"]["Enums"]["analytics_event_type"][]
+          p_from: string
+          p_to: string
+        }
+        Returns: {
+          event_count: number
+          section_type: Database["public"]["Enums"]["menu_section_type"]
+        }[]
+      }
       insert_slug_history: {
         Args: { p_entity_id: string; p_old_slug: string }
         Returns: undefined
@@ -2254,6 +2551,11 @@ export type Database = {
         Args: { p_client_id: string }
         Returns: undefined
       }
+      rollup_entity_analytics_daily: {
+        Args: { p_day: string }
+        Returns: number
+      }
+      rollup_entity_analytics_incremental: { Args: never; Returns: Json }
       slugify: { Args: { input: string }; Returns: string }
       unaccent: { Args: { "": string }; Returns: string }
     }

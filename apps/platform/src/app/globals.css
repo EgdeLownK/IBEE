@@ -17,3 +17,72 @@
   --font-sans: var(--font-roboto), "Inter", system-ui, sans-serif;
   --font-display: var(--font-poppins), var(--font-roboto), "Inter", sans-serif;
 }
+
+@keyframes dash-skeleton-pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.dash-skeleton {
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 28px 24px 40px;
+}
+
+.dash-skeleton__head,
+.dash-skeleton__chip,
+.dash-skeleton__card,
+.dash-skeleton__panel {
+  border-radius: 12px;
+  background: var(--color-panel);
+  animation: dash-skeleton-pulse 1.4s ease-in-out infinite;
+}
+
+.dash-skeleton__head {
+  height: 32px;
+  width: min(280px, 60%);
+  margin-bottom: 20px;
+}
+
+.dash-skeleton__row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.dash-skeleton__chip {
+  height: 36px;
+  width: 108px;
+}
+
+.dash-skeleton__cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.dash-skeleton__card {
+  height: 96px;
+}
+
+.dash-skeleton__panel {
+  height: 280px;
+}
+
+@media (max-width: 799px) {
+  .dash-skeleton {
+    padding: 20px 16px 32px;
+  }
+
+  .dash-skeleton__cards {
+    grid-template-columns: 1fr;
+  }
+}

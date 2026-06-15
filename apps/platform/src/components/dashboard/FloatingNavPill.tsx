@@ -1,6 +1,8 @@
 'use client'
 
 import type { ReactNode } from 'react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Activity, Home, MessageCircle, PanelsTopLeft } from 'lucide-react'
 
 type NavItem = {
@@ -8,6 +10,7 @@ type NavItem = {
   label: string
   icon: ReactNode
   isActive?: boolean
+  external?: boolean
 }
 
 interface Props {
@@ -25,6 +28,7 @@ export function FloatingNavPill({
   isAuthenticated = true,
   loginUrl = '/login',
 }: Props) {
+  const router = useRouter()
   const profileHref = isAuthenticated ? webProfileUrl : loginUrl
 
   const items: NavItem[] = [
@@ -38,6 +42,7 @@ export function FloatingNavPill({
       href: '#messages',
       label: 'Message',
       icon: <MessageCircle className="h-5 w-5" aria-hidden="true" />,
+      external: true,
     },
     {
       href: '/notifications',
@@ -55,17 +60,37 @@ export function FloatingNavPill({
 
   return (
     <nav className="navpill" aria-label="Navigation rapide">
-      {items.map((item) => (
-        <a
-          key={item.label}
-          href={item.href}
-          aria-label={item.label}
-          aria-current={item.isActive ? 'page' : undefined}
-          className={`navpill__btn${item.isActive ? ' is-active' : ''}`}
-        >
-          {item.icon}
-        </a>
-      ))}
+      {items.map((item) => {
+        const className = `navpill__btn${item.isActive ? ' is-active' : ''}`
+
+        if (item.external || item.href.startsWith('#')) {
+          return (
+            <a
+              key={item.label}
+              href={item.href}
+              aria-label={item.label}
+              aria-current={item.isActive ? 'page' : undefined}
+              className={className}
+            >
+              {item.icon}
+            </a>
+          )
+        }
+
+        return (
+          <Link
+            key={item.label}
+            href={item.href}
+            prefetch
+            aria-label={item.label}
+            aria-current={item.isActive ? 'page' : undefined}
+            className={className}
+            onMouseEnter={() => router.prefetch(item.href)}
+          >
+            {item.icon}
+          </Link>
+        )
+      })}
     </nav>
   )
 }

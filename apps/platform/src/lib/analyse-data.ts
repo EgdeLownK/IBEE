@@ -1,17 +1,12 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import {
-  computeDelta,
-  countDistinctVisitors,
-  countEvents,
-  groupCountByResource,
-  groupCountBySection,
-  listAnalyticsEvents,
+  fetchAnalyseScopeRaw,
+  fetchAnalyseRankingChartBuckets,
 } from '@ibee/supabase'
 import type { Database } from '@ibee/supabase'
-import { countFollowsInWindow } from '@ibee/supabase'
 import type { AnalyseBarPoint, AnalysePeriod, PeriodWindow } from '@/lib/analyse-period'
 import { formatPeriodRangeLabel, getPeriodWindow } from '@/lib/analyse-period'
-import { bucketDistinctVisitors, bucketTimestamps } from '@/lib/analyse-buckets'
+import { bucketTimestamps, buildBucketLabels, mergeBucketRows } from '@/lib/analyse-buckets'
 import {
   formatMetricNumber,
   formatMetricPercent,
@@ -55,6 +50,7 @@ export type AnalyseScopePayload = {
 }
 
 type Client = SupabaseClient<Database>
+type BookingStatus = Database['public']['Enums']['booking_status']
 
 const SECTION_LABELS: Record<string, string> = {
   home: 'Accueil',
@@ -73,6 +69,38 @@ function windowIso(window: PeriodWindow) {
     from: window.start.toISOString(),
     to: window.end.toISOString(),
   }
+}
+
+function asNumber(value: unknown, fallback = 0) {
+  const n = Number(value)
+  return Number.isFinite(n) ? n : fallback
+}
+
+function asStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return []
+  return value.filter((item): item is string => typeof item === 'string')
+}
+
+function parseBucketRows(value: unknown): { bucket_index: number; value: number }[] {
+  if (!Array.isArray(value)) return []
+  return value.map((row) => {
+    const item = row as { bucket_index?: unknown; value?: unknown }
+    return {
+      bucket_index: asNumber(item.bucket_index),
+      value: asNumber(item.value),
+    }
+  })
+}
+
+function computeDelta(current: number, previous: number) {
+  if (previous === 0) {
+    if (current === 0) return { deltaLabel: '0 %', up: true, deltaPct: 0 }
+    return { deltaLabel: '+100 %', up: true, deltaPct: 100 }
+  }
+  const deltaPct = Math.round(((current - previous) / previous) * 100)
+  const up = deltaPct >= 0
+  const sign = deltaPct > 0 ? '+' : ''
+  return { deltaLabel: `${sign}${deltaPct} %`, up, deltaPct }
 }
 
 function makeKpi(
@@ -114,192 +142,80 @@ function buildRanking(
   }
 }
 
-type BookingStatus = Database['public']['Enums']['booking_status']
-
-async function countBookingsInWindow(
-  client: Client,
-  entityId: string,
-  from: string,
-  to: string,
-  status?: BookingStatus
+function countRowsWithStatus<T extends { status: string }>(
+  rows: T[],
+  status?: BookingStatus | 'confirmed' | 'cancelled'
 ) {
-  let query = client
-    .from('bookings')
-    .select('*', { count: 'exact', head: true })
-    .eq('entity_id', entityId)
-    .gte('created_at', from)
-    .lte('created_at', to)
-
-  if (status) query = query.eq('status', status)
-
-  const { count, error } = await query
-  if (error) throw error
-  return count ?? 0
+  if (!status) return rows.length
+  return rows.filter((row) => row.status === status).length
 }
 
-async function listBookingsInWindow(client: Client, entityId: string, from: string, to: string) {
-  const { data, error } = await client
-    .from('bookings')
-    .select('id, created_at, status, appointment_type_id, appointment_types(title)')
-    .eq('entity_id', entityId)
-    .gte('created_at', from)
-    .lte('created_at', to)
-
-  if (error) throw error
-  return data ?? []
-}
-
-async function countRegistrationsInWindow(
+async function fetchScopeRaw(
   client: Client,
   entityId: string,
-  from: string,
-  to: string,
-  status?: 'confirmed' | 'cancelled'
-) {
-  let query = client
-    .from('event_registrations')
-    .select('*', { count: 'exact', head: true })
-    .eq('entity_id', entityId)
-    .gte('created_at', from)
-    .lte('created_at', to)
-
-  if (status) query = query.eq('status', status)
-
-  const { count, error } = await query
-  if (error) throw error
-  return count ?? 0
-}
-
-async function listRegistrationsInWindow(client: Client, entityId: string, from: string, to: string) {
-  const { data, error } = await client
-    .from('event_registrations')
-    .select('id, created_at, status, event_id, events(title, capacity)')
-    .eq('entity_id', entityId)
-    .gte('created_at', from)
-    .lte('created_at', to)
-
-  if (error) throw error
-  return data ?? []
-}
-
-async function countPublicationCommentsInWindow(
-  client: Client,
-  entityId: string,
-  from: string,
-  to: string
-) {
-  const { data: pubs, error: pubError } = await client
-    .from('publications')
-    .select('id')
-    .eq('entity_id', entityId)
-
-  if (pubError) throw pubError
-  const pubIds = (pubs ?? []).map((p) => p.id)
-  if (pubIds.length === 0) return 0
-
-  const { count, error } = await client
-    .from('publication_comments')
-    .select('*', { count: 'exact', head: true })
-    .in('publication_id', pubIds)
-    .gte('created_at', from)
-    .lte('created_at', to)
-
-  if (error) throw error
-  return count ?? 0
-}
-
-async function loadWebScope(
-  client: Client,
-  entityId: string,
+  scope: AnalyseScope,
   period: AnalysePeriod,
-  offset: number,
-  rankingLimit: number
-): Promise<AnalyseScopePayload> {
+  offset: number
+) {
   const current = getPeriodWindow(period, offset)
   const previous = getPeriodWindow(period, offset - 1)
   const cur = windowIso(current)
   const prev = windowIso(previous)
 
-  const [profileViewsCur, profileViewsPrev, sectionViewsCur, unfollowCur, unfollowPrev] =
-    await Promise.all([
-      listAnalyticsEvents(client, entityId, {
-        eventTypes: ['profile_view'],
-        from: cur.from,
-        to: cur.to,
-      }),
-      listAnalyticsEvents(client, entityId, {
-        eventTypes: ['profile_view'],
-        from: prev.from,
-        to: prev.to,
-      }),
-      listAnalyticsEvents(client, entityId, {
-        eventTypes: ['section_view'],
-        from: cur.from,
-        to: cur.to,
-      }),
-      listAnalyticsEvents(client, entityId, {
-        eventTypes: ['unfollow'],
-        from: cur.from,
-        to: cur.to,
-      }),
-      listAnalyticsEvents(client, entityId, {
-        eventTypes: ['unfollow'],
-        from: prev.from,
-        to: prev.to,
-      }),
-    ])
+  return fetchAnalyseScopeRaw(client, entityId, {
+    scope,
+    from: cur.from,
+    to: cur.to,
+    prevFrom: prev.from,
+    prevTo: prev.to,
+    period,
+  })
+}
 
-  const [membersCur, membersPrev, followRowsCur] = await Promise.all([
-    countFollowsInWindow(client, entityId, cur.from, cur.to),
-    countFollowsInWindow(client, entityId, prev.from, prev.to),
-    client
-      .from('follows')
-      .select('created_at')
-      .eq('followed_entity_id', entityId)
-      .gte('created_at', cur.from)
-      .lte('created_at', cur.to),
-  ])
+function buildWebPayload(
+  raw: Record<string, unknown>,
+  period: AnalysePeriod,
+  offset: number,
+  rankingLimit: number
+): AnalyseScopePayload {
+  const current = getPeriodWindow(period, offset)
 
-  const visitorsCur = countDistinctVisitors(profileViewsCur)
-  const visitorsPrev = countDistinctVisitors(profileViewsPrev)
+  const visitorsCur = asNumber(raw.visitors_cur)
+  const visitorsPrev = asNumber(raw.visitors_prev)
+  const membersCur = asNumber(raw.members_cur)
+  const membersPrev = asNumber(raw.members_prev)
+  const unsubscribedCur = asNumber(raw.unsubscribed_cur)
+  const unsubscribedPrev = asNumber(raw.unsubscribed_prev)
 
-  const sectionCounts = groupCountBySection(sectionViewsCur)
-  const sectionTotal = Array.from(sectionCounts.values()).reduce((a, b) => a + b, 0)
-  const sectionEntries = Array.from(sectionCounts.entries()).map(([id, count]) => ({
-    id: `section-${id}`,
-    label: SECTION_LABELS[id] ?? id,
-    count,
-  }))
+  const sectionRows = Array.isArray(raw.section_counts) ? raw.section_counts : []
+  const sectionEntries = sectionRows.map((row) => {
+    const item = row as { section_type?: string; count?: unknown }
+    const id = String(item.section_type ?? '')
+    return {
+      id: `section-${id}`,
+      label: SECTION_LABELS[id] ?? id,
+      count: asNumber(item.count),
+    }
+  })
+  const sectionTotal = sectionEntries.reduce((sum, entry) => sum + entry.count, 0)
   const ranking = buildRanking(sectionEntries, sectionTotal, rankingLimit)
 
   const kpis = [
     makeKpi('visitors', 'Visiteurs', visitorsCur, visitorsPrev, 1),
     makeKpi('members', 'Membres', membersCur, membersPrev, 0.32),
-    makeKpi('unsubscribed', 'Désabonnés', countEvents(unfollowCur), countEvents(unfollowPrev), 0.1),
+    makeKpi('unsubscribed', 'Désabonnés', unsubscribedCur, unsubscribedPrev, 0.1),
   ]
 
   const chartSeries: Record<string, AnalyseBarPoint[]> = {
-    'kpi:visitors': bucketDistinctVisitors(profileViewsCur, period, current),
-    'kpi:members': bucketTimestamps(
-      (followRowsCur.data ?? []).map((row) => row.created_at),
-      period,
-      current
+    'kpi:visitors': mergeBucketRows(
+      buildBucketLabels(period, current),
+      parseBucketRows(raw.visitor_buckets)
     ),
-    'kpi:unsubscribed': bucketTimestamps(
-      unfollowCur.map((e) => e.occurred_at),
-      period,
-      current
+    'kpi:members': bucketTimestamps(asStringArray(raw.follow_timestamps), period, current),
+    'kpi:unsubscribed': mergeBucketRows(
+      buildBucketLabels(period, current),
+      parseBucketRows(raw.unsubscribed_buckets)
     ),
-  }
-
-  for (const item of ranking.items) {
-    const sectionKey = item.id.replace('section-', '')
-    const events = sectionViewsCur.filter((e) => e.section_type === sectionKey)
-    chartSeries[`ranking:${item.id}`] = bucketTimestamps(
-      events.map((e) => e.occurred_at),
-      period,
-      current
-    )
   }
 
   return {
@@ -314,50 +230,52 @@ async function loadWebScope(
   }
 }
 
-async function loadServiceScope(
-  client: Client,
-  entityId: string,
+type ServiceBookingRow = {
+  id: string
+  created_at: string
+  status: string
+  appointment_type_id: string
+  appointment_type_title?: string | null
+}
+
+function buildServicePayload(
+  raw: Record<string, unknown>,
   period: AnalysePeriod,
   offset: number,
   rankingLimit: number
-): Promise<AnalyseScopePayload> {
+): AnalyseScopePayload {
   const current = getPeriodWindow(period, offset)
-  const previous = getPeriodWindow(period, offset - 1)
-  const cur = windowIso(current)
-  const prev = windowIso(previous)
 
-  const [bookingsCur, bookingsPrev, noShowCur, noShowPrev, serviceViewsCur, serviceViewsPrev] =
-    await Promise.all([
-      countBookingsInWindow(client, entityId, cur.from, cur.to),
-      countBookingsInWindow(client, entityId, prev.from, prev.to),
-      countBookingsInWindow(client, entityId, cur.from, cur.to, 'no_show'),
-      countBookingsInWindow(client, entityId, prev.from, prev.to, 'no_show'),
-      listAnalyticsEvents(client, entityId, {
-        eventTypes: ['service_view'],
-        from: cur.from,
-        to: cur.to,
-      }),
-      listAnalyticsEvents(client, entityId, {
-        eventTypes: ['service_view'],
-        from: prev.from,
-        to: prev.to,
-      }),
-    ])
+  const bookingRows = (Array.isArray(raw.bookings_cur) ? raw.bookings_cur : []).map((row) => {
+    const item = row as ServiceBookingRow
+    return {
+      id: String(item.id),
+      created_at: String(item.created_at),
+      status: String(item.status),
+      appointment_type_id: String(item.appointment_type_id),
+      appointment_type_title: item.appointment_type_title ?? null,
+    }
+  })
+  const bookingRowsPrev = (Array.isArray(raw.bookings_prev) ? raw.bookings_prev : []).map((row) => ({
+    status: String((row as { status?: string }).status ?? ''),
+  }))
 
-  const completedCur = await countBookingsInWindow(client, entityId, cur.from, cur.to, 'completed')
-  const completedPrev = await countBookingsInWindow(client, entityId, prev.from, prev.to, 'completed')
+  const viewsCur = asNumber(raw.views_cur)
+  const viewsPrev = asNumber(raw.views_prev)
+  const bookingsCur = bookingRows.length
+  const bookingsPrev = bookingRowsPrev.length
+  const noShowCur = countRowsWithStatus(bookingRows, 'no_show')
+  const noShowPrev = countRowsWithStatus(bookingRowsPrev, 'no_show')
+  const completedCur = countRowsWithStatus(bookingRows, 'completed')
+  const completedPrev = countRowsWithStatus(bookingRowsPrev, 'completed')
 
-  const viewsCur = countDistinctVisitors(serviceViewsCur)
-  const viewsPrev = countDistinctVisitors(serviceViewsPrev)
   const conversionCur = viewsCur > 0 ? (completedCur / viewsCur) * 100 : 0
   const conversionPrev = viewsPrev > 0 ? (completedPrev / viewsPrev) * 100 : 0
 
-  const bookingRows = await listBookingsInWindow(client, entityId, cur.from, cur.to)
   const byType = new Map<string, { id: string; label: string; count: number }>()
   for (const row of bookingRows) {
     const typeId = row.appointment_type_id
-    const title =
-      (row.appointment_types as { title?: string } | null)?.title ?? 'Service'
+    const title = row.appointment_type_title ?? 'Service'
     const existing = byType.get(typeId)
     if (existing) existing.count += 1
     else byType.set(typeId, { id: typeId, label: title, count: 1 })
@@ -390,14 +308,6 @@ async function loadServiceScope(
     ),
   }
 
-  for (const item of ranking.items) {
-    chartSeries[`ranking:${item.id}`] = bucketTimestamps(
-      bookingRows.filter((b) => b.appointment_type_id === item.id).map((b) => b.created_at),
-      period,
-      current
-    )
-  }
-
   const cancelled = bookingRows.filter((b) => b.status === 'cancelled').length
 
   return {
@@ -420,58 +330,36 @@ async function loadServiceScope(
   }
 }
 
-async function loadShopScope(
-  client: Client,
-  entityId: string,
+function buildShopPayload(
+  raw: Record<string, unknown>,
   period: AnalysePeriod,
   offset: number,
   rankingLimit: number
-): Promise<AnalyseScopePayload> {
+): AnalyseScopePayload {
   const current = getPeriodWindow(period, offset)
-  const previous = getPeriodWindow(period, offset - 1)
-  const cur = windowIso(current)
-  const prev = windowIso(previous)
 
-  const [productViewsCur, productViewsPrev, wishlistCur, wishlistPrev] = await Promise.all([
-    listAnalyticsEvents(client, entityId, {
-      eventTypes: ['product_view'],
-      from: cur.from,
-      to: cur.to,
-    }),
-    listAnalyticsEvents(client, entityId, {
-      eventTypes: ['product_view'],
-      from: prev.from,
-      to: prev.to,
-    }),
-    listAnalyticsEvents(client, entityId, {
-      eventTypes: ['wishlist_add'],
-      from: cur.from,
-      to: cur.to,
-    }),
-    listAnalyticsEvents(client, entityId, {
-      eventTypes: ['wishlist_add'],
-      from: prev.from,
-      to: prev.to,
-    }),
-  ])
+  const viewsCur = asNumber(raw.views_cur)
+  const viewsPrev = asNumber(raw.views_prev)
+  const wishlistCur = asNumber(raw.wishlist_cur)
+  const wishlistPrev = asNumber(raw.wishlist_prev)
 
-  const viewsCur = countEvents(productViewsCur)
-  const viewsPrev = countEvents(productViewsPrev)
-  const wishlistCountCur = countEvents(wishlistCur)
-  const wishlistCountPrev = countEvents(wishlistPrev)
+  const productMap = new Map<string, string>()
+  if (raw.products && typeof raw.products === 'object' && !Array.isArray(raw.products)) {
+    for (const [id, title] of Object.entries(raw.products as Record<string, unknown>)) {
+      productMap.set(id, String(title))
+    }
+  }
 
-  const resourceCounts = groupCountByResource(productViewsCur)
-  const { data: products } = await client
-    .from('products')
-    .select('id, title')
-    .eq('entity_id', entityId)
-
-  const productMap = new Map((products ?? []).map((p) => [p.id, p.title]))
-  const entries = Array.from(resourceCounts.entries()).map(([id, count]) => ({
-    id,
-    label: productMap.get(id) ?? 'Produit',
-    count,
-  }))
+  const resourceRows = Array.isArray(raw.resource_counts) ? raw.resource_counts : []
+  const entries = resourceRows.map((row) => {
+    const item = row as { resource_id?: string; count?: unknown }
+    const id = String(item.resource_id ?? '')
+    return {
+      id,
+      label: productMap.get(id) ?? 'Produit',
+      count: asNumber(item.count),
+    }
+  })
   const ranking = buildRanking(entries, viewsCur, rankingLimit)
 
   const kpis: AnalyseKpi[] = [
@@ -491,25 +379,16 @@ async function loadShopScope(
       up: true,
       chartWeight: 0.25,
     },
-    makeKpi('abandoned', 'Paniers abandon.', wishlistCountCur, wishlistCountPrev, 0.15),
+    makeKpi('abandoned', 'Paniers abandon.', wishlistCur, wishlistPrev, 0.15),
   ]
 
   const chartSeries: Record<string, AnalyseBarPoint[]> = {
-    'kpi:abandoned': bucketTimestamps(
-      wishlistCur.map((e) => e.occurred_at),
-      period,
-      current
+    'kpi:abandoned': mergeBucketRows(
+      buildBucketLabels(period, current),
+      parseBucketRows(raw.wishlist_buckets)
     ),
     'kpi:revenue': bucketTimestamps([], period, current),
     'kpi:basket': bucketTimestamps([], period, current),
-  }
-
-  for (const item of ranking.items) {
-    chartSeries[`ranking:${item.id}`] = bucketTimestamps(
-      productViewsCur.filter((e) => e.resource_id === item.id).map((e) => e.occurred_at),
-      period,
-      current
-    )
   }
 
   return {
@@ -522,54 +401,63 @@ async function loadShopScope(
     stats: [
       { l: 'Unités vendus', v: formatUnavailableMetric() },
       { l: 'Panier moyen', v: formatUnavailableMetric() },
-      {
-        l: 'Vues produits',
-        v: formatMetricNumber(viewsCur),
-      },
+      { l: 'Vues produits', v: formatMetricNumber(viewsCur) },
     ],
     ranking: { title: 'Top produits', ...ranking },
     chartSeries,
   }
 }
 
-async function loadEventScope(
-  client: Client,
-  entityId: string,
+type EventRegistrationRow = {
+  id: string
+  created_at: string
+  status: string
+  event_id: string
+  event_title?: string | null
+  event_capacity?: number | null
+}
+
+function buildEventPayload(
+  raw: Record<string, unknown>,
   period: AnalysePeriod,
   offset: number,
   rankingLimit: number
-): Promise<AnalyseScopePayload> {
+): AnalyseScopePayload {
   const current = getPeriodWindow(period, offset)
-  const previous = getPeriodWindow(period, offset - 1)
-  const cur = windowIso(current)
-  const prev = windowIso(previous)
 
-  const [signupsCur, signupsPrev, cancelledCur, cancelledPrev] = await Promise.all([
-    countRegistrationsInWindow(client, entityId, cur.from, cur.to, 'confirmed'),
-    countRegistrationsInWindow(client, entityId, prev.from, prev.to, 'confirmed'),
-    countRegistrationsInWindow(client, entityId, cur.from, cur.to, 'cancelled'),
-    countRegistrationsInWindow(client, entityId, prev.from, prev.to, 'cancelled'),
-  ])
+  const rowsCur = (Array.isArray(raw.registrations_cur) ? raw.registrations_cur : []).map((row) => {
+    const item = row as EventRegistrationRow
+    return {
+      id: String(item.id),
+      created_at: String(item.created_at),
+      status: String(item.status),
+      event_id: String(item.event_id),
+      event_title: item.event_title ?? null,
+      event_capacity: item.event_capacity ?? null,
+    }
+  })
+  const rowsPrev = (Array.isArray(raw.registrations_prev) ? raw.registrations_prev : []).map((row) => ({
+    status: String((row as { status?: string }).status ?? ''),
+  }))
 
-  const rows = await listRegistrationsInWindow(client, entityId, cur.from, cur.to)
-  const confirmedRows = rows.filter((r) => r.status === 'confirmed')
+  const confirmedRows = rowsCur.filter((r) => r.status === 'confirmed')
+  const signupsCur = confirmedRows.length
+  const signupsPrev = countRowsWithStatus(rowsPrev, 'confirmed')
+  const cancelledCur = countRowsWithStatus(rowsCur, 'cancelled')
+  const cancelledPrev = countRowsWithStatus(rowsPrev, 'cancelled')
 
   let capacityTotal = 0
   const byEvent = new Map<string, { id: string; label: string; count: number }>()
   for (const row of confirmedRows) {
-    const eventId = row.event_id
-    const event = row.events as { title?: string; capacity?: number | null } | null
-    if (event?.capacity) capacityTotal += event.capacity
-    const title = event?.title ?? 'Événement'
-    const existing = byEvent.get(eventId)
+    if (row.event_capacity) capacityTotal += row.event_capacity
+    const title = row.event_title ?? 'Événement'
+    const existing = byEvent.get(row.event_id)
     if (existing) existing.count += 1
-    else byEvent.set(eventId, { id: eventId, label: title, count: 1 })
+    else byEvent.set(row.event_id, { id: row.event_id, label: title, count: 1 })
   }
 
   const fillRateCur = capacityTotal > 0 ? (signupsCur / capacityTotal) * 100 : 0
-  const fillRatePrev =
-    capacityTotal > 0 ? (signupsPrev / capacityTotal) * 100 : 0
-
+  const fillRatePrev = capacityTotal > 0 ? (signupsPrev / capacityTotal) * 100 : 0
   const ranking = buildRanking(Array.from(byEvent.values()), signupsCur, rankingLimit)
 
   const kpis = [
@@ -592,18 +480,10 @@ async function loadEventScope(
       current
     ),
     'kpi:cancellations': bucketTimestamps(
-      rows.filter((r) => r.status === 'cancelled').map((r) => r.created_at),
+      rowsCur.filter((r) => r.status === 'cancelled').map((r) => r.created_at),
       period,
       current
     ),
-  }
-
-  for (const item of ranking.items) {
-    chartSeries[`ranking:${item.id}`] = bucketTimestamps(
-      confirmedRows.filter((r) => r.event_id === item.id).map((r) => r.created_at),
-      period,
-      current
-    )
   }
 
   return {
@@ -618,10 +498,7 @@ async function loadEventScope(
       { l: 'Taux de remplissage', v: formatMetricPercent(fillRateCur) },
       {
         l: 'Vitesse de vente moyenne',
-        v:
-          period === 'week' && signupsCur > 0
-            ? `${Math.round(signupsCur / 7)} / jour`
-            : '—',
+        v: period === 'week' && signupsCur > 0 ? `${Math.round(signupsCur / 7)} / jour` : '—',
       },
     ],
     ranking: { title: 'Top événements', ...ranking },
@@ -629,91 +506,56 @@ async function loadEventScope(
   }
 }
 
-async function loadNewsScope(
-  client: Client,
-  entityId: string,
+function buildNewsPayload(
+  raw: Record<string, unknown>,
   period: AnalysePeriod,
   offset: number,
   rankingLimit: number
-): Promise<AnalyseScopePayload> {
+): AnalyseScopePayload {
   const current = getPeriodWindow(period, offset)
-  const previous = getPeriodWindow(period, offset - 1)
-  const cur = windowIso(current)
-  const prev = windowIso(previous)
 
-  const [pubViewsCur, pubViewsPrev, sharesCur, sharesPrev] = await Promise.all([
-    listAnalyticsEvents(client, entityId, {
-      eventTypes: ['publication_view'],
-      from: cur.from,
-      to: cur.to,
-    }),
-    listAnalyticsEvents(client, entityId, {
-      eventTypes: ['publication_view'],
-      from: prev.from,
-      to: prev.to,
-    }),
-    listAnalyticsEvents(client, entityId, {
-      eventTypes: ['publication_share'],
-      from: cur.from,
-      to: cur.to,
-    }),
-    listAnalyticsEvents(client, entityId, {
-      eventTypes: ['publication_share'],
-      from: prev.from,
-      to: prev.to,
-    }),
-  ])
+  const viewsCur = asNumber(raw.views_cur)
+  const viewsPrev = asNumber(raw.views_prev)
+  const sharesCur = asNumber(raw.shares_cur)
+  const sharesPrev = asNumber(raw.shares_prev)
+  const likesCur = asNumber(raw.comments_cur)
+  const likesPrev = asNumber(raw.comments_prev)
 
-  const [likesCur, likesPrev] = await Promise.all([
-    countPublicationCommentsInWindow(client, entityId, cur.from, cur.to),
-    countPublicationCommentsInWindow(client, entityId, prev.from, prev.to),
-  ])
+  const pubMap = new Map<string, string>()
+  if (raw.publications && typeof raw.publications === 'object' && !Array.isArray(raw.publications)) {
+    for (const [id, title] of Object.entries(raw.publications as Record<string, unknown>)) {
+      pubMap.set(id, String(title))
+    }
+  }
 
-  const viewsCur = countEvents(pubViewsCur)
-  const viewsPrev = countEvents(pubViewsPrev)
-  const sharesCountCur = countEvents(sharesCur)
-  const sharesCountPrev = countEvents(sharesPrev)
-
-  const resourceCounts = groupCountByResource(pubViewsCur)
-  const { data: publications } = await client
-    .from('publications')
-    .select('id, title')
-    .eq('entity_id', entityId)
-
-  const pubMap = new Map((publications ?? []).map((p) => [p.id, p.title]))
-  const entries = Array.from(resourceCounts.entries()).map(([id, count]) => ({
-    id,
-    label: pubMap.get(id) ?? 'Publication',
-    count,
-  }))
+  const resourceRows = Array.isArray(raw.resource_counts) ? raw.resource_counts : []
+  const entries = resourceRows.map((row) => {
+    const item = row as { resource_id?: string; count?: unknown }
+    const id = String(item.resource_id ?? '')
+    return {
+      id,
+      label: pubMap.get(id) ?? 'Publication',
+      count: asNumber(item.count),
+    }
+  })
   const ranking = buildRanking(entries, viewsCur, rankingLimit)
 
   const kpis = [
     makeKpi('views', 'Vues', viewsCur, viewsPrev, 1),
     makeKpi('likes', 'Likes', likesCur, likesPrev, 0.35),
-    makeKpi('shares', 'Partages', sharesCountCur, sharesCountPrev, 0.22),
+    makeKpi('shares', 'Partages', sharesCur, sharesPrev, 0.22),
   ]
 
   const chartSeries: Record<string, AnalyseBarPoint[]> = {
-    'kpi:views': bucketTimestamps(
-      pubViewsCur.map((e) => e.occurred_at),
-      period,
-      current
+    'kpi:views': mergeBucketRows(
+      buildBucketLabels(period, current),
+      parseBucketRows(raw.views_buckets)
     ),
     'kpi:likes': bucketTimestamps([], period, current),
-    'kpi:shares': bucketTimestamps(
-      sharesCur.map((e) => e.occurred_at),
-      period,
-      current
+    'kpi:shares': mergeBucketRows(
+      buildBucketLabels(period, current),
+      parseBucketRows(raw.shares_buckets)
     ),
-  }
-
-  for (const item of ranking.items) {
-    chartSeries[`ranking:${item.id}`] = bucketTimestamps(
-      pubViewsCur.filter((e) => e.resource_id === item.id).map((e) => e.occurred_at),
-      period,
-      current
-    )
   }
 
   return {
@@ -728,6 +570,40 @@ async function loadNewsScope(
   }
 }
 
+export async function loadAnalyseRankingChartSeries(
+  client: Client,
+  entityId: string,
+  opts: {
+    scope: AnalyseScope
+    period: AnalysePeriod
+    offset: number
+    rankingItemId: string
+  }
+): Promise<AnalyseBarPoint[]> {
+  const current = getPeriodWindow(opts.period, opts.offset)
+  const cur = windowIso(current)
+
+  if (opts.scope !== 'web' && opts.scope !== 'shop' && opts.scope !== 'news') {
+    return bucketTimestamps([], opts.period, current)
+  }
+
+  const sectionKey =
+    opts.scope === 'web'
+      ? (opts.rankingItemId.replace('section-', '') as Database['public']['Enums']['menu_section_type'])
+      : null
+
+  const rows = await fetchAnalyseRankingChartBuckets(client, entityId, {
+    scope: opts.scope,
+    from: cur.from,
+    to: cur.to,
+    period: opts.period,
+    sectionType: sectionKey,
+    resourceId: opts.scope === 'web' ? null : opts.rankingItemId,
+  })
+
+  return mergeBucketRows(buildBucketLabels(opts.period, current), rows)
+}
+
 export async function loadAnalyseScopeData(
   client: Client,
   entityId: string,
@@ -739,20 +615,21 @@ export async function loadAnalyseScopeData(
   }
 ): Promise<AnalyseScopePayload> {
   const rankingLimit = opts.rankingLimit ?? 4
+  const raw = await fetchScopeRaw(client, entityId, opts.scope, opts.period, opts.offset)
 
   switch (opts.scope) {
     case 'web':
-      return loadWebScope(client, entityId, opts.period, opts.offset, rankingLimit)
+      return buildWebPayload(raw, opts.period, opts.offset, rankingLimit)
     case 'service':
-      return loadServiceScope(client, entityId, opts.period, opts.offset, rankingLimit)
+      return buildServicePayload(raw, opts.period, opts.offset, rankingLimit)
     case 'shop':
-      return loadShopScope(client, entityId, opts.period, opts.offset, rankingLimit)
+      return buildShopPayload(raw, opts.period, opts.offset, rankingLimit)
     case 'event':
-      return loadEventScope(client, entityId, opts.period, opts.offset, rankingLimit)
+      return buildEventPayload(raw, opts.period, opts.offset, rankingLimit)
     case 'news':
-      return loadNewsScope(client, entityId, opts.period, opts.offset, rankingLimit)
+      return buildNewsPayload(raw, opts.period, opts.offset, rankingLimit)
     default:
-      return loadWebScope(client, entityId, opts.period, opts.offset, rankingLimit)
+      return buildWebPayload(raw, opts.period, opts.offset, rankingLimit)
   }
 }
 

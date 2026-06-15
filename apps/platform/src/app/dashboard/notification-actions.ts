@@ -1,6 +1,5 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { markAllAsRead, markAsRead } from '@ibee/supabase'
 
@@ -12,7 +11,6 @@ export async function markAllNotificationsReadAction() {
   if (!user) return { ok: false as const }
 
   await markAllAsRead(supabase, user.id)
-  revalidatePath('/dashboard', 'layout')
   return { ok: true as const }
 }
 
@@ -26,6 +24,5 @@ export async function markNotificationReadAction(notificationId: string) {
   if (!user) return { ok: false as const }
 
   await markAsRead(supabase, notificationId)
-  revalidatePath('/dashboard', 'layout')
   return { ok: true as const }
 }

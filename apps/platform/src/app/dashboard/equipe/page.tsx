@@ -7,41 +7,36 @@ import {
 } from '@/lib/team-data'
 import {
   ensureDefaultTeamRoles,
-  getEntityByUserId,
   getOwnerRole,
   listTeamInvitations,
   listTeamMembers,
 } from '@ibee/supabase'
-import { createClient } from '@/lib/supabase/server'
+import { getDashboardContext } from '@/lib/dashboard-context'
+import { measureDashboardLoad } from '@/lib/dashboard-perf'
 
 export const metadata: Metadata = {
   title: 'Équipe',
 }
 
 export default async function EquipePage() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const ctx = await getDashboardContext()
+  if (!ctx) redirect('/login')
 
-  if (!user) redirect('/login')
-
-  const entity = await getEntityByUserId(supabase, user.id)
-  if (!entity) redirect('/login')
-
-  const roles = await ensureDefaultTeamRoles(supabase, entity.id)
+  const roles = await ensureDefaultTeamRoles(ctx.supabase, ctx.entity.id)
   const ownerRole = getOwnerRole(roles)
   if (!ownerRole) redirect('/login')
 
-  const [members, pending] = await Promise.all([
-    listTeamMembers(supabase, entity.id),
-    listTeamInvitations(supabase, entity.id),
-  ])
+  const [members, pending] = await measureDashboardLoad('page:equipe', () =>
+    Promise.all([
+      listTeamMembers(ctx.supabase, ctx.entity.id),
+      listTeamInvitations(ctx.supabase, ctx.entity.id),
+    ])
+  )
 
   const data = buildTeamPageDataFromEntity({
-    display_name: entity.display_name,
-    created_at: entity.created_at,
-    ownerEmail: user.email,
+    display_name: ctx.entity.display_name,
+    created_at: ctx.entity.created_at,
+    ownerEmail: ctx.user.email,
     ownerRoleId: ownerRole.id,
     roles: roles.map(mapRoleRecordToDefinition),
     members,

@@ -1,9 +1,11 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { ProfileShell } from '@ibee/ui-react/profile'
 import { ProfileHeroEditor, type ProfileHeroEntity } from './ProfileHeroEditor'
 import type { ProfileStudioData } from '@/lib/profile-studio-data'
+import { useProfileStudioData } from './ProfileStudioDataContext'
+import { StudioPlaylistsSkeleton } from './StudioPlaylistsSkeleton'
 import { ProfileStudioMenuTabs } from './ProfileStudioMenuTabs'
 import { ProfileStudioSections } from './ProfileStudioSections'
 import { HomeWidgetsPanel } from './home-widgets/HomeWidgetsPanel'
@@ -19,11 +21,18 @@ type ShopProduct = ProfileStudioData['shopProducts'][number]
 type PlaylistService = ProfileStudioData['playlistServices'][number]
 type PlaylistEvent = ProfileStudioData['playlistEvents'][number]
 
-type Props = {
-  data: ProfileStudioData
+const EMPTY_PLAYLISTS = {
+  publications: [] as Publication[],
+  shopProducts: [] as ShopProduct[],
+  productCategories: [] as ProfileStudioData['productCategories'],
+  playlistServices: [] as PlaylistService[],
+  playlistEvents: [] as PlaylistEvent[],
 }
 
-export function ProfileStudio({ data }: Props) {
+export function ProfileStudio() {
+  const { shell, playlists } = useProfileStudioData()
+  const playlistsReady = playlists != null
+
   const [activeType, setActiveType] = useState('home')
   const [addContentOpen, setAddContentOpen] = useState(false)
   const [historyEditOpen, setHistoryEditOpen] = useState(false)
@@ -34,25 +43,42 @@ export function ProfileStudio({ data }: Props) {
   const [serviceReturnToAddContent, setServiceReturnToAddContent] = useState(false)
   const [eventWizardOpen, setEventWizardOpen] = useState(false)
   const [eventReturnToAddContent, setEventReturnToAddContent] = useState(false)
-  const [publications, setPublications] = useState<Publication[]>(data.publications)
-  const [historyBlocks, setHistoryBlocks] = useState<HistoryBlock[]>(data.historyBlocks)
-  const [shopProducts, setShopProducts] = useState<ShopProduct[]>(data.shopProducts)
-  const [playlistServices, setPlaylistServices] = useState<PlaylistService[]>(data.playlistServices)
-  const [playlistEvents, setPlaylistEvents] = useState<PlaylistEvent[]>(data.playlistEvents)
+  const [publications, setPublications] = useState<Publication[]>([])
+  const [historyBlocks, setHistoryBlocks] = useState<HistoryBlock[]>(shell.historyBlocks)
+  const [shopProducts, setShopProducts] = useState<ShopProduct[]>([])
+  const [playlistServices, setPlaylistServices] = useState<PlaylistService[]>([])
+  const [playlistEvents, setPlaylistEvents] = useState<PlaylistEvent[]>([])
   const [entity, setEntity] = useState<ProfileHeroEntity>({
-    display_name: data.entity.display_name,
-    role: data.entity.role,
-    bio: data.entity.bio,
-    avatar_url: data.entity.avatar_url,
-    banner_url: data.entity.banner_url,
-    followers_count: data.entity.followers_count,
+    display_name: shell.entity.display_name,
+    role: shell.entity.role,
+    bio: shell.entity.bio,
+    avatar_url: shell.entity.avatar_url,
+    banner_url: shell.entity.banner_url,
+    followers_count: shell.entity.followers_count,
   })
-  const { menuSections, sectionOptions, webEditUrl, productCategories } = data
+
+  useEffect(() => {
+    if (!playlists) return
+    setPublications(playlists.publications)
+    setShopProducts(playlists.shopProducts)
+    setPlaylistServices(playlists.playlistServices)
+    setPlaylistEvents(playlists.playlistEvents)
+  }, [playlists])
+
+  const baseData = useMemo<ProfileStudioData>(
+    () => ({
+      ...shell,
+      ...(playlists ?? EMPTY_PLAYLISTS),
+    }),
+    [shell, playlists]
+  )
 
   const studioData = useMemo(
-    () => ({ ...data, publications, historyBlocks, shopProducts, playlistServices, playlistEvents }),
-    [data, publications, historyBlocks, shopProducts, playlistServices, playlistEvents]
+    () => ({ ...baseData, publications, historyBlocks, shopProducts, playlistServices, playlistEvents }),
+    [baseData, publications, historyBlocks, shopProducts, playlistServices, playlistEvents]
   )
+
+  const { menuSections, sectionOptions, webEditUrl, productCategories } = baseData
 
   const activeSectionTypes = useMemo(() => {
     const set = new Set<string>(['home'])
@@ -101,7 +127,7 @@ export function ProfileStudio({ data }: Props) {
       {
         ...pub,
         comments_count: 0,
-        entity_id: data.entity.id,
+        entity_id: shell.entity.id,
         scheduled_for: null,
         updated_at: pub.created_at,
         publication_media: (pub.publication_media ?? []) as Publication['publication_media'],
@@ -128,23 +154,25 @@ export function ProfileStudio({ data }: Props) {
           onTabChange={setActiveType}
         />
 
-        {activeType === 'home' ? (
+        {!playlistsReady ? (
+          <StudioPlaylistsSkeleton />
+        ) : activeType === 'home' ? (
           <HomeWidgetsPanel data={studioData} onOpenAddContent={openAddContent} />
         ) : (
           <ProfileStudioSections
             activeType={activeType}
-            homeWidgets={data.homeWidgets}
+            homeWidgets={baseData.homeWidgets}
             shopProducts={shopProducts}
             playlistServices={playlistServices}
             playlistEvents={playlistEvents}
             publications={publications}
             historyBlocks={historyBlocks}
-            faqItems={data.faqItems}
-            entitySlug={data.entity.slug}
+            faqItems={baseData.faqItems}
+            entitySlug={baseData.entity.slug}
             entityDisplayName={entity.display_name}
             entityAvatarUrl={entity.avatar_url}
-            webBaseUrl={data.webEditUrl}
-            dashboardBaseUrl={data.dashboardUrl}
+            webBaseUrl={baseData.webEditUrl}
+            dashboardBaseUrl={baseData.dashboardUrl}
             onEditHistory={() => openHistoryEdit(false)}
             onPublicationUpdated={(pub) =>
               setPublications((prev) =>

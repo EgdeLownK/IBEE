@@ -7,6 +7,30 @@
   padding: 28px 24px 40px;
 }
 
+.analyse-page.is-loading {
+  pointer-events: none;
+  opacity: 0.72;
+  transition: opacity 0.15s ease;
+}
+
+.anal-kpis.is-loading,
+.anal-chart.is-loading,
+.anal-bottom.is-loading {
+  opacity: 0.55;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+.anal-chart.is-loading .anal-bar__fill {
+  animation: dash-skeleton-pulse 1.4s ease-in-out infinite;
+}
+
+.anal-head__error {
+  margin: -8px 0 12px;
+  font-size: 13px;
+  color: #b42318;
+}
+
 @media (max-width: 799px) {
   .analyse-page {
     padding: 20px 16px 32px;
