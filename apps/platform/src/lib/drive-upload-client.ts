@@ -8,8 +8,8 @@ import { prepareDriveUploadFile } from '@/lib/drive-upload-prep'
 import {
   registerDirectEntityFileAction,
   uploadEntityFileAction,
-  type EntityFileDto,
 } from '@/lib/entity-file-actions'
+import type { EntityFileDto } from '@/lib/entity-file-server'
 
 export type DriveUploadClientResult = {
   ok: true

@@ -4,10 +4,8 @@ import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { useAccountContext } from '@/components/dashboard/AccountContext'
-import {
-  deleteEntityFileAction,
-  getEntityFileSignedUrlAction,
-} from '@/lib/entity-file-actions'
+import { deleteEntityFileAction } from '@/lib/entity-file-actions'
+import { getEntityFileSignedUrl } from '@/lib/entity-file-client'
 import { createDriveFolderAction, deleteDriveFolderAction } from '@/lib/drive-folder-actions'
 import {
   canPreviewInBrowser,
@@ -641,7 +639,7 @@ function FilesTable({
       : ['Nom', 'Taille', 'Modifié', 'Propriétaire', ''])
 
   async function openFile(file: DriveFileRow, mode: 'preview' | 'download') {
-    const result = await getEntityFileSignedUrlAction(file.id)
+    const result = await getEntityFileSignedUrl(file.id)
     if (!result.ok) {
       toast.error(result.error)
       return

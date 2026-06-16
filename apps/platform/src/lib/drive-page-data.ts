@@ -51,12 +51,21 @@ export async function loadDrivePageDataFromContext(ctx: DashboardContext): Promi
   const shell = buildAccountShellData(ctx.user, ctx.entity)
   const { supabase, entity, user } = ctx
 
-  const [files, folders, linkedIds, accountUsedBytes] = await Promise.all([
+  const [files, foldersResult, linkedIds, accountUsedBytes] = await Promise.all([
     listEntityFiles(supabase, entity.id),
-    listAllEntityFolders(supabase, entity.id),
+    listAllEntityFolders(supabase, entity.id).catch((err) => {
+      const code =
+        typeof err === 'object' && err && 'code' in err ? (err as { code?: string }).code : null
+      if (code === 'PGRST205') {
+        console.warn('[drive] entity_folders table missing — apply migration 20260616120000_entity_folders.sql')
+        return []
+      }
+      throw err
+    }),
     listEntityFileIdsLinkedToProducts(supabase, entity.id),
     sumUserDriveBytes(supabase, user.id),
   ])
+  const folders = foldersResult
 
   const profileColor =
     shell.projectAccounts.find((p) => p.id === entity.id)?.color ?? 'var(--color-accent)'

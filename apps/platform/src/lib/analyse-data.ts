@@ -658,7 +658,7 @@ export function parseAnalyseScope(value: string | undefined): AnalyseScope {
 }
 
 export function parseAnalysePeriod(value: string | undefined): AnalysePeriod {
-  if (value === 'month' || value === 'year') return value
+  if (value === 'year') return 'year'
   return 'week'
 }
 

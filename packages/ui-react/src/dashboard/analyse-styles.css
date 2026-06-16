@@ -13,6 +13,16 @@
   transition: opacity 0.15s ease;
 }
 
+/* Transition fluide pendant le chargement — les données restent visibles */
+.anal-content {
+  transition: opacity 0.15s ease;
+}
+
+.anal-content.is-pending {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
 .anal-kpis.is-loading,
 .anal-chart.is-loading,
 .anal-bottom.is-loading {

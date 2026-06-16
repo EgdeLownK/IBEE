@@ -6,7 +6,6 @@ import type { AccountShellData } from '@/lib/account-shell-data'
 import { getNavZone, shouldShowSidebar } from '@/lib/nav-zone'
 import { AccountContextProvider, useAccountContext } from './AccountContext'
 import { DashboardContentArea } from './DashboardContentArea'
-import { DashboardNavigationProvider } from './DashboardNavigationContext'
 import { GlobalHeader } from './GlobalHeader'
 import { FloatingNavPill } from './FloatingNavPill'
 import { ZoneSidebar } from './ZoneSidebar'
@@ -60,9 +59,7 @@ function AppShellInner({ children, webUrl }: Omit<Props, 'accountData'>) {
 export function AppShell({ children, accountData, webUrl }: Props) {
   return (
     <AccountContextProvider data={accountData}>
-      <DashboardNavigationProvider>
-        <AppShellInner webUrl={webUrl}>{children}</AppShellInner>
-      </DashboardNavigationProvider>
+      <AppShellInner webUrl={webUrl}>{children}</AppShellInner>
     </AccountContextProvider>
   )
 }

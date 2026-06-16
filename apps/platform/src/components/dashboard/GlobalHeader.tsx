@@ -95,12 +95,55 @@ function personalInitial(name: string) {
   return name.trim().charAt(0).toUpperCase() || '?'
 }
 
-export function GlobalHeader({
-  webUrl,
-  webProfileUrl = '/',
-  isAuthenticated = true,
-  loginUrl = '/login',
-}: Props) {
+function useHeaderClock() {
+  const [clock, setClock] = useState('--:--')
+
+  useEffect(() => {
+    function tick() {
+      const d = new Date()
+      setClock(
+        `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+      )
+    }
+    tick()
+    const id = window.setInterval(tick, 30000)
+    return () => window.clearInterval(id)
+  }, [])
+
+  return clock
+}
+
+function GuestGlobalHeader({ loginUrl = '/login' }: Pick<Props, 'loginUrl'>) {
+  const clock = useHeaderClock()
+
+  return (
+    <header className="app-header">
+      <div className="flex items-center gap-2" aria-hidden="true" />
+
+      <a href="/" className="app-header__brand" aria-label="Accueil IBEE">
+        IBEE<sup>v0.4</sup>
+      </a>
+
+      <div className="app-header__right">
+        <div className="app-header__weather hidden md:inline-flex" aria-label="Météo">
+          <Sun className="h-4 w-4" aria-hidden="true" />
+          <span className="app-header__weather-temp">21°</span>
+        </div>
+
+        <span className="app-header__time hidden md:inline">{clock}</span>
+
+        <a
+          href={loginUrl}
+          className="inline-flex items-center rounded-full border border-neutral-200 bg-surface px-4 py-1.5 text-sm font-medium text-neutral-900 transition-colors hover:bg-panel-2"
+        >
+          Se connecter
+        </a>
+      </div>
+    </header>
+  )
+}
+
+function AuthenticatedGlobalHeader(_props: Props) {
   const router = useRouter()
   const pathname = usePathname() ?? '/'
   const dashboardNav = useOptionalDashboardNavigation()
@@ -115,9 +158,8 @@ export function GlobalHeader({
     isPersonalMode,
   } = useAccountContext()
 
-  const showSidebar = isAuthenticated && shouldShowSidebar(getNavZone(pathname, isPersonalMode))
-
-  const [clock, setClock] = useState('--:--')
+  const showSidebar = shouldShowSidebar(getNavZone(pathname, isPersonalMode))
+  const clock = useHeaderClock()
   const [unreadCount, setUnreadCount] = useState(0)
   const [notifications, setNotifications] = useState<HeaderNotification[]>([])
   const [pending, startTransition] = useTransition()
@@ -128,8 +170,6 @@ export function GlobalHeader({
   const personalInitials = personalInitial(personalAccount.displayName)
 
   useEffect(() => {
-    if (!isAuthenticated) return
-
     let cancelled = false
 
     void fetch('/api/dashboard/notifications')
@@ -144,18 +184,6 @@ export function GlobalHeader({
     return () => {
       cancelled = true
     }
-  }, [isAuthenticated])
-
-  useEffect(() => {
-    function tick() {
-      const d = new Date()
-      setClock(
-        `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
-      )
-    }
-    tick()
-    const id = window.setInterval(tick, 30000)
-    return () => window.clearInterval(id)
   }, [])
 
   function handleMarkAllRead() {
@@ -230,22 +258,20 @@ export function GlobalHeader({
 
         <span className="app-header__time hidden md:inline">{clock}</span>
 
-        {isAuthenticated ? (
-          <>
-            <a
-              href="/notifications"
-              className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-neutral-600 transition hover:bg-panel md:hidden"
-              aria-label="Notifications"
-            >
-              <Bell className="h-5 w-5" aria-hidden="true" />
-              {unreadCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-accent px-1 text-[10px] font-bold text-white">
-                  {formatBadge(unreadCount)}
-                </span>
-              )}
-            </a>
+        <a
+          href="/notifications"
+          className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-neutral-600 transition hover:bg-panel md:hidden"
+          aria-label="Notifications"
+        >
+          <Bell className="h-5 w-5" aria-hidden="true" />
+          {unreadCount > 0 && (
+            <span className="absolute -top-0.5 -right-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-accent px-1 text-[10px] font-bold text-white">
+              {formatBadge(unreadCount)}
+            </span>
+          )}
+        </a>
 
-            <button
+        <button
               type="button"
               popoverTarget={notifPopoverId}
               style={{ anchorName: `--${notifPopoverId}` } as React.CSSProperties}
@@ -466,16 +492,14 @@ export function GlobalHeader({
                 </form>
               </div>
             </div>
-          </>
-        ) : (
-          <a
-            href={loginUrl}
-            className="inline-flex items-center rounded-full border border-neutral-200 bg-surface px-4 py-1.5 text-sm font-medium text-neutral-900 transition-colors hover:bg-panel-2"
-          >
-            Se connecter
-          </a>
-        )}
       </div>
     </header>
   )
+}
+
+export function GlobalHeader({ isAuthenticated = true, loginUrl = '/login', ...props }: Props) {
+  if (!isAuthenticated) {
+    return <GuestGlobalHeader loginUrl={loginUrl} />
+  }
+  return <AuthenticatedGlobalHeader loginUrl={loginUrl} {...props} />
 }

@@ -1,4 +1,4 @@
-import type { EntityFileDto } from '@/lib/entity-file-actions'
+import type { EntityFileDto } from '@/lib/entity-file-server'
 import type { ProductCreateDraft, PhysicalCondition } from '@ibee/shared'
 
 export type ProductType = 'physical' | 'digital'

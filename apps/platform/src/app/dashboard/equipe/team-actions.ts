@@ -3,21 +3,15 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import {
-  buildTeamPageDataFromEntity,
   cloneRole,
   isValidEmail,
   mapRoleDefinitionToSaveInput,
   mapRoleRecordToDefinition,
-  type TeamPageData,
   type TeamRoleDefinition,
 } from '@/lib/team-data'
 import {
   createTeamInvitation,
-  ensureDefaultTeamRoles,
   getEntityByUserId,
-  getOwnerRole,
-  listTeamInvitations,
-  listTeamMembers,
   removeTeamMember,
   saveTeamRoles,
   teamEmailAlreadyUsed,
@@ -40,43 +34,6 @@ async function requireOwnerEntity() {
   if (!entity) return { ok: false as const, error: 'Profil introuvable.' }
 
   return { ok: true as const, supabase, user, entity }
-}
-
-export async function loadTeamPageDataAction(): Promise<ActionResult<TeamPageData>> {
-  const ctx = await requireOwnerEntity()
-  if (!ctx.ok) return ctx
-
-  try {
-    const roles = await ensureDefaultTeamRoles(ctx.supabase, ctx.entity.id)
-    const ownerRole = getOwnerRole(roles)
-    if (!ownerRole) {
-      return { ok: false, error: 'Rôle propriétaire introuvable.' }
-    }
-
-    const [members, pending] = await Promise.all([
-      listTeamMembers(ctx.supabase, ctx.entity.id),
-      listTeamInvitations(ctx.supabase, ctx.entity.id),
-    ])
-
-    const data = buildTeamPageDataFromEntity({
-      display_name: ctx.entity.display_name,
-      created_at: ctx.entity.created_at,
-      ownerEmail: ctx.user.email,
-      ownerRoleId: ownerRole.id,
-      roles: roles.map(mapRoleRecordToDefinition),
-      members,
-      pending: pending.map((invite) => ({
-        id: invite.id,
-        email: invite.email,
-        role_id: invite.role_id,
-      })),
-    })
-
-    return { ok: true, data }
-  } catch (err) {
-    console.error('[loadTeamPageDataAction]', err)
-    return { ok: false, error: 'Impossible de charger l’équipe.' }
-  }
 }
 
 export async function saveTeamRolesAction(

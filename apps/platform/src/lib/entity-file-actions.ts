@@ -5,59 +5,19 @@ import { createClient } from '@/lib/supabase/server'
 import { DRIVE_MAX_FILE_BYTES, DRIVE_QUOTA_BYTES, DRIVE_QUOTA_GB, validateDriveUpload } from '@/lib/drive-file-policy'
 import { processDriveUploadFile } from '@/lib/drive-upload-process'
 import {
+  getOwnedEntityFile,
+  requireOwnerEntity,
+  toEntityFileDto,
+} from '@/lib/entity-file-server'
+import {
   createEntityFile,
   deleteEntityFileRecord,
-  getEntityByUserId,
-  getEntityFileById,
   getEntityFolderById,
-  getEntityOwnedByUser,
   isEntityFileLinkedToProduct,
-  listEntityFiles,
   sumUserDriveBytes,
 } from '@ibee/supabase'
 
-export type EntityFileDto = {
-  id: string
-  name: string
-  mime_type: string | null
-  size_bytes: number
-  created_at: string
-  folder_id: string | null
-}
-
-type OwnerSession =
-  | { ok: false; error: string }
-  | {
-      ok: true
-      supabase: Awaited<ReturnType<typeof createClient>>
-      user: { id: string }
-      entity: { id: string }
-    }
-
-async function requireOwnerEntity(entityId?: string): Promise<OwnerSession> {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return { ok: false, error: 'Non authentifié.' }
-
-  const entity = entityId
-    ? await getEntityOwnedByUser(supabase, entityId, user.id)
-    : await getEntityByUserId(supabase, user.id)
-  if (!entity) return { ok: false, error: 'Profil introuvable.' }
-
-  return { ok: true, supabase, user, entity }
-}
-
-async function getOwnedEntityFile(session: Extract<OwnerSession, { ok: true }>, fileId: string) {
-  const file = await getEntityFileById(session.supabase, fileId)
-  if (!file) return null
-
-  const entity = await getEntityOwnedByUser(session.supabase, file.entity_id, session.user.id)
-  if (!entity) return null
-
-  return { file, entity }
-}
+export type { EntityFileDto } from '@/lib/entity-file-server'
 
 async function assertDriveQuota(
   supabase: Awaited<ReturnType<typeof createClient>>,
@@ -85,37 +45,6 @@ async function resolveFolderId(
     return { ok: false as const, error: 'Dossier introuvable.' }
   }
   return { ok: true as const, folderId }
-}
-
-function toDto(file: {
-  id: string
-  name: string
-  mime_type: string | null
-  size_bytes: number
-  created_at: string
-  folder_id?: string | null
-}): EntityFileDto {
-  return {
-    id: file.id,
-    name: file.name,
-    mime_type: file.mime_type,
-    size_bytes: file.size_bytes,
-    created_at: file.created_at,
-    folder_id: file.folder_id ?? null,
-  }
-}
-
-export async function listEntityFilesAction() {
-  try {
-    const session = await requireOwnerEntity()
-    if (!session.ok) return session
-
-    const files = await listEntityFiles(session.supabase, session.entity.id)
-    return { ok: true as const, files: files.map(toDto) }
-  } catch (err) {
-    console.error('[listEntityFilesAction]', err)
-    return { ok: false as const, error: 'Erreur lors du chargement des fichiers.' }
-  }
 }
 
 export async function uploadEntityFileAction(formData: FormData) {
@@ -174,7 +103,7 @@ export async function uploadEntityFileAction(formData: FormData) {
 
     revalidatePath('/dashboard/drive')
 
-    return { ok: true as const, file: toDto(created) }
+    return { ok: true as const, file: toEntityFileDto(created) }
   } catch (err) {
     console.error('[uploadEntityFileAction]', err)
     return { ok: false as const, error: "Erreur lors de l'enregistrement du fichier." }
@@ -234,39 +163,10 @@ export async function registerDirectEntityFileAction(input: {
 
     revalidatePath('/dashboard/drive')
 
-    return { ok: true as const, file: toDto(created) }
+    return { ok: true as const, file: toEntityFileDto(created) }
   } catch (err) {
     console.error('[registerDirectEntityFileAction]', err)
     return { ok: false as const, error: "Erreur lors de l'enregistrement du fichier." }
-  }
-}
-
-export async function getEntityFileSignedUrlAction(fileId: string) {
-  try {
-    const session = await requireOwnerEntity()
-    if (!session.ok) return session
-
-    const owned = await getOwnedEntityFile(session, fileId)
-    if (!owned) return { ok: false as const, error: 'Fichier introuvable.' }
-
-    const { data, error } = await session.supabase.storage
-      .from('product-files')
-      .createSignedUrl(owned.file.storage_path, 120)
-
-    if (error || !data?.signedUrl) {
-      console.error('[getEntityFileSignedUrlAction]', error)
-      return { ok: false as const, error: 'Impossible de générer le lien de téléchargement.' }
-    }
-
-    return {
-      ok: true as const,
-      url: data.signedUrl,
-      name: owned.file.name,
-      mime_type: owned.file.mime_type,
-    }
-  } catch (err) {
-    console.error('[getEntityFileSignedUrlAction]', err)
-    return { ok: false as const, error: 'Erreur lors de l’accès au fichier.' }
   }
 }
 

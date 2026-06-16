@@ -4,9 +4,7 @@ import { useRef } from 'react'
 import { Download, Loader2, Plus, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { PHYSICAL_CONDITIONS } from '@ibee/shared'
-import {
-  listEntityFilesAction,
-} from '@/lib/entity-file-actions'
+import { listEntityFiles } from '@/lib/entity-file-client'
 import { DRIVE_MAX_FILE_MB } from '@/lib/drive-file-policy'
 import { uploadDriveFile } from '@/lib/drive-upload-client'
 import type { ProductCreateFormState } from '../types'
@@ -38,7 +36,7 @@ export function StepTypeSpecific({ form, updateForm, onChange }: Props) {
   }
 
   async function loadEntityFiles() {
-    const result = await listEntityFilesAction()
+    const result = await listEntityFiles()
     if (result.ok) onChange({ entityFiles: result.files })
     else toast.error(result.error)
   }

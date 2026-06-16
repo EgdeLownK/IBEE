@@ -14,9 +14,9 @@ import {
   Upload,
 } from 'lucide-react'
 import {
-  fetchAnalyseRankingChartAction,
-  fetchAnalyseScopeAction,
-} from '@/app/dashboard/analyse/analyse-actions'
+  fetchAnalyseRankingChart,
+  fetchAnalyseScope,
+} from '@/lib/analyse-client'
 import {
   getChartColumnCount,
   getMinPeriodOffset,
@@ -25,7 +25,6 @@ import {
   type AnalysePeriod,
 } from '@/lib/analyse-period'
 import type { AnalyseScopePayload } from '@/lib/analyse-data'
-import { AnalyseContentSkeleton } from '@/components/dashboard/analyse/AnalyseContentSkeleton'
 
 type Scope = AnalyseScopePayload['scope']
 
@@ -51,7 +50,6 @@ const SCOPES: { id: Scope; label: string; Icon: LucideIcon }[] = [
 
 const PERIODS: { id: AnalysePeriod; label: string }[] = [
   { id: 'week', label: 'Semaine' },
-  { id: 'month', label: 'Mois' },
   { id: 'year', label: 'Année' },
 ]
 
@@ -62,8 +60,8 @@ function defaultChartSeries(data: AnalyseScopePayload): ChartSeries {
 
 function periodCompareLabel(period: AnalysePeriod) {
   if (period === 'week') return 'sem. dernière'
-  if (period === 'month') return 'mois dernier'
-  return 'an dernier'
+  if (period === 'year') return 'an dernier'
+  return 'mois dernier'
 }
 
 function seriesKey(series: ChartSeries) {
@@ -114,12 +112,12 @@ export function AnalyseDashboard({
   const [data, setData] = useState(initialData)
   const [rankingLimit, setRankingLimit] = useState(initialRankingLimit)
   const [error, setError] = useState<string | null>(null)
-  const [scopeLoading, setScopeLoading] = useState(false)
+  const [scopePending, setScopePending] = useState(false)
   const [rankingChartPending, setRankingChartPending] = useState(false)
   const [extraCharts, setExtraCharts] = useState<Record<string, AnalyseBarPoint[]>>({})
   const cacheRef = useRef(new Map<string, AnalyseScopePayload>())
   const inflightRef = useRef(
-    new Map<string, ReturnType<typeof fetchAnalyseScopeAction>>()
+    new Map<string, ReturnType<typeof fetchAnalyseScope>>()
   )
   const [chartSeries, setChartSeries] = useState<ChartSeries>(() =>
     defaultChartSeries(initialData)
@@ -158,7 +156,7 @@ export function AnalyseDashboard({
       const inflight = inflightRef.current.get(key)
       if (inflight) return inflight
 
-      const promise = fetchAnalyseScopeAction({ entityId, ...payload }).then((result) => {
+      const promise = fetchAnalyseScope({ entityId, ...payload }).then((result) => {
         inflightRef.current.delete(key)
         if (result.ok) cacheRef.current.set(key, result.data)
         return result
@@ -170,9 +168,15 @@ export function AnalyseDashboard({
   )
 
   useEffect(() => {
+    // Prefetch 1 : les autres scopes pour la période courante
+    // Prefetch 2 : les autres périodes pour le scope courant
+    // → tous les clics onglet ET période sont des cache hits instantanés
     const timer = setTimeout(() => {
-      for (const tab of SCOPES) {
-        if (tab.id === initialData.scope) continue
+      const otherScopes = SCOPES.filter((tab) => tab.id !== initialData.scope)
+      const otherPeriods = PERIODS.filter((p) => p.id !== initialData.period)
+
+      // Autres scopes (période courante)
+      for (const tab of otherScopes) {
         void fetchScope({
           scope: tab.id,
           period: initialData.period,
@@ -180,7 +184,17 @@ export function AnalyseDashboard({
           rankingLimit: 4,
         })
       }
-    }, 500)
+
+      // Autres périodes (scope courant)
+      for (const p of otherPeriods) {
+        void fetchScope({
+          scope: initialData.scope,
+          period: p.id,
+          offset: 0,
+          rankingLimit: 4,
+        })
+      }
+    }, 600)
     return () => clearTimeout(timer)
   }, [entityId, fetchScope, initialData.period, initialData.scope])
 
@@ -207,10 +221,10 @@ export function AnalyseDashboard({
   }, [period, periodOffset])
 
   useEffect(() => {
-    if (scopeLoading) return
+    if (scopePending) return
     setChartSeries(defaultChartSeries(data))
     setSelectedBar(null)
-  }, [data.scope, data.period, data.offset, scopeLoading])
+  }, [data.scope, data.period, data.offset, scopePending])
 
   const canGoBack = periodOffset > minOffset
   const canGoForward = periodOffset < 0
@@ -241,7 +255,7 @@ export function AnalyseDashboard({
       return
     }
 
-    setScopeLoading(true)
+    setScopePending(true)
     void fetchScope(payload)
       .then((result) => {
         if (!result.ok) {
@@ -254,7 +268,7 @@ export function AnalyseDashboard({
           setRankingLimit(next.rankingLimit)
         }
       })
-      .finally(() => setScopeLoading(false))
+      .finally(() => setScopePending(false))
   }
 
   function prefetchScope(targetScope: Scope) {
@@ -289,7 +303,7 @@ export function AnalyseDashboard({
     if (data.chartSeries[key] || extraCharts[key]) return
 
     setRankingChartPending(true)
-    void fetchAnalyseRankingChartAction({
+    void fetchAnalyseRankingChart({
       entityId,
       scope,
       period,
@@ -339,7 +353,7 @@ export function AnalyseDashboard({
               onMouseEnter={() => prefetchScope(s.id)}
               onFocus={() => prefetchScope(s.id)}
               onClick={() => handleScopeChange(s.id)}
-              disabled={scopeLoading}
+              disabled={scopePending}
             >
               <Icon className="h-3.5 w-3.5" aria-hidden="true" />
               <span>{s.label}</span>
@@ -348,10 +362,7 @@ export function AnalyseDashboard({
         })}
       </div>
 
-      {scopeLoading ? (
-        <AnalyseContentSkeleton columnCount={columnCount} showStats={scope === 'service' || scope === 'event' || scope === 'shop'} />
-      ) : (
-        <>
+      <div className={`anal-content${scopePending ? ' is-pending' : ''}`}>
           <div className="anal-kpis" role="listbox" aria-label="Indicateurs">
             {data.kpis.map((kpi) => {
               const isOn = chartSeries.source === 'kpi' && chartSeries.id === kpi.id
@@ -525,8 +536,7 @@ export function AnalyseDashboard({
               ) : null}
             </div>
           </div>
-        </>
-      )}
+      </div>
     </main>
   )
 }
