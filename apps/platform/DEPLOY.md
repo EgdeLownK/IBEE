@@ -52,6 +52,33 @@ npx vercel deploy --prod   # depuis la racine du monorepo si .vercel/project.jso
 
 ## Dépannage build Vercel
 
+### `ERR_PNPM_NO_PKG_MANIFEST` — `No package.json found in /`
+
+Le log montre souvent une **faute de frappe** dans Install Command :
+
+```text
+pnpm install --frozen-lockfil   ← incorrect (il manque « e »)
+```
+
+et/ou un **Root Directory vide** avec `cd ../..` :
+
+| Root Directory | cwd au install | `cd ../..` arrive à… |
+|----------------|----------------|----------------------|
+| *(vide — racine repo)* | `/vercel/path0` (monorepo) | `/` → **pas de package.json** |
+| `apps/platform` | `/vercel/path0/apps/platform` | `/vercel/path0` (racine repo) → OK |
+
+**Correction** (projet **platform** → Settings) :
+
+1. **General → Root Directory** → `apps/platform` → **Save**
+2. **Build & Deployment → Install Command** :
+   - soit **désactiver l’override** (laisser `vercel.json` du dossier s’appliquer),
+   - soit coller exactement : `cd ../.. && pnpm install --frozen-lockfile` (**lockfile** avec un **e** final)
+3. **Build Command** → `next build` ou override désactivé
+4. **Output Directory** → vide
+5. **Redeploy** (sans cache si besoin)
+
+Si tu préfères builder depuis la **racine du monorepo**, ne pas utiliser `cd ../..` — voir l’alternative dans la section suivante.
+
 ### `No Next.js version detected`
 
 Le `package.json` **racine** du monorepo n’a pas `next` — seul `apps/platform/package.json` l’a.
@@ -62,7 +89,7 @@ Vercel cherche `next` dans le **Root Directory** configuré.
 1. **Root Directory** → `apps/platform` (sans `/` au début, sans `\` Windows)
 2. Sauvegarder, puis Settings → Build & Deployment :
    - **Framework Preset** → `Next.js`
-   - **Install Command** (override) → `cd ../.. && pnpm install --frozen-lockfile`
+   - **Install Command** (override) → `pnpm -C ../.. install --frozen-lockfile`
    - **Build Command** (override) → `next build`
    - **Output Directory** → vide
 3. Redeploy
