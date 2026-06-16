@@ -81,18 +81,35 @@ Si tu préfères builder depuis la **racine du monorepo**, ne pas utiliser `cd .
 
 ### `No Next.js version detected`
 
-Le `package.json` **racine** du monorepo n’a pas `next` — seul `apps/platform/package.json` l’a.
-Vercel cherche `next` dans le **Root Directory** configuré.
+Symptômes typiques dans les logs :
 
-**Correction** (Settings → General → Root Directory) :
+```text
+Installing dependencies...
+Scope: all 5 workspace projects        ← install OK à la racine du monorepo
+...
+Warning: Could not identify Next.js version
+Error: No Next.js version detected
+```
 
-1. **Root Directory** → `apps/platform` (sans `/` au début, sans `\` Windows)
-2. Sauvegarder, puis Settings → Build & Deployment :
+L’install réussit, mais Vercel lit le **`package.json` racine** (sans `next`) au lieu de
+`apps/platform/package.json` (qui contient `"next": "16.2.2"`).
+
+**Cause** : **Root Directory** vide ou incorrect dans le dashboard (pas dans le code).
+
+**Correction** — projet **platform** → [Settings → General](https://vercel.com/egdelownks-projects/platform/settings/general) :
+
+1. Section **Root Directory** → **Edit**
+2. Saisir exactement : `apps/platform` (minuscules, slash `/`, **sans** `/` au début)
+3. **Save** — attendre la confirmation, rafraîchir la page, revérifier que la valeur est bien enregistrée
+4. **Build & Deployment** :
    - **Framework Preset** → `Next.js`
-   - **Install Command** (override) → `pnpm -C ../.. install --frozen-lockfile`
-   - **Build Command** (override) → `next build`
+   - **Install Command** → override **désactivé** ou `pnpm -C ../.. install --frozen-lockfile`
+   - **Build Command** → override **désactivé** ou `next build`
    - **Output Directory** → vide
-3. Redeploy
+5. **Redeploy** (idéalement sur le dernier commit `main`, pas seulement `ae31418`)
+
+Vérification dans les logs après correction : le build doit lancer `next build` depuis
+`apps/platform`, pas chercher `next` à la racine.
 
 Si l’erreur persiste dans l’UI : clique **Save** sur Root Directory, rafraîchis la page,
 puis re-sélectionne Framework **Next.js**.
