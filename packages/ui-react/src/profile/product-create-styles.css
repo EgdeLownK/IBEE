@@ -50,6 +50,10 @@
   }
 }
 
+.pco__panel--wide {
+  max-width: min(900px, 100%);
+}
+
 .pco__header {
   display: flex;
   align-items: center;

@@ -27,6 +27,9 @@ export type ServiceCreateInput = {
   buffer_after_minutes: number
   auto_accept_bookings: boolean
   is_active: boolean
+  payment_required?: boolean
+  deposit_percent?: number
+  cancel_min_hours?: number
   highlights?: string[]
   gallery_images?: string[]
   content_blocks?: ContentBlockInput[]
@@ -43,6 +46,9 @@ export type ServiceCreateDraft = {
   promoEnabled: boolean
   promoPrice: string
   autoAcceptBookings: boolean
+  paymentRequired: boolean
+  depositPercent: string
+  cancelMinHours: string
   minNoticeHours: string
   maxAdvanceDays: string
   bufferBeforeMinutes: string
@@ -129,6 +135,14 @@ export function validateServiceStep(step: 1 | 2 | 3, draft: ServiceCreateDraft):
     if (!Number.isInteger(bufAfter) || bufAfter < 0 || bufAfter > 480) {
       fail('buffer_after_minutes', 'Le battement après doit être entre 0 et 480 minutes.')
     }
+    const cancelMin = Number(draft.cancelMinHours)
+    if (!Number.isInteger(cancelMin) || cancelMin < 0 || cancelMin > 720) {
+      fail('cancel_min_hours', 'Le délai d’annulation doit être entre 0 et 720 heures.')
+    }
+    const deposit = Number(draft.depositPercent)
+    if (!Number.isInteger(deposit) || deposit < 1 || deposit > 100) {
+      fail('deposit_percent', 'L’acompte doit être entre 1 et 100 %.')
+    }
   }
 
   if (step === 3) {
@@ -166,6 +180,9 @@ export function buildServiceCreatePayload(draft: ServiceCreateDraft): ServiceCre
     buffer_after_minutes: Number(draft.bufferAfterMinutes),
     auto_accept_bookings: draft.autoAcceptBookings,
     is_active: draft.isActive,
+    payment_required: draft.paymentRequired,
+    deposit_percent: Number(draft.depositPercent),
+    cancel_min_hours: Number(draft.cancelMinHours),
   }
 
   if (description.length > 0) payload.description = description
@@ -188,6 +205,9 @@ export function serviceStepForField(field: string): 1 | 2 | 3 {
     field === 'max_advance_days' ||
     field === 'buffer_before_minutes' ||
     field === 'buffer_after_minutes' ||
+    field === 'cancel_min_hours' ||
+    field === 'deposit_percent' ||
+    field === 'payment_required' ||
     field === 'auto_accept_bookings'
   ) {
     return 2

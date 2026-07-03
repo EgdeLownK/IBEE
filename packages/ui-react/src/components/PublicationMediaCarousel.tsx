@@ -13,9 +13,32 @@ type CarouselMedia = {
 
 type Props = {
   media: CarouselMedia[]
+  /** Pleine largeur du conteneur — pas de letterboxing ni hauteur max */
+  fullWidth?: boolean
 }
 
-function getCropStyle(width: number | null | undefined, height: number | null | undefined): React.CSSProperties {
+function getCropStyle(
+  width: number | null | undefined,
+  height: number | null | undefined,
+  fullWidth: boolean
+): React.CSSProperties {
+  if (fullWidth) {
+    if (!width || !height) {
+      return { aspectRatio: '16/9', objectFit: 'cover' }
+    }
+    const ratio = width / height
+    if (ratio >= 1.91) {
+      return { aspectRatio: '1.91/1', objectFit: 'cover' }
+    }
+    if (ratio >= 1) {
+      return { aspectRatio: `${width}/${height}`, objectFit: 'cover' }
+    }
+    if (ratio >= 0.8) {
+      return { aspectRatio: `${width}/${height}`, objectFit: 'cover' }
+    }
+    return { aspectRatio: '4/5', objectFit: 'cover' }
+  }
+
   if (!width || !height) {
     return { aspectRatio: '3/2', objectFit: 'cover', maxHeight: 400 }
   }
@@ -32,7 +55,7 @@ function getCropStyle(width: number | null | undefined, height: number | null | 
   return { aspectRatio: '4/5', objectFit: 'cover' }
 }
 
-export function PublicationMediaCarousel({ media }: Props) {
+export function PublicationMediaCarousel({ media, fullWidth = false }: Props) {
   const [current, setCurrent] = useState(0)
   const trackRef = useRef<HTMLDivElement>(null)
   const scrollTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -74,6 +97,8 @@ export function PublicationMediaCarousel({ media }: Props) {
 
   if (media.length === 0) return null
 
+  const rootClass = fullWidth ? 'pub-media-carousel--full group relative' : 'overflow-hidden group relative'
+
   function renderSlide(m: CarouselMedia, i: number) {
     if (m.type === 'video') {
       return (
@@ -81,7 +106,11 @@ export function PublicationMediaCarousel({ media }: Props) {
           key={i}
           src={m.url}
           className="w-full"
-          style={{ aspectRatio: '16/9', objectFit: 'cover', maxHeight: 400 }}
+          style={
+            fullWidth
+              ? { aspectRatio: '16/9', objectFit: 'cover' }
+              : { aspectRatio: '16/9', objectFit: 'cover', maxHeight: 400 }
+          }
           controls
           playsInline
           preload="metadata"
@@ -94,17 +123,17 @@ export function PublicationMediaCarousel({ media }: Props) {
         src={m.url}
         alt={m.alt_text ?? ''}
         className="w-full"
-        style={getCropStyle(m.width, m.height)}
+        style={getCropStyle(m.width, m.height, fullWidth)}
       />
     )
   }
 
   if (media.length === 1) {
-    return <div className="overflow-hidden">{renderSlide(media[0], 0)}</div>
+    return <div className={fullWidth ? 'pub-media-carousel--full' : 'overflow-hidden'}>{renderSlide(media[0], 0)}</div>
   }
 
   return (
-    <div className="group relative overflow-hidden">
+    <div className={rootClass}>
       {/* Track */}
       <div
         ref={trackRef}

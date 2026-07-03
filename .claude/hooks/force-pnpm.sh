@@ -3,7 +3,7 @@
 # Intercepte toute commande Bash avant exécution.
 # Si elle commence par "npm", bloque et force pnpm.
 # Code de sortie 2 = annulation de l'action par Claude Code.
-
+enel
 INPUT=$(cat)
 COMMAND=$(echo "$INPUT" | jq -r '.tool_input.command // ""')
 
@@ -19,3 +19,4 @@ if echo "$COMMAND" | grep -qE '^\s*npm\s'; then
 fi
 
 exit 0
+étquit

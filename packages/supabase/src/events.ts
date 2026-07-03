@@ -28,6 +28,8 @@ export type EventRecord = {
   position: number
   created_at: string
   updated_at: string
+  cancel_min_hours?: number
+  registration_fields?: unknown
 }
 
 // ---------------------------------------------------------------------------
@@ -95,6 +97,40 @@ export async function getEventBySlug(
 
   if (error) throw error
   return data as EventRecord | null
+}
+
+export async function getEventById(
+  client: SupabaseClient<Database>,
+  eventId: string
+) {
+  const { data, error } = await client.from('events').select('*').eq('id', eventId).maybeSingle()
+  if (error) throw error
+  return data as EventRecord | null
+}
+
+export async function deleteEvent(client: SupabaseClient<Database>, eventId: string): Promise<void> {
+  const { error } = await client.from('events').delete().eq('id', eventId)
+  if (error) throw error
+}
+
+export async function updateEventSettings(
+  client: SupabaseClient<Database>,
+  eventId: string,
+  patch: {
+    cancel_min_hours?: number
+    capacity?: number | null
+    registration_fields?: Database['public']['Tables']['events']['Update']['registration_fields']
+  }
+) {
+  const { data, error } = await client
+    .from('events')
+    .update(patch)
+    .eq('id', eventId)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data as EventRecord
 }
 
 /**
@@ -169,22 +205,35 @@ export async function createEventRegistration(
   data: {
     event_id: string
     entity_id: string
+    activity_id?: string | null
     attendee_name: string
     attendee_email: string
     attendee_phone?: string | null
     message?: string | null
+    ticket_type_id?: string | null
+    ticket_code?: string | null
+    price_cents?: number | null
+    form_answers?: Record<string, string | boolean> | null
   }
 ) {
+  const ticketCode =
+    data.ticket_code ??
+    `EVT-${crypto.randomUUID().replace(/-/g, '').slice(0, 10).toUpperCase()}`
+
   const { data: result, error } = await client
     .from('event_registrations')
     .insert({
       event_id: data.event_id,
       entity_id: data.entity_id,
+      activity_id: data.activity_id ?? null,
       attendee_name: data.attendee_name,
       attendee_email: data.attendee_email,
       attendee_phone: data.attendee_phone ?? null,
       message: data.message ?? null,
-      // status intentionnellement omis : défaut DB = 'confirmed'
+      ticket_type_id: data.ticket_type_id ?? null,
+      ticket_code: ticketCode,
+      price_cents: data.price_cents ?? 0,
+      form_answers: data.form_answers ?? {},
     })
     .select()
     .single()
@@ -209,4 +258,92 @@ export async function listEventRegistrations(
 
   if (error) throw error
   return data ?? []
+}
+
+export type EventRegistrationWithEvent = Database['public']['Tables']['event_registrations']['Row'] & {
+  events: {
+    id: string
+    title: string
+    slug: string
+    start_at: string
+    end_at: string | null
+    capacity: number | null
+    price_cents: number | null
+    currency: string
+    location_type: 'online' | 'in_person'
+    is_published: boolean
+    registration_fields: Database['public']['Tables']['events']['Row']['registration_fields']
+  } | null
+  event_ticket_types?: {
+    title: string
+    price_cents: number
+    currency: string
+  } | null
+  event_activities?: {
+    id: string
+    title: string
+    slug: string
+    start_at: string
+    end_at: string | null
+  } | null
+  orders?: {
+    discount_cents: number
+    discount_code_id: string | null
+    discount_codes: { code: string } | null
+  } | null
+}
+
+export async function listRegistrationsByEntity(
+  client: SupabaseClient<Database>,
+  entityId: string,
+  opts: { limit?: number } = {}
+) {
+  const { limit = 200 } = opts
+  const { data, error } = await client
+    .from('event_registrations')
+    .select(
+      '*, events(id, title, slug, start_at, end_at, capacity, price_cents, currency, location_type, is_published, registration_fields), event_ticket_types(title, price_cents, currency), event_activities(id, title, slug, start_at, end_at), orders(discount_cents, discount_code_id, discount_codes(code))'
+    )
+    .eq('entity_id', entityId)
+    .order('created_at', { ascending: false })
+    .limit(limit)
+
+  if (error) throw error
+  return (data ?? []) as EventRegistrationWithEvent[]
+}
+
+export async function cancelEventRegistration(
+  client: SupabaseClient<Database>,
+  registrationId: string
+) {
+  const { data, error } = await client
+    .from('event_registrations')
+    .update({ status: 'cancelled' })
+    .eq('id', registrationId)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+/** Inscription confirmée d’un visiteur (service role ou owner — RLS bloque le public). */
+export async function getConfirmedEventRegistrationByEmail(
+  client: SupabaseClient<Database>,
+  eventId: string,
+  email: string
+) {
+  const normalized = email.trim().toLowerCase()
+  if (!normalized) return null
+
+  const { data, error } = await client
+    .from('event_registrations')
+    .select('id, ticket_code, status')
+    .eq('event_id', eventId)
+    .eq('status', 'confirmed')
+    .ilike('attendee_email', normalized)
+    .maybeSingle()
+
+  if (error) throw error
+  return data
 }

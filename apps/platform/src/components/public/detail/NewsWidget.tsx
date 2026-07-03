@@ -15,15 +15,17 @@ const MOCK_ITEMS = [
 
 interface Props {
   entitySlug: string
+  profileBaseHref?: string
   showHeader?: boolean
 }
 
-export function NewsWidget({ entitySlug, showHeader = true }: Props) {
+export function NewsWidget({ entitySlug, profileBaseHref, showHeader = true }: Props) {
+  const profileBase = profileBaseHref ?? `/${entitySlug}`
   const { trackRef, canPrev, canNext, scrollPrev, scrollNext } = useHorizontalCarousel(14, 'nwidget__card')
 
   const items = MOCK_ITEMS.map((item) => ({
     title: item.title,
-    href: item.slug ? `/${entitySlug}/news/${item.slug}` : `/${entitySlug}#news`,
+    href: item.slug ? `${profileBase}/news/${item.slug}` : `${profileBase}#news`,
     date: formatRelativeDateFr(item.publishedAt),
   }))
 
@@ -32,7 +34,7 @@ export function NewsWidget({ entitySlug, showHeader = true }: Props) {
       {showHeader && (
         <div className="nwidget__head">
           <h2 className="nwidget__title">Actualités</h2>
-          <Link href={`/${entitySlug}#news`} className="nwidget__more">
+          <Link href={`${profileBase}#news`} className="nwidget__more">
             Voir plus
           </Link>
         </div>

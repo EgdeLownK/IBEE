@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidateAfterEntityMutation } from '@/lib/revalidate-public'
-import { digitalFormatFromName } from '@/lib/drive-file-policy'
+import { digitalFormatFromName } from '@/lib/digital-product-utils'
 import {
   addProductMedia,
   createProduct,
@@ -14,6 +14,7 @@ import {
   purgeEntityCache,
 } from '@ibee/supabase'
 import type { ProductCreateInput } from '@ibee/shared'
+import { isMissingColumnError } from '@/lib/postgres-errors'
 
 const siteUrl = () => process.env.NEXT_PUBLIC_WEB_URL ?? 'http://localhost:3000'
 
@@ -181,7 +182,9 @@ export async function createProductAction(input: ProductCreateInput) {
         return {
           ok: false as const,
           error: 'Données invalides.',
-          fieldErrors: { digital_file_id: 'Choisis ou téléverse un fichier.' },
+          fieldErrors: {
+            digital_file_id: 'Le téléversement de fichiers n’est pas disponible pour le moment.',
+          },
         }
       }
       const entityFile = await getEntityFileById(supabase, fileId)
@@ -197,7 +200,7 @@ export async function createProductAction(input: ProductCreateInput) {
     }
 
     const baseSlug = slugify(title) || 'produit'
-    const common = {
+    const baseCommon = {
       entity_id: entity.id,
       type,
       title,
@@ -227,19 +230,47 @@ export async function createProductAction(input: ProductCreateInput) {
       delivery_enabled: type === 'physical' ? (input.delivery_enabled ?? false) : false,
     }
 
+    const digitalStockFields =
+      type === 'digital'
+        ? {
+            digital_stock_unlimited: input.digital_stock_unlimited ?? true,
+            digital_stock_quantity:
+              input.digital_stock_unlimited === false
+                ? Number.isInteger(input.digital_stock_quantity)
+                  ? input.digital_stock_quantity!
+                  : 0
+                : null,
+          }
+        : null
+
     let productId: string | null = null
     let productSlug: string | null = null
     let lastError: unknown = null
+    let digitalStockSkipped = false
 
     for (let attempt = 0; attempt < 10; attempt++) {
       const slug = attempt === 0 ? baseSlug : `${baseSlug.slice(0, 76)}-${attempt + 1}`
+      const payload = {
+        ...baseCommon,
+        ...(digitalStockFields && !digitalStockSkipped ? digitalStockFields : {}),
+        slug,
+      }
       try {
-        const product = await createProduct(supabase, { ...common, slug })
+        const product = await createProduct(supabase, payload)
         productId = product.id
         productSlug = product.slug
         break
       } catch (err) {
         lastError = err
+        if (
+          !digitalStockSkipped &&
+          digitalStockFields &&
+          isMissingColumnError(err, 'digital_stock')
+        ) {
+          digitalStockSkipped = true
+          attempt -= 1
+          continue
+        }
         if (isUniqueViolation(err)) continue
         console.error('[createProductAction]', err)
         return { ok: false as const, error: 'Erreur lors de la création du produit.' }
@@ -335,7 +366,7 @@ export async function createProductAction(input: ProductCreateInput) {
         status,
         category_id: resolvedCategoryId,
         type,
-        physical_stock_quantity: common.physical_stock_quantity,
+        physical_stock_quantity: baseCommon.physical_stock_quantity,
         image_url: media[0]?.url ?? null,
       },
     }

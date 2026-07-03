@@ -15,6 +15,7 @@ export type HistoryBlock =
       title?: string
       description?: string
     }
+  | { type: 'list'; items: string[] }
 
 const HISTORY_MAX_BLOCKS = 20
 const AR_MIN = 1
@@ -41,6 +42,11 @@ function parseHistoryBlocksRaw(raw: unknown): HistoryBlock[] {
     if (row.type === 'text') {
       const content = typeof row.content === 'string' ? row.content.trim() : ''
       if (content) blocks.push({ type: 'text', content })
+    } else if (row.type === 'list') {
+      if (Array.isArray(row.items)) {
+        const items = row.items.filter(i => typeof i === 'string').map(i => i.trim()).filter(i => i.length > 0)
+        if (items.length > 0) blocks.push({ type: 'list', items })
+      }
     } else if (row.type === 'image') {
       const imagesRaw = Array.isArray(row.images) ? row.images : []
       const parsed: HistoryImageItem[] = []

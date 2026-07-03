@@ -220,6 +220,11 @@
   box-shadow: var(--shadow-card);
 }
 
+/* Legacy : masque tout bouton « Mois » si un ancien bundle le rend encore. */
+.anal-period__btn[data-period='month'] {
+  display: none !important;
+}
+
 .anal-export,
 .dash-action-btn {
   display: inline-flex;
@@ -235,6 +240,364 @@
   background: var(--color-surface);
   box-shadow: var(--shadow-card);
   cursor: pointer;
+}
+
+.anal-export-wrap {
+  position: relative;
+  margin-left: auto;
+}
+
+.anal-export__chev {
+  opacity: 0.45;
+  transition: transform 160ms ease;
+}
+
+.anal-export:popover-open .anal-export__chev {
+  transform: rotate(180deg);
+}
+
+.anal-export-menu {
+  background: var(--color-surface);
+  border: 1px solid color-mix(in srgb, var(--color-border) 70%, transparent);
+  border-radius: 20px;
+  box-shadow:
+    0 4px 6px -2px rgb(15 23 42 / 6%),
+    0 16px 40px -8px rgb(15 23 42 / 14%);
+  margin: 0;
+  margin-top: 10px;
+  width: min(392px, calc(100vw - 2rem));
+  padding: 0;
+  overflow: hidden;
+  position-area: bottom span-right;
+  position-try-fallbacks: flip-block;
+}
+
+.anal-export-menu::backdrop {
+  background: rgb(15 23 42 / 10%);
+  backdrop-filter: blur(3px);
+}
+
+.anal-export-menu__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 16px 20px 14px;
+}
+
+.anal-export-menu__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  margin: -2px 0 0 -4px;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-neutral-500);
+  cursor: pointer;
+  transition: background 140ms ease, color 140ms ease;
+}
+
+.anal-export-menu__close:hover {
+  background: var(--color-panel);
+  color: var(--color-neutral-900);
+}
+
+.anal-export-menu__head-text {
+  flex: 1;
+  min-width: 0;
+  padding-top: 4px;
+}
+
+.anal-export-menu__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--color-neutral-900);
+}
+
+.anal-export-menu__subtitle {
+  margin: 4px 0 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--color-neutral-500);
+}
+
+.anal-export-menu__body {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 0 20px 18px;
+  max-height: min(68vh, 480px);
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.anal-export-menu__section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.anal-export-menu__section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.anal-export-menu__label {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--color-neutral-900);
+}
+
+.anal-export-menu__toggle-all {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-neutral-500);
+  cursor: pointer;
+  transition: color 120ms ease;
+}
+
+.anal-export-menu__toggle-all:hover {
+  color: var(--color-neutral-900);
+}
+
+.anal-export-options {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.anal-export-options--grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.anal-export-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 10px 8px 8px;
+  border: 1px solid var(--color-border-soft);
+  border-radius: 12px;
+  background: var(--color-surface);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background 140ms ease,
+    border-color 140ms ease,
+    box-shadow 140ms ease,
+    transform 80ms ease;
+}
+
+.anal-export-option:hover {
+  border-color: var(--color-neutral-300);
+  background: var(--color-panel);
+}
+
+.anal-export-option:active {
+  transform: scale(0.99);
+}
+
+.anal-export-option__icon-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: var(--color-panel);
+  color: var(--color-neutral-600);
+  transition: background 140ms ease, color 140ms ease;
+}
+
+.anal-export-option__icon {
+  width: 15px;
+  height: 15px;
+}
+
+.anal-export-option__label {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-neutral-800);
+}
+
+.anal-export-option__mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border: 1.5px solid var(--color-neutral-300);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: #fff;
+  transition:
+    border-color 140ms ease,
+    background 140ms ease,
+    transform 140ms ease;
+}
+
+.anal-export-option.is-on .anal-export-option__mark {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+}
+
+.anal-export-menu__period {
+  display: flex;
+  width: 100%;
+  background: var(--color-panel);
+  padding: 3px;
+  border-radius: 12px;
+}
+
+.anal-export-menu__period-btn {
+  flex: 1;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 9px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-neutral-500);
+  background: transparent;
+  cursor: pointer;
+  transition: background 140ms ease, color 140ms ease, box-shadow 140ms ease;
+}
+
+.anal-export-menu__period-btn.is-on {
+  background: var(--color-surface);
+  color: var(--color-neutral-900);
+  box-shadow: 0 1px 3px rgb(15 23 42 / 8%);
+}
+
+.anal-export-menu__range-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px;
+  border-radius: 14px;
+  background: var(--color-panel);
+}
+
+.anal-export-menu__range-nav {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: 10px;
+  background: var(--color-surface);
+  color: var(--color-neutral-700);
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 6%);
+  transition: background 120ms ease, color 120ms ease, opacity 120ms ease;
+}
+
+.anal-export-menu__range-nav:hover:not(:disabled) {
+  color: var(--color-neutral-900);
+}
+
+.anal-export-menu__range-nav:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.anal-export-menu__range-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  padding: 0 4px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-neutral-700);
+  text-align: center;
+}
+
+.anal-export-menu__range-label span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.anal-export-menu__foot {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 20px 18px;
+  border-top: 1px solid var(--color-border-soft);
+  background: color-mix(in srgb, var(--color-panel) 45%, var(--color-surface));
+}
+
+.anal-export-menu__summary {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--color-neutral-500);
+  text-align: center;
+}
+
+.anal-export-menu__submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 13px 18px;
+  border: none;
+  border-radius: 999px;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: #fff;
+  background: var(--color-neutral-900);
+  cursor: pointer;
+  text-decoration: none;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 10%);
+  transition: background 140ms ease, opacity 140ms ease, transform 80ms ease;
+}
+
+.anal-export-menu__submit:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-neutral-900) 88%, white);
+}
+
+.anal-export-menu__submit:active:not(:disabled) {
+  transform: scale(0.99);
+}
+
+.anal-export-menu__submit:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+  box-shadow: none;
 }
 
 .anal-scope {
@@ -449,10 +812,31 @@
   padding: 8px 8px 0;
 }
 
+.anal-chart__bars--year {
+  gap: 8px;
+}
+
+.anal-chart__bars--year .anal-bar__day {
+  font-size: 11px;
+}
+
 @media (max-width: 599px) {
   .anal-chart__bars {
     gap: 8px;
     min-height: 250px;
+  }
+
+  .anal-chart__bars--year {
+    display: flex;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: thin;
+  }
+
+  .anal-chart__bars--year .anal-bar {
+    flex: 0 0 44px;
+    min-width: 44px;
+    min-height: 220px;
   }
 }
 
@@ -498,6 +882,8 @@
   justify-content: flex-end;
   width: 100%;
   min-height: 0;
+  background: rgb(249, 250, 251);
+  border-radius: 10px 10px 0 0;
 }
 
 .anal-bar__fill {
@@ -706,4 +1092,54 @@
   font-weight: 400;
   color: var(--color-neutral-500);
   margin-top: 2px;
+}
+
+.anal-ranking-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 220px;
+  padding: 28px 20px;
+  text-align: center;
+  border-radius: 14px;
+  border: 1.5px dashed color-mix(in srgb, var(--color-border) 85%, var(--color-neutral-400));
+  background:
+    repeating-linear-gradient(
+      135deg,
+      var(--color-panel) 0,
+      var(--color-panel) 8px,
+      var(--color-panel-2) 8px,
+      var(--color-panel-2) 16px
+    );
+}
+
+.anal-ranking-empty__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 4px;
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-accent);
+  box-shadow: var(--shadow-card);
+}
+
+.anal-ranking-empty__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-neutral-900);
+}
+
+.anal-ranking-empty__hint {
+  margin: 0;
+  max-width: 36ch;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-neutral-500);
 }

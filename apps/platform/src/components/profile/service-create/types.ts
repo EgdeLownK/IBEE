@@ -27,6 +27,9 @@ export type ServiceCreateFormState = {
   promoEnabled: boolean
   promoPrice: string
   autoAcceptBookings: boolean
+  paymentRequired: boolean
+  depositPercent: string
+  cancelMinHours: string
   minNoticeHours: string
   maxAdvanceDays: string
   bufferBeforeMinutes: string

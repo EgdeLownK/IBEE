@@ -83,7 +83,7 @@ export function ProfileHeroView({
             onClick={onAddContent}
           >
             <Plus className="h-4 w-4" aria-hidden="true" />
-            Ajouter contenu
+            Modifier contenu
           </button>
           <button
             type="button"

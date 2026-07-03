@@ -32,6 +32,8 @@ export type ProductCreateInput = {
   faq?: FaqInput[]
   custom_details?: CustomDetailInput[]
   digital_file_id?: string
+  digital_stock_quantity?: number
+  digital_stock_unlimited?: boolean
   physical_condition?: string
   physical_pickup_location?: string
   physical_stock_quantity?: number
@@ -65,6 +67,7 @@ export type ProductCreateDraft = {
   }[]
   digitalFileId: string | null
   digitalFileUploading: boolean
+  digitalStockUnlimited: boolean
   customDetails: { label: string; value: string }[]
   contentBlocks: (
     | { type: 'text'; content: string }
@@ -159,6 +162,13 @@ export function validateProductStep(step: 1 | 2 | 3, draft: ProductCreateDraft):
       }
       if (!draft.digitalFileId) {
         fail('digital_file_id', 'Choisis ou téléverse un fichier.')
+      }
+      if (!draft.digitalStockUnlimited) {
+        const stock = draft.physicalStockQuantity
+        const sn = Number(stock)
+        if (stock === '' || !Number.isInteger(sn) || sn < 0) {
+          fail('digital_stock_quantity', 'Indique une quantité disponible (entier ≥ 0).')
+        }
       }
       if (draft.customDetails.length > 8) fail('custom_details', 'Maximum 8 détails.')
       let totalDetails = 0
@@ -303,6 +313,11 @@ export function buildProductCreatePayload(draft: ProductCreateDraft): ProductCre
   if (faq.length > 0) payload.faq = faq
 
   if (draft.type === 'digital') {
+    payload.digital_stock_unlimited = draft.digitalStockUnlimited
+    if (!draft.digitalStockUnlimited) {
+      const sn = Number(draft.physicalStockQuantity)
+      if (Number.isInteger(sn) && sn >= 0) payload.digital_stock_quantity = sn
+    }
     if (draft.digitalFileId) payload.digital_file_id = draft.digitalFileId
     const details: CustomDetailInput[] = []
     for (const d of draft.customDetails) {
@@ -349,6 +364,7 @@ export function buildProductCreatePayload(draft: ProductCreateDraft): ProductCre
 export function stepForField(field: string): 1 | 2 | 3 {
   if (
     field === 'physical_stock_quantity' ||
+    field === 'digital_stock_quantity' ||
     field === 'physical_condition' ||
     field === 'variants' ||
     field.startsWith('variants_') ||

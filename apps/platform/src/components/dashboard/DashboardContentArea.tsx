@@ -8,8 +8,16 @@ export function DashboardContentArea({ children }: { children: ReactNode }) {
   const { isNavigating } = useDashboardNavigation()
 
   if (isNavigating) {
-    return <DashboardPageSkeleton />
+    return (
+      <div className="dashboard-content-area flex min-h-0 flex-1 flex-col">
+        <DashboardPageSkeleton />
+      </div>
+    )
   }
 
-  return <Suspense fallback={<DashboardPageSkeleton />}>{children}</Suspense>
+  return (
+    <div className="dashboard-content-area flex min-h-0 flex-1 flex-col">
+      <Suspense fallback={<DashboardPageSkeleton />}>{children}</Suspense>
+    </div>
+  )
 }

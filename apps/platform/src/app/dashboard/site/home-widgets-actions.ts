@@ -10,22 +10,20 @@ import {
   isSingleInstanceHomeWidget,
   isWidgetConfigured,
   normalizeWidgetConfig,
+  sortHomeWidgetsByFixedOrder,
 } from '@ibee/shared'
 
-const VALID_TYPES = [
-  'widget_shop',
-  'widget_service',
-  'widget_event',
-  'widget_news',
+const CREATABLE_TYPES = [
+  'widget_highlight',
+  'widget_carousel',
   'widget_bio',
   'widget_faq',
-  'widget_announcement',
 ] as const
 
-type ValidWidgetType = (typeof VALID_TYPES)[number]
+type CreatableWidgetType = (typeof CREATABLE_TYPES)[number]
 
-function isValidType(t: unknown): t is ValidWidgetType {
-  return typeof t === 'string' && (VALID_TYPES as readonly string[]).includes(t)
+function isCreatableType(t: unknown): t is CreatableWidgetType {
+  return typeof t === 'string' && (CREATABLE_TYPES as readonly string[]).includes(t)
 }
 
 const siteUrl = () => process.env.NEXT_PUBLIC_WEB_URL ?? 'http://localhost:3000'
@@ -43,15 +41,49 @@ async function requireEntity() {
   return { supabase, entity }
 }
 
-function defaultConfigForType(type: ValidWidgetType): Record<string, unknown> {
-  if (type === 'widget_news') return { mode: 'latest', limit: 3 }
+function defaultConfigForType(type: CreatableWidgetType): Record<string, unknown> {
   if (type === 'widget_bio') return { mode: 'profile' }
   if (type === 'widget_faq') return { mode: 'menu' }
   return {}
 }
 
+async function applyHomeWidgetFixedOrder(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  entityId: string
+) {
+  const { data: widgets, error } = await supabase
+    .from('entity_home_widgets')
+    .select('id, type, position, config')
+    .eq('entity_id', entityId)
+
+  if (error || !widgets) return
+
+  const sorted = sortHomeWidgetsByFixedOrder(
+    widgets.map((w) => ({
+      id: w.id,
+      type: w.type,
+      position: w.position,
+      config: normalizeWidgetConfig(w.config),
+    }))
+  )
+  const history = widgets.filter((w) => w.type === 'widget_history')
+  const updates: { id: string; position: number }[] = sorted.map((w, i) => ({
+    id: w.id,
+    position: i,
+  }))
+  history.forEach((w, i) => {
+    updates.push({ id: w.id, position: sorted.length + i })
+  })
+
+  await Promise.all(
+    updates.map(({ id, position }) =>
+      supabase.from('entity_home_widgets').update({ position }).eq('id', id).eq('entity_id', entityId)
+    )
+  )
+}
+
 export async function createHomeWidgetAction(type: string) {
-  if (!isValidType(type)) {
+  if (!isCreatableType(type)) {
     return { ok: false as const, error: 'Type de widget invalide.' }
   }
 
@@ -97,16 +129,26 @@ export async function createHomeWidgetAction(type: string) {
       return { ok: false as const, error: 'Impossible d\'ajouter ce widget.' }
     }
 
+    await applyHomeWidgetFixedOrder(supabase, entity.id)
+
+    const { data: refreshed } = await supabase
+      .from('entity_home_widgets')
+      .select('id, type, position, config')
+      .eq('id', inserted.id)
+      .single()
+
     void purgeEntityCache(entity.slug, siteUrl())
     revalidateAfterEntityMutation(entity.slug)
+
+    const row = refreshed ?? inserted
 
     return {
       ok: true as const,
       widget: {
-        id: inserted.id,
-        type: inserted.type,
-        position: inserted.position,
-        config: normalizeWidgetConfig(inserted.config),
+        id: row.id,
+        type: row.type,
+        position: row.position,
+        config: normalizeWidgetConfig(row.config),
       },
     }
   } catch (err) {
@@ -162,64 +204,13 @@ export async function updateHomeWidgetConfigAction(widgetId: string, config: Rec
   }
 }
 
-export async function reorderHomeWidgetsAction(order: string[]) {
-  if (!Array.isArray(order) || order.length === 0 || !order.every((id) => typeof id === 'string' && id)) {
-    return { ok: false as const, error: 'Ordre invalide.' }
-  }
-
+/** @deprecated Ordre manuel retiré — réapplique l'ordre fixe produit. */
+export async function reorderHomeWidgetsAction(_order: string[]) {
   try {
     const { supabase, entity } = await requireEntity()
-
-    const { data: widgets, error: fetchErr } = await supabase
-      .from('entity_home_widgets')
-      .select('id, type')
-      .eq('entity_id', entity.id)
-      .order('position', { ascending: true })
-
-    if (fetchErr || !widgets) {
-      return { ok: false as const, error: 'Impossible de charger les widgets.' }
-    }
-
-    const visibleWidgets = widgets.filter((w) => w.type !== 'widget_history')
-    const visibleIds = new Set(visibleWidgets.map((w) => w.id))
-    const orderSet = new Set(order)
-
-    if (
-      orderSet.size !== order.length
-      || visibleIds.size !== orderSet.size
-      || !order.every((id) => visibleIds.has(id))
-    ) {
-      return { ok: false as const, error: 'Ordre des widgets incohérent.' }
-    }
-
-    const hiddenWidgets = widgets.filter((w) => w.type === 'widget_history')
-    const updates: { id: string; position: number }[] = order.map((id, i) => ({
-      id,
-      position: i,
-    }))
-    hiddenWidgets.forEach((w, i) => {
-      updates.push({ id: w.id, position: order.length + i })
-    })
-
-    const results = await Promise.all(
-      updates.map(({ id, position }) =>
-        supabase
-          .from('entity_home_widgets')
-          .update({ position })
-          .eq('id', id)
-          .eq('entity_id', entity.id)
-      )
-    )
-
-    const updateErr = results.find((r) => r.error)?.error
-    if (updateErr) {
-      console.error('[reorderHomeWidgetsAction]', updateErr)
-      return { ok: false as const, error: 'Impossible de réorganiser les widgets.' }
-    }
-
+    await applyHomeWidgetFixedOrder(supabase, entity.id)
     void purgeEntityCache(entity.slug, siteUrl())
     revalidateAfterEntityMutation(entity.slug)
-
     return { ok: true as const }
   } catch (err) {
     console.error('[reorderHomeWidgetsAction]', err)
@@ -252,6 +243,8 @@ export async function deleteHomeWidgetAction(widgetId: string) {
       console.error('[deleteHomeWidgetAction]', delErr)
       return { ok: false as const, error: 'Impossible de supprimer ce widget.' }
     }
+
+    await applyHomeWidgetFixedOrder(supabase, entity.id)
 
     void purgeEntityCache(entity.slug, siteUrl())
     revalidateAfterEntityMutation(entity.slug)

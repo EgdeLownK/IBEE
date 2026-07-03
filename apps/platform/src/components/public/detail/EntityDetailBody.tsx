@@ -34,6 +34,7 @@ interface Props {
   contentBlocks?: DetailContentBlock[]
   fallbackText?: string | null
   hasNews?: boolean
+  profileBaseHref?: string
   title: string
 }
 
@@ -54,6 +55,7 @@ export function EntityDetailBody({
   contentBlocks = [],
   fallbackText = null,
   hasNews = false,
+  profileBaseHref,
 }: Props) {
   const { trackRef, canPrev, canNext, scrollPrev, scrollNext } = useHorizontalCarousel(12, 'edb__slide')
 
@@ -189,7 +191,9 @@ export function EntityDetailBody({
         contentBlocks={contentBlocks}
         fallbackText={fallbackText}
       />
-      {hasNews && entitySlug && <NewsWidget entitySlug={entitySlug} />}
+      {hasNews && entitySlug && (
+        <NewsWidget entitySlug={entitySlug} profileBaseHref={profileBaseHref} />
+      )}
     </div>
   )
 }

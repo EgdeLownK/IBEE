@@ -2,7 +2,7 @@
 
 import type { ReactNode } from 'react'
 import { usePathname } from 'next/navigation'
-import { Bell, Folder, Lock, User, Wallet } from 'lucide-react'
+import { Bell, Lock, User, Wallet } from 'lucide-react'
 import { DashboardNavLink } from './DashboardNavLink'
 import { MainRail, closeAppDrawer } from './MainRail'
 
@@ -18,21 +18,16 @@ export function AccountSidebar() {
 
   const accountItems: SidebarItem[] = [
     {
-      href: '#revenue',
-      label: 'Revenus',
+      href: '/dashboard/compte/revenus',
+      label: 'Revenus perso',
       icon: <Wallet className="h-5 w-5" aria-hidden="true" />,
+      isActive: pathname.startsWith('/dashboard/compte/revenus'),
     },
     {
       href: '/dashboard/site/general',
       label: 'Mon compte',
       icon: <User className="h-5 w-5" aria-hidden="true" />,
       isActive: pathname.startsWith('/dashboard/site/general'),
-    },
-    {
-      href: '/dashboard/drive',
-      label: 'Drive',
-      icon: <Folder className="h-5 w-5" aria-hidden="true" />,
-      isActive: pathname.startsWith('/dashboard/drive'),
     },
     {
       href: '/notifications',

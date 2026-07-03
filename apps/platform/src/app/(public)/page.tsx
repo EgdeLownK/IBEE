@@ -1,34 +1,24 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
 import { getSiteUrl } from '@/lib/site-url'
+import { loadHomeFeedInitialPage } from '@/lib/load-home-feed'
+import { HomeFeed } from '@/components/public/home/HomeFeed'
 
 export const revalidate = 300
 
 export const metadata: Metadata = {
   title: 'IBEE — Accueil',
-  description: 'Bienvenue sur IBEE, la plateforme des solopreneurs.',
+  description: 'Découvre produits, événements et services des solopreneurs sur IBEE.',
   alternates: { canonical: getSiteUrl() },
   openGraph: {
     title: 'IBEE — Accueil',
-    description: 'Bienvenue sur IBEE, la plateforme des solopreneurs.',
+    description: 'Découvre produits, événements et services des solopreneurs sur IBEE.',
     url: getSiteUrl(),
     type: 'website',
   },
   robots: { index: true, follow: true },
 }
 
-export default function PublicHomePage() {
-  return (
-    <main className="home-stage">
-      <div className="home-stage__inner">
-        <h1 className="home-stage__title">IBEE — Home</h1>
-        <p className="home-stage__lead">
-          Ton feed personnalisé arrive bientôt. En attendant, explore les profiles publiés.
-        </p>
-        <Link href="/explore" className="home-stage__cta">
-          Explorer les profiles
-        </Link>
-      </div>
-    </main>
-  )
+export default async function PublicHomePage() {
+  const initial = await loadHomeFeedInitialPage()
+  return <HomeFeed initial={initial} />
 }

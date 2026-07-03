@@ -387,7 +387,7 @@ export function AddContentDialog({
             <div className="add-content__user-text">
               <p className="add-content__name">{displayName}</p>
               <p id="add-content-title" className="add-content__subtitle">
-                Ajouter du contenu
+                Modifier contenu
               </p>
             </div>
           </div>
@@ -399,10 +399,7 @@ export function AddContentDialog({
         <div className="add-content__body">
           {toolbarItems.length === 0 ? (
             <p className="add-content__prompt add-content__prompt--muted">
-              Aucun menu actif pour publier du contenu.
-              <span className="add-content__hint">
-                Utilise l&apos;onglet <strong>+</strong> pour activer Shop, Service, Event…
-              </span>
+              Aucun type de contenu disponible pour le moment.
             </p>
           ) : (
             <>

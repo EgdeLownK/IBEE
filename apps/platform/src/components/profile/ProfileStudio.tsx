@@ -1,7 +1,12 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { ProfileShell } from '@ibee/ui-react/profile'
+import { useRouter, useSearchParams } from 'next/navigation'
+import {
+  ProfileShell,
+  getVisibleProfileTabs,
+  profileTabContentFromLists,
+} from '@ibee/ui-react/profile'
 import { ProfileHeroEditor, type ProfileHeroEntity } from './ProfileHeroEditor'
 import type { ProfileStudioData } from '@/lib/profile-studio-data'
 import { useProfileStudioData } from './ProfileStudioDataContext'
@@ -31,6 +36,8 @@ const EMPTY_PLAYLISTS = {
 
 export function ProfileStudio() {
   const { shell, playlists } = useProfileStudioData()
+  const searchParams = useSearchParams()
+  const router = useRouter()
   const playlistsReady = playlists != null
 
   const [activeType, setActiveType] = useState('home')
@@ -65,6 +72,27 @@ export function ProfileStudio() {
     setPlaylistEvents(playlists.playlistEvents)
   }, [playlists])
 
+  useEffect(() => {
+    if (searchParams.get('wizard') !== 'product') return
+    setProductWizardOpen(true)
+    setActiveType('shop')
+    router.replace('/dashboard/site', { scroll: false })
+  }, [router, searchParams])
+
+  useEffect(() => {
+    if (searchParams.get('wizard') !== 'service') return
+    setServiceWizardOpen(true)
+    setActiveType('appointments')
+    router.replace('/dashboard/site', { scroll: false })
+  }, [router, searchParams])
+
+  useEffect(() => {
+    if (searchParams.get('wizard') !== 'event') return
+    setEventWizardOpen(true)
+    setActiveType('events')
+    router.replace('/dashboard/site', { scroll: false })
+  }, [router, searchParams])
+
   const baseData = useMemo<ProfileStudioData>(
     () => ({
       ...shell,
@@ -78,14 +106,40 @@ export function ProfileStudio() {
     [baseData, publications, historyBlocks, shopProducts, playlistServices, playlistEvents]
   )
 
-  const { menuSections, sectionOptions, webEditUrl, productCategories } = baseData
+  const { menuSections, webEditUrl, productCategories } = baseData
 
-  const activeSectionTypes = useMemo(() => {
-    const set = new Set<string>(['home'])
-    menuSections.forEach((s) => set.add(s.type))
-    sectionOptions.filter((o) => o.active).forEach((o) => set.add(o.type))
-    return set
-  }, [menuSections, sectionOptions])
+  const tabContent = useMemo(
+    () =>
+      profileTabContentFromLists({
+        publications,
+        shopProducts,
+        playlistServices,
+        playlistEvents,
+        historyBlocks,
+      }),
+    [publications, shopProducts, playlistServices, playlistEvents, historyBlocks]
+  )
+
+  const visibleTabTypes = useMemo(
+    () =>
+      new Set<string>(
+        getVisibleProfileTabs(
+          'studio',
+          menuSections,
+          tabContent
+        )
+      ),
+    [menuSections, tabContent]
+  )
+
+  useEffect(() => {
+    if (!visibleTabTypes.has(activeType)) setActiveType('home')
+  }, [activeType, visibleTabTypes])
+
+  const addContentSectionTypes = useMemo(
+    () => new Set(['news', 'shop', 'appointments', 'events', 'history']),
+    []
+  )
 
   function openAddContent() {
     setAddContentOpen(true)
@@ -149,7 +203,7 @@ export function ProfileStudio() {
 
         <ProfileStudioMenuTabs
           menuSections={menuSections}
-          sectionOptions={sectionOptions}
+          tabContent={tabContent}
           activeType={activeType}
           onTabChange={setActiveType}
         />
@@ -168,6 +222,7 @@ export function ProfileStudio() {
             publications={publications}
             historyBlocks={historyBlocks}
             faqItems={baseData.faqItems}
+            productCategories={baseData.productCategories}
             entitySlug={baseData.entity.slug}
             entityDisplayName={entity.display_name}
             entityAvatarUrl={entity.avatar_url}
@@ -197,6 +252,7 @@ export function ProfileStudio() {
               )
             }
             onPublicationDeleted={(id) => setPublications((prev) => prev.filter((p) => p.id !== id))}
+            onEventDeleted={(id) => setPlaylistEvents((prev) => prev.filter((ev) => ev.id !== id))}
           />
         )}
       </ProfileShell>
@@ -205,7 +261,7 @@ export function ProfileStudio() {
         open={addContentOpen}
         displayName={entity.display_name}
         avatarUrl={entity.avatar_url}
-        activeSectionTypes={activeSectionTypes}
+        activeSectionTypes={addContentSectionTypes}
         webEditUrl={webEditUrl}
         onClose={() => setAddContentOpen(false)}
         onPublished={handlePublished}
@@ -241,6 +297,7 @@ export function ProfileStudio() {
             {
               ...product,
               image_url: product.image_url ?? '',
+              image_urls: product.image_url ? [product.image_url] : [],
             },
             ...prev,
           ])
@@ -261,6 +318,7 @@ export function ProfileStudio() {
             {
               ...service,
               image_url: service.image_url ?? '',
+              image_urls: service.image_url ? [service.image_url] : [],
               location_type: service.location_type as PlaylistService['location_type'],
             },
             ...prev,
@@ -282,6 +340,7 @@ export function ProfileStudio() {
             {
               ...event,
               image_url: event.image_url ?? '',
+              image_urls: event.image_url ? [event.image_url] : [],
             },
             ...prev,
           ])

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useTransition, type CSSProperties } from 'react'
 import { createPortal } from 'react-dom'
-import { ArrowDown, ArrowUp, Image as ImageIcon, Plus, Trash2, Type, X } from 'lucide-react'
+import { ArrowDown, ArrowUp, Image as ImageIcon, Plus, Trash2, Type, X, List } from 'lucide-react'
 import { toast } from 'sonner'
 import type { HistoryBlock } from '@ibee/shared'
 import { HISTORY_MAX_BLOCKS, HISTORY_TEXT_MAX } from '@ibee/shared'
@@ -108,6 +108,14 @@ export function HistoryEditDialog({
     ])
   }
 
+  function addListBlock() {
+    if (blocks.length >= HISTORY_MAX_BLOCKS) {
+      setError(`Maximum ${HISTORY_MAX_BLOCKS} blocs.`)
+      return
+    }
+    setBlocks((prev) => [...prev, { id: nextBlockId(), type: 'list', items: [{ id: nextBlockId(), value: '' }] }])
+  }
+
   function updateBlock(index: number, block: DraftBlock) {
     setBlocks((prev) => prev.map((b, i) => (i === index ? block : b)))
   }
@@ -193,7 +201,7 @@ export function HistoryEditDialog({
                         <div className="hist-edit__meta">
                           <span className="hist-edit__index">{i + 1}</span>
                           <span className={`hist-edit__tag hist-edit__tag--${block.type}`}>
-                            {block.type === 'text' ? 'Paragraphe' : 'Visuel'}
+                            {block.type === 'text' ? 'Paragraphe' : block.type === 'image' ? 'Visuel' : 'Liste'}
                           </span>
                         </div>
                         <div className="hist-edit__ctrls">
@@ -245,6 +253,45 @@ export function HistoryEditDialog({
                               </span>
                             </div>
                           </div>
+                        ) : block.type === 'list' ? (
+                          <div className="space-y-3 px-2 py-1">
+                            {block.items.map((item, itemIndex) => (
+                              <div key={item.id} className="flex items-start gap-3">
+                                <div className="mt-2.5 h-1.5 w-1.5 rounded-full bg-neutral-400 shrink-0" />
+                                <input
+                                  type="text"
+                                  className="flex-1 rounded-md border border-neutral-200 px-3 py-2 text-sm focus:border-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-400"
+                                  placeholder="Élément de la liste..."
+                                  value={item.value}
+                                  onChange={(e) => {
+                                    const newItems = [...block.items]
+                                    newItems[itemIndex] = { ...newItems[itemIndex], value: e.target.value }
+                                    updateBlock(i, { ...block, items: newItems })
+                                  }}
+                                />
+                                <button
+                                  type="button"
+                                  className="mt-1 p-1.5 text-neutral-400 hover:text-red-600 transition-colors"
+                                  onClick={() => {
+                                    const newItems = block.items.filter((_, idx) => idx !== itemIndex)
+                                    updateBlock(i, { ...block, items: newItems })
+                                  }}
+                                  aria-label="Supprimer cet élément"
+                                >
+                                  <X className="h-4 w-4" />
+                                </button>
+                              </div>
+                            ))}
+                            <button
+                              type="button"
+                              className="text-sm text-neutral-500 hover:text-neutral-900 font-medium inline-flex items-center gap-1 mt-2"
+                              onClick={() => {
+                                updateBlock(i, { ...block, items: [...block.items, { id: nextBlockId(), value: '' }] })
+                              }}
+                            >
+                              <Plus className="h-4 w-4" /> Ajouter une puce
+                            </button>
+                          </div>
                         ) : (
                           <HistoryImageBlockEditor
                             block={block}
@@ -281,6 +328,18 @@ export function HistoryEditDialog({
                 <span className="hist-edit__add-copy">
                   <strong>Image</strong>
                   <span>Une photo ou illustration</span>
+                </span>
+                <span className="hist-edit__add-plus" aria-hidden="true">
+                  <Plus className="h-4 w-4" />
+                </span>
+              </button>
+              <button type="button" className="hist-edit__add-card" onClick={addListBlock}>
+                <span className="hist-edit__add-icon bg-neutral-100 text-neutral-600">
+                  <List className="h-[18px] w-[18px]" />
+                </span>
+                <span className="hist-edit__add-copy">
+                  <strong>Liste</strong>
+                  <span>Une liste à puces</span>
                 </span>
                 <span className="hist-edit__add-plus" aria-hidden="true">
                   <Plus className="h-4 w-4" />

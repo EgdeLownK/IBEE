@@ -18,9 +18,15 @@ export type HistoryImageBlock = {
   description?: string
 }
 
+export type HistoryListBlock = {
+  type: 'list'
+  items: string[]
+}
+
 export type HistoryBlock =
   | { type: 'text'; content: string }
   | HistoryImageBlock
+  | HistoryListBlock
 
 export const HISTORY_MAX_BLOCKS = 20
 export const HISTORY_TEXT_MAX = 2000
@@ -69,6 +75,11 @@ export function parseHistoryBlocks(raw: unknown): HistoryBlock[] {
     if (item.type === 'text') {
       const content = typeof item.content === 'string' ? item.content.trim() : ''
       if (content) blocks.push({ type: 'text', content })
+    } else if (item.type === 'list') {
+      if (Array.isArray(item.items)) {
+        const items = item.items.filter(i => typeof i === 'string').map(i => i.trim()).filter(i => i.length > 0)
+        if (items.length > 0) blocks.push({ type: 'list', items })
+      }
     } else if (item.type === 'image') {
       const parsedImages = parseImageItems(item.images)
       const legacyUrl = typeof item.url === 'string' ? item.url.trim() : ''
@@ -104,6 +115,7 @@ export function parseHistoryBlocks(raw: unknown): HistoryBlock[] {
 export function historyBlocksHaveContent(blocks: HistoryBlock[]): boolean {
   return blocks.some((b) => {
     if (b.type === 'text') return b.content.trim().length > 0
+    if (b.type === 'list') return b.items.some(i => i.trim().length > 0)
     return (b.images ?? []).some((img) => !!img.url)
   })
 }

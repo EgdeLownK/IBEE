@@ -1,0 +1,513 @@
+/* Revenus — compte perso & activité projet (inspiré prototype standalone) */
+
+.revenu-page {
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 28px 24px 48px;
+}
+
+.revenu-page__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.revenu-page__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--color-neutral-900);
+}
+
+.revenu-page__subtitle {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: var(--color-neutral-500);
+}
+
+.revenu-export-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 20px;
+  border: 1px solid var(--color-border-soft);
+  border-radius: 20px;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+  font-size: 15px;
+  color: var(--color-neutral-900);
+  cursor: pointer;
+  transition: background 140ms;
+}
+
+.revenu-export-btn:hover {
+  background: var(--color-panel);
+}
+
+.revenu-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-soft);
+  border-radius: 20px;
+  box-shadow: var(--shadow-card);
+  margin-bottom: 16px;
+}
+
+.revenu-card--chart {
+  padding: 20px 24px 18px;
+}
+
+.revenu-chart-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.revenu-chart-meta__label {
+  font-size: 15px;
+  color: var(--color-neutral-500);
+  margin-bottom: 8px;
+}
+
+.revenu-chart-meta__amount {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 600;
+  color: var(--color-neutral-900);
+  line-height: 1.1;
+}
+
+.revenu-chart-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.revenu-range-toggle {
+  display: inline-flex;
+  background: var(--color-panel);
+  border-radius: 10px;
+  padding: 2px;
+}
+
+.revenu-range-toggle__btn {
+  border: none;
+  cursor: pointer;
+  border-radius: 8px;
+  padding: 7px 16px;
+  font-weight: 500;
+  font-size: 13px;
+  background: transparent;
+  color: var(--color-neutral-500);
+  transition: background 140ms, box-shadow 140ms, color 140ms;
+}
+
+.revenu-range-toggle__btn.is-active {
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+  color: var(--color-neutral-900);
+}
+
+.revenu-period-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--color-panel);
+  border: none;
+  border-radius: 10px;
+  padding: 7px 14px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-neutral-900);
+}
+
+.revenu-bars-wrap {
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+  height: 218px;
+  margin-top: 26px;
+}
+
+.revenu-bar-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+  min-width: 0;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  padding: 0;
+}
+
+.revenu-bar-track {
+  position: relative;
+  width: 100%;
+  height: 188px;
+  display: flex;
+  align-items: flex-end;
+  border-radius: 10px 10px 0 0;
+  background: rgb(249, 250, 251);
+}
+
+.revenu-bar-fill {
+  width: 100%;
+  border-radius: 10px 10px 0 0;
+  background: linear-gradient(rgb(209, 213, 219) 0%, rgb(152, 159, 171) 100%);
+  transition: background 140ms, height 200ms ease;
+}
+
+.revenu-bar-col.is-active .revenu-bar-fill {
+  background: var(--color-accent);
+}
+
+.revenu-bar-tip {
+  position: absolute;
+  top: -28px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--color-neutral-900);
+  color: var(--color-surface);
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.revenu-bar-day {
+  margin-top: 9px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--color-neutral-500);
+}
+
+.revenu-bar-col.is-active .revenu-bar-day {
+  color: var(--color-neutral-900);
+}
+
+.revenu-chart-hint {
+  font-size: 15px;
+  color: var(--color-neutral-500);
+  margin-top: 16px;
+}
+
+.revenu-balance {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 19px 20px;
+  flex-wrap: wrap;
+}
+
+.revenu-balance__title {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--color-neutral-900);
+}
+
+.revenu-balance__sub {
+  font-size: 15px;
+  color: var(--color-neutral-500);
+  margin-top: 6px;
+}
+
+.revenu-balance__extra {
+  font-size: 14px;
+  color: var(--color-neutral-500);
+  margin-top: 4px;
+}
+
+.revenu-balance__row {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  flex-wrap: wrap;
+}
+
+.revenu-balance__amount {
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 500;
+  color: var(--color-neutral-900);
+}
+
+.revenu-cashout-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  background: var(--color-panel);
+  border: 1px solid var(--color-border-soft);
+  border-radius: 10px;
+  padding: 9px 16px;
+  cursor: pointer;
+  font-size: 15px;
+  color: var(--color-neutral-900);
+  transition: background 140ms;
+}
+
+.revenu-cashout-btn:hover {
+  background: var(--color-panel-2);
+}
+
+.revenu-transfers {
+  padding: 19px 20px;
+}
+
+.revenu-transfers__title {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--color-neutral-900);
+  margin-bottom: 6px;
+}
+
+.revenu-transfer-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 0;
+  border-top: 1px solid var(--color-border-soft);
+}
+
+.revenu-transfer-row:first-of-type {
+  border-top: 0;
+}
+
+.revenu-transfer-row__date {
+  font-size: 16px;
+  color: var(--color-neutral-900);
+}
+
+.revenu-transfer-row__label {
+  font-size: 16px;
+  color: var(--color-neutral-500);
+}
+
+.revenu-transfer-row__amount {
+  font-size: 15px;
+  font-weight: 600;
+  color: rgb(44, 141, 74);
+}
+
+.revenu-transfer-row__amount--out {
+  color: var(--color-neutral-900);
+}
+
+.revenu-transfer-row__status {
+  display: block;
+  margin-top: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-neutral-500);
+}
+
+.revenu-transfers__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.revenu-transfers__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.revenu-payout-mode-toggle {
+  display: inline-flex;
+  background: var(--color-panel);
+  border-radius: 10px;
+  padding: 2px;
+  margin-bottom: 16px;
+}
+
+.revenu-payout-mode-toggle__btn {
+  border: none;
+  cursor: pointer;
+  border-radius: 8px;
+  padding: 7px 16px;
+  font-weight: 500;
+  font-size: 13px;
+  background: transparent;
+  color: var(--color-neutral-500);
+  transition: background 140ms, box-shadow 140ms, color 140ms;
+}
+
+.revenu-payout-mode-toggle__btn.is-active {
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+  color: var(--color-neutral-900);
+}
+
+.revenu-transfers__empty {
+  margin: 8px 0 0;
+  font-size: 15px;
+  color: var(--color-neutral-500);
+}
+
+.revenu-transfers__footer {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-border-soft);
+}
+
+.revenu-page__error {
+  margin: 0 0 14px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(220, 38, 38, 0.08);
+  color: rgb(185, 28, 28);
+  font-size: 14px;
+}
+
+.revenu-payout-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: none;
+  border-radius: 10px;
+  padding: 9px 16px;
+  background: var(--color-neutral-900);
+  color: var(--color-surface);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.revenu-payout-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.revenu-payout-btn--ghost {
+  background: var(--color-panel);
+  color: var(--color-neutral-900);
+  border: 1px solid var(--color-border-soft);
+}
+
+.revenu-payout-form__row {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.revenu-payout-form__label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-neutral-900);
+}
+
+.revenu-payout-form__select,
+.revenu-payout-form__input {
+  width: 100%;
+  border: 1px solid var(--color-border-soft);
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: var(--color-surface);
+  font-size: 14px;
+  color: var(--color-neutral-900);
+}
+
+.revenu-payout-form__check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+  font-size: 14px;
+  color: var(--color-neutral-700);
+}
+
+.revenu-payout-members {
+  border: 1px solid var(--color-border-soft);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.revenu-payout-members__head,
+.revenu-payout-members__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) 120px minmax(0, 0.9fr);
+  gap: 12px;
+  align-items: center;
+  padding: 12px 14px;
+}
+
+.revenu-payout-members__head {
+  background: var(--color-panel);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--color-neutral-500);
+}
+
+.revenu-payout-members__row + .revenu-payout-members__row {
+  border-top: 1px solid var(--color-border-soft);
+}
+
+.revenu-payout-members__name {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.revenu-payout-members__name strong {
+  font-size: 14px;
+  color: var(--color-neutral-900);
+}
+
+.revenu-payout-members__name span {
+  font-size: 13px;
+  color: var(--color-neutral-500);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.revenu-payout-members__amount {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.revenu-payout-members__amount span {
+  font-size: 14px;
+  color: var(--color-neutral-500);
+}
+
+@media (max-width: 720px) {
+  .revenu-page {
+    padding: 20px 16px 40px;
+  }
+
+  .revenu-bars-wrap {
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+
+  .revenu-bar-col {
+    min-width: 44px;
+  }
+
+  .revenu-transfer-row {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+}

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { unstable_noStore as noStore } from 'next/cache'
 import { notFound, permanentRedirect } from 'next/navigation'
-import { ProductDetailPage } from '@/components/public/detail/ProductDetailPage'
+import { ProductDetailCheckout } from '@/components/public/detail/ProductDetailCheckout'
 import { ProductSchemaJsonLd } from '@/components/public/detail/ProductSchemaJsonLd'
 import { TrackPageView } from '@/components/analytics/TrackPageView'
 import { loadPublicProduct } from '@/lib/load-public-product'
@@ -60,7 +60,7 @@ export default async function ProductDetailRoute({ params, searchParams }: PageP
   return (
     <>
       <ProductSchemaJsonLd data={data} />
-      <ProductDetailPage data={data} />
+      <ProductDetailCheckout data={data} />
       <TrackPageView
         events={[
           {

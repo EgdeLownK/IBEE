@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import type { ReactNode } from 'react'
 
 interface Props {
   displayName: string
@@ -12,6 +13,8 @@ interface Props {
   /** CTA visiteur (ex. Réserver, Participer). */
   ctaHref?: string | null
   ctaLabel?: string
+  /** CTA React custom (ex. checkout Stripe). Prioritaire sur ctaHref. */
+  ctaSlot?: ReactNode
 }
 
 export function DetailEntityStrip({
@@ -24,6 +27,7 @@ export function DetailEntityStrip({
   priceText = null,
   ctaHref = null,
   ctaLabel = 'Voir',
+  ctaSlot = null,
 }: Props) {
   const initials = displayName
     .split(/\s+/)
@@ -60,12 +64,14 @@ export function DetailEntityStrip({
           </div>
         </div>
 
-        {ctaHref && (
+        {(ctaSlot || ctaHref) && (
           <div className="detail-entity-strip__buy">
             {priceText && <span className="detail-entity-strip__price">{priceText}</span>}
-            <Link href={ctaHref} className="detail-entity-strip__cta">
-              {ctaLabel}
-            </Link>
+            {ctaSlot ?? (
+              <Link href={ctaHref!} className="detail-entity-strip__cta">
+                {ctaLabel}
+              </Link>
+            )}
           </div>
         )}
       </div>

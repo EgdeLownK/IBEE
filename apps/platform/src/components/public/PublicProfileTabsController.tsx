@@ -2,32 +2,59 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { isAnalyticsSectionType } from '@ibee/shared'
+import {
+  getVisibleProfileTabs,
+  profileTabContentFromLists,
+} from '@ibee/ui-react/profile'
 import { ProfileStudioSections } from '@/components/profile/ProfileStudioSections'
 import type { PublicProfileData } from '@/lib/load-public-profile'
+import { embedDetailBase, embedProfileHref } from '@/lib/embed-public-urls'
 import { trackAnalyticsEvents } from '@/lib/analytics-client'
 import { PublicProfileMenuTabs } from './PublicProfileMenuTabs'
 import { PublicProfileHome } from './PublicProfileHome'
 
 interface Props {
   data: PublicProfileData
+  embedMode?: boolean
 }
 
-export function PublicProfileTabsController({ data }: Props) {
+export function PublicProfileTabsController({ data, embedMode = false }: Props) {
   const [activeType, setActiveType] = useState('home')
   const [tabsReady, setTabsReady] = useState(false)
   const trackedSection = useRef<string | null>(null)
 
+  const tabContent = useMemo(
+    () =>
+      profileTabContentFromLists({
+        publications: data.publications,
+        shopProducts: data.shopProducts,
+        playlistServices: data.playlistServices,
+        playlistEvents: data.playlistEvents,
+        historyBlocks: data.historyBlocks,
+      }),
+    [
+      data.publications,
+      data.shopProducts,
+      data.playlistServices,
+      data.playlistEvents,
+      data.historyBlocks,
+    ]
+  )
+
   const visibleTypes = useMemo(() => {
-    const types = new Set<string>(['home'])
-    data.menuSections.forEach((s) => types.add(s.type))
-    return types
-  }, [data.menuSections])
+    const types = getVisibleProfileTabs(
+      'public',
+      data.menuSections,
+      tabContent
+    )
+    return new Set<string>(types)
+  }, [data.menuSections, tabContent])
 
   useEffect(() => {
     const syncFromHash = () => {
       const hash = window.location.hash.slice(1)
       if (hash && visibleTypes.has(hash)) setActiveType(hash)
-      else if (!hash) setActiveType('home')
+      else setActiveType('home')
     }
     syncFromHash()
     setTabsReady(true)
@@ -54,10 +81,14 @@ export function PublicProfileTabsController({ data }: Props) {
     window.history.replaceState(null, '', `#${type}`)
   }
 
+  const webBaseUrl = embedMode ? embedProfileHref(data.entity.slug) : data.entityBaseUrl
+  const detailBaseUrl = embedMode ? embedDetailBase(data.entity.slug) : undefined
+
   return (
     <>
       <PublicProfileMenuTabs
         menuSections={data.menuSections}
+        tabContent={tabContent}
         activeType={activeType}
         tabsReady={tabsReady}
         onTabChange={handleTabChange}
@@ -73,7 +104,8 @@ export function PublicProfileTabsController({ data }: Props) {
           faqItems={data.faqItems}
           contactInfo={data.contactInfo}
           productCategories={data.productCategories}
-          entityBaseUrl={data.entityBaseUrl}
+          entityBaseUrl={webBaseUrl}
+          detailBaseUrl={detailBaseUrl}
         />
       ) : (
         <ProfileStudioSections
@@ -85,10 +117,12 @@ export function PublicProfileTabsController({ data }: Props) {
           publications={data.publications}
           historyBlocks={data.historyBlocks}
           faqItems={data.faqItems}
+          productCategories={data.productCategories}
           entitySlug={data.entity.slug}
           entityDisplayName={data.entity.display_name}
           entityAvatarUrl={data.entity.avatar_url}
-          webBaseUrl={data.entityBaseUrl}
+          webBaseUrl={webBaseUrl}
+          detailBaseUrl={detailBaseUrl}
           dashboardBaseUrl=""
           readOnly
         />

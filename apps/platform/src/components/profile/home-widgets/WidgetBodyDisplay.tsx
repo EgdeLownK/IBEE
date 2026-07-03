@@ -16,15 +16,22 @@ import {
   Zap,
 } from 'lucide-react'
 import {
+  bannerWidgetMediaAspect,
+  homeWidgetCarouselSectionLink,
   isWidgetConfigured,
   normalizeWidgetConfig,
   parseAnnouncementConfig,
   parseBioConfig,
+  parseCarouselConfig,
   parseEventConfig,
   parseFaqConfig,
+  parseHighlightConfig,
   parseNewsConfig,
   parseServiceConfig,
   parseShopConfig,
+  resolveCarouselShopProducts,
+  resolveCarouselServices,
+  resolveCarouselUpcomingEvents,
   widgetEmptyContent,
   widgetHasDisplayContent,
 } from '@ibee/shared'
@@ -47,10 +54,15 @@ type Props = {
   widget: HomeWidget
   data: WidgetData
   webBaseUrl: string
+  detailBaseUrl?: string
   onConfigure: (widgetId: string) => void
   onOpenFaq?: () => void
   onOpenAddContent?: () => void
   readOnly?: boolean
+  /** Studio : le titre est déjà dans WidgetCard — pas de doublon dans le carousel */
+  embedInWidgetCard?: boolean
+  /** Studio : menu ⋮ dans la carte featured (shop/service/event élément unique) */
+  adminMenu?: React.ReactNode
 }
 
 function relativeDate(iso: string) {
@@ -115,6 +127,7 @@ function useTrackNav(trackRef: React.RefObject<HTMLDivElement | null>, slideSele
 function WidgetFeaturedCard({
   href,
   imageUrl,
+  imageUrls,
   placeholder,
   badgeLabel,
   title,
@@ -123,9 +136,12 @@ function WidgetFeaturedCard({
   oldPriceLabel,
   promo,
   ctaLabel,
+  adminMenu,
+  hidePrice = false,
 }: {
   href: string
   imageUrl: string | null
+  imageUrls?: string[]
   placeholder: React.ReactNode
   badgeLabel: string
   title: string
@@ -134,77 +150,118 @@ function WidgetFeaturedCard({
   oldPriceLabel?: string | null
   promo?: boolean
   ctaLabel: string
+  adminMenu?: React.ReactNode
+  hidePrice?: boolean
 }) {
+  const trackRef = useRef<HTMLDivElement>(null)
+  const images = (imageUrls?.length ? imageUrls : imageUrl ? [imageUrl] : []).filter(Boolean)
+  const { canPrev, canNext, scrollPrev, scrollNext } = useTrackNav(trackRef, '.wfeat__media-slide')
+
   return (
     <section className="wfeat wfeat--embedded">
-      <Link href={href} className="wfeat__card">
-        {imageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={imageUrl} alt="" className="wfeat__img" loading="lazy" />
-        ) : (
-          <span className="wfeat__placeholder" aria-hidden="true">
-            {placeholder}
-          </span>
-        )}
-        <span className="wfeat__badge">{badgeLabel}</span>
-        <span className="wfeat__price-badge">
-          {promo && oldPriceLabel ? (
-            <>
-              <span className="wfeat__price-now">{priceLabel}</span>
-              <s className="wfeat__price-was">{oldPriceLabel}</s>
-            </>
-          ) : (
-            <span className="wfeat__price-now">{priceLabel}</span>
-          )}
-        </span>
-        <div className="wfeat__caption">
-          <div className="wfeat__glass">
-            <div className="wfeat__row">
-              <div className="wfeat__info">
-                <h3 className="wfeat__name">{title}</h3>
-                {tags.length > 0 && (
-                  <div className="wfeat__tags">
-                    {tags.map((tag) => (
-                      <span key={tag} className="wfeat__tag">
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
+      <div className={`wfeat__shell${adminMenu ? ' wfeat__shell--admin' : ''}`}>
+        {adminMenu}
+        <div className="wfeat__card wfeat__card--split">
+          <div className="wfeat__media">
+            <span className="wfeat__badge">{badgeLabel}</span>
+            {images.length > 0 ? (
+              <>
+                <div className="wfeat__media-track" ref={trackRef}>
+                  {images.map((url, i) => (
+                    <div key={`${url}-${i}`} className="wfeat__media-slide">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={url} alt="" className="wfeat__img" loading="lazy" />
+                    </div>
+                  ))}
+                </div>
+                {images.length > 1 && (
+                  <>
+                    <button
+                      type="button"
+                      className="wfeat__media-nav wfeat__media-nav--prev"
+                      aria-label="Image précédente"
+                      disabled={!canPrev}
+                      onClick={scrollPrev}
+                    >
+                      <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+                    </button>
+                    <button
+                      type="button"
+                      className="wfeat__media-nav wfeat__media-nav--next"
+                      aria-label="Image suivante"
+                      disabled={!canNext}
+                      onClick={scrollNext}
+                    >
+                      <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                    </button>
+                  </>
                 )}
+              </>
+            ) : (
+              <span className="wfeat__placeholder" aria-hidden="true">
+                {placeholder}
+              </span>
+            )}
+          </div>
+          <Link href={href} className="wfeat__body">
+            <h3 className="wfeat__name">{title}</h3>
+            {tags.length > 0 && (
+              <div className="wfeat__tags">
+                {tags.map((tag) => (
+                  <span key={tag} className="wfeat__tag">
+                    {tag}
+                  </span>
+                ))}
               </div>
+            )}
+            <div className="wfeat__footer">
+              {!hidePrice && (
+                <div className={`wfeat__price${promo ? ' wfeat__price--promo' : ''}`}>
+                  {promo && oldPriceLabel ? (
+                    <>
+                      <span className="wfeat__price-now">{priceLabel}</span>
+                      <s className="wfeat__price-was">{oldPriceLabel}</s>
+                    </>
+                  ) : (
+                    <span className="wfeat__price-now">{priceLabel}</span>
+                  )}
+                </div>
+              )}
               <span className="wfeat__cta">{ctaLabel}</span>
             </div>
-          </div>
+          </Link>
         </div>
-      </Link>
+      </div>
     </section>
   )
 }
 
 function CategoryCarousel({
   title,
-  moreHref,
+  titleHref,
   children,
   showNav,
+  hideHead = false,
 }: {
   title: string
-  moreHref?: string
+  titleHref: string
   children: React.ReactNode
   showNav: boolean
+  hideHead?: boolean
 }) {
   const trackRef = useRef<HTMLDivElement>(null)
   const { canPrev, canNext, scrollPrev, scrollNext } = useTrackNav(trackRef, '.wcat__tile')
 
   return (
     <section className="wcat wcat--embedded">
-      <div className="wcat__head">
-        <h2 className="wcat__title">{title}</h2>
-        {moreHref && (
-          <a href={moreHref} className="wcat__more">
-            Voir plus
+      {!hideHead && (
+        <div className="wcat__head">
+          <a href={titleHref} className="wcat__title wcat__title--link wcat__title--with-arrow">
+            <span>{title}</span>
+            <ChevronRight className="wcat__title-arrow" aria-hidden="true" />
           </a>
-        )}
-      </div>
+        </div>
+      )}
       <div className="wcat__carousel">
         <div className="wcat__track" ref={trackRef}>
           {children}
@@ -304,12 +361,31 @@ function ShopTile({
   )
 }
 
-function NewsCarousel({ items, webBaseUrl }: { items: { title: string; slug: string; publishedAt: string; imageUrl: string | null }[]; webBaseUrl: string }) {
+function NewsCarousel({
+  items,
+  webBaseUrl,
+  title,
+  titleHref,
+  hideHead = false,
+}: {
+  items: { title: string; slug: string; publishedAt: string; imageUrl: string | null }[]
+  webBaseUrl: string
+  title: string
+  titleHref: string
+  hideHead?: boolean
+}) {
   const trackRef = useRef<HTMLDivElement>(null)
   const { canPrev, canNext, scrollPrev, scrollNext } = useTrackNav(trackRef, '.nwidget__card')
 
   return (
     <section className="nwidget nwidget--embedded">
+      {!hideHead && (
+        <div className="nwidget__head">
+          <a href={titleHref} className="nwidget__title nwidget__title--link">
+            {title}
+          </a>
+        </div>
+      )}
       <div className="nwidget__carousel" style={{ position: 'relative' }}>
         <div className="nwidget__track" ref={trackRef}>
           {items.map((n) => (
@@ -347,7 +423,19 @@ function NewsCarousel({ items, webBaseUrl }: { items: { title: string; slug: str
   )
 }
 
-export function WidgetBodyDisplay({ widget, data, webBaseUrl, onConfigure, onOpenFaq, onOpenAddContent, readOnly = false }: Props) {
+export function WidgetBodyDisplay({
+  widget,
+  data,
+  webBaseUrl,
+  detailBaseUrl,
+  onConfigure,
+  onOpenFaq,
+  onOpenAddContent,
+  readOnly = false,
+  embedInWidgetCard = false,
+  adminMenu,
+}: Props) {
+  const detailBase = detailBaseUrl ?? webBaseUrl
   const ctx = {
     products: data.shopProducts,
     appointmentTypes: data.playlistServices,
@@ -386,16 +474,18 @@ export function WidgetBodyDisplay({ widget, data, webBaseUrl, onConfigure, onOpe
 
   if (!configured) return null
 
-  if (widget.type === 'widget_shop') {
-    const cfg = parseShopConfig(config)!
-    if (cfg.mode === 'product') {
-      const p = data.shopProducts.find((x) => x.id === cfg.product_id)
+  if (widget.type === 'widget_highlight') {
+    const cfg = parseHighlightConfig(config)!
+    const loc: Record<string, string> = { video: 'Visio', in_person: 'Sur place', phone: 'Téléphone' }
+    if (cfg.item.kind === 'product') {
+      const p = data.shopProducts.find((x) => x.id === cfg.item.id)
       if (!p) return null
       const promo = saleActive(p.sale_price_cents, p.sale_ends_at)
       return (
         <WidgetFeaturedCard
-          href={p.slug ? `${webBaseUrl}/shop/${p.slug}` : `${webBaseUrl}#shop`}
+          href={p.slug ? `${detailBase}/shop/${p.slug}` : `${webBaseUrl}#shop`}
           imageUrl={p.image_url}
+          imageUrls={p.image_urls}
           placeholder={<ShoppingBag className="h-10 w-10" />}
           badgeLabel="Shop"
           title={p.title}
@@ -404,19 +494,241 @@ export function WidgetBodyDisplay({ widget, data, webBaseUrl, onConfigure, onOpe
           oldPriceLabel={promo ? formatPrice(p.price_cents, p.currency) : null}
           promo={promo}
           ctaLabel="Voir"
+          adminMenu={adminMenu}
         />
       )
     }
-    const cat = data.productCategories.find((c) => c.id === cfg.category_id)
-    const items = data.shopProducts.filter((p) => p.category_id === cfg.category_id).slice(0, cfg.limit ?? 6)
+    if (cfg.item.kind === 'service') {
+      const s = data.playlistServices.find((x) => x.id === cfg.item.id)
+      if (!s) return null
+      const promo = s.promo_price_cents != null && s.price_cents != null && s.promo_price_cents > 0
+      return (
+        <WidgetFeaturedCard
+          href={s.slug ? `${detailBase}/services/${s.slug}` : `${webBaseUrl}#appointments`}
+          imageUrl={s.image_url}
+          imageUrls={s.image_urls}
+          placeholder={<CalendarClock className="h-10 w-10" />}
+          badgeLabel="Service"
+          title={s.title}
+          tags={[`${s.duration_minutes} min`, loc[s.location_type] ?? 'Visio']}
+          priceLabel={formatPrice(promo ? s.promo_price_cents : s.price_cents, s.currency)}
+          oldPriceLabel={promo ? formatPrice(s.price_cents, s.currency) : null}
+          promo={promo}
+          ctaLabel="Réserver"
+          adminMenu={adminMenu}
+        />
+      )
+    }
+    if (cfg.item.kind === 'event') {
+      const ev = data.playlistEvents.find((x) => x.id === cfg.item.id)
+      if (!ev) return null
+      const start = new Date(ev.start_at)
+      const tag = new Intl.DateTimeFormat('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' }).format(start)
+      return (
+        <WidgetFeaturedCard
+          href={ev.slug ? `${detailBase}/events/${ev.slug}` : `${webBaseUrl}#events`}
+          imageUrl={ev.image_url}
+          imageUrls={ev.image_urls}
+          placeholder={<Zap className="h-10 w-10" />}
+          badgeLabel="Event"
+          title={ev.title}
+          tags={[tag]}
+          priceLabel={formatPrice(ev.price_cents, ev.currency)}
+          ctaLabel="Participer"
+          adminMenu={adminMenu}
+        />
+      )
+    }
+    const pub = data.publications.find((x) => x.id === cfg.item.id)
+    if (!pub?.published_at) return null
+    const media = [...(pub.publication_media ?? [])].sort((a, b) => a.position - b.position)
+    const imageUrls = media.map((m) => m.url).filter(Boolean)
     return (
-      <CategoryCarousel title={cat?.name ?? 'Catégorie'} moreHref={`${webBaseUrl}#shop`} showNav={items.length > 1}>
+      <WidgetFeaturedCard
+        href={pub.slug ? `${detailBase}/news/${pub.slug}` : `${webBaseUrl}#news`}
+        imageUrl={imageUrls[0] ?? null}
+        imageUrls={imageUrls}
+        placeholder={<Mail className="h-10 w-10" />}
+        badgeLabel="News"
+        title={pub.title}
+        tags={[relativeDate(pub.published_at)]}
+        priceLabel=""
+        hidePrice
+        ctaLabel="Lire"
+        adminMenu={adminMenu}
+      />
+    )
+  }
+
+  if (widget.type === 'widget_carousel') {
+    const cfg = parseCarouselConfig(config)!
+    const sectionLink = homeWidgetCarouselSectionLink(widget.type, config, webBaseUrl)!
+    if (cfg.source_kind === 'shop_category') {
+      const items = resolveCarouselShopProducts(data.shopProducts, cfg)
+      return (
+        <CategoryCarousel
+          title={sectionLink.label}
+          titleHref={sectionLink.href}
+          showNav={items.length > 1}
+          hideHead={embedInWidgetCard}
+        >
+          {items.map((p) => {
+            const promo = saleActive(p.sale_price_cents, p.sale_ends_at)
+            return (
+              <ShopTile
+                key={p.id}
+                href={p.slug ? `${detailBase}/shop/${p.slug}` : `${webBaseUrl}#shop`}
+                title={p.title}
+                imageUrl={p.image_url}
+                excerpt={p.detailExcerpt ?? ''}
+                priceCents={p.price_cents}
+                salePriceCents={promo ? p.sale_price_cents : null}
+                currency={p.currency}
+                reviewAverage={p.reviewAverage}
+                reviewCount={p.reviewCount}
+                promo={promo}
+              />
+            )
+          })}
+        </CategoryCarousel>
+      )
+    }
+    if (cfg.source_kind === 'services') {
+      const items = resolveCarouselServices(data.playlistServices, cfg)
+      return (
+        <CategoryCarousel
+          title={sectionLink.label}
+          titleHref={sectionLink.href}
+          showNav={items.length > 1}
+          hideHead={embedInWidgetCard}
+        >
+          {items.map((s) => {
+            const promo = s.promo_price_cents != null && s.price_cents != null
+            return (
+              <ShopTile
+                key={s.id}
+                href={s.slug ? `${detailBase}/services/${s.slug}` : `${webBaseUrl}#appointments`}
+                title={s.title}
+                imageUrl={s.image_url}
+                excerpt={s.detailExcerpt ?? ''}
+                priceCents={s.price_cents}
+                salePriceCents={promo ? s.promo_price_cents : null}
+                currency={s.currency}
+                reviewAverage={s.reviewAverage}
+                reviewCount={s.reviewCount}
+                promo={!!promo}
+              />
+            )
+          })}
+        </CategoryCarousel>
+      )
+    }
+    if (cfg.source_kind === 'events') {
+      const items = resolveCarouselUpcomingEvents(data.playlistEvents, cfg.limit ?? 6)
+      return (
+        <CategoryCarousel
+          title={sectionLink.label}
+          titleHref={sectionLink.href}
+          showNav={items.length > 1}
+          hideHead={embedInWidgetCard}
+        >
+          {items.map((ev) => {
+            const start = new Date(ev.start_at)
+            const day = new Intl.DateTimeFormat('fr-FR', { day: 'numeric' }).format(start)
+            const month = new Intl.DateTimeFormat('fr-FR', { month: 'short' }).format(start).replace('.', '')
+            return (
+              <div key={ev.id} className="tile tile--rich wcat__tile">
+                <Link
+                  className="tile__stretch"
+                  href={ev.slug ? `${detailBase}/events/${ev.slug}` : `${webBaseUrl}#events`}
+                  aria-label={ev.title}
+                />
+                <div className="tile__media">
+                  {ev.image_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={ev.image_url} alt="" loading="lazy" />
+                  ) : (
+                    <span className="ph">
+                      <Zap className="h-8 w-8" />
+                    </span>
+                  )}
+                  <span className="tile__date-badge">
+                    <span className="tile__date-day">{day}</span>
+                    <span className="tile__date-month">{month}</span>
+                  </span>
+                </div>
+                <div className="tile__body">
+                  <h3 className="tile__title">{ev.title}</h3>
+                  {ev.detailExcerpt && <p className="tile__detail-text">{ev.detailExcerpt}</p>}
+                </div>
+              </div>
+            )
+          })}
+        </CategoryCarousel>
+      )
+    }
+    const latest = [...data.publications]
+      .filter((p) => p.published_at)
+      .sort((a, b) => new Date(b.published_at!).getTime() - new Date(a.published_at!).getTime())
+      .slice(0, cfg.limit ?? 3)
+    const newsItems = latest.map((pub) => {
+      const media = [...(pub.publication_media ?? [])].sort((a, b) => a.position - b.position)
+      return {
+        title: pub.title,
+        slug: pub.slug,
+        publishedAt: pub.published_at!,
+        imageUrl: media[0]?.url ?? null,
+      }
+    })
+    return (
+      <NewsCarousel
+        items={newsItems}
+        webBaseUrl={webBaseUrl}
+        title={sectionLink.label}
+        titleHref={sectionLink.href}
+        hideHead={embedInWidgetCard}
+      />
+    )
+  }
+
+  if (widget.type === 'widget_shop') {
+    const cfg = parseShopConfig(config)!
+    if (cfg.mode === 'product') {
+      const p = data.shopProducts.find((x) => x.id === cfg.product_id)
+      if (!p) return null
+      const promo = saleActive(p.sale_price_cents, p.sale_ends_at)
+      return (
+        <WidgetFeaturedCard
+          href={p.slug ? `${detailBase}/shop/${p.slug}` : `${webBaseUrl}#shop`}
+          imageUrl={p.image_url}
+          imageUrls={p.image_urls}
+          placeholder={<ShoppingBag className="h-10 w-10" />}
+          badgeLabel="Shop"
+          title={p.title}
+          tags={[p.type === 'digital' ? 'Numérique' : 'Physique']}
+          priceLabel={formatPrice(promo ? p.sale_price_cents : p.price_cents, p.currency)}
+          oldPriceLabel={promo ? formatPrice(p.price_cents, p.currency) : null}
+          promo={promo}
+          ctaLabel="Voir"
+          adminMenu={adminMenu}
+        />
+      )
+    }
+    const items = data.shopProducts.filter((p) => p.category_id === cfg.category_id).slice(0, cfg.limit ?? 6)
+    const sectionLink = homeWidgetCarouselSectionLink(widget.type, config, webBaseUrl)!
+    return (
+      <CategoryCarousel
+        title={sectionLink.label}
+        titleHref={sectionLink.href}
+        showNav={items.length > 1}
+        hideHead={embedInWidgetCard}
+      >
         {items.map((p) => {
           const promo = saleActive(p.sale_price_cents, p.sale_ends_at)
           return (
             <ShopTile
               key={p.id}
-              href={p.slug ? `${webBaseUrl}/shop/${p.slug}` : `${webBaseUrl}#shop`}
+              href={p.slug ? `${detailBase}/shop/${p.slug}` : `${webBaseUrl}#shop`}
               title={p.title}
               imageUrl={p.image_url}
               excerpt={p.detailExcerpt ?? ''}
@@ -442,8 +754,9 @@ export function WidgetBodyDisplay({ widget, data, webBaseUrl, onConfigure, onOpe
       const promo = s.promo_price_cents != null && s.price_cents != null && s.promo_price_cents > 0
       return (
         <WidgetFeaturedCard
-          href={s.slug ? `${webBaseUrl}/services/${s.slug}` : `${webBaseUrl}#appointments`}
+          href={s.slug ? `${detailBase}/services/${s.slug}` : `${webBaseUrl}#appointments`}
           imageUrl={s.image_url}
+          imageUrls={s.image_urls}
           placeholder={<CalendarClock className="h-10 w-10" />}
           badgeLabel="Service"
           title={s.title}
@@ -452,18 +765,25 @@ export function WidgetBodyDisplay({ widget, data, webBaseUrl, onConfigure, onOpe
           oldPriceLabel={promo ? formatPrice(s.price_cents, s.currency) : null}
           promo={promo}
           ctaLabel="Réserver"
+          adminMenu={adminMenu}
         />
       )
     }
     const items = data.playlistServices.slice(0, cfg.limit ?? 6)
+    const sectionLink = homeWidgetCarouselSectionLink(widget.type, config, webBaseUrl)!
     return (
-      <CategoryCarousel title="Services" moreHref={`${webBaseUrl}#appointments`} showNav={items.length > 1}>
+      <CategoryCarousel
+        title={sectionLink.label}
+        titleHref={sectionLink.href}
+        showNav={items.length > 1}
+        hideHead={embedInWidgetCard}
+      >
         {items.map((s) => {
           const promo = s.promo_price_cents != null && s.price_cents != null
           return (
             <ShopTile
               key={s.id}
-              href={s.slug ? `${webBaseUrl}/services/${s.slug}` : `${webBaseUrl}#appointments`}
+              href={s.slug ? `${detailBase}/services/${s.slug}` : `${webBaseUrl}#appointments`}
               title={s.title}
               imageUrl={s.image_url}
               excerpt={s.detailExcerpt ?? ''}
@@ -489,20 +809,28 @@ export function WidgetBodyDisplay({ widget, data, webBaseUrl, onConfigure, onOpe
       const tag = new Intl.DateTimeFormat('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' }).format(start)
       return (
         <WidgetFeaturedCard
-          href={ev.slug ? `${webBaseUrl}/events/${ev.slug}` : `${webBaseUrl}#events`}
+          href={ev.slug ? `${detailBase}/events/${ev.slug}` : `${webBaseUrl}#events`}
           imageUrl={ev.image_url}
+          imageUrls={ev.image_urls}
           placeholder={<Zap className="h-10 w-10" />}
           badgeLabel="Event"
           title={ev.title}
           tags={[tag]}
           priceLabel={formatPrice(ev.price_cents, ev.currency)}
           ctaLabel="Participer"
+          adminMenu={adminMenu}
         />
       )
     }
     const items = data.playlistEvents.slice(0, cfg.limit ?? 6)
+    const sectionLink = homeWidgetCarouselSectionLink(widget.type, config, webBaseUrl)!
     return (
-      <CategoryCarousel title="Events" moreHref={`${webBaseUrl}#events`} showNav={items.length > 1}>
+      <CategoryCarousel
+        title={sectionLink.label}
+        titleHref={sectionLink.href}
+        showNav={items.length > 1}
+        hideHead={embedInWidgetCard}
+      >
         {items.map((ev) => {
           const start = new Date(ev.start_at)
           const day = new Intl.DateTimeFormat('fr-FR', { day: 'numeric' }).format(start)
@@ -511,7 +839,7 @@ export function WidgetBodyDisplay({ widget, data, webBaseUrl, onConfigure, onOpe
             <div key={ev.id} className="tile tile--rich wcat__tile">
               <Link
                 className="tile__stretch"
-                href={ev.slug ? `${webBaseUrl}/events/${ev.slug}` : `${webBaseUrl}#events`}
+                href={ev.slug ? `${detailBase}/events/${ev.slug}` : `${webBaseUrl}#events`}
                 aria-label={ev.title}
               />
               <div className="tile__media">
@@ -554,7 +882,16 @@ export function WidgetBodyDisplay({ widget, data, webBaseUrl, onConfigure, onOpe
         imageUrl: media[0]?.url ?? null,
       }
     })
-    return <NewsCarousel items={newsItems} webBaseUrl={webBaseUrl} />
+    const sectionLink = homeWidgetCarouselSectionLink(widget.type, config, webBaseUrl)!
+    return (
+      <NewsCarousel
+        items={newsItems}
+        webBaseUrl={webBaseUrl}
+        title={sectionLink.label}
+        titleHref={sectionLink.href}
+        hideHead={embedInWidgetCard}
+      />
+    )
   }
 
   if (widget.type === 'widget_faq') {
@@ -656,13 +993,17 @@ export function WidgetBodyDisplay({ widget, data, webBaseUrl, onConfigure, onOpe
     if (images.length === 0) return null
     const count = Math.min(images.length, 3)
     return (
-      <div className="banner-welcome">
+      <div className="banner-welcome banner-welcome--full">
         <div className={`banner-welcome__gallery banner-welcome__gallery--count-${count}`}>
           {images.slice(0, 3).map((img, index) => (
             <div
               key={index}
               className="banner-welcome__media"
-              style={{ '--banner-aspect': String(images.length === 1 ? img.aspect_ratio : 1) } as React.CSSProperties}
+              style={
+                {
+                  '--banner-aspect': String(bannerWidgetMediaAspect(count, img.aspect_ratio)),
+                } as React.CSSProperties
+              }
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={img.url} alt={index === 0 && cfg.title ? cfg.title : ''} className="banner-welcome__img" loading="lazy" />

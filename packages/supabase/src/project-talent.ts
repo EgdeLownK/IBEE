@@ -1,0 +1,122 @@
+import { SupabaseClient } from '@supabase/supabase-js'
+import { Database } from './types'
+
+type Client = SupabaseClient<Database>
+
+export type JobOfferStatus = Database['public']['Enums']['entity_job_status_v2']
+export type JobContractType = Database['public']['Enums']['entity_job_contract_type']
+export type JobLocationType = Database['public']['Enums']['entity_job_location_type']
+export type JobCompType = Database['public']['Enums']['entity_job_comp_type']
+export type JobCompFreq = Database['public']['Enums']['entity_job_comp_freq']
+
+export type JobOffer = Database['public']['Tables']['entity_job_offers']['Row']
+
+export type JobApplicationStatus = Database['public']['Enums']['entity_job_application_status']
+export type JobApplication = Database['public']['Tables']['entity_job_applications']['Row']
+
+export async function listProjectJobOffers(
+  client: Client,
+  entityId: string
+): Promise<JobOffer[]> {
+  const { data, error } = await client
+    .from('entity_job_offers')
+    .select('*')
+    .eq('entity_id', entityId)
+    .order('created_at', { ascending: false })
+
+  if (error) throw error
+  return data
+}
+
+export async function getProjectJobOffer(
+  client: Client,
+  entityId: string,
+  offerId: string
+): Promise<JobOffer> {
+  const { data, error } = await client
+    .from('entity_job_offers')
+    .select('*')
+    .eq('id', offerId)
+    .eq('entity_id', entityId)
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export async function createProjectJobOffer(
+  client: Client,
+  entityId: string,
+  input: Omit<Database['public']['Tables']['entity_job_offers']['Insert'], 'entity_id' | 'id' | 'created_at' | 'updated_at'>
+): Promise<JobOffer> {
+  const { data, error } = await client
+    .from('entity_job_offers')
+    .insert({
+      ...input,
+      entity_id: entityId,
+    })
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export async function updateProjectJobOffer(
+  client: Client,
+  entityId: string,
+  offerId: string,
+  input: Omit<Database['public']['Tables']['entity_job_offers']['Update'], 'entity_id' | 'id' | 'created_at' | 'updated_at'>
+): Promise<JobOffer> {
+  const { data, error } = await client
+    .from('entity_job_offers')
+    .update(input)
+    .eq('id', offerId)
+    .eq('entity_id', entityId)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export async function deleteProjectJobOffer(
+  client: Client,
+  entityId: string,
+  offerId: string
+): Promise<void> {
+  const { error } = await client
+    .from('entity_job_offers')
+    .delete()
+    .eq('id', offerId)
+    .eq('entity_id', entityId)
+
+  if (error) throw error
+}
+
+export async function listJobApplications(
+  client: Client,
+  offerId: string
+): Promise<JobApplication[]> {
+  const { data, error } = await client
+    .from('entity_job_applications')
+    .select('*')
+    .eq('offer_id', offerId)
+    .order('created_at', { ascending: false })
+
+  if (error) throw error
+  return data
+}
+
+export async function updateJobApplicationStatus(
+  client: Client,
+  applicationId: string,
+  status: JobApplicationStatus
+): Promise<void> {
+  const { error } = await client
+    .from('entity_job_applications')
+    .update({ status })
+    .eq('id', applicationId)
+
+  if (error) throw error
+}

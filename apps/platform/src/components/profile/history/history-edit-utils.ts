@@ -7,6 +7,17 @@ export type DraftTextBlock = {
   content: string
 }
 
+export type DraftListBlockItem = {
+  id: string
+  value: string
+}
+
+export type DraftListBlock = {
+  id: string
+  type: 'list'
+  items: DraftListBlockItem[]
+}
+
 export type DraftImageBlock = {
   id: string
   type: 'image'
@@ -17,7 +28,7 @@ export type DraftImageBlock = {
   uploading: boolean
 }
 
-export type DraftBlock = DraftTextBlock | DraftImageBlock
+export type DraftBlock = DraftTextBlock | DraftImageBlock | DraftListBlock
 
 let blockUid = 0
 export function nextBlockId() {
@@ -75,6 +86,13 @@ export function draftBlocksFromInitial(blocks: HistoryBlock[]): DraftBlock[] {
     if (item.type === 'text') {
       return { id: nextBlockId(), type: 'text', content: item.content }
     }
+    if (item.type === 'list') {
+      return { 
+        id: nextBlockId(), 
+        type: 'list', 
+        items: item.items.map(value => ({ id: nextBlockId(), value })) 
+      }
+    }
     const slot_count =
       item.slot_count === 2 || item.slot_count === 3 ? item.slot_count : (item.images?.length === 2 ? 2 : item.images?.length === 3 ? 3 : 1)
     const images: (HistoryImageItem | null)[] = []
@@ -104,6 +122,15 @@ export function serializeDraftBlocks(blocks: DraftBlock[]): HistoryBlock[] {
         throw new Error(`Chaque bloc texte doit faire entre 1 et ${HISTORY_TEXT_MAX} caractères.`)
       }
       payload.push({ type: 'text', content: text })
+    } else if (b.type === 'list') {
+      const items = b.items.map(i => i.value.trim()).filter(i => i.length > 0)
+      if (items.length === 0) continue
+      for (const item of items) {
+        if (item.length > HISTORY_TEXT_MAX) {
+          throw new Error(`Chaque élément de liste doit faire entre 1 et ${HISTORY_TEXT_MAX} caractères.`)
+        }
+      }
+      payload.push({ type: 'list', items })
     } else {
       const err = getBlockImageSaveError(b)
       if (err) throw new Error(err)

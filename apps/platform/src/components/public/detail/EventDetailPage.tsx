@@ -3,15 +3,17 @@ import { DetailTopBar } from '@/components/public/DetailTopBar'
 import type { PublicEventData } from '@/lib/load-public-event'
 import { DetailEntityStrip } from './DetailEntityStrip'
 import { EntityDetailBody } from './EntityDetailBody'
-import { EventRegistrationWidget } from './EventRegistrationWidget'
+import { EventParticipationCta } from './EventParticipationCta'
 import { ProductFaq } from './ProductFaq'
 import { RelatedContent } from './RelatedContent'
+import { embedProfileHref } from '@/lib/embed-public-urls'
 
 interface Props {
   data: PublicEventData
+  embedMode?: boolean
 }
 
-export function EventDetailPage({ data }: Props) {
+export function EventDetailPage({ data, embedMode = false }: Props) {
   const subtitle = [`${data.dayChip} ${data.monthChip}`, data.locLabel].filter(Boolean).join(' · ')
 
   return (
@@ -26,9 +28,26 @@ export function EventDetailPage({ data }: Props) {
           profileHref={data.profileHref}
           title={data.event.title}
           subtitle={subtitle}
-          priceText={data.priceText}
-          ctaHref={data.statusAvailable ? '#inscription' : null}
-          ctaLabel="Participer"
+          ctaSlot={
+            data.statusAvailable ? (
+              <EventParticipationCta
+                eventId={data.event.id}
+                entityId={data.entity.id}
+                entitySlug={data.entity.slug}
+                eventSlug={data.event.slug}
+                statusAvailable={data.statusAvailable}
+                isAuthenticated={data.isAuthenticated}
+                messageEnabled={data.messageEnabled}
+                messageHref={data.messageHref}
+                bookerName={data.bookerName}
+                bookerEmail={data.bookerEmail}
+                initialRegistered={data.viewerRegistration != null}
+                hasActivities={data.hasActivities}
+                activities={data.activities}
+                registrationTarget={data.registrationTarget}
+              />
+            ) : null
+          }
         />
 
         <EntityDetailBody
@@ -41,14 +60,33 @@ export function EventDetailPage({ data }: Props) {
           contentBlocks={data.detailContentBlocks}
           fallbackText={data.event.description}
           hasNews={data.hasNews}
+          profileBaseHref={embedMode ? embedProfileHref(data.entity.slug) : undefined}
         />
 
-        <EventRegistrationWidget
-          eventId={data.event.id}
-          statusAvailable={data.statusAvailable}
-          initialName={data.bookerName}
-          initialEmail={data.bookerEmail}
-        />
+        {data.hasActivities && data.activities.length > 0 ? (
+          <div className="product-sections px-[22px] pt-2 pb-2">
+            <section className="product-major-section">
+              <h2 className="product-major-section__title">Places</h2>
+              <div className="product-major-section__body">
+                <ul className="event-program-list">
+                  {data.activities.map((activity) => (
+                    <li key={activity.id} className="event-program-list__item">
+                      <div className="event-program-list__main">
+                        <strong className="event-program-list__title">{activity.title}</strong>
+                        <span className="event-program-list__slot">{activity.slotLabel}</span>
+                      </div>
+                      {activity.remaining != null ? (
+                        <span className="event-program-list__places">
+                          {activity.isFull ? 'Complet' : `${activity.remaining} place${activity.remaining > 1 ? 's' : ''}`}
+                        </span>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </section>
+          </div>
+        ) : null}
 
         <div className="product-related pb-2">
           <RelatedContent title={`Autres contenus de ${data.entity.display_name}`} items={data.profileRelated} />

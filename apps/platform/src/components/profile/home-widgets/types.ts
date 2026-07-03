@@ -22,9 +22,12 @@ export type PickerService = {
 
 export type PickerEvent = { id: string; title: string }
 
+export type PickerPublication = { id: string; title: string; tags: string[] }
+
 export type WidgetPickerData = {
   products: PickerProduct[]
   categories: PickerCategory[]
   services: PickerService[]
   events: PickerEvent[]
+  publications: PickerPublication[]
 }

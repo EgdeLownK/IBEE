@@ -1,0 +1,301 @@
+/* Nav pill flottante — dashboard */
+
+.navpill-shell {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  max-width: calc(100vw - 2rem);
+}
+
+.navpill-shell__error {
+  margin: 0 0 6px;
+  padding: 6px 12px;
+  border-radius: 10px;
+  font-size: 12px;
+  text-align: center;
+  color: var(--color-error);
+  background: rgb(255 255 255 / 0.92);
+  box-shadow: var(--shadow-sm);
+  width: fit-content;
+  max-width: calc(100vw - 2rem);
+  box-sizing: border-box;
+}
+
+.navpill {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: fit-content;
+  height: 52px;
+  padding: 6px 14px;
+  border-radius: 30px;
+  background: rgb(255 255 255 / 0.85);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-nav);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-sizing: border-box;
+}
+
+.navpill--composer {
+  gap: 8px;
+  height: auto;
+  min-height: 52px;
+  padding: 6px 8px 6px 6px;
+}
+
+.navpill--composer.navpill--with-nav-back {
+  gap: 0 6px;
+  padding: 6px 8px 6px 10px;
+}
+
+.navpill__btn {
+  width: 39px;
+  height: 39px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-neutral-900);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color 140ms ease, color 140ms ease;
+}
+
+.navpill__btn:hover {
+  background: var(--color-panel);
+}
+
+.navpill__btn.is-active {
+  background: #2a4a6b;
+  color: #fff;
+}
+
+.navpill--with-compose-toggle {
+  gap: 0;
+  padding: 6px 8px 6px 14px;
+}
+
+.navpill__nav-cluster {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.navpill__divider {
+  width: 1px;
+  height: 30px;
+  margin: 0 8px 0 10px;
+  flex-shrink: 0;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    var(--color-neutral-300) 18%,
+    var(--color-neutral-300) 82%,
+    transparent 100%
+  );
+}
+
+.navpill__compose-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 40px;
+  padding: 0 8px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: color 140ms ease, background-color 140ms ease;
+}
+
+.navpill__compose-toggle:hover {
+  background: var(--color-panel);
+}
+
+.navpill__compose-toggle:active {
+  transform: scale(0.98);
+}
+
+.navpill__compose-toggle--back {
+  padding: 0 6px 0 4px;
+}
+
+.navpill__compose-label {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--color-neutral-900);
+  white-space: nowrap;
+}
+
+.navpill__compose-toggle:hover .navpill__compose-label {
+  color: var(--color-accent-strong);
+}
+
+.navpill__compose-chevron {
+  width: 16px;
+  height: 16px;
+  color: var(--color-neutral-500);
+  flex-shrink: 0;
+  transition: color 140ms ease, transform 140ms ease;
+}
+
+.navpill__compose-toggle:hover .navpill__compose-chevron {
+  color: var(--color-accent-strong);
+}
+
+.navpill__compose-toggle:not(.navpill__compose-toggle--back):hover .navpill__compose-chevron {
+  transform: translateX(2px);
+}
+
+.navpill__compose-toggle--back:hover .navpill__compose-chevron {
+  transform: translateX(-2px);
+}
+
+.navpill-composer__field {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  width: clamp(200px, 36vw, 360px);
+  display: flex;
+  align-items: center;
+}
+
+.navpill-composer__input {
+  width: 100%;
+  min-width: 0;
+  height: 40px;
+  padding: 0 76px 0 40px;
+  border: none;
+  border-radius: 999px;
+  background: var(--color-panel);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: var(--color-neutral-900);
+  outline: none;
+  box-sizing: border-box;
+}
+
+.navpill-composer__input::placeholder {
+  color: var(--color-neutral-400);
+}
+
+.navpill-composer__input-attach,
+.navpill-composer__input-mic {
+  position: absolute;
+  top: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--color-neutral-500);
+  transform: translateY(-50%);
+  cursor: pointer;
+  transition: background-color 140ms ease, color 140ms ease;
+}
+
+.navpill-composer__input-attach {
+  left: 6px;
+}
+
+.navpill-composer__input-mic {
+  right: 38px;
+}
+
+.navpill-composer__input-attach:hover:not(:disabled),
+.navpill-composer__input-mic:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-neutral-900) 6%, var(--color-panel));
+  color: var(--color-neutral-800);
+}
+
+.navpill-composer__input-attach:disabled,
+.navpill-composer__input-mic:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.navpill-composer__send {
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--color-neutral-900);
+  color: var(--color-neutral-0);
+  transform: translateY(-50%);
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: opacity 140ms ease, transform 80ms ease;
+}
+
+.navpill-composer__send:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.navpill-composer__send:active:not(:disabled) {
+  transform: translateY(-50%) scale(0.96);
+}
+
+.navpill-composer__send:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+html[data-messages-compose-bar='true'] {
+  --messages-compose-bar-inset: 16px;
+}
+
+html[data-messages-compose-bar='true'] .navpill-shell--message-compose {
+  left: var(--messages-compose-bar-center-x, 50%);
+  width: min(
+    calc(var(--messages-compose-bar-max-width, 360px) - 2 * var(--messages-compose-bar-inset)),
+    calc(100vw - 2rem)
+  );
+  max-width: min(
+    calc(var(--messages-compose-bar-max-width, 360px) - 2 * var(--messages-compose-bar-inset)),
+    calc(100vw - 2rem)
+  );
+  align-items: stretch;
+}
+
+html[data-messages-compose-bar='true'] .navpill-shell--message-compose .navpill--composer-fluid {
+  width: 100%;
+  min-width: min-content;
+  max-width: 100%;
+}
+
+html[data-messages-compose-bar='true'] .navpill--composer-fluid .navpill-composer__field {
+  width: auto;
+  flex: 1;
+  min-width: 0;
+  max-width: none;
+}
+
+@media (min-width: 1100px) {
+  .navpill--composer:not(.navpill--composer-fluid) .navpill-composer__field {
+    width: clamp(240px, 32vw, 420px);
+  }
+}

@@ -46,7 +46,10 @@ export function ProductSchemaJsonLd({ data }: Props) {
   if (variants.length > 0) {
     inStock = variants.some((v) => v.stock_quantity > 0)
   } else if (product.type === 'digital') {
-    inStock = true
+    inStock =
+      product.digital_stock_unlimited !== false
+        ? true
+        : (product.digital_stock_quantity ?? 0) > 0
   } else {
     inStock = !!product.physical_stock_unlimited || (product.physical_stock_quantity ?? 0) > 0
   }

@@ -6,12 +6,14 @@ import { EntityDetailBody } from './EntityDetailBody'
 import { ProductFaq } from './ProductFaq'
 import { ProductReviewsList } from './ProductReviewsList'
 import { RelatedContent } from './RelatedContent'
+import { embedProfileHref } from '@/lib/embed-public-urls'
 
 interface Props {
   data: PublicServiceData
+  embedMode?: boolean
 }
 
-export function ServiceDetailPage({ data }: Props) {
+export function ServiceDetailPage({ data, embedMode = false }: Props) {
   const subtitle = [`${data.service.duration_minutes} min`, data.locLabel].filter(Boolean).join(' · ')
 
   return (
@@ -42,6 +44,7 @@ export function ServiceDetailPage({ data }: Props) {
           entityKind="service"
           contentBlocks={data.detailContentBlocks}
           hasNews={data.hasNews}
+          profileBaseHref={embedMode ? embedProfileHref(data.entity.slug) : undefined}
         />
 
         <div className="product-related pb-2">

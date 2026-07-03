@@ -10,6 +10,8 @@ import {
   deletePublicationAction,
   updatePublicationContentAction,
 } from '@/app/dashboard/site/publication-actions'
+import { PublicationEngageBar } from '@/components/public/PublicationEngageBar'
+import { PublicationCardText } from '@/components/public/PublicationCardText'
 
 type PublicationMedia = {
   id?: string
@@ -22,12 +24,14 @@ type PublicationMedia = {
 
 export type FeedPublication = {
   id: string
+  entity_id: string
   title: string
   slug: string
   content: string | null
   created_at: string
   published_at: string | null
   status?: string | null
+  comments_count?: number
   publication_media?: PublicationMedia[]
 }
 
@@ -209,6 +213,7 @@ export function PublicationFeedCard({
         {media.length > 0 && (
           <div className="pub-card__carousel">
             <PublicationMediaCarousel
+              fullWidth
               media={media.map((m) => ({
                 url: m.url,
                 type: m.type,
@@ -220,8 +225,21 @@ export function PublicationFeedCard({
           </div>
         )}
 
-        <p className="pub-card__text">{publication.content?.trim() || 'Publication sans texte'}</p>
+        {publication.content?.trim() ? (
+          <PublicationCardText content={publication.content} />
+        ) : (
+          <p className="pub-card__text">Publication sans texte</p>
+        )}
         {error && <p className="pub-card__error m-0">{error}</p>}
+
+        <PublicationEngageBar
+          entityId={publication.entity_id}
+          publicationId={publication.id}
+          commentsCount={publication.comments_count ?? 0}
+          shareUrl={permalink ?? ''}
+          commentsHref={permalink ? `${permalink}#comments` : null}
+          className="pub-detail__engage--feed"
+        />
       </article>
 
       {editOpen &&

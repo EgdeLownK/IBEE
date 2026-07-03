@@ -1,6 +1,6 @@
 'use client'
 
-import { widgetEmptyContent, widgetHasDisplayContent } from '@ibee/shared'
+import { widgetEmptyContent, widgetHasDisplayContent, parseCarouselConfig, CAROUSEL_SELECTION_LABELS } from '@ibee/shared'
 import type { HomeWidget } from './types'
 import type { ProfileStudioData } from '@/lib/profile-studio-data'
 
@@ -61,6 +61,103 @@ export function WidgetBodyPreview({ widget, data, onConfigure, onOpenFaq, onOpen
   }
 
   switch (widget.type) {
+    case 'widget_highlight': {
+      const cfg = widget.config
+      const item = cfg.item as { kind?: string; id?: string } | undefined
+      if (cfg.mode === 'single' && item?.kind && typeof item.id === 'string') {
+        if (item.kind === 'product') {
+          const p = data.shopProducts.find((x) => x.id === item.id)
+          if (p) {
+            return (
+              <div className="widget-preview">
+                {p.image_url && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={p.image_url} alt="" className="widget-preview__thumb" />
+                )}
+                <div>
+                  <p className="widget-preview__title">{p.title}</p>
+                  <p className="widget-preview__meta">Produit · {formatPrice(p.sale_price_cents ?? p.price_cents, p.currency)}</p>
+                </div>
+              </div>
+            )
+          }
+        }
+        if (item.kind === 'service') {
+          const s = data.playlistServices.find((x) => x.id === item.id)
+          if (s) {
+            return (
+              <div className="widget-preview">
+                {s.image_url && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={s.image_url} alt="" className="widget-preview__thumb" />
+                )}
+                <div>
+                  <p className="widget-preview__title">{s.title}</p>
+                  <p className="widget-preview__meta">Service · {s.duration_minutes} min</p>
+                </div>
+              </div>
+            )
+          }
+        }
+        if (item.kind === 'event') {
+          const ev = data.playlistEvents.find((x) => x.id === item.id)
+          if (ev) return <p className="widget-preview__title">Événement · {ev.title}</p>
+        }
+        if (item.kind === 'news') {
+          const pub = data.publications.find((x) => x.id === item.id)
+          if (pub) return <p className="widget-preview__title">Actualité · {pub.title}</p>
+        }
+      }
+      break
+    }
+    case 'widget_carousel': {
+      const parsed = parseCarouselConfig(widget.config)
+      if (!parsed) break
+      if (parsed.source_kind === 'shop_category') {
+        const mode = parsed.selection_mode ?? 'category'
+        if (mode === 'category') {
+          const cat = data.productCategories.find((c) => c.id === parsed.category_id)
+          const count = data.shopProducts.filter((p) => p.category_id === parsed.category_id).length
+          return (
+            <p className="widget-preview__meta">
+              Boutique · {CAROUSEL_SELECTION_LABELS.category}
+              {cat ? ` « ${cat.name} »` : ''} — {count} produit{count > 1 ? 's' : ''}
+            </p>
+          )
+        }
+        return (
+          <p className="widget-preview__meta">
+            Boutique · {CAROUSEL_SELECTION_LABELS[mode]} — {data.shopProducts.length} produit
+            {data.shopProducts.length > 1 ? 's' : ''}
+          </p>
+        )
+      }
+      if (parsed.source_kind === 'services') {
+        const mode = parsed.selection_mode ?? 'popular'
+        return (
+          <p className="widget-preview__meta">
+            Services · {CAROUSEL_SELECTION_LABELS[mode]} — {data.playlistServices.length} service
+            {data.playlistServices.length > 1 ? 's' : ''}
+          </p>
+        )
+      }
+      if (parsed.source_kind === 'events') {
+        return (
+          <p className="widget-preview__meta">
+            Événements à venir — {data.playlistEvents.length} événement
+            {data.playlistEvents.length > 1 ? 's' : ''}
+          </p>
+        )
+      }
+      if (parsed.source_kind === 'news') {
+        return (
+          <p className="widget-preview__meta">
+            Dernières actualités — {data.publications.length} actu{data.publications.length > 1 ? 's' : ''}
+          </p>
+        )
+      }
+      break
+    }
     case 'widget_shop': {
       const cfg = widget.config
       if (cfg.mode === 'product' && typeof cfg.product_id === 'string') {

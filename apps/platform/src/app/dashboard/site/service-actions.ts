@@ -45,6 +45,9 @@ function inputToDraft(input: ServiceCreateInput) {
     promoEnabled: input.promo_price_cents != null,
     promoPrice: input.promo_price_cents != null ? String(input.promo_price_cents / 100) : '',
     autoAcceptBookings: input.auto_accept_bookings,
+    paymentRequired: input.payment_required ?? false,
+    depositPercent: String(input.deposit_percent ?? 100),
+    cancelMinHours: String(input.cancel_min_hours ?? 24),
     minNoticeHours: String(input.min_notice_hours),
     maxAdvanceDays: String(input.max_advance_days),
     bufferBeforeMinutes: String(input.buffer_before_minutes),
@@ -107,6 +110,9 @@ export async function createServiceAction(input: ServiceCreateInput) {
       faq: input.faq ?? [],
       is_active: input.is_active,
       auto_accept_bookings: input.auto_accept_bookings,
+      payment_required: input.payment_required ?? false,
+      deposit_percent: input.deposit_percent ?? 100,
+      cancel_min_hours: input.cancel_min_hours ?? 24,
     }
 
     for (let attempt = 0; attempt < 10; attempt++) {

@@ -1,6 +1,11 @@
 'use client'
 
-import { PROFILE_TAB_ICONS, PROFILE_TAB_LABELS, PROFILE_TAB_ORDER } from '@ibee/ui-react/profile'
+import {
+  PROFILE_TAB_ICONS,
+  PROFILE_TAB_LABELS,
+  getVisibleProfileTabs,
+  type ProfileTabContent,
+} from '@ibee/ui-react/profile'
 
 interface MenuSection {
   type: string
@@ -8,15 +13,24 @@ interface MenuSection {
 
 interface Props {
   menuSections: MenuSection[]
+  tabContent: ProfileTabContent
   activeType: string
   tabsReady?: boolean
   onTabChange: (type: string) => void
 }
 
-export function PublicProfileMenuTabs({ menuSections, activeType, tabsReady = true, onTabChange }: Props) {
-  const activeTypes = new Set<string>(['home'])
-  menuSections.forEach((s) => activeTypes.add(s.type))
-  const visibleTabs = PROFILE_TAB_ORDER.filter((t) => activeTypes.has(t))
+export function PublicProfileMenuTabs({
+  menuSections,
+  tabContent,
+  activeType,
+  tabsReady = true,
+  onTabChange,
+}: Props) {
+  const visibleTabs = getVisibleProfileTabs(
+    'public',
+    menuSections,
+    tabContent
+  )
 
   if (visibleTabs.length === 0) {
     return (

@@ -26,6 +26,9 @@ export function BookingPage({ data }: Props) {
           bookerName={data.bookerName}
           bookerEmail={data.bookerEmail}
           priceText={data.priceText}
+          chargeLabel={data.chargeLabel}
+          needsPayment={data.needsPayment}
+          cancellationPolicyLabel={data.cancellationPolicyLabel}
           locationLabel={data.locationLabel}
           confirmedBaseHref={data.confirmedBaseHref}
         />

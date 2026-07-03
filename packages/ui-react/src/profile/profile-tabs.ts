@@ -28,11 +28,14 @@ export const PROFILE_TAB_ICONS: Record<string, LucideIcon> = {
 
 export const PROFILE_TAB_ORDER = [
   'home',
+  'news',
   'shop',
   'appointments',
   'events',
-  'news',
   'history',
 ] as const
+
+/** Onglets activité : ordre dynamique selon l'ajout (position menu). */
+export const PROFILE_ACTIVITY_TAB_TYPES = ['shop', 'appointments', 'events'] as const
 
 export type ProfileTabType = (typeof PROFILE_TAB_ORDER)[number]

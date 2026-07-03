@@ -153,7 +153,7 @@ export async function groupCountByResourceInWindow(
   return map
 }
 
-export type AnalyticsBucketPeriod = 'week' | 'month' | 'year'
+export type AnalyticsBucketPeriod = 'week' | 'year'
 
 export type AnalyseScopeRpc = 'web' | 'service' | 'shop' | 'event' | 'news'
 

@@ -5,7 +5,6 @@ export type TeamPermissionKey =
   | 'shop'
   | 'services'
   | 'events'
-  | 'drive'
   | 'messages'
   | 'connecteur'
   | 'team'
@@ -73,11 +72,6 @@ export const TEAM_PERMISSION_GROUPS: TeamPermissionGroup[] = [
     label: 'Outils',
     items: [
       {
-        key: 'drive',
-        label: 'Drive',
-        description: 'Accéder aux fichiers du projet',
-      },
-      {
         key: 'messages',
         label: 'Messages',
         description: 'Lire et répondre aux messages clients',
@@ -100,8 +94,8 @@ export const TEAM_PERMISSION_GROUPS: TeamPermissionGroup[] = [
       },
       {
         key: 'revenue',
-        label: 'Revenus',
-        description: 'Consulter le chiffre d\'affaires',
+        label: 'Revenus projet',
+        description: 'Consulter le chiffre d\'affaires du projet',
       },
     ],
   },
@@ -131,7 +125,6 @@ export const MANAGER_PERMISSIONS: TeamPermissions = {
 
 export const MEMBER_PERMISSIONS: TeamPermissions = {
   ...createEmptyPermissions(),
-  drive: true,
   messages: true,
   services: true,
 }

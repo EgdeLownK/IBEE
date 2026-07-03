@@ -1,5 +1,7 @@
 'use client'
 
+import { useMemo } from 'react'
+import { sortHomeWidgetsByFixedOrder } from '@ibee/shared'
 import { WidgetBodyDisplay } from '@/components/profile/home-widgets/WidgetBodyDisplay'
 import type { HomeWidget } from '@/components/profile/home-widgets/types'
 import type { PublicProfileData } from '@/lib/load-public-profile'
@@ -16,6 +18,7 @@ type Props = Pick<
   | 'productCategories'
 > & {
   entityBaseUrl: string
+  detailBaseUrl?: string
 }
 
 export function PublicProfileHome({
@@ -28,8 +31,18 @@ export function PublicProfileHome({
   contactInfo,
   productCategories,
   entityBaseUrl,
+  detailBaseUrl,
 }: Props) {
-  const widgets = homeWidgets.filter((w) => w.is_active !== false) as HomeWidget[]
+  const widgets = useMemo(
+    () =>
+      sortHomeWidgetsByFixedOrder(
+        (homeWidgets.filter((w) => w.is_active !== false) as HomeWidget[]).map((w) => ({
+          ...w,
+          config: (w.config ?? {}) as Record<string, unknown>,
+        }))
+      ),
+    [homeWidgets]
+  )
 
   if (widgets.length === 0) {
     return (
@@ -40,7 +53,7 @@ export function PublicProfileHome({
   }
 
   return (
-    <div className="widget-stack px-[22px] pb-7">
+    <div className="widget-stack widget-stack--home pb-7">
       {widgets.map((widget) => (
         <article key={widget.id} className="widget">
           <WidgetBodyDisplay
@@ -55,6 +68,7 @@ export function PublicProfileHome({
               productCategories,
             }}
             webBaseUrl={entityBaseUrl}
+            detailBaseUrl={detailBaseUrl}
             onConfigure={() => {}}
             readOnly
           />

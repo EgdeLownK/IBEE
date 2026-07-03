@@ -8,32 +8,79 @@ export {
   parseBioConfig,
   parseFaqConfig,
   parseAnnouncementConfig,
+  parseHighlightConfig,
+  parseCarouselConfig,
   AUTOMATIC_HOME_WIDGET_TYPES,
   SINGLE_INSTANCE_HOME_WIDGET_TYPES,
   isSingleInstanceHomeWidget,
+  HOME_WIDGET_CAROUSEL_OPEN_LABELS,
+  CAROUSEL_SOURCE_LABELS,
+  CAROUSEL_SOURCE_KINDS,
+  carouselSourceLimit,
+  homeWidgetCarouselSectionLink,
+  isHomeWidgetFeaturedSingle,
 } from './home-widget-config'
 export type {
   ShopWidgetConfig,
   ServiceWidgetConfig,
   EventWidgetConfig,
+  HighlightWidgetConfig,
+  CarouselWidgetConfig,
+  HighlightContentKind,
+  CarouselSourceKind,
   NewsWidgetConfig,
   BioWidgetConfig,
   FaqWidgetConfig,
   AnnouncementWidgetConfig,
   BannerWidgetImage,
   HomeWidgetConfig,
+  HomeWidgetCarouselSectionLink,
 } from './home-widget-config'
 export {
   BANNER_ASPECT_MIN,
   BANNER_ASPECT_MAX,
+  BANNER_WIDGET_DISPLAY_ASPECT,
   BANNER_MAX_IMAGES,
   clampBannerAspectRatio,
   normalizeBannerImages,
+  bannerWidgetMediaAspect,
 } from './home-widget-config'
 export { widgetHasDisplayContent } from './widget-display-content'
 export type { WidgetDisplayContext } from './widget-display-content'
 export { widgetEmptyContent } from './widget-empty-content'
 export type { WidgetEmptyContent } from './widget-empty-content'
+export {
+  HIDDEN_HOME_WIDGET_TYPES,
+  HOME_WIDGET_FIXED_TIERS,
+  homeWidgetSortTier,
+  isVisibleHomeWidget,
+  sortHomeWidgetsByFixedOrder,
+} from './home-widget-order'
+export {
+  CAROUSEL_SELECTION_LABELS,
+  CAROUSEL_SELECTION_MODES,
+  carouselSelectionModesForSource,
+  carouselSourceNeedsContentStep,
+  defaultCarouselSelectionMode,
+  parseCarouselSelectionMode,
+  resolveCarouselShopProducts,
+  resolveCarouselServices,
+  resolveCarouselUpcomingEvents,
+  sortByCarouselSelection,
+} from './carousel-items'
+export type { CarouselSelectionMode } from './carousel-items'
+export {
+  CAROUSEL_SOURCE_EMPTY_LABELS,
+  carouselSelectionModeHasContent,
+  carouselSourceHasContent,
+  categoriesWithProducts,
+  categoryIdsWithProducts,
+  firstAvailableCarouselSelectionMode,
+  firstAvailableCarouselSource,
+  firstAvailableHighlightKind,
+  highlightKindHasContent,
+} from './carousel-picker-availability'
+export type { WidgetConfigPickerData } from './carousel-picker-availability'
 export {
   parseHistoryBlocks,
   historyBlocksHaveContent,
@@ -108,3 +155,22 @@ export type {
   TrackEventPayload,
   TrackEventsBody,
 } from './analytics'
+export {
+  encodeHomeFeedCursor,
+  decodeHomeFeedCursor,
+  compareHomeFeedPosts,
+  isHomeFeedPostBeforeCursor,
+  getHomeFeedDetailPreviewPath,
+} from './home-feed'
+export type {
+  HomeFeedPostKind,
+  HomeFeedEntity,
+  HomeFeedPost,
+  HomeFeedNewsItem,
+  HomeFeedProfile,
+  HomeFeedRow,
+  HomeFeedCursor,
+  HomeFeedPage,
+} from './home-feed'
+export { parseContactFromQr } from './manual-reg-contact-qr'
+export type { ParsedContactQr } from './manual-reg-contact-qr'

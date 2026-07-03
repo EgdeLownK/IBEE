@@ -18,19 +18,37 @@ type Booking = {
   cancelled_by: string | null
   cancelled_at: string | null
   notes: string | null
+  price_cents: number | null
+  currency: string
+  payment_status: Database['public']['Enums']['booking_payment_status']
+  stripe_checkout_session_id: string | null
+  stripe_payment_intent_id: string | null
+  paid_at: string | null
+  refund_cents: number
+  checkout_expires_at: string | null
+  source: string
+  confirmation_sent_at: string | null
+  reminder_sent_at: string | null
   created_at: string
   updated_at: string
 }
 
-type BookingWithType = Booking & {
+export type BookingWithType = Booking & {
   appointment_types: {
     id: string
     title: string
     duration_minutes: number
-    location_type: string
+    location_type: Database['public']['Enums']['appointment_location_type']
     location_details: string | null
     color: string | null
-  }
+    price_cents: number | null
+    promo_price_cents: number | null
+    currency: string | null
+    gallery_images?: string[] | null
+    cancel_min_hours?: number
+    payment_required?: boolean
+    deposit_percent?: number
+  } | null
 }
 
 export async function getBookingsByEntity(
@@ -42,7 +60,7 @@ export async function getBookingsByEntity(
 
   let query = client
     .from('bookings')
-    .select('*, appointment_types(id, title, duration_minutes, location_type, location_details, color)')
+    .select('*, appointment_types(id, title, duration_minutes, location_type, location_details, color, price_cents, promo_price_cents, currency, gallery_images, cancel_min_hours, payment_required, deposit_percent)')
     .eq('entity_id', entityId)
     .order('start_at', { ascending: true })
     .range(offset, offset + limit - 1)
@@ -62,7 +80,7 @@ export async function getBookingById(
 ) {
   const { data, error } = await client
     .from('bookings')
-    .select('*, appointment_types(id, title, duration_minutes, location_type, location_details, color)')
+    .select('*, appointment_types(id, title, duration_minutes, location_type, location_details, color, price_cents, promo_price_cents, currency, gallery_images, cancel_min_hours, payment_required, deposit_percent)')
     .eq('id', id)
     .maybeSingle()
 
@@ -116,6 +134,7 @@ export async function createBooking(
       start_at: data.start_at,
       end_at: data.end_at,
       status: autoAccept ? 'confirmed' : 'pending',
+      source: 'web',
     })
     .select()
     .single()
@@ -336,4 +355,47 @@ export async function getBookingStats(
     hourCounts,
     typeCounts,
   }
+}
+
+export async function markBookingConfirmationSent(client: SupabaseClient<Database>, bookingId: string) {
+  const { error } = await client
+    .from('bookings')
+    .update({ confirmation_sent_at: new Date().toISOString() })
+    .eq('id', bookingId)
+
+  if (error) throw error
+}
+
+export async function markBookingReminderSent(client: SupabaseClient<Database>, bookingId: string) {
+  const { error } = await client
+    .from('bookings')
+    .update({ reminder_sent_at: new Date().toISOString() })
+    .eq('id', bookingId)
+
+  if (error) throw error
+}
+
+type BookingReminderRow = BookingWithType & {
+  entity: { display_name: string } | null
+}
+
+export async function listBookingsDueForReminder(
+  client: SupabaseClient<Database>
+): Promise<BookingReminderRow[]> {
+  const now = Date.now()
+  const windowStart = new Date(now + 23 * 60 * 60 * 1000).toISOString()
+  const windowEnd = new Date(now + 25 * 60 * 60 * 1000).toISOString()
+
+  const { data, error } = await client
+    .from('bookings')
+    .select(
+      '*, appointment_types(id, title, duration_minutes, location_type, location_details, color, price_cents, promo_price_cents, currency), entity:entity_id(display_name)'
+    )
+    .eq('status', 'confirmed')
+    .is('reminder_sent_at', null)
+    .gte('start_at', windowStart)
+    .lte('start_at', windowEnd)
+
+  if (error) throw error
+  return (data ?? []) as BookingReminderRow[]
 }

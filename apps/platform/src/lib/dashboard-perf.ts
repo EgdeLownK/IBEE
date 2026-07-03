@@ -7,7 +7,6 @@ export type DashboardPerfBudgetKey =
   | 'site-shell'
   | 'site-playlists'
   | 'equipe'
-  | 'drive'
 
 /** Budgets cibles en prod (ms) — voir docs/plans/2026-06-10-dashboard-performance-globale.md */
 export const DASHBOARD_PERF_BUDGETS_MS: Record<DashboardPerfBudgetKey, number> = {
@@ -17,7 +16,6 @@ export const DASHBOARD_PERF_BUDGETS_MS: Record<DashboardPerfBudgetKey, number> =
   'site-shell': 400,
   'site-playlists': 1200,
   equipe: 500,
-  drive: 600,
 }
 
 export function isDashboardPerfDebug(): boolean {
@@ -34,7 +32,6 @@ function budgetFor(label: string): number | undefined {
   if (label.startsWith('page:site-shell')) return DASHBOARD_PERF_BUDGETS_MS['site-shell']
   if (label.startsWith('page:site-playlists')) return DASHBOARD_PERF_BUDGETS_MS['site-playlists']
   if (label.startsWith('page:equipe')) return DASHBOARD_PERF_BUDGETS_MS.equipe
-  if (label.startsWith('page:drive')) return DASHBOARD_PERF_BUDGETS_MS.drive
   if (label.startsWith('context:')) return DASHBOARD_PERF_BUDGETS_MS.shell
   return undefined
 }

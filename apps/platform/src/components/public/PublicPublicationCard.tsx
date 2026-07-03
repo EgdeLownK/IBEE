@@ -1,8 +1,11 @@
 'use client'
 
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { PublicationMediaCarousel } from '@ibee/ui-react'
 import type { PublicProfileData } from '@/lib/load-public-profile'
+import { PublicationEngageBar } from './PublicationEngageBar'
+import { PublicationCardText } from './PublicationCardText'
 
 type Publication = PublicProfileData['publications'][number]
 
@@ -27,57 +30,83 @@ export function PublicPublicationCard({
   entityDisplayName: string
   entityAvatarUrl: string | null
 }) {
+  const router = useRouter()
   const href = publication.slug ? `/${entitySlug}/news/${publication.slug}` : null
   const media = (publication.publication_media ?? []).map(
-    (m: { id?: string; url: string; type?: string | null; position?: number; width?: number | null; height?: number | null }, i: number) => ({
-    id: m.id ?? String(i),
-    url: m.url,
-    type: (m.type === 'video' ? 'video' : 'image') as 'image' | 'video',
-    position: m.position ?? i,
-    width: m.width ?? null,
-    height: m.height ?? null,
-  }))
-
-  const body = (
-    <>
-      <div className="flex items-center gap-3 px-4 py-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-accent-soft">
-          {entityAvatarUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={entityAvatarUrl} alt="" className="h-full w-full object-cover" />
-          ) : (
-            <span className="text-sm font-semibold text-accent">
-              {entityDisplayName.charAt(0).toUpperCase()}
-            </span>
-          )}
-        </div>
-        <div className="min-w-0">
-          <p className="m-0 truncate text-sm font-semibold text-neutral-900">{entityDisplayName}</p>
-          <p className="m-0 text-xs text-neutral-400">
-            {formatDate(publication.published_at ?? publication.created_at)}
-          </p>
-        </div>
-      </div>
-      {publication.content && (
-        <p className="m-0 whitespace-pre-wrap px-4 pb-3 text-sm leading-relaxed text-neutral-700">
-          {publication.content}
-        </p>
-      )}
-      {media.length > 0 && <PublicationMediaCarousel media={media} />}
-    </>
+    (
+      m: {
+        id?: string
+        url: string
+        type?: string | null
+        position?: number
+        width?: number | null
+        height?: number | null
+      },
+      i: number
+    ) => ({
+      id: m.id ?? String(i),
+      url: m.url,
+      type: (m.type === 'video' ? 'video' : 'image') as 'image' | 'video',
+      position: m.position ?? i,
+      width: m.width ?? null,
+      height: m.height ?? null,
+    })
   )
 
-  if (href) {
-    return (
-      <article className="mb-4 overflow-hidden rounded-2xl border border-border bg-surface">
-        <Link href={href} className="block text-inherit no-underline hover:bg-panel/40">
-          {body}
-        </Link>
-      </article>
-    )
+  const initial = entityDisplayName.charAt(0).toUpperCase()
+  const dateSource = publication.published_at ?? publication.created_at
+
+  function handleCardClick(e: React.MouseEvent<HTMLElement>) {
+    if (!href) return
+    const target = e.target as HTMLElement
+    if (target.closest('a, button, textarea, input, [role="menu"]')) return
+    router.push(href)
   }
 
   return (
-    <article className="mb-4 overflow-hidden rounded-2xl border border-border bg-surface">{body}</article>
+    <article
+      className={`pub-card pub-card--feed${href ? ' pub-card--clickable' : ''}`}
+      onClick={href ? handleCardClick : undefined}
+    >
+      <div className="pub-card__head">
+        <div className="pub-card__avatar">
+          {entityAvatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={entityAvatarUrl} alt="" />
+          ) : (
+            <span>{initial}</span>
+          )}
+        </div>
+        <div className="pub-card__meta-block min-w-0 flex-1">
+          <h3 className="pub-card__title m-0 truncate">
+            {href ? (
+              <Link href={href}>{publication.title || entityDisplayName}</Link>
+            ) : (
+              <span>{publication.title || entityDisplayName}</span>
+            )}
+          </h3>
+          <time className="pub-card__meta">{formatDate(dateSource)}</time>
+        </div>
+      </div>
+
+      {media.length > 0 && (
+        <div className="pub-card__carousel">
+          <PublicationMediaCarousel fullWidth media={media} />
+        </div>
+      )}
+
+      {publication.content && <PublicationCardText content={publication.content} />}
+
+      {href && (
+        <PublicationEngageBar
+          entityId={publication.entity_id}
+          publicationId={publication.id}
+          commentsCount={publication.comments_count ?? 0}
+          shareUrl={href}
+          commentsHref={`${href}#comments`}
+          className="pub-detail__engage--feed"
+        />
+      )}
+    </article>
   )
 }

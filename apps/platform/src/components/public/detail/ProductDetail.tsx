@@ -10,13 +10,14 @@ import {
   Store,
   Truck,
 } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useHorizontalCarousel } from '@/hooks/useHorizontalCarousel'
 import type { DetailContentBlock } from '@/lib/entity-content-blocks'
 import { formatDetailPrice } from '@/lib/detail-format'
 import type { PublicProductData, PublishedProduct, PublishedProductVariant } from '@/lib/load-public-product'
 import { EntityMoreDetails } from './EntityMoreDetails'
 import { NewsWidget } from './NewsWidget'
+import { embedProfileHref } from '@/lib/embed-public-urls'
 
 type CustomDetail = PublicProductData['customDetails'][number]
 
@@ -30,6 +31,12 @@ type Props = {
   aggregates?: { count: number; average: number } | null
   entitySlug?: string
   hasNews?: boolean
+  embedMode?: boolean
+  onCheckoutStateChange?: (state: {
+    priceText: string | null
+    variantId: string | null
+    canBuy: boolean
+  }) => void
 }
 
 const FORMAT_LABELS: Record<string, string> = {
@@ -95,7 +102,10 @@ function computeStock(
   if (activeVariants.length > 0) {
     return activeVariants.some((v) => v.stock_quantity > 0)
   }
-  if (product.type === 'digital') return true
+  if (product.type === 'digital') {
+    if (product.digital_stock_unlimited !== false) return true
+    return (product.digital_stock_quantity ?? 0) > 0
+  }
   return !!product.physical_stock_unlimited || (product.physical_stock_quantity ?? 0) > 0
 }
 
@@ -108,6 +118,8 @@ export function ProductDetail({
   aggregates = null,
   entitySlug = '',
   hasNews = false,
+  embedMode = false,
+  onCheckoutStateChange,
 }: Props) {
   const variants = ((product.product_variants ?? []) as PublishedProductVariant[]).filter(
     (v) => v.is_active
@@ -161,6 +173,23 @@ export function ProductDetail({
   const reviewCount = aggregates?.count ?? 0
   const reviewAverage = aggregates?.average ?? 0
   const detailRows = buildDetailRows(product, customDetails)
+
+  const needsVariant = variants.length > 0
+  const canBuy = inStock && (!needsVariant || selectedVariant != null)
+
+  useEffect(() => {
+    onCheckoutStateChange?.({
+      priceText: formatDetailPrice(displayPriceCents, product.currency),
+      variantId: selectedVariant?.id ?? null,
+      canBuy,
+    })
+  }, [
+    canBuy,
+    displayPriceCents,
+    onCheckoutStateChange,
+    product.currency,
+    selectedVariant?.id,
+  ])
 
   const deliveryTags =
     product.type === 'physical'
@@ -327,7 +356,12 @@ export function ProductDetail({
         bulletPoints={bulletPoints}
         fallbackText={product.description_long}
       />
-      {hasNews && entitySlug && <NewsWidget entitySlug={entitySlug} />}
+      {hasNews && entitySlug && (
+        <NewsWidget
+          entitySlug={entitySlug}
+          profileBaseHref={embedMode ? embedProfileHref(entitySlug) : undefined}
+        />
+      )}
     </div>
   )
 }

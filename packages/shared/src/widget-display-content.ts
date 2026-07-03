@@ -9,7 +9,10 @@ import {
   parseNewsConfig,
   parseServiceConfig,
   parseShopConfig,
+  parseHighlightConfig,
+  parseCarouselConfig,
 } from './home-widget-config'
+import { resolveCarouselUpcomingEvents } from './carousel-items'
 
 type ContactInfo = {
   contact_email: string | null
@@ -24,8 +27,8 @@ type ContactInfo = {
 export interface WidgetDisplayContext {
   products: { id: string; category_id?: string | null }[]
   appointmentTypes: { id: string }[]
-  events: { id: string }[]
-  publications: { published_at: string | null }[]
+  events: { id: string; start_at: string }[]
+  publications: { id: string; published_at: string | null }[]
   faqItems: unknown[]
   contactInfo: ContactInfo | null
 }
@@ -47,6 +50,41 @@ export function widgetHasDisplayContent(
   if (!isWidgetConfigured(widget.type, config)) return false
 
   switch (widget.type) {
+    case 'widget_highlight': {
+      const cfg = parseHighlightConfig(config)
+      if (!cfg) return false
+      switch (cfg.item.kind) {
+        case 'product':
+          return ctx.products.some((p) => p.id === cfg.item.id)
+        case 'service':
+          return ctx.appointmentTypes.some((s) => s.id === cfg.item.id)
+        case 'event':
+          return ctx.events.some((e) => e.id === cfg.item.id)
+        case 'news':
+          return ctx.publications.some((p) => p.id === cfg.item.id && p.published_at)
+      }
+      return false
+    }
+    case 'widget_carousel': {
+      const cfg = parseCarouselConfig(config)
+      if (!cfg) return false
+      switch (cfg.source_kind) {
+        case 'shop_category': {
+          const mode = cfg.selection_mode ?? 'category'
+          if (mode === 'category') {
+            return ctx.products.some((p) => p.category_id === cfg.category_id)
+          }
+          return ctx.products.length > 0
+        }
+        case 'services':
+          return ctx.appointmentTypes.length > 0
+        case 'events':
+          return resolveCarouselUpcomingEvents(ctx.events, 6).length > 0
+        case 'news':
+          return ctx.publications.some((p) => p.published_at)
+      }
+      return false
+    }
     case 'widget_shop': {
       const cfg = parseShopConfig(config)
       if (!cfg) return false

@@ -8,7 +8,16 @@ type Slot = { start: string; end: string }
 
 type Props = Pick<
   PublicBookingData,
-  'entity' | 'service' | 'bookerName' | 'bookerEmail' | 'priceText' | 'locationLabel' | 'confirmedBaseHref'
+  | 'entity'
+  | 'service'
+  | 'bookerName'
+  | 'bookerEmail'
+  | 'priceText'
+  | 'chargeLabel'
+  | 'needsPayment'
+  | 'cancellationPolicyLabel'
+  | 'locationLabel'
+  | 'confirmedBaseHref'
 >
 
 const MONTH_NAMES = [
@@ -38,6 +47,9 @@ export function BookingWidget({
   bookerName: initialName,
   bookerEmail: initialEmail,
   priceText,
+  chargeLabel,
+  needsPayment,
+  cancellationPolicyLabel,
   locationLabel: locLabel,
   confirmedBaseHref,
 }: Props) {
@@ -151,6 +163,32 @@ export function BookingWidget({
 
     setSubmitting(true)
     try {
+      if (needsPayment) {
+        const res = await fetch('/api/checkout/create-booking-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            entityId: entity.id,
+            entitySlug: entity.slug,
+            serviceSlug: service.slug,
+            appointmentTypeId: service.id,
+            bookerName: trimmedName,
+            bookerEmail: trimmedEmail,
+            bookerPhone: phone.trim() || null,
+            startAt: selectedStart,
+            endAt: selectedEnd,
+          }),
+        })
+        const data = await res.json()
+        if (data.error || !data.url) {
+          window.alert(data.error ?? 'Impossible de démarrer le paiement.')
+          setSubmitting(false)
+          return
+        }
+        window.location.href = data.url
+        return
+      }
+
       const res = await fetch('/api/bookings/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -355,9 +393,15 @@ export function BookingWidget({
                   {service.duration_minutes} min — {locLabel}
                 </div>
                 {service.price_cents !== null && service.price_cents > 0 && (
-                  <p className="pt-1 text-sm font-semibold text-neutral-900">{priceText}</p>
+                  <p className="pt-1 text-sm font-semibold text-neutral-900">
+                    {needsPayment && chargeLabel ? `À payer : ${chargeLabel}` : priceText}
+                  </p>
                 )}
               </div>
+
+              {cancellationPolicyLabel ? (
+                <p className="text-xs leading-relaxed text-neutral-500">{cancellationPolicyLabel}</p>
+              ) : null}
 
               <div className="space-y-3">
                 <div>
@@ -412,10 +456,16 @@ export function BookingWidget({
                   disabled={submitting}
                   className="btn btn--accent btn--block w-full"
                 >
-                  {submitting ? 'Envoi...' : 'Confirmer le rendez-vous'}
+                  {submitting
+                    ? 'Envoi...'
+                    : needsPayment
+                      ? `Payer ${chargeLabel ?? ''}`.trim()
+                      : 'Confirmer le rendez-vous'}
                 </button>
                 <p className="mt-2 text-center text-xs text-neutral-400">
-                  Vous recevrez un email de confirmation.
+                  {needsPayment
+                    ? 'Paiement sécurisé par Stripe. Vous recevrez un email de confirmation.'
+                    : 'Vous recevrez un email de confirmation.'}
                 </p>
               </form>
             </div>

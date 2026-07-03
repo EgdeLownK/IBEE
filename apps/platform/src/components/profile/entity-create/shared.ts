@@ -1,3 +1,5 @@
+import { CARD_DETAIL_EXCERPT_MAX, truncateText } from '@/lib/entity-detail-excerpt'
+
 let uid = 0
 
 export function nextId(prefix = 'id') {
@@ -5,10 +7,8 @@ export function nextId(prefix = 'id') {
   return `${prefix}${uid}`
 }
 
-export function truncateExcerpt(text: string, max = 150): string {
-  const t = text.trim()
-  if (t.length <= max) return t
-  return `${t.slice(0, max)}...`
+export function truncateExcerpt(text: string, max = CARD_DETAIL_EXCERPT_MAX): string {
+  return truncateText(text, max)
 }
 
 export type GalleryImageItem = {

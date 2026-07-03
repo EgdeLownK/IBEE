@@ -1,0 +1,21 @@
+/* Pages embed (iframe) — scroll interne sans barre visible */
+
+html:has(.embed-shell),
+html:has(.embed-shell) body {
+  overflow: hidden;
+  height: 100%;
+}
+
+.embed-shell {
+  height: 100dvh;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.embed-shell::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}

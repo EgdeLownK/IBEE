@@ -1,6 +1,13 @@
 import { createClient } from '@/lib/supabase/server'
 import { formatDetailPrice, locationLabel } from '@/lib/detail-format'
-import { getAppointmentTypeBySlug, getEntityBySlug, getEntityByUserId } from '@ibee/supabase'
+import {
+  formatCancellationPolicyLabel,
+  getAppointmentTypeBySlug,
+  getEntityBySlug,
+  getEntityByUserId,
+  requiresBookingPayment,
+  resolveAppointmentChargeCents,
+} from '@ibee/supabase'
 
 export async function loadPublicBooking(slug: string, serviceSlug: string) {
   const supabase = await createClient()
@@ -21,6 +28,8 @@ export async function loadPublicBooking(slug: string, serviceSlug: string) {
   }
 
   const siteUrl = process.env.NEXT_PUBLIC_WEB_URL ?? 'http://localhost:3000'
+  const chargeCents = resolveAppointmentChargeCents(service)
+  const needsPayment = requiresBookingPayment(service)
 
   return {
     entity: {
@@ -36,12 +45,23 @@ export async function loadPublicBooking(slug: string, serviceSlug: string) {
       duration_minutes: service.duration_minutes,
       location_type: service.location_type,
       price_cents: service.price_cents,
+      promo_price_cents: service.promo_price_cents,
       currency: service.currency,
+      payment_required: service.payment_required,
+      deposit_percent: service.deposit_percent,
+      cancel_min_hours: service.cancel_min_hours,
     },
     bookerName,
     bookerEmail: user?.email ?? '',
     isLoggedIn: !!user,
     priceText: formatDetailPrice(service.price_cents, service.currency),
+    chargeCents,
+    needsPayment,
+    chargeLabel:
+      chargeCents > 0
+        ? formatDetailPrice(chargeCents, service.currency)
+        : null,
+    cancellationPolicyLabel: formatCancellationPolicyLabel(service.cancel_min_hours),
     locationLabel: locationLabel(service.location_type),
     profileHref: `/${entity.slug}`,
     serviceHref: `/${entity.slug}/services/${service.slug}`,

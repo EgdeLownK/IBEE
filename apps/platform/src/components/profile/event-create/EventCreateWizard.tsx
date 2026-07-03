@@ -119,6 +119,10 @@ export function EventCreateWizard({
         start_at: ev.start_at,
         price_cents: ev.price_cents,
         currency: ev.currency,
+        location_type: payload.location_type,
+        location_details: payload.location_details ?? null,
+        capacity: payload.capacity ?? null,
+        registrations_count: 0,
         image_url: ev.image_url,
       })
       toast.success(ev.is_published ? 'Event publié' : 'Event enregistré en brouillon')

@@ -75,6 +75,81 @@ export async function updateClient(
   return result
 }
 
+export async function getBannedClientsByEntity(
+  client: SupabaseClient<Database>,
+  entityId: string,
+  opts: { search?: string } = {}
+): Promise<Client[]> {
+  let query = client
+    .from('clients')
+    .select('*')
+    .eq('entity_id', entityId)
+    .eq('is_banned', true)
+    .order('banned_at', { ascending: false, nullsFirst: false })
+
+  if (opts.search && opts.search.trim() !== '') {
+    const s = `%${opts.search.trim()}%`
+    query = query.or(`name.ilike.${s},email.ilike.${s},phone.ilike.${s}`)
+  }
+
+  const { data, error } = await query
+  if (error) throw error
+  return data ?? []
+}
+
+export async function isEntityEmailBanned(
+  client: SupabaseClient<Database>,
+  entityId: string,
+  email: string
+): Promise<boolean> {
+  const normalized = email.trim().toLowerCase()
+  if (!normalized) return false
+
+  const { data, error } = await client
+    .from('clients')
+    .select('is_banned')
+    .eq('entity_id', entityId)
+    .eq('email', normalized)
+    .maybeSingle()
+
+  if (error) throw error
+  return data?.is_banned === true
+}
+
+export async function banClientByEmail(
+  client: SupabaseClient<Database>,
+  input: {
+    entityId: string
+    email: string
+    name?: string
+    phone?: string | null
+  }
+): Promise<Client> {
+  const { data, error } = await client.rpc('ban_entity_client', {
+    p_entity_id: input.entityId,
+    p_email: input.email,
+    p_name: input.name ?? '',
+    p_phone: input.phone ?? undefined,
+  })
+
+  if (error) throw error
+  return data as Client
+}
+
+export async function unbanClient(
+  client: SupabaseClient<Database>,
+  entityId: string,
+  clientId: string
+): Promise<Client> {
+  const { data, error } = await client.rpc('unban_entity_client', {
+    p_entity_id: entityId,
+    p_client_id: clientId,
+  })
+
+  if (error) throw error
+  return data as Client
+}
+
 export async function deleteClient(
   client: SupabaseClient<Database>,
   id: string

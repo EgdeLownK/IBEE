@@ -1,61 +1,43 @@
 import { redirect } from 'next/navigation'
+import { loadAnalyseScopeData } from '@/lib/analyse-data'
 import {
-  loadAnalyseScopeData,
-  parseAnalyseOffset,
-  parseAnalysePeriod,
-  parseAnalyseScope,
-} from '@/lib/analyse-data'
+  buildAnalyseCsv,
+  EXPORT_SCOPE_OPTIONS,
+  parseAnalyseExportSearchParams,
+} from '@/lib/analyse-export'
 import { getDashboardContext } from '@/lib/dashboard-context'
-
-function csvEscape(value: string) {
-  if (value.includes('"') || value.includes(',') || value.includes('\n')) {
-    return `"${value.replace(/"/g, '""')}"`
-  }
-  return value
-}
 
 export async function GET(request: Request) {
   const ctx = await getDashboardContext()
   if (!ctx) redirect('/login')
 
   const url = new URL(request.url)
-  const scope = parseAnalyseScope(url.searchParams.get('scope') ?? undefined)
-  const period = parseAnalysePeriod(url.searchParams.get('period') ?? undefined)
-  const offset = parseAnalyseOffset(url.searchParams.get('offset') ?? undefined)
+  const { scopes, sections, period, offset } = parseAnalyseExportSearchParams(url.searchParams)
 
-  const data = await loadAnalyseScopeData(ctx.supabase, ctx.entity.id, {
-    scope,
-    period,
-    offset,
-    rankingLimit: 20,
-  })
-
-  const lines: string[] = []
-  lines.push(`Scope,${csvEscape(data.scope)}`)
-  lines.push(`Période,${csvEscape(data.rangeLabel)}`)
-  lines.push('')
-  lines.push('KPI,Valeur,Delta')
-  for (const kpi of data.kpis) {
-    lines.push(`${csvEscape(kpi.k)},${csvEscape(kpi.v)},${csvEscape(kpi.d)}`)
+  if (scopes.length === 0 || sections.length === 0) {
+    return new Response('Sélection d’export invalide.', { status: 400 })
   }
-  lines.push('')
-  lines.push('Série,Libellé,Valeur')
-  const seriesKey = `kpi:${data.kpis[0]?.id}`
-  const bars = data.chartSeries[seriesKey] ?? []
-  for (const bar of bars) {
-    lines.push(`${csvEscape(seriesKey)},${csvEscape(bar.label)},${bar.value}`)
-  }
-  lines.push('')
-  lines.push(`Classement — ${csvEscape(data.ranking.title)}`)
-  lines.push('Rang,Libellé,Part,Total')
-  data.ranking.items.forEach((item, index) => {
-    lines.push(
-      `${index + 1},${csvEscape(item.k)},${csvEscape(item.v)},${csvEscape(item.n)}`
-    )
-  })
 
-  const csv = `\uFEFF${lines.join('\n')}`
-  const filename = `ibee-analyse-${scope}-${period}.csv`
+  const scopeLabels = new Map(EXPORT_SCOPE_OPTIONS.map((option) => [option.id, option.label]))
+
+  const payloads = await Promise.all(
+    scopes.map(async (scope) => {
+      const data = await loadAnalyseScopeData(ctx.supabase, ctx.entity.id, {
+        scope,
+        period,
+        offset,
+        rankingLimit: 20,
+      })
+      return {
+        scopeLabel: scopeLabels.get(scope) ?? scope,
+        data,
+      }
+    })
+  )
+
+  const csv = buildAnalyseCsv(payloads, sections)
+  const scopeSlug = scopes.length === 1 ? scopes[0] : 'multi'
+  const filename = `ibee-analyse-${scopeSlug}-${period}.csv`
 
   return new Response(csv, {
     headers: {

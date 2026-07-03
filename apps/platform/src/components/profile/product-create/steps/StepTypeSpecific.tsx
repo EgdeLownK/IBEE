@@ -1,14 +1,9 @@
 'use client'
 
-import { useRef } from 'react'
-import { Download, Loader2, Plus, Trash2 } from 'lucide-react'
-import { toast } from 'sonner'
+import { Plus, Trash2 } from 'lucide-react'
 import { PHYSICAL_CONDITIONS } from '@ibee/shared'
-import { listEntityFiles } from '@/lib/entity-file-client'
-import { DRIVE_MAX_FILE_MB } from '@/lib/drive-file-policy'
-import { uploadDriveFile } from '@/lib/drive-upload-client'
 import type { ProductCreateFormState } from '../types'
-import { formatFileSize, nextId } from '../utils'
+import { nextId } from '../utils'
 
 type Props = {
   form: ProductCreateFormState
@@ -24,44 +19,13 @@ const CONDITION_LABELS: Record<string, string> = {
   acceptable: 'Correct',
 }
 
-export function StepTypeSpecific({ form, updateForm, onChange }: Props) {
-  const fileInputRef = useRef<HTMLInputElement>(null)
-
+export function StepTypeSpecific({ form, onChange }: Props) {
   function err(field: string) {
     return form.fieldErrors[field]
   }
 
   function variantErr(index: number, suffix = 'attributes') {
     return form.fieldErrors[`variants_${index}_${suffix}`]
-  }
-
-  async function loadEntityFiles() {
-    const result = await listEntityFiles()
-    if (result.ok) onChange({ entityFiles: result.files })
-    else toast.error(result.error)
-  }
-
-  async function handleFileUpload(file: File) {
-    updateForm((prev) => ({ ...prev, digitalFileUploading: true }))
-    try {
-      const result = await uploadDriveFile(file)
-      if (result.ok) {
-        updateForm((prev) => ({
-          ...prev,
-          digitalFileUploading: false,
-          digitalFileId: result.file.id,
-          digitalFile: result.file,
-          entityFiles: [result.file, ...prev.entityFiles.filter((f) => f.id !== result.file.id)],
-        }))
-      } else {
-        updateForm((prev) => ({ ...prev, digitalFileUploading: false }))
-        toast.error(result.error)
-        onChange({ fieldErrors: { ...form.fieldErrors, digital_file_id: result.error } })
-      }
-    } catch {
-      updateForm((prev) => ({ ...prev, digitalFileUploading: false }))
-      toast.error('Erreur lors de la préparation du fichier.')
-    }
   }
 
   function addVariant() {
@@ -82,83 +46,45 @@ export function StepTypeSpecific({ form, updateForm, onChange }: Props) {
   if (form.type === 'digital') {
     return (
       <section className="pco__stage">
-        <div className="pco__field">
-          <span className="pco__label">
-            Fichier livré <span className="pco__req">*</span>
-          </span>
-          {form.digitalFile ? (
-            <div className="pco__file-selected">
-              <Download className="h-4 w-4 shrink-0" />
-              <span className="pco__file-selected-name">{form.digitalFile.name}</span>
-              <span className="pco__file-selected-size">
-                {formatFileSize(form.digitalFile.size_bytes)}
-              </span>
-              <button
-                type="button"
-                className="pco__file-remove"
-                aria-label="Retirer le fichier"
-                onClick={() => onChange({ digitalFileId: null, digitalFile: null })}
-              >
-                ×
-              </button>
-            </div>
-          ) : null}
-          <button
-            type="button"
-            className="pco__add-btn"
-            disabled={form.digitalFileUploading}
-            onClick={() => fileInputRef.current?.click()}
-          >
-            {form.digitalFileUploading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Plus className="h-4 w-4" />
-            )}
-            {form.digitalFile ? 'Changer de fichier' : 'Téléverser un fichier'}
-          </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            hidden
-            onChange={(e) => {
-              const f = e.target.files?.[0]
-              if (f) void handleFileUpload(f)
-              e.target.value = ''
-            }}
-          />
-          <p className="pco__hint-block">
-            Jusqu&apos;à {DRIVE_MAX_FILE_MB} Mo. Vidéos lourdes envoyées en direct puis compressées côté
-            serveur. Stocké en privé — livré à l&apos;acheteur après l&apos;achat.
-          </p>
-          {err('digital_file_id') ? <p className="pco__error">{err('digital_file_id')}</p> : null}
-        </div>
+        <p className="pco__hint-block">
+          Le téléversement de fichiers pour les produits digitaux n&apos;est pas disponible pour le
+          moment.
+        </p>
+        {err('digital_file_id') ? <p className="pco__error">{err('digital_file_id')}</p> : null}
 
         <div className="pco__field">
-          <span className="pco__label">
-            Mes fichiers{' '}
-            <span className="pco__hint">(réutiliser un fichier déjà envoyé)</span>
-          </span>
-          {form.entityFiles.length === 0 ? (
-            <button type="button" className="pco__add-btn pco__add-btn--ghost" onClick={() => void loadEntityFiles()}>
-              Charger mes fichiers
-            </button>
-          ) : (
-            <div className="pco__myfiles-list">
-              {form.entityFiles.map((f) => (
-                <button
-                  key={f.id}
-                  type="button"
-                  className={`pco__file-item${form.digitalFileId === f.id ? ' is-selected' : ''}`}
-                  onClick={() => onChange({ digitalFileId: f.id, digitalFile: f })}
-                >
-                  <Download className="h-4 w-4 shrink-0" />
-                  <span className="pco__file-item-name">{f.name}</span>
-                  <span className="pco__file-item-meta">{formatFileSize(f.size_bytes)}</span>
-                </button>
-              ))}
-            </div>
-          )}
+          <label className="pco__check-row">
+            <input
+              type="checkbox"
+              checked={form.digitalStockUnlimited}
+              onChange={(e) => onChange({ digitalStockUnlimited: e.target.checked })}
+            />
+            <span>Ventes illimitées</span>
+          </label>
+          <p className="pco__hint">
+            Décoche pour limiter le nombre de licences vendues (ex. places à un atelier en replay).
+          </p>
         </div>
+
+        {!form.digitalStockUnlimited ? (
+          <div className="pco__field">
+            <label className="pco__label" htmlFor="pco-digital-stock">
+              Quantité disponible
+            </label>
+            <input
+              id="pco-digital-stock"
+              type="number"
+              min={0}
+              step={1}
+              className="pco__input"
+              value={form.physicalStockQuantity}
+              onChange={(e) => onChange({ physicalStockQuantity: e.target.value })}
+            />
+            {err('digital_stock_quantity') ? (
+              <p className="pco__error">{err('digital_stock_quantity')}</p>
+            ) : null}
+          </div>
+        ) : null}
 
         <div className="pco__field">
           <span className="pco__label">

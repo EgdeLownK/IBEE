@@ -9,7 +9,7 @@ const nextConfig: NextConfig = {
   outputFileTracingRoot: monorepoRoot,
   transpilePackages: ['@ibee/ui-react', '@ibee/shared', '@ibee/supabase'],
   // Médias produit/publications : jusqu'à 10 Mo image / 200 Mo vidéo (miroir API Astro).
-  // Drive / produits digitaux : jusqu'à 500 Mo (serverActions bodySizeLimit ci-dessous).
+  // Server actions volumineuses (médias) : bodySizeLimit ci-dessous.
   experimental: {
     serverActions: {
       bodySizeLimit: '520mb',

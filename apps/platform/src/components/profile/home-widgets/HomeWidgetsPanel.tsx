@@ -1,17 +1,21 @@
 'use client'
 
-import { useMemo, useState, useTransition } from 'react'
+import { useMemo, useRef, useState, useTransition } from 'react'
 import { Plus } from 'lucide-react'
 import { toast } from 'sonner'
-import { isSingleInstanceHomeWidget, widgetHasDisplayContent } from '@ibee/shared'
-import { homeWidgetLabel } from '@ibee/ui-react/profile'
 import {
-  createHomeWidgetAction,
-  deleteHomeWidgetAction,
-  reorderHomeWidgetsAction,
-} from '@/app/dashboard/site/home-widgets-actions'
+  isSingleInstanceHomeWidget,
+  homeWidgetCarouselSectionLink,
+  isHomeWidgetFeaturedSingle,
+  parseHighlightConfig,
+  sortHomeWidgetsByFixedOrder,
+  widgetHasDisplayContent,
+} from '@ibee/shared'
+import { homeWidgetLabel } from '@ibee/ui-react/profile'
+import { createHomeWidgetAction, deleteHomeWidgetAction } from '@/app/dashboard/site/home-widgets-actions'
 import type { ProfileStudioData } from '@/lib/profile-studio-data'
 import { WidgetCard } from './WidgetCard'
+import { WidgetAdminMenu } from './WidgetAdminMenu'
 import { WidgetBodyDisplay } from './WidgetBodyDisplay'
 import { HomeWidgetConfigDialog } from './HomeWidgetConfigDialog'
 import { FaqEditDialog } from './FaqEditDialog'
@@ -19,17 +23,34 @@ import { BioConfigDialog } from './BioConfigDialog'
 import type { HomeWidget, PickerEvent, PickerProduct, PickerService, WidgetPickerData } from './types'
 
 const WIDGET_DEFS = [
-  { type: 'widget_shop', label: 'Shop' },
-  { type: 'widget_service', label: 'Service' },
-  { type: 'widget_event', label: 'Event' },
-  { type: 'widget_news', label: 'News' },
-  { type: 'widget_bio', label: 'Bio' },
+  { type: 'widget_highlight', label: 'Mise en avant' },
+  { type: 'widget_carousel', label: 'Carrousel' },
   { type: 'widget_faq', label: 'F.A.Q' },
-  { type: 'widget_announcement', label: 'Bannière' },
+  { type: 'widget_bio', label: 'Bio' },
 ] as const
 
+function mapStudioWidgets(raw: ProfileStudioData['homeWidgets']): HomeWidget[] {
+  return sortHomeWidgetsByFixedOrder(
+    [...raw]
+      .map((w) => ({
+        id: w.id,
+        type: w.type,
+        position: w.position,
+        config: (w.config ?? {}) as Record<string, unknown>,
+      }))
+  )
+}
+
+function relativePublicationTag(iso: string) {
+  const diff = Date.now() - new Date(iso).getTime()
+  const days = Math.floor(diff / 86400000)
+  if (days < 1) return "aujourd'hui"
+  if (days === 1) return 'hier'
+  if (days < 30) return `il y a ${days} jours`
+  return new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short' }).format(new Date(iso))
+}
+
 function widgetEditMode(type: string): 'config' | 'faq' | 'none' {
-  if (type === 'widget_news') return 'none'
   if (type === 'widget_faq') return 'faq'
   return 'config'
 }
@@ -71,21 +92,14 @@ type Props = {
 }
 
 export function HomeWidgetsPanel({ data, onOpenAddContent }: Props) {
-  const [widgets, setWidgets] = useState<HomeWidget[]>(() =>
-    [...data.homeWidgets]
-      .filter((w) => w.type !== 'widget_history')
-      .sort((a, b) => a.position - b.position)
-      .map((w) => ({
-        id: w.id,
-        type: w.type,
-        position: w.position,
-        config: (w.config ?? {}) as Record<string, unknown>,
-      }))
-  )
+  const [widgets, setWidgets] = useState<HomeWidget[]>(() => mapStudioWidgets(data.homeWidgets))
   const [addMenuOpen, setAddMenuOpen] = useState(false)
   const [configWidgetId, setConfigWidgetId] = useState<string | null>(null)
   const [faqOpen, setFaqOpen] = useState(false)
   const [bioOpen, setBioOpen] = useState(false)
+  const [newWidgetId, setNewWidgetId] = useState<string | null>(null)
+  /** IDs de widgets fraîchement sauvegardés — évite la suppression auto par stale closure. */
+  const justSavedWidgetIds = useRef<Set<string>>(new Set())
   const [faqItems, setFaqItems] = useState(data.faqItems)
   const [contactInfo, setContactInfo] = useState(data.contactInfo)
   const [pending, startTransition] = useTransition()
@@ -109,10 +123,41 @@ export function HomeWidgetsPanel({ data, onOpenAddContent }: Props) {
   }, [widgets])
 
   function widgetCardTitle(widget: HomeWidget, index: number): string {
+    const carouselLink = homeWidgetCarouselSectionLink(widget.type, widget.config, data.webEditUrl)
+    if (carouselLink) return carouselLink.label
+
+    if (widget.type === 'widget_highlight') {
+      const cfg = parseHighlightConfig(widget.config)
+      if (cfg) {
+        const { kind, id } = cfg.item
+        if (kind === 'product') {
+          const p = data.shopProducts.find((x) => x.id === id)
+          if (p) return p.title
+        }
+        if (kind === 'service') {
+          const s = data.playlistServices.find((x) => x.id === id)
+          if (s) return s.title
+        }
+        if (kind === 'event') {
+          const ev = data.playlistEvents.find((x) => x.id === id)
+          if (ev) return ev.title
+        }
+        if (kind === 'news') {
+          const pub = data.publications.find((x) => x.id === id)
+          if (pub) return pub.title
+        }
+      }
+      return 'Mise en avant'
+    }
+
     const base = homeWidgetLabel(widget.type)
     if ((widgetCountByType[widget.type] ?? 0) <= 1) return base
     const sameTypeIndex = widgets.slice(0, index + 1).filter((w) => w.type === widget.type).length
     return `${base} ${sameTypeIndex}`
+  }
+
+  function widgetCardTitleHref(widget: HomeWidget): string | undefined {
+    return homeWidgetCarouselSectionLink(widget.type, widget.config, data.webEditUrl)?.href
   }
 
   const pickerData: WidgetPickerData = useMemo(
@@ -139,6 +184,13 @@ export function HomeWidgetsPanel({ data, onOpenAddContent }: Props) {
           title: e.title,
         })
       ),
+      publications: data.publications
+        .filter((p) => p.published_at)
+        .map((p) => ({
+          id: p.id,
+          title: p.title,
+          tags: [relativePublicationTag(p.published_at!)],
+        })),
     }),
     [data]
   )
@@ -165,42 +217,9 @@ export function HomeWidgetsPanel({ data, onOpenAddContent }: Props) {
   function openEditorAfterAdd(type: string, widgetId: string) {
     if (type === 'widget_faq') setFaqOpen(true)
     else if (type === 'widget_bio') setBioOpen(true)
-    else if (['widget_shop', 'widget_service', 'widget_event', 'widget_announcement'].includes(type)) {
+    else if (['widget_highlight', 'widget_carousel'].includes(type)) {
       setConfigWidgetId(widgetId)
     }
-  }
-
-  function persistOrder(next: HomeWidget[]) {
-    const order = next.map((w) => w.id)
-    startTransition(async () => {
-      const result = await reorderHomeWidgetsAction(order)
-      if (!result.ok) {
-        toast.error(result.error)
-        setWidgets(
-          [...data.homeWidgets]
-            .filter((w) => w.type !== 'widget_history')
-            .sort((a, b) => a.position - b.position)
-            .map((w) => ({
-              id: w.id,
-              type: w.type,
-              position: w.position,
-              config: (w.config ?? {}) as Record<string, unknown>,
-            }))
-        )
-      }
-    })
-  }
-
-  function moveWidget(id: string, direction: 'up' | 'down') {
-    const idx = widgets.findIndex((w) => w.id === id)
-    if (idx < 0) return
-    const next = direction === 'up' ? idx - 1 : idx + 1
-    if (next < 0 || next >= widgets.length) return
-    const copy = [...widgets]
-    const [item] = copy.splice(idx, 1)
-    copy.splice(next, 0, item)
-    setWidgets(copy)
-    persistOrder(copy)
   }
 
   function handleAdd(type: string) {
@@ -211,16 +230,40 @@ export function HomeWidgetsPanel({ data, onOpenAddContent }: Props) {
         toast.error(result.error)
         return
       }
-      setWidgets((prev) => [...prev, result.widget])
-      toast.success('Widget ajouté')
+      setWidgets((prev) => sortHomeWidgetsByFixedOrder([...prev, result.widget]))
+      setNewWidgetId(result.widget.id)
       openEditorAfterAdd(type, result.widget.id)
     })
+  }
+
+  function removeWidget(id: string) {
+    setWidgets((prev) => sortHomeWidgetsByFixedOrder(prev.filter((x) => x.id !== id)))
+    startTransition(async () => {
+      await deleteHomeWidgetAction(id)
+    })
+  }
+
+  /** Ferme un dialog issu d'un ajout : supprime le widget s'il est resté vide. */
+  function closeEditorDialog() {
+    const pendingId = newWidgetId
+    if (pendingId) {
+      const wasJustSaved = justSavedWidgetIds.current.delete(pendingId)
+      const widget = widgets.find((w) => w.id === pendingId)
+      if (!wasJustSaved && widget && !widgetHasDisplayContent(widget, displayCtx)) {
+        removeWidget(pendingId)
+      }
+      setNewWidgetId(null)
+    }
+    setConfigWidgetId(null)
+    setFaqOpen(false)
+    setBioOpen(false)
   }
 
   function handleDelete(id: string) {
     if (!confirm('Supprimer ce widget de l\'accueil ?')) return
     const prev = widgets
-    setWidgets((w) => w.filter((x) => x.id !== id))
+    const next = sortHomeWidgetsByFixedOrder(widgets.filter((x) => x.id !== id))
+    setWidgets(next)
     startTransition(async () => {
       const result = await deleteHomeWidgetAction(id)
       if (!result.ok) {
@@ -233,25 +276,29 @@ export function HomeWidgetsPanel({ data, onOpenAddContent }: Props) {
   }
 
   function handleConfigSaved(widgetId: string, config: Record<string, unknown>) {
-    setWidgets((prev) => prev.map((w) => (w.id === widgetId ? { ...w, config } : w)))
+    justSavedWidgetIds.current.add(widgetId)
+    setWidgets((prev) =>
+      sortHomeWidgetsByFixedOrder(prev.map((w) => (w.id === widgetId ? { ...w, config } : w)))
+    )
+    setNewWidgetId((prev) => (prev === widgetId ? null : prev))
   }
 
   return (
     <div className="profile-section">
-      <div className="profile-section__widgets" data-widget-sort-list>
+      <div className="profile-section__widgets">
         {widgets.map((widget, index) => {
           const filled = widgetHasDisplayContent(widget, displayCtx)
           const editMode = widgetEditMode(widget.type)
+          const featuredSingle = isHomeWidgetFeaturedSingle(widget.type, widget.config)
+          const headerVariant = featuredSingle ? 'hidden' : 'default'
           return (
             <WidgetCard
               key={widget.id}
               title={widgetCardTitle(widget, index)}
+              titleHref={widgetCardTitleHref(widget)}
               filled={filled}
-              canMoveUp={index > 0}
-              canMoveDown={index < widgets.length - 1}
+              headerVariant={headerVariant}
               editMode={editMode}
-              onMoveUp={() => moveWidget(widget.id, 'up')}
-              onMoveDown={() => moveWidget(widget.id, 'down')}
               onEdit={() => openWidgetEditor(widget)}
               onDelete={() => handleDelete(widget.id)}
             >
@@ -259,12 +306,22 @@ export function HomeWidgetsPanel({ data, onOpenAddContent }: Props) {
                 widget={widget}
                 data={panelData}
                 webBaseUrl={data.webEditUrl}
+                embedInWidgetCard
+                adminMenu={
+                  featuredSingle ? (
+                    <WidgetAdminMenu
+                      placement="card"
+                      editMode={editMode}
+                      onEdit={() => openWidgetEditor(widget)}
+                      onDelete={() => handleDelete(widget.id)}
+                    />
+                  ) : undefined
+                }
                 onConfigure={(id) => {
                   const w = widgets.find((x) => x.id === id)
                   if (w) openWidgetEditor(w)
                 }}
                 onOpenFaq={widget.type === 'widget_faq' ? () => setFaqOpen(true) : undefined}
-                onOpenAddContent={widget.type === 'widget_news' ? onOpenAddContent : undefined}
               />
             </WidgetCard>
           )
@@ -320,22 +377,30 @@ export function HomeWidgetsPanel({ data, onOpenAddContent }: Props) {
       <HomeWidgetConfigDialog
         widget={configWidget}
         pickerData={pickerData}
-        onClose={() => setConfigWidgetId(null)}
+        onClose={closeEditorDialog}
         onSaved={handleConfigSaved}
       />
 
       <FaqEditDialog
         open={faqOpen}
         initialItems={faqItems}
-        onClose={() => setFaqOpen(false)}
-        onSaved={setFaqItems}
+        onClose={closeEditorDialog}
+        onSaved={(items) => {
+          setFaqItems(items)
+          if (newWidgetId) justSavedWidgetIds.current.add(newWidgetId)
+          setNewWidgetId(null)
+        }}
       />
 
       <BioConfigDialog
         open={bioOpen}
         contactInfo={contactInfo}
-        onClose={() => setBioOpen(false)}
-        onSaved={setContactInfo}
+        onClose={closeEditorDialog}
+        onSaved={(info) => {
+          setContactInfo(info)
+          if (newWidgetId) justSavedWidgetIds.current.add(newWidgetId)
+          setNewWidgetId(null)
+        }}
       />
     </div>
   )

@@ -109,6 +109,62 @@ export function StepBooking({ form, onChange }: Props) {
       <p className="pco__hint-block">
         Le battement bloque du temps avant/après chaque rendez-vous (préparation, déplacement…).
       </p>
+
+      <div className="pco__field pco__publish">
+        <label className="pco__switch">
+          <input
+            type="checkbox"
+            checked={form.paymentRequired}
+            onChange={(e) => onChange({ paymentRequired: e.target.checked })}
+          />
+          <span className="pco__switch-track" aria-hidden="true">
+            <span className="pco__switch-thumb" />
+          </span>
+          <span className="pco__switch-label">
+            Paiement en ligne obligatoire{' '}
+            <span className="pco__switch-hint">(si un prix est défini à l’étape 1)</span>
+          </span>
+        </label>
+      </div>
+
+      {form.paymentRequired ? (
+        <div className="pco__field">
+          <label className="pco__label" htmlFor="svc-deposit">
+            Montant exigé à la réservation
+          </label>
+          <select
+            id="svc-deposit"
+            className="pco__input"
+            value={form.depositPercent}
+            onChange={(e) => onChange({ depositPercent: e.target.value })}
+          >
+            <option value="100">100 % — paiement total</option>
+            <option value="50">50 % — acompte</option>
+            <option value="30">30 % — acompte</option>
+          </select>
+          {err('deposit_percent') ? <p className="pco__error">{err('deposit_percent')}</p> : null}
+        </div>
+      ) : null}
+
+      <div className="pco__field">
+        <label className="pco__label" htmlFor="svc-cancel-min">
+          Délai d’annulation minimum (heures)
+        </label>
+        <input
+          id="svc-cancel-min"
+          type="number"
+          min={0}
+          max={720}
+          step={1}
+          className="pco__input"
+          value={form.cancelMinHours}
+          onChange={(e) => onChange({ cancelMinHours: e.target.value })}
+        />
+        <p className="pco__hint-block">
+          Le client ne peut plus annuler en deçà de ce délai avant le créneau. 0 = jusqu’au début.
+        </p>
+        {err('cancel_min_hours') ? <p className="pco__error">{err('cancel_min_hours')}</p> : null}
+      </div>
     </section>
   )
 }

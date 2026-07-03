@@ -50,6 +50,7 @@ export type ProductCreateFormState = {
   physicalPickupLocation: string
   physicalStockQuantity: string
   physicalCondition: PhysicalCondition
+  digitalStockUnlimited: boolean
   variants: VariantDraft[]
   digitalFileId: string | null
   digitalFile: EntityFileDto | null

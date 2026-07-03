@@ -91,6 +91,10 @@ export async function loadPublicProfileBySlug(slug: string) {
     sale_ends_at: p.sale_ends_at,
     currency: p.currency,
     image_url: p.product_media?.[0]?.url ?? null,
+    image_urls: (p.product_media ?? [])
+      .filter((m) => !m.media_type || m.media_type === 'image')
+      .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))
+      .map((m) => m.url),
     status: p.status,
     category_id: p.category_id,
     type: p.type,
@@ -110,6 +114,7 @@ export async function loadPublicProfileBySlug(slug: string) {
     promo_price_cents: s.promo_price_cents,
     currency: s.currency,
     image_url: s.gallery_images?.[0] ?? null,
+    image_urls: [...(s.gallery_images ?? [])].filter(Boolean),
   }))
 
   const playlistEvents = events.map((ev) => ({
@@ -120,7 +125,12 @@ export async function loadPublicProfileBySlug(slug: string) {
     start_at: ev.start_at,
     price_cents: ev.price_cents,
     currency: ev.currency,
+    location_type: ev.location_type,
+    location_details: ev.location_details,
+    capacity: ev.capacity,
+    registrations_count: ev.registrations_count,
     image_url: ev.gallery_images?.[0] ?? null,
+    image_urls: [...(ev.gallery_images ?? [])].filter(Boolean),
   }))
 
   const homeWidgets = homeWidgetsRaw.map((w) => ({

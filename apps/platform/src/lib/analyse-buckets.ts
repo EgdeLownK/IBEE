@@ -1,11 +1,7 @@
 import type { AnalyseBarPoint, AnalysePeriod, PeriodWindow } from './analyse-period'
-import { getChartColumnCount } from './analyse-period'
+import { monthIndexFromDate, yearBucketLabels } from './analyse-period'
 
 const DAYS_FR = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'] as const
-const MONTHS_SHORT_FR = [
-  'Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin',
-  'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc',
-] as const
 
 export function buildBucketLabels(period: AnalysePeriod, window: PeriodWindow): string[] {
   if (period === 'week') {
@@ -16,22 +12,13 @@ export function buildBucketLabels(period: AnalysePeriod, window: PeriodWindow): 
     })
   }
 
-  if (period === 'month') {
-    const daysInMonth = window.end.getDate()
-    const chunkCount = getChartColumnCount(period, window)
-    return Array.from({ length: chunkCount }, (_, i) => {
-      const fromDay = i * 7 + 1
-      const toDay = Math.min(fromDay + 6, daysInMonth)
-      return fromDay === toDay ? `${fromDay}` : `${fromDay}–${toDay}`
-    })
-  }
-
-  return [...MONTHS_SHORT_FR]
+  return yearBucketLabels()
 }
 
 export function mergeBucketRows(
   labels: string[],
-  rows: { bucket_index: number; value: number }[]
+  rows: { bucket_index: number; value: number }[],
+  _period: AnalysePeriod
 ): AnalyseBarPoint[] {
   const map = new Map(rows.map((row) => [row.bucket_index, row.value]))
   return labels.map((label, index) => ({
@@ -70,28 +57,15 @@ export function bucketTimestamps(
     })
   }
 
-  if (period === 'month') {
-    const daysInMonth = window.end.getDate()
-    const chunkCount = getChartColumnCount(period, window)
-    return Array.from({ length: chunkCount }, (_, i) => {
-      const fromDay = i * 7 + 1
-      const toDay = Math.min(fromDay + 6, daysInMonth)
-      const from = new Date(window.start.getFullYear(), window.start.getMonth(), fromDay)
-      const to = new Date(window.start.getFullYear(), window.start.getMonth(), toDay, 23, 59, 59, 999)
-      const count = filtered.filter((ts) => ts >= from.getTime() && ts <= to.getTime()).length
-      return {
-        label: fromDay === toDay ? `${fromDay}` : `${fromDay}–${toDay}`,
-        value: count,
-      }
-    })
+  const totals = Array.from({ length: 12 }, () => 0)
+  for (const ts of filtered) {
+    totals[monthIndexFromDate(new Date(ts))] += 1
   }
 
-  return MONTHS_SHORT_FR.map((label, monthIndex) => {
-    const from = new Date(window.start.getFullYear(), monthIndex, 1)
-    const to = new Date(window.start.getFullYear(), monthIndex + 1, 0, 23, 59, 59, 999)
-    const count = filtered.filter((ts) => ts >= from.getTime() && ts <= to.getTime()).length
-    return { label, value: count }
-  })
+  return yearBucketLabels().map((label, index) => ({
+    label,
+    value: totals[index] ?? 0,
+  }))
 }
 
 export function bucketDistinctVisitors(
@@ -117,36 +91,16 @@ export function bucketDistinctVisitors(
     })
   }
 
-  if (period === 'month') {
-    const daysInMonth = window.end.getDate()
-    const chunkCount = getChartColumnCount(period, window)
-    return Array.from({ length: chunkCount }, (_, i) => {
-      const fromDay = i * 7 + 1
-      const toDay = Math.min(fromDay + 6, daysInMonth)
-      const from = new Date(window.start.getFullYear(), window.start.getMonth(), fromDay)
-      const to = new Date(window.start.getFullYear(), window.start.getMonth(), toDay, 23, 59, 59, 999)
-      const keys = new Set<string>()
-      for (const event of events) {
-        const ts = parseTs(event.occurred_at)
-        if (ts < from.getTime() || ts > to.getTime()) continue
-        keys.add(event.visitor_key ?? event.id)
-      }
-      return {
-        label: fromDay === toDay ? `${fromDay}` : `${fromDay}–${toDay}`,
-        value: keys.size,
-      }
-    })
+  const keysByMonth: Array<Set<string>> = Array.from({ length: 12 }, () => new Set())
+  for (const event of events) {
+    const ts = parseTs(event.occurred_at)
+    if (!inWindow(ts, window)) continue
+    const month = monthIndexFromDate(new Date(ts))
+    keysByMonth[month].add(event.visitor_key ?? event.id)
   }
 
-  return MONTHS_SHORT_FR.map((label, monthIndex) => {
-    const from = new Date(window.start.getFullYear(), monthIndex, 1)
-    const to = new Date(window.start.getFullYear(), monthIndex + 1, 0, 23, 59, 59, 999)
-    const keys = new Set<string>()
-    for (const event of events) {
-      const ts = parseTs(event.occurred_at)
-      if (ts < from.getTime() || ts > to.getTime()) continue
-      keys.add(event.visitor_key ?? event.id)
-    }
-    return { label, value: keys.size }
-  })
+  return yearBucketLabels().map((label, index) => ({
+    label,
+    value: keysByMonth[index]?.size ?? 0,
+  }))
 }

@@ -4,8 +4,6 @@ import { useEffect, useState, useTransition } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   Bell,
-  ChevronDown,
-  Folder,
   Lock,
   LogOut,
   Menu,
@@ -19,6 +17,7 @@ import {
   markNotificationReadAction,
 } from '@/app/dashboard/notification-actions'
 import { useAccountContext } from './AccountContext'
+import { ProjectAccountSwitcher } from './ProjectAccountSwitcher'
 import { useOptionalDashboardNavigation } from './DashboardNavigationContext'
 import { toggleAppDrawer } from './MainRail'
 import { getNavZone, shouldShowSidebar } from '@/lib/nav-zone'
@@ -46,9 +45,8 @@ interface Props {
 }
 
 const HEADER_MENU = [
-  { href: '#revenue', label: 'Revenus', icon: Wallet },
+  { href: '/dashboard/compte/revenus', label: 'Revenus perso', icon: Wallet, personal: true },
   { href: '/dashboard/site/general', label: 'Mon compte', icon: User },
-  { href: '/dashboard/drive', label: 'Drive', icon: Folder, switchToPersonal: true },
   { href: '/notifications', label: 'Notifications', icon: Bell },
   { href: '#privacy', label: 'Confidentialité', icon: Lock },
 ] as const
@@ -147,25 +145,18 @@ function AuthenticatedGlobalHeader(_props: Props) {
   const router = useRouter()
   const pathname = usePathname() ?? '/'
   const dashboardNav = useOptionalDashboardNavigation()
-  const {
-    personalAccount,
-    projectAccounts,
-    projectLabel,
-    mode,
-    activeProjectId,
-    setPersonalMode,
-    setProjectMode,
-    isPersonalMode,
-  } = useAccountContext()
+  const { personalAccount, isPersonalMode, setPersonalMode } = useAccountContext()
 
-  const showSidebar = shouldShowSidebar(getNavZone(pathname, isPersonalMode))
+  const showSidebar = shouldShowSidebar(getNavZone(pathname, isPersonalMode), true)
+  const navZone = getNavZone(pathname, isPersonalMode)
+  const hideProjectSwitcher =
+    navZone === 'messages' || navZone === 'activity' || navZone === 'profile-web'
   const clock = useHeaderClock()
   const [unreadCount, setUnreadCount] = useState(0)
   const [notifications, setNotifications] = useState<HeaderNotification[]>([])
   const [pending, startTransition] = useTransition()
 
   const avatarMenuId = 'header-avatar-menu'
-  const projectMenuId = 'header-project-menu'
   const notifPopoverId = 'header-notif-popover'
   const personalInitials = personalInitial(personalAccount.displayName)
 
@@ -234,16 +225,7 @@ function AuthenticatedGlobalHeader(_props: Props) {
           </button>
         ) : null}
 
-        <button
-          type="button"
-          popoverTarget={projectMenuId}
-          style={{ anchorName: `--${projectMenuId}` } as React.CSSProperties}
-          className="app-header__project"
-          aria-label="Changer de compte"
-        >
-          <span className="truncate max-w-[200px] min-[1200px]:max-w-[280px]">{projectLabel}</span>
-          <ChevronDown className="h-4 w-4 text-neutral-500" aria-hidden="true" />
-        </button>
+        {!hideProjectSwitcher ? <ProjectAccountSwitcher variant="header" /> : null}
       </div>
 
       <a href="/" className="app-header__brand" aria-label="Accueil IBEE">
@@ -361,53 +343,6 @@ function AuthenticatedGlobalHeader(_props: Props) {
               )}
             </div>
 
-            <div
-              id={projectMenuId}
-              popover="auto"
-              className="app-menu app-menu--project"
-              style={{ positionAnchor: `--${projectMenuId}` } as React.CSSProperties}
-            >
-              <p className="app-menu__section-label">Comptes</p>
-              <button
-                type="button"
-                className={`app-menu__account-item${mode === 'personal' ? ' is-active' : ''}`}
-                onClick={() => {
-                  setPersonalMode()
-                  document.getElementById(projectMenuId)?.hidePopover()
-                }}
-              >
-                <span className="app-menu__account-dot app-menu__account-dot--personal" />
-                <span className="min-w-0 flex-1 text-left">
-                  <span className="app-menu__account-name">Compte perso</span>
-                  <span className="app-menu__account-meta">{personalAccount.displayName}</span>
-                </span>
-              </button>
-              {projectAccounts.map((project) => (
-                <button
-                  key={project.id}
-                  type="button"
-                  className={`app-menu__account-item${
-                    mode === 'project' && activeProjectId === project.id ? ' is-active' : ''
-                  }`}
-                  onClick={() => {
-                    setProjectMode(project.id)
-                    document.getElementById(projectMenuId)?.hidePopover()
-                  }}
-                >
-                  <span
-                    className="app-menu__account-dot"
-                    style={{ background: project.color }}
-                  />
-                  <span className="min-w-0 flex-1 text-left">
-                    <span className="app-menu__account-name">{project.name}</span>
-                    {project.role ? (
-                      <span className="app-menu__account-meta">{project.role}</span>
-                    ) : null}
-                  </span>
-                </button>
-              ))}
-            </div>
-
             <div className="app-header__avatar-wrap">
               <button
                 type="button"
@@ -472,7 +407,7 @@ function AuthenticatedGlobalHeader(_props: Props) {
                       type="button"
                       className="app-menu__item"
                       onClick={() => {
-                        handleMenuNavigate(item.href, 'switchToPersonal' in item && item.switchToPersonal)
+                        handleMenuNavigate(item.href, 'personal' in item ? item.personal : false)
                         document.getElementById(avatarMenuId)?.hidePopover()
                       }}
                     >

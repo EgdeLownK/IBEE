@@ -1,4 +1,4 @@
-const CARD_DETAIL_EXCERPT_MAX = 150
+export const CARD_DETAIL_EXCERPT_MAX = 100
 
 export function truncateText(text: string, max: number = CARD_DETAIL_EXCERPT_MAX): string {
   const t = text.trim()

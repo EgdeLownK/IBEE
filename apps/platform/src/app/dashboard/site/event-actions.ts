@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidateAfterEntityMutation } from '@/lib/revalidate-public'
-import { createEvent, getEntityByUserId, purgeEntityCache } from '@ibee/supabase'
+import { createEvent, deleteEvent, getEntityByUserId, getEventById, purgeEntityCache } from '@ibee/supabase'
 import { validateEventStep, type EventCreateInput } from '@ibee/shared'
 
 const siteUrl = () => process.env.NEXT_PUBLIC_WEB_URL ?? 'http://localhost:3000'
@@ -174,5 +174,35 @@ export async function createEventAction(input: EventCreateInput) {
   } catch (err) {
     console.error('[createEventAction]', err)
     return { ok: false as const, error: "Erreur lors de la création de l'event." }
+  }
+}
+
+export async function deleteEventAction(eventId: string) {
+  if (!eventId) return { ok: false as const, error: 'Event invalide.' }
+
+  try {
+    const supabase = await createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (!user) return { ok: false as const, error: 'Non authentifié.' }
+
+    const entity = await getEntityByUserId(supabase, user.id)
+    if (!entity) return { ok: false as const, error: 'Profil introuvable.' }
+
+    const event = await getEventById(supabase, eventId)
+    if (!event || event.entity_id !== entity.id) {
+      return { ok: false as const, error: 'Event introuvable.' }
+    }
+
+    await deleteEvent(supabase, eventId)
+
+    void purgeEntityCache(entity.slug, siteUrl())
+    revalidateAfterEntityMutation(entity.slug, { eventSlug: event.slug })
+
+    return { ok: true as const }
+  } catch (err) {
+    console.error('[deleteEventAction]', err)
+    return { ok: false as const, error: "Erreur lors de la suppression de l'event." }
   }
 }

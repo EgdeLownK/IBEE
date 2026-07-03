@@ -1,16 +1,31 @@
 @import "tailwindcss";
 @import "../../../../packages/ui-react/src/tokens.css";
 @import "../../../../packages/ui-react/src/app-shell.css";
+@import "../../../../packages/ui-react/src/navpill.css" layer(components);
 @import "../../../../packages/ui-react/src/profile/profile-styles.css";
 @import "../../../../packages/ui-react/src/profile/home-widgets.css";
 @import "../../../../packages/ui-react/src/profile/history-edit-styles.css";
 @import "../../../../packages/ui-react/src/profile/product-create-styles.css";
 @import "../../../../packages/ui-react/src/profile/profile-general-styles.css";
 @import "../../../../packages/ui-react/src/dashboard/analyse-styles.css";
-@import "../../../../packages/ui-react/src/dashboard/drive-styles.css";
+@import "../../../../packages/ui-react/src/dashboard/revenu-styles.css";
 @import "../../../../packages/ui-react/src/dashboard/team-styles.css";
+@import "../../../../packages/ui-react/src/dashboard/activite-styles.css";
+@import "../../../../packages/ui-react/src/dashboard/messages-styles.css";
+@import "../../../../packages/ui-react/src/home-feed.css";
 
+@source "../**/*.{ts,tsx}";
 @source "../../../../packages/ui-react/src/**/*.{ts,tsx}";
+@source "../../../../packages/ui-react/src/dashboard/**/*.css";
+@source inline(
+  "event-place-picker",
+  "event-place-picker__item",
+  "event-place-picker__item is-selected",
+  "event-workspace__tabs",
+  "event-workspace__tab",
+  "event-workspace__tab is-active",
+  "event-places-panel"
+);
 
 /* Polices Next.js (layout.tsx) — surcharge les fallbacks de tokens.css */
 @theme {
@@ -87,7 +102,7 @@
   }
 }
 
-/* Squelettes zones dashboard (drive, équipe, profil web) */
+/* Squelettes zones dashboard (équipe, profil web) */
 
 .zone-skeleton-line,
 .zone-skeleton-block,

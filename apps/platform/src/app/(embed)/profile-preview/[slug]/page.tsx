@@ -29,7 +29,7 @@ export default async function ProfilePreviewPage({ params }: PageProps) {
 
   return (
     <div className="mx-auto max-w-[800px] md:py-6">
-      <PublicProfilePage data={data} />
+      <PublicProfilePage data={data} embedMode />
     </div>
   )
 }

@@ -3,6 +3,7 @@ import {
   validateProductStep,
   type ProductCreateDraft,
 } from '@ibee/shared'
+import { CARD_DETAIL_EXCERPT_MAX, truncateText } from '@/lib/entity-detail-excerpt'
 import type { ProductCreateFormState } from './types'
 
 let uid = 0
@@ -30,6 +31,7 @@ export function createInitialFormState(): ProductCreateFormState {
     physicalPickupLocation: '',
     physicalStockQuantity: '1',
     physicalCondition: 'new',
+    digitalStockUnlimited: true,
     variants: [],
     digitalFileId: null,
     digitalFile: null,
@@ -63,6 +65,7 @@ export function formToDraft(form: ProductCreateFormState): ProductCreateDraft {
     physicalPickupLocation: form.physicalPickupLocation,
     physicalStockQuantity: form.physicalStockQuantity,
     physicalCondition: form.physicalCondition,
+    digitalStockUnlimited: form.digitalStockUnlimited,
     variants: form.variants.map((v) => ({
       pairs: v.pairs,
       sku: v.sku,
@@ -97,10 +100,8 @@ export function formatFileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`
 }
 
-export function truncateExcerpt(text: string, max = 150): string {
-  const t = text.trim()
-  if (t.length <= max) return t
-  return `${t.slice(0, max)}...`
+export function truncateExcerpt(text: string, max = CARD_DETAIL_EXCERPT_MAX): string {
+  return truncateText(text, max)
 }
 
 export function step2Label(type: ProductCreateFormState['type']): string {

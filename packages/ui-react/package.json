@@ -17,6 +17,10 @@
     "./app-shell.css": {
       "style": "./src/app-shell.css",
       "default": "./src/app-shell.css"
+    },
+    "./home-activity-sidebar.css": {
+      "style": "./src/home-activity-sidebar.css",
+      "default": "./src/home-activity-sidebar.css"
     }
   },
   "scripts": {

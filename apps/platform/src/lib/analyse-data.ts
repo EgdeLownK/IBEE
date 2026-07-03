@@ -6,9 +6,14 @@ import {
 } from '@ibee/supabase'
 import type { Database } from '@ibee/supabase'
 import type { AnalyseBarPoint, AnalysePeriod, PeriodWindow } from '@/lib/analyse-period'
-import { formatPeriodRangeLabel, getPeriodWindow } from '@/lib/analyse-period'
+import {
+  formatPeriodRangeLabel,
+  getPeriodWindow,
+  normalizeAnalysePeriod,
+} from '@/lib/analyse-period'
 import { bucketTimestamps, buildBucketLabels, mergeBucketRows } from '@/lib/analyse-buckets'
 import {
+  formatMetricCurrency,
   formatMetricNumber,
   formatMetricPercent,
   formatRankingPercent,
@@ -225,15 +230,18 @@ function buildWebPayload(
   const chartSeries: Record<string, AnalyseBarPoint[]> = {
     'kpi:visitors': mergeBucketRows(
       buildBucketLabels(period, current),
-      raw.visitor_buckets
+      raw.visitor_buckets,
+      period
     ),
     'kpi:members': mergeBucketRows(
       buildBucketLabels(period, current),
-      raw.member_buckets
+      raw.member_buckets,
+      period
     ),
     'kpi:unsubscribed': mergeBucketRows(
       buildBucketLabels(period, current),
-      raw.unsubscribed_buckets
+      raw.unsubscribed_buckets,
+      period
     ),
   }
 
@@ -255,6 +263,9 @@ type ServiceBookingRow = {
   status: string
   appointment_type_id: string
   appointment_type_title?: string | null
+  price_cents?: number | null
+  payment_status?: string | null
+  paid_at?: string | null
 }
 
 function buildServicePayload(
@@ -273,10 +284,14 @@ function buildServicePayload(
       status: String(item.status),
       appointment_type_id: String(item.appointment_type_id),
       appointment_type_title: item.appointment_type_title ?? null,
+      price_cents: item.price_cents ?? null,
+      payment_status: item.payment_status ?? null,
+      paid_at: item.paid_at ?? null,
     }
   })
   const bookingRowsPrev = (Array.isArray(raw.bookings_prev) ? raw.bookings_prev : []).map((row) => ({
     status: String((row as { status?: string }).status ?? ''),
+    payment_status: String((row as { payment_status?: string }).payment_status ?? ''),
   }))
 
   const viewsCur = asNumber(raw.views_cur)
@@ -291,6 +306,13 @@ function buildServicePayload(
   const conversionCur = viewsCur > 0 ? (completedCur / viewsCur) * 100 : 0
   const conversionPrev = viewsPrev > 0 ? (completedPrev / viewsPrev) * 100 : 0
 
+  const revenueCur = asNumber(raw.revenue_cur)
+  const revenuePrev = asNumber(raw.revenue_prev)
+  const paidCur = bookingRows.filter((b) => b.payment_status === 'paid').length
+  const avgBasketCur = paidCur > 0 ? revenueCur / paidCur : 0
+  const paidPrev = bookingRowsPrev.filter((b) => b.payment_status === 'paid').length
+  const avgBasketPrev = paidPrev > 0 ? revenuePrev / paidPrev : 0
+
   const byType = new Map<string, { id: string; label: string; count: number }>()
   for (const row of bookingRows) {
     const typeId = row.appointment_type_id
@@ -303,6 +325,9 @@ function buildServicePayload(
 
   const kpis = [
     makeKpi('bookings', 'Réservations', bookingsCur, bookingsPrev, 1),
+    makeKpi('revenue', 'Revenu', revenueCur / 100, revenuePrev / 100, 1, (n) =>
+      formatMetricCurrency(Math.round(n * 100))
+    ),
     makeKpi('conversion', 'Taux conversion', conversionCur, conversionPrev, 0.28, (n) =>
       formatMetricPercent(n)
     ),
@@ -312,6 +337,13 @@ function buildServicePayload(
   const chartSeries: Record<string, AnalyseBarPoint[]> = {
     'kpi:bookings': bucketTimestamps(
       bookingRows.map((b) => b.created_at),
+      period,
+      current
+    ),
+    'kpi:revenue': bucketTimestamps(
+      bookingRows
+        .filter((b) => b.payment_status === 'paid' && b.paid_at)
+        .map((b) => b.paid_at as string),
       period,
       current
     ),
@@ -325,6 +357,16 @@ function buildServicePayload(
       period,
       current
     ),
+  }
+
+  for (const item of ranking.items) {
+    chartSeries[`ranking:${item.id}`] = bucketTimestamps(
+      bookingRows
+        .filter((b) => b.appointment_type_id === item.id)
+        .map((b) => b.created_at),
+      period,
+      current
+    )
   }
 
   const cancelled = bookingRows.filter((b) => b.status === 'cancelled').length
@@ -343,6 +385,10 @@ function buildServicePayload(
       },
       { l: "Nombre d'annulation", v: formatMetricNumber(cancelled) },
       { l: 'Nombre de rendez-vous effectué', v: formatMetricNumber(completedCur) },
+      {
+        l: 'Panier moyen (RDV payés)',
+        v: paidCur > 0 ? formatMetricCurrency(Math.round(avgBasketCur)) : '—',
+      },
     ],
     ranking: { title: 'Top services', ...ranking },
     chartSeries,
@@ -404,7 +450,8 @@ function buildShopPayload(
   const chartSeries: Record<string, AnalyseBarPoint[]> = {
     'kpi:abandoned': mergeBucketRows(
       buildBucketLabels(period, current),
-      parseBucketRows(raw.wishlist_buckets)
+      parseBucketRows(raw.wishlist_buckets),
+      period
     ),
     'kpi:revenue': bucketTimestamps([], period, current),
     'kpi:basket': bucketTimestamps([], period, current),
@@ -434,6 +481,15 @@ type EventRegistrationRow = {
   event_id: string
   event_title?: string | null
   event_capacity?: number | null
+  price_cents?: number | null
+  checked_in_at?: string | null
+}
+
+type EventOrderRow = {
+  id: string
+  paid_at: string | null
+  total_cents: number
+  event_id: string | null
 }
 
 function buildEventPayload(
@@ -453,6 +509,7 @@ function buildEventPayload(
       event_id: String(item.event_id),
       event_title: item.event_title ?? null,
       event_capacity: item.event_capacity ?? null,
+      checked_in_at: item.checked_in_at ?? null,
     }
   })
   const rowsPrev = (Array.isArray(raw.registrations_prev) ? raw.registrations_prev : []).map((row) => ({
@@ -464,6 +521,21 @@ function buildEventPayload(
   const signupsPrev = countRowsWithStatus(rowsPrev, 'confirmed')
   const cancelledCur = countRowsWithStatus(rowsCur, 'cancelled')
   const cancelledPrev = countRowsWithStatus(rowsPrev, 'cancelled')
+
+  const revenueCur = asNumber(raw.revenue_cur)
+  const revenuePrev = asNumber(raw.revenue_prev)
+  const orderRows = (Array.isArray(raw.orders_cur) ? raw.orders_cur : []).map((row) => {
+    const item = row as EventOrderRow
+    return {
+      id: String(item.id),
+      paid_at: item.paid_at ? String(item.paid_at) : null,
+      total_cents: asNumber(item.total_cents),
+      event_id: item.event_id ? String(item.event_id) : null,
+    }
+  })
+  const paidOrdersCur = orderRows.length
+  const avgBasketCur = paidOrdersCur > 0 ? revenueCur / paidOrdersCur : 0
+  const checkedInCur = rowsCur.filter((r) => r.status === 'confirmed' && r.checked_in_at).length
 
   let capacityTotal = 0
   const byEvent = new Map<string, { id: string; label: string; count: number }>()
@@ -481,6 +553,9 @@ function buildEventPayload(
 
   const kpis = [
     makeKpi('signups', 'Inscriptions', signupsCur, signupsPrev, 1),
+    makeKpi('revenue', 'Revenu', revenueCur / 100, revenuePrev / 100, 1, (n) =>
+      formatMetricCurrency(Math.round(n * 100))
+    ),
     makeKpi('fill-rate', 'Taux remplissage', fillRateCur, fillRatePrev, 0.3, (n) =>
       formatMetricPercent(n)
     ),
@@ -490,6 +565,11 @@ function buildEventPayload(
   const chartSeries: Record<string, AnalyseBarPoint[]> = {
     'kpi:signups': bucketTimestamps(
       confirmedRows.map((r) => r.created_at),
+      period,
+      current
+    ),
+    'kpi:revenue': bucketTimestamps(
+      orderRows.filter((o) => o.paid_at).map((o) => o.paid_at as string),
       period,
       current
     ),
@@ -505,6 +585,14 @@ function buildEventPayload(
     ),
   }
 
+  for (const item of ranking.items) {
+    chartSeries[`ranking:${item.id}`] = bucketTimestamps(
+      confirmedRows.filter((r) => r.event_id === item.id).map((r) => r.created_at),
+      period,
+      current
+    )
+  }
+
   return {
     scope: 'event',
     period,
@@ -514,10 +602,14 @@ function buildEventPayload(
     kpis,
     stats: [
       { l: 'Billets vendus', v: formatMetricNumber(signupsCur) },
-      { l: 'Taux de remplissage', v: formatMetricPercent(fillRateCur) },
       {
-        l: 'Vitesse de vente moyenne',
-        v: period === 'week' && signupsCur > 0 ? `${Math.round(signupsCur / 7)} / jour` : '—',
+        l: 'Panier moyen',
+        v: paidOrdersCur > 0 ? formatMetricCurrency(avgBasketCur) : '—',
+      },
+      { l: 'Entrées scannées', v: formatMetricNumber(checkedInCur) },
+      {
+        l: 'Taux de remplissage',
+        v: capacityTotal > 0 ? formatMetricPercent(fillRateCur) : 'Illimité',
       },
     ],
     ranking: { title: 'Top événements', ...ranking },
@@ -568,12 +660,14 @@ function buildNewsPayload(
   const chartSeries: Record<string, AnalyseBarPoint[]> = {
     'kpi:views': mergeBucketRows(
       buildBucketLabels(period, current),
-      parseBucketRows(raw.views_buckets)
+      parseBucketRows(raw.views_buckets),
+      period
     ),
     'kpi:likes': bucketTimestamps([], period, current),
     'kpi:shares': mergeBucketRows(
       buildBucketLabels(period, current),
-      parseBucketRows(raw.shares_buckets)
+      parseBucketRows(raw.shares_buckets),
+      period
     ),
   }
 
@@ -620,7 +714,7 @@ export async function loadAnalyseRankingChartSeries(
     resourceId: opts.scope === 'web' ? null : opts.rankingItemId,
   })
 
-  return mergeBucketRows(buildBucketLabels(opts.period, current), rows)
+  return mergeBucketRows(buildBucketLabels(opts.period, current), rows, opts.period)
 }
 
 export async function loadAnalyseScopeData(
@@ -657,9 +751,9 @@ export function parseAnalyseScope(value: string | undefined): AnalyseScope {
   return 'web'
 }
 
+/** Seules « semaine » et « année » sont supportées — les URLs legacy `month` retombent sur `week`. */
 export function parseAnalysePeriod(value: string | undefined): AnalysePeriod {
-  if (value === 'year') return 'year'
-  return 'week'
+  return normalizeAnalysePeriod(value)
 }
 
 export function parseAnalyseOffset(value: string | undefined): number {

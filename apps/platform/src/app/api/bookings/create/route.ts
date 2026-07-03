@@ -1,6 +1,13 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { createBooking, trackEvent } from '@ibee/supabase'
+import {
+  createBooking,
+  getAppointmentTypeById,
+  requiresBookingPayment,
+  trackEvent,
+  isEntityEmailBanned,
+} from '@ibee/supabase'
+import { notifyBookingCreated } from '@/lib/booking-notifications'
 
 export async function POST(request: Request) {
   try {
@@ -21,6 +28,27 @@ export async function POST(request: Request) {
     }
 
     const supabase = await createClient()
+
+    const service = await getAppointmentTypeById(supabase, appointment_type_id)
+    if (!service || service.entity_id !== entity_id || !service.is_active) {
+      return NextResponse.json({ error: 'Service introuvable.' }, { status: 404 })
+    }
+
+    if (requiresBookingPayment(service)) {
+      return NextResponse.json(
+        { error: 'Ce service nécessite un paiement en ligne.' },
+        { status: 400 }
+      )
+    }
+
+    const bookerEmail = String(booker_email).trim()
+    if (await isEntityEmailBanned(supabase, entity_id, bookerEmail)) {
+      return NextResponse.json(
+        { error: 'Réservation impossible pour cette adresse email.' },
+        { status: 403 }
+      )
+    }
+
     const booking = await createBooking(supabase, {
       appointment_type_id,
       entity_id,
@@ -38,6 +66,8 @@ export async function POST(request: Request) {
       resource_id: booking.id,
       metadata: { appointment_type_id },
     })
+
+    void notifyBookingCreated(booking)
 
     return NextResponse.json({ success: true, booking })
   } catch (err: unknown) {

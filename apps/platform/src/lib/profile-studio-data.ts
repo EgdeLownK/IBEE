@@ -13,6 +13,7 @@ import {
   getReviewAggregates,
   getServiceReviewAggregates,
   getAppointmentTypesByEntity,
+  countEventRegistrations,
   listMenuSectionStates,
   listProductCategories,
   listProductsByEntity,
@@ -75,7 +76,7 @@ export async function loadProfileStudioShell() {
   }))
 
   const webUrl = process.env.NEXT_PUBLIC_WEB_URL ?? 'http://localhost:3000'
-  const dashboardUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL ?? 'http://localhost:3000'
+  const dashboardUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL ?? `${webUrl}/dashboard/site`
   const entityRow = entity as typeof entity & { banner_url?: string | null }
 
   return {
@@ -119,13 +120,20 @@ export async function loadProfileStudioPlaylists() {
       listUpcomingEventsForOwner(supabase, entity.id),
     ])
 
-  const [productReviewStats, serviceReviewStats] = await Promise.all([
+  const [productReviewStats, serviceReviewStats, eventRegistrationCounts] = await Promise.all([
     Promise.all(
       products.map((p) => getReviewAggregates(supabase, p.id).catch(() => ({ count: 0, average: 0 })))
     ),
     Promise.all(
       appointmentTypes.map((s) =>
         getServiceReviewAggregates(supabase, s.id).catch(() => ({ count: 0, average: 0 }))
+      )
+    ),
+    Promise.all(
+      upcomingEvents.map((ev) =>
+        ev.capacity != null
+          ? countEventRegistrations(supabase, ev.id).catch(() => 0)
+          : Promise.resolve(0)
       )
     ),
   ])
@@ -144,6 +152,10 @@ export async function loadProfileStudioPlaylists() {
       sale_ends_at: p.sale_ends_at,
       currency: p.currency,
       image_url: p.product_media?.[0]?.url ?? null,
+      image_urls: (p.product_media ?? [])
+        .filter((m) => !m.media_type || m.media_type === 'image')
+        .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))
+        .map((m) => m.url),
       status: p.status,
       category_id: p.category_id,
       type: p.type,
@@ -163,8 +175,9 @@ export async function loadProfileStudioPlaylists() {
       promo_price_cents: s.promo_price_cents,
       currency: s.currency,
       image_url: s.gallery_images?.[0] ?? null,
+      image_urls: [...(s.gallery_images ?? [])].filter(Boolean),
     })),
-    playlistEvents: upcomingEvents.map((ev) => ({
+    playlistEvents: upcomingEvents.map((ev, i) => ({
       id: ev.id,
       title: ev.title,
       slug: ev.slug,
@@ -172,7 +185,12 @@ export async function loadProfileStudioPlaylists() {
       start_at: ev.start_at,
       price_cents: ev.price_cents,
       currency: ev.currency,
+      location_type: ev.location_type,
+      location_details: ev.location_details,
+      capacity: ev.capacity,
+      registrations_count: eventRegistrationCounts[i],
       image_url: ev.gallery_images?.[0] ?? null,
+      image_urls: [...(ev.gallery_images ?? [])].filter(Boolean),
     })),
   }
 }

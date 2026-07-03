@@ -1,18 +1,12 @@
 import type { Metadata } from 'next'
-import { Suspense } from 'react'
 import { redirect } from 'next/navigation'
 import { AnalyseDashboard } from '@/components/dashboard/analyse/AnalyseDashboard'
-import { AnalysePageSkeleton } from '@/components/dashboard/analyse/AnalyseContentSkeleton'
 import {
   loadAnalyseScopeData,
   parseAnalyseOffset,
   parseAnalysePeriod,
   parseAnalyseScope,
-  type AnalyseScope,
 } from '@/lib/analyse-data'
-import type { SupabaseClient } from '@supabase/supabase-js'
-import type { Database } from '@ibee/supabase'
-import type { AnalysePeriod } from '@/lib/analyse-period'
 import { getDashboardContext } from '@/lib/dashboard-context'
 import { measureDashboardLoad } from '@/lib/dashboard-perf'
 
@@ -29,43 +23,24 @@ type PageProps = {
   }>
 }
 
-type LoaderProps = {
-  supabase: SupabaseClient<Database>
-  entityId: string
-  accountCreatedAt: string
-  scope: AnalyseScope
-  period: AnalysePeriod
-  offset: number
-  rankingLimit: number
-}
+function buildAnalysePath(params: {
+  scope?: string
+  period?: string
+  offset?: string
+  rankingLimit?: string
+}) {
+  const qs = new URLSearchParams()
+  const scope = parseAnalyseScope(params.scope)
+  const period = parseAnalysePeriod(params.period)
+  const offset = parseAnalyseOffset(params.offset)
+  const rankingLimit = Math.min(20, Math.max(4, Number(params.rankingLimit ?? '4') || 4))
 
-async function AnalyseDashboardLoader({
-  supabase,
-  entityId,
-  accountCreatedAt,
-  scope,
-  period,
-  offset,
-  rankingLimit,
-}: LoaderProps) {
-  const data = await measureDashboardLoad('page:analyse', () =>
-    loadAnalyseScopeData(supabase, entityId, {
-      scope,
-      period,
-      offset,
-      rankingLimit,
-    }),
-    { scope, period, offset }
-  )
+  qs.set('scope', scope)
+  qs.set('period', period)
+  if (offset !== 0) qs.set('offset', String(offset))
+  if (rankingLimit !== 4) qs.set('rankingLimit', String(rankingLimit))
 
-  return (
-    <AnalyseDashboard
-      entityId={entityId}
-      accountCreatedAt={accountCreatedAt}
-      data={data}
-      initialRankingLimit={rankingLimit}
-    />
-  )
+  return `/dashboard/analyse?${qs.toString()}`
 }
 
 export default async function AnalysePage({ searchParams }: PageProps) {
@@ -73,22 +48,41 @@ export default async function AnalysePage({ searchParams }: PageProps) {
   if (!ctx) redirect('/login')
 
   const params = await searchParams
+
+  if (params.period === 'month') {
+    redirect(
+      buildAnalysePath({
+        scope: params.scope,
+        period: 'week',
+        offset: params.offset,
+        rankingLimit: params.rankingLimit,
+      })
+    )
+  }
+
   const scope = parseAnalyseScope(params.scope)
   const period = parseAnalysePeriod(params.period)
   const offset = parseAnalyseOffset(params.offset)
   const rankingLimit = Math.min(20, Math.max(4, Number(params.rankingLimit ?? '4') || 4))
 
+  const currentData = await measureDashboardLoad(
+    'page:analyse',
+    () =>
+      loadAnalyseScopeData(ctx.supabase, ctx.entity.id, {
+        scope,
+        period,
+        offset,
+        rankingLimit,
+      }),
+    { scope, period, offset }
+  )
+
   return (
-    <Suspense fallback={<AnalysePageSkeleton />}>
-      <AnalyseDashboardLoader
-        supabase={ctx.supabase}
-        entityId={ctx.entity.id}
-        accountCreatedAt={ctx.entity.created_at}
-        scope={scope}
-        period={period}
-        offset={offset}
-        rankingLimit={rankingLimit}
-      />
-    </Suspense>
+    <AnalyseDashboard
+      entityId={ctx.entity.id}
+      accountCreatedAt={ctx.entity.created_at}
+      data={currentData}
+      initialRankingLimit={rankingLimit}
+    />
   )
 }

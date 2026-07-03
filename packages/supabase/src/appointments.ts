@@ -34,6 +34,9 @@ type AppointmentType = {
   buffer_after_minutes: number
   min_notice_hours: number
   max_advance_days: number
+  payment_required: boolean
+  deposit_percent: number
+  cancel_min_hours: number
   is_active: boolean
   auto_accept_bookings: boolean
   position: number
@@ -115,6 +118,9 @@ export async function createAppointmentType(
     buffer_after_minutes?: number
     min_notice_hours?: number
     max_advance_days?: number
+    payment_required?: boolean
+    deposit_percent?: number
+    cancel_min_hours?: number
     color?: string | null
     highlights?: string[]
     gallery_images?: string[]
@@ -139,6 +145,9 @@ export async function createAppointmentType(
     buffer_after_minutes: data.buffer_after_minutes ?? 0,
     min_notice_hours: data.min_notice_hours ?? 24,
     max_advance_days: data.max_advance_days ?? 90,
+    payment_required: data.payment_required ?? false,
+    deposit_percent: data.deposit_percent ?? 100,
+    cancel_min_hours: data.cancel_min_hours ?? 24,
     color: data.color ?? null,
     highlights: data.highlights ?? [],
     gallery_images: data.gallery_images ?? [],

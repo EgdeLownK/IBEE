@@ -72,6 +72,20 @@ export function widgetEmptyContent(
             ctaLabel: 'Ajouter une publication',
             ctaAction: 'data-open-publication-overlay',
           }
+        case 'widget_highlight':
+          return {
+            visitorMessage: 'Contenu bientôt disponible.',
+            ownerMessage: 'Choisis un produit, service, événement ou actualité à mettre en avant.',
+            ctaLabel: 'Choisir le contenu',
+            ...configCta(widgetId),
+          }
+        case 'widget_carousel':
+          return {
+            visitorMessage: 'Contenu bientôt disponible.',
+            ownerMessage: 'Choisis une source pour alimenter ce carrousel.',
+            ctaLabel: 'Choisir la source',
+            ...configCta(widgetId),
+          }
         default:
           return {
             visitorMessage: 'Contenu à venir.',
@@ -104,6 +118,13 @@ export function widgetEmptyContent(
             ctaLabel: 'Choisir un événement',
             ...configCta(widgetId),
           }
+        case 'widget_highlight':
+          return {
+            visitorMessage: 'Contenu bientôt disponible.',
+            ownerMessage: 'Sélectionne le contenu à afficher.',
+            ctaLabel: 'Choisir le contenu',
+            ...configCta(widgetId),
+          }
         default:
           return {
             visitorMessage: 'Contenu à venir.',
@@ -123,6 +144,13 @@ export function widgetEmptyContent(
 
     case 'empty_pool':
       switch (widgetType) {
+        case 'widget_carousel':
+          return {
+            visitorMessage: 'Contenu à venir.',
+            ownerMessage: 'Ajoute du contenu pour alimenter ce carrousel.',
+            ctaLabel: 'Choisir la source',
+            ...configCta(widgetId),
+          }
         case 'widget_service':
           return {
             visitorMessage: 'Aucun service réservable pour l\'instant.',

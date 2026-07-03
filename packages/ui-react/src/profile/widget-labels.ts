@@ -1,4 +1,6 @@
 export const HOME_WIDGET_LABELS: Record<string, string> = {
+  widget_highlight: 'Mise en avant',
+  widget_carousel: 'Carrousel',
   widget_shop: 'Shop',
   widget_service: 'Service',
   widget_event: 'Event',

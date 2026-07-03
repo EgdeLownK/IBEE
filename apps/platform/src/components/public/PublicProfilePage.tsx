@@ -5,9 +5,10 @@ import { PublicProfileTabsController } from './PublicProfileTabsController'
 
 interface Props {
   data: PublicProfileData
+  embedMode?: boolean
 }
 
-export function PublicProfilePage({ data }: Props) {
+export function PublicProfilePage({ data, embedMode = false }: Props) {
   return (
     <main className="profile-page">
       <ProfileShell>
@@ -24,7 +25,7 @@ export function PublicProfilePage({ data }: Props) {
           isFollowing={data.isFollowing}
         />
 
-        <PublicProfileTabsController data={data} />
+        <PublicProfileTabsController data={data} embedMode={embedMode} />
       </ProfileShell>
     </main>
   )

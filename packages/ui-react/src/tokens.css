@@ -64,6 +64,7 @@
 
 :root {
   --app-header-height: 65px;
+  --app-navpill-clearance: 100px;
   --profile-main-padding-y: 32px;
 }
 
@@ -99,30 +100,12 @@ a[href]:not([aria-disabled="true"]) {
 /* Drawer mobile */
 @media (max-width: 1199px) {
   html[data-drawer-open="true"] .main-rail {
-    translate: 0;
+    transform: translateX(0);
   }
 
   html[data-drawer-open="true"] .main-rail-backdrop {
     opacity: 1;
     pointer-events: auto;
-  }
-}
-
-.main-rail-spacer {
-  width: 260px;
-  flex-shrink: 0;
-}
-
-.app-layout__content {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
-}
-
-@media (max-width: 799px) {
-  .app-layout__content {
-    background: var(--color-neutral-0);
   }
 }
 
