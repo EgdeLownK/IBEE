@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight, Crop, ImagePlus, Loader2, Plus, Trash2 } fro
 import { toast } from 'sonner'
 import { uploadProductMediaAction } from '@/app/dashboard/site/product-actions'
 import { BannerImageCropDialog } from '@/components/profile/history/BannerImageCropDialog'
+import { AddressAutocomplete } from '../AddressAutocomplete'
 import type { ProductCategoryOption, ProductCreateFormState } from '../types'
 import { canAddMedia, nextId } from '../utils'
 
@@ -354,69 +355,6 @@ export function StepEssentials({ form, categories, updateForm, onChange }: Props
         {err('bullet_points') ? <p className="pco__error">{err('bullet_points')}</p> : null}
       </div>
 
-      <div className="pco__field">
-        <label className="pco__label" htmlFor="pco-price">
-          Prix (€) <span className="pco__req">*</span>
-        </label>
-        <input
-          id="pco-price"
-          type="number"
-          min={0}
-          step={0.01}
-          className="pco__input"
-          placeholder="0,00"
-          value={form.price}
-          onChange={(e) => onChange({ price: e.target.value })}
-        />
-        {err('price_cents') ? <p className="pco__error">{err('price_cents')}</p> : null}
-      </div>
-
-      <div className="pco__field">
-        <label className="pco__check">
-          <input
-            type="checkbox"
-            checked={form.promoEnabled}
-            onChange={(e) => onChange({ promoEnabled: e.target.checked })}
-          />
-          <span>Activer une promo (prix barré)</span>
-        </label>
-      </div>
-
-      {form.promoEnabled ? (
-        <div className="pco__promo">
-          <div className="pco__row">
-            <div className="pco__field">
-              <label className="pco__label" htmlFor="pco-sale-price">
-                Prix promo (€) <span className="pco__req">*</span>
-              </label>
-              <input
-                id="pco-sale-price"
-                type="number"
-                min={0}
-                step={0.01}
-                className="pco__input"
-                placeholder="0,00"
-                value={form.salePrice}
-                onChange={(e) => onChange({ salePrice: e.target.value })}
-              />
-              {err('sale_price_cents') ? <p className="pco__error">{err('sale_price_cents')}</p> : null}
-            </div>
-            <div className="pco__field">
-              <label className="pco__label" htmlFor="pco-sale-ends">
-                Fin de la promo
-              </label>
-              <input
-                id="pco-sale-ends"
-                type="date"
-                className="pco__input"
-                value={form.saleEndsAt}
-                onChange={(e) => onChange({ saleEndsAt: e.target.value })}
-              />
-              {err('sale_ends_at') ? <p className="pco__error">{err('sale_ends_at')}</p> : null}
-            </div>
-          </div>
-        </div>
-      ) : null}
 
       <div className="pco__field">
         <label className="pco__label" htmlFor="pco-category-select">
@@ -468,14 +406,12 @@ export function StepEssentials({ form, categories, updateForm, onChange }: Props
               <label className="pco__label" htmlFor="pco-pickup">
                 Lieu de retrait <span className="pco__req">*</span>
               </label>
-              <input
+              <AddressAutocomplete
                 id="pco-pickup"
-                type="text"
-                maxLength={200}
                 className="pco__input"
                 placeholder="Ville, point de retrait..."
                 value={form.physicalPickupLocation}
-                onChange={(e) => onChange({ physicalPickupLocation: e.target.value })}
+                onChange={(val) => onChange({ physicalPickupLocation: val })}
               />
               {err('physical_pickup_location') ? (
                 <p className="pco__error">{err('physical_pickup_location')}</p>

@@ -387,7 +387,7 @@ export function AddContentDialog({
             <div className="add-content__user-text">
               <p className="add-content__name">{displayName}</p>
               <p id="add-content-title" className="add-content__subtitle">
-                Modifier contenu
+                Ajouter contenu
               </p>
             </div>
           </div>

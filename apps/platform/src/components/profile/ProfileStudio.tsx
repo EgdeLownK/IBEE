@@ -93,6 +93,12 @@ export function ProfileStudio() {
     router.replace('/dashboard/site', { scroll: false })
   }, [router, searchParams])
 
+  useEffect(() => {
+    if (searchParams.get('action') !== 'add-content') return
+    setAddContentOpen(true)
+    router.replace('/dashboard/site', { scroll: false })
+  }, [router, searchParams])
+
   const baseData = useMemo<ProfileStudioData>(
     () => ({
       ...shell,

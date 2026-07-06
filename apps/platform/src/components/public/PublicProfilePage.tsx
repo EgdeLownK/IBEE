@@ -20,6 +20,7 @@ export function PublicProfilePage({ data, embedMode = false }: Props) {
           bannerUrl={data.entity.banner_url}
           entityId={data.entity.id}
           entitySlug={data.entity.slug}
+          ownerId={data.entity.user_id}
           followersCount={data.entity.followers_count}
           isAuthenticated={data.isAuthenticated}
           isFollowing={data.isFollowing}

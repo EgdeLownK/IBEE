@@ -161,7 +161,7 @@ export function ProfileHeroEditor({ entity, onAddContent, onEntityChange }: Prop
         <div className="mb-1 mt-5 flex items-center gap-2.5">
           <button type="button" className="btn btn--dark flex-1" disabled={!onAddContent} onClick={onAddContent}>
             <Plus className="h-4 w-4" aria-hidden="true" />
-            Modifier contenu
+            Ajouter contenu
           </button>
           <button
             type="button"

@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createPublicSupabaseClient } from '@/lib/site-url'
 import { entityDetailExcerpt } from '@/lib/entity-detail-excerpt'
 import {
   countEventRegistrations,
@@ -20,16 +20,12 @@ import {
 } from '@ibee/supabase'
 
 export async function loadPublicProfileBySlug(slug: string) {
-  const supabase = await createClient()
+  const supabase = createPublicSupabaseClient()
 
-  const [entity, authResult] = await Promise.all([
-    getEntityBySlug(supabase, slug),
-    supabase.auth.getUser(),
-  ])
+  const entity = await getEntityBySlug(supabase, slug)
 
   if (!entity) return null
 
-  const user = authResult.data.user
   const entityRow = entity as typeof entity & { banner_url?: string | null; updated_at?: string }
 
   const [
@@ -67,7 +63,7 @@ export async function loadPublicProfileBySlug(slug: string) {
     registrations_count: eventRegistrationCounts[i],
   }))
 
-  const [productReviewStats, serviceReviewStats, isFollowing] = await Promise.all([
+  const [productReviewStats, serviceReviewStats] = await Promise.all([
     Promise.all(
       products.map((p) => getReviewAggregates(supabase, p.id).catch(() => ({ count: 0, average: 0 })))
     ),
@@ -76,7 +72,6 @@ export async function loadPublicProfileBySlug(slug: string) {
         getServiceReviewAggregates(supabase, s.id).catch(() => ({ count: 0, average: 0 }))
       )
     ),
-    user ? checkIsFollowing(supabase, user.id, entity.id) : Promise.resolve(false),
   ])
 
   const shopProducts = products.map((p, i) => ({
@@ -163,7 +158,6 @@ export async function loadPublicProfileBySlug(slug: string) {
     opening_hours: defaultOpeningHours(),
   }
 
-  const isOwner = !!(user && entity.user_id && user.id === entity.user_id)
   const siteUrl = process.env.NEXT_PUBLIC_WEB_URL ?? 'http://localhost:3000'
 
   return {
@@ -192,9 +186,9 @@ export async function loadPublicProfileBySlug(slug: string) {
     productCategories: productCategories.map((c) => ({ id: c.id, name: c.name })),
     playlistServices,
     playlistEvents,
-    isAuthenticated: !!user,
-    isFollowing,
-    isOwner,
+    isAuthenticated: false, // Default for SSG
+    isFollowing: false, // Default for SSG
+    isOwner: false, // Default for SSG
     profileUrl: `${siteUrl}/${entity.slug}`,
     entityBaseUrl: `/${entity.slug}`,
     siteUrl,

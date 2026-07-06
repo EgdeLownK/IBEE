@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import Link from 'next/link'
 import type { HomeFeedNewsItem } from '@ibee/shared'
 
@@ -17,8 +18,7 @@ export function HomeFeedNewsRow({ items }: Props) {
         {items.map((item) => (
           <Link key={item.id} href={item.href} className="home-feed-news-card">
             <span className="home-feed-news-card__media">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={item.imageUrl} alt="" loading="lazy" />
+              <Image src={item.imageUrl} alt="" width={300} height={200} className="w-full h-full object-cover" loading="lazy" />
             </span>
             <span className="home-feed-news-card__body">
               <span className="home-feed-news-card__author truncate">{item.entity.displayName}</span>

@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import type { HomeFeedPost } from '@ibee/shared'
@@ -51,8 +52,7 @@ export function HomeFeedCard({ post, isDesktop = false, isSelected = false, onSe
         >
           <span className="home-feed-card__avatar" aria-hidden="true">
             {post.entity.avatarUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={post.entity.avatarUrl} alt="" />
+              <Image src={post.entity.avatarUrl} alt="" width={32} height={32} />
             ) : (
               <span>{initial}</span>
             )}
@@ -63,8 +63,7 @@ export function HomeFeedCard({ post, isDesktop = false, isSelected = false, onSe
       </header>
 
       <div className="home-feed-card__media">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={post.imageUrl} alt="" loading="lazy" />
+        <Image src={post.imageUrl} alt="" width={600} height={400} className="h-full w-full object-cover" loading="lazy" />
       </div>
 
       <div className="home-feed-card__body">

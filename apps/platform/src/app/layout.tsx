@@ -19,11 +19,35 @@ const roboto = Roboto({
 })
 
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL
+      ? `https://${process.env.NEXT_PUBLIC_SITE_URL}`
+      : process.env.VERCEL_URL
+        ? `https://${process.env.VERCEL_URL}`
+        : 'http://localhost:3000'
+  ),
   title: {
     default: 'IBEE',
     template: '%s — IBEE',
   },
   description: 'La plateforme des solopreneurs',
+  openGraph: {
+    type: 'website',
+    locale: 'fr_FR',
+    url: '/',
+    siteName: 'IBEE',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'IBEE',
+    description: 'La plateforme des solopreneurs',
+  },
+  alternates: {
+    languages: {
+      'fr-FR': '/',
+      'x-default': '/',
+    },
+  },
 }
 
 export default function RootLayout({

@@ -89,7 +89,7 @@ export function priceToCents(raw: string | number | null | undefined): number | 
   return Math.round(n * 100)
 }
 
-export function validateProductStep(step: 1 | 2 | 3, draft: ProductCreateDraft): ValidationResult {
+export function validateProductStep(step: 1 | 2 | 3 | 4, draft: ProductCreateDraft): ValidationResult {
   const fieldErrors: Record<string, string> = {}
   const fail = (field: string, msg: string) => {
     fieldErrors[field] = msg
@@ -115,26 +115,6 @@ export function validateProductStep(step: 1 | 2 | 3, draft: ProductCreateDraft):
       }
     }
     if (draft.bullets.length > 8) fail('bullet_points', 'Maximum 8 points.')
-
-    const priceCents = priceToCents(draft.price)
-    if (!(Number.isInteger(priceCents) && priceCents! > 0)) {
-      fail('price_cents', 'Le prix doit être supérieur à 0.')
-    }
-
-    if (draft.promoEnabled) {
-      const sp = priceToCents(draft.salePrice)
-      if (!(Number.isInteger(sp) && sp! >= 0)) {
-        fail('sale_price_cents', 'Indique un prix promo valide.')
-      } else if (Number.isInteger(priceCents) && priceCents! > 0 && sp! >= priceCents!) {
-        fail('sale_price_cents', 'Le prix promo doit être inférieur au prix.')
-      }
-      if (draft.saleEndsAt) {
-        const d = new Date(draft.saleEndsAt)
-        if (Number.isNaN(d.getTime()) || d.getTime() <= Date.now()) {
-          fail('sale_ends_at', 'La date de fin doit être dans le futur.')
-        }
-      }
-    }
 
     if (draft.categoryId === '__new__') {
       const nn = draft.newCategoryName.trim()
@@ -247,13 +227,16 @@ export function validateProductStep(step: 1 | 2 | 3, draft: ProductCreateDraft):
         break
       }
     }
+  }
+
+  if (step === 4) {
     if (draft.faq.length > 10) fail('faq', 'Maximum 10 questions.')
-    for (const item of draft.faq) {
-      const q = item.question.trim()
-      const a = item.answer.trim()
+    for (const f of draft.faq) {
+      const q = f.question.trim()
+      const a = f.answer.trim()
       if (q === '' && a === '') continue
-      if (q.length < 1 || q.length > 200 || a.length < 1 || a.length > 1000) {
-        fail('faq', 'Chaque entrée : question 1-200 caractères, réponse 1-1000 caractères.')
+      if (q.length < 1 || q.length > 100 || a.length < 1 || a.length > 1000) {
+        fail('faq', 'Chaque question (1-100 car.) et réponse (1-1000 car.) doit être valide.')
         break
       }
     }
@@ -263,11 +246,21 @@ export function validateProductStep(step: 1 | 2 | 3, draft: ProductCreateDraft):
 }
 
 export function buildProductCreatePayload(draft: ProductCreateDraft): ProductCreateInput {
+  let basePrice = priceToCents(draft.price)
+  if (basePrice === null || Number.isNaN(basePrice)) {
+    if (draft.variants && draft.variants.length > 0) {
+      const prices = draft.variants.map(v => priceToCents(v.price)).filter(p => p !== null && !Number.isNaN(p)) as number[]
+      basePrice = prices.length > 0 ? Math.min(...prices) : 0
+    } else {
+      basePrice = 0
+    }
+  }
+
   const payload: ProductCreateInput = {
     type: draft.type,
     title: draft.title.trim(),
     description_short: draft.descriptionShort.trim(),
-    price_cents: priceToCents(draft.price)!,
+    price_cents: basePrice,
     status: draft.publish ? 'published' : 'draft',
   }
 

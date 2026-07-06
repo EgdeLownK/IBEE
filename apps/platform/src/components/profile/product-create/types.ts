@@ -13,13 +13,25 @@ export type MediaDraft = {
 
 export type VariantPair = { key: string; value: string }
 
+export type SubVariantDraft = {
+  id: string
+  key: string
+  value: string
+  price: string
+  stock: string
+  sku: string
+  condition?: string
+}
+
 export type VariantDraft = {
   id: string
   pairs: VariantPair[]
   sku: string
   price: string
   stock: string
+  condition?: string
   error?: string
+  subVariants?: SubVariantDraft[]
 }
 
 export type DetailPair = { label: string; value: string }
@@ -33,7 +45,7 @@ export type FaqDraft = { question: string; answer: string }
 export type ProductCategoryOption = { id: string; name: string }
 
 export type ProductCreateFormState = {
-  step: 0 | 1 | 2 | 3
+  step: 0 | 1 | 2 | 3 | 4
   type: ProductType | null
   media: MediaDraft[]
   title: string
@@ -51,6 +63,7 @@ export type ProductCreateFormState = {
   physicalStockQuantity: string
   physicalCondition: PhysicalCondition
   digitalStockUnlimited: boolean
+  variantOptions: { name: string; values: string[] }[]
   variants: VariantDraft[]
   digitalFileId: string | null
   digitalFile: EntityFileDto | null

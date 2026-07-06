@@ -22,11 +22,20 @@ interface Props {
 export function ProfileJsonLd({ entity, siteUrl, faqItems, profileUrl }: Props) {
   const url = profileUrl ?? `${siteUrl}/${entity.slug}`
 
+  const organization = {
+    '@type': 'Organization',
+    '@id': `${siteUrl}/#organization`,
+    name: 'IBEE',
+    url: siteUrl,
+    logo: `${siteUrl}/icon.svg`,
+  }
+
   const person: Record<string, unknown> = {
     '@type': 'Person',
     '@id': `${url}#person`,
     name: entity.display_name,
     url,
+    memberOf: { '@id': `${siteUrl}/#organization` },
   }
 
   if (entity.avatar_url) person.image = entity.avatar_url
@@ -49,7 +58,32 @@ export function ProfileJsonLd({ entity, siteUrl, faqItems, profileUrl }: Props) 
     dateModified: entity.updated_at,
   }
 
-  const graph: Record<string, unknown>[] = [person, profilePage]
+  const breadcrumb = {
+    '@type': 'BreadcrumbList',
+    '@id': `${url}#breadcrumb`,
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Accueil',
+        item: siteUrl,
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: 'Profils',
+        item: `${siteUrl}/explore`,
+      },
+      {
+        '@type': 'ListItem',
+        position: 3,
+        name: entity.display_name,
+        item: url,
+      },
+    ],
+  }
+
+  const graph: Record<string, unknown>[] = [organization, person, profilePage, breadcrumb]
 
   if (faqItems && faqItems.length > 0) {
     graph.push({

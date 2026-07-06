@@ -3,6 +3,7 @@
 import type { LucideIcon } from 'lucide-react'
 import { CalendarDays, ChevronLeft, ChevronRight, ShoppingBag, Star } from 'lucide-react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useHorizontalCarousel } from '@/hooks/useHorizontalCarousel'
 import type { DetailContentBlock } from '@/lib/entity-content-blocks'
 import { EntityMoreDetails } from './EntityMoreDetails'
@@ -112,8 +113,7 @@ export function EntityDetailBody({
                 {m.mediaType === 'video' ? (
                   <video src={m.url} controls preload="metadata" playsInline className="h-full w-full bg-black object-cover" />
                 ) : (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={m.url} alt={m.alt ?? title} className="h-full w-full object-cover" loading="lazy" />
+                  <Image src={m.url} alt={m.alt ?? title} className="h-full w-full object-cover" width={800} height={600} loading="lazy" />
                 )}
               </div>
             ))

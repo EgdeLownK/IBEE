@@ -104,6 +104,8 @@ export function PublicProfileTabsController({ data, embedMode = false }: Props) 
           faqItems={data.faqItems}
           contactInfo={data.contactInfo}
           productCategories={data.productCategories}
+          entityId={data.entity.id}
+          ownerId={data.entity.user_id}
           entityBaseUrl={webBaseUrl}
           detailBaseUrl={detailBaseUrl}
         />

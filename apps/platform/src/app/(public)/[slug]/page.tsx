@@ -29,7 +29,6 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       description,
       url: data.profileUrl,
       type: 'profile',
-      images: data.entity.avatar_url ? [{ url: data.entity.avatar_url }] : undefined,
     },
     alternates: { canonical: data.profileUrl },
     robots: { index: true, follow: true },
@@ -47,9 +46,6 @@ export default async function PublicProfileRoute({ params, searchParams }: PageP
 
   const isPreview = preview === '1'
   if (isPreview) noStore()
-  if (data.isOwner && !isPreview) {
-    redirect('/dashboard/site')
-  }
 
   return (
     <>

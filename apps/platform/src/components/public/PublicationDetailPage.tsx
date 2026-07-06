@@ -11,7 +11,7 @@ interface Props {
 
 export function PublicationDetailPage({ data }: Props) {
   return (
-    <main className="profile-page">
+    <article className="profile-page">
       <ProfileShell>
         <DetailTopBar
           backHref={data.backHref}
@@ -50,6 +50,6 @@ export function PublicationDetailPage({ data }: Props) {
           />
         </div>
       </ProfileShell>
-    </main>
+    </article>
   )
 }

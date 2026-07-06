@@ -25,14 +25,17 @@ export function PlaylistSectionToolbar({
   const inputRef = useRef<HTMLInputElement>(null)
   const [searchOpen, setSearchOpen] = useState(false)
   const showCategories = categories.length >= 2
+  const isSearchExpanded = searchOpen || !showCategories
 
   useEffect(() => {
-    if (searchOpen) inputRef.current?.focus()
-  }, [searchOpen])
+    if (searchOpen && showCategories) inputRef.current?.focus()
+  }, [searchOpen, showCategories])
 
-  function closeSearch() {
+  function handleClearOrClose() {
     onQueryChange('')
-    setSearchOpen(false)
+    if (showCategories) {
+      setSearchOpen(false)
+    }
   }
 
   const searchButton = (
@@ -49,7 +52,7 @@ export function PlaylistSectionToolbar({
 
   return (
     <div className="playlist-toolbar">
-      {searchOpen ? (
+      {isSearchExpanded ? (
         <div className="playlist-search">
           <Search className="h-[18px] w-[18px] shrink-0 text-neutral-400" aria-hidden="true" />
           <input
@@ -60,16 +63,18 @@ export function PlaylistSectionToolbar({
             value={query}
             onChange={(e) => onQueryChange(e.target.value)}
           />
-          <button
-            type="button"
-            className="playlist-search__clear"
-            aria-label="Fermer la recherche"
-            onClick={closeSearch}
-          >
-            <X className="h-4 w-4" aria-hidden="true" />
-          </button>
+          {(query || showCategories) && (
+            <button
+              type="button"
+              className="playlist-search__clear"
+              aria-label={showCategories && !query ? 'Fermer la recherche' : 'Effacer la recherche'}
+              onClick={handleClearOrClose}
+            >
+              <X className="h-4 w-4" aria-hidden="true" />
+            </button>
+          )}
         </div>
-      ) : showCategories ? (
+      ) : (
         <div className="playlist-toolbar__row playlist-toolbar__row--with-cats">
           <div className="playlist-cats" role="tablist" aria-label="Catégories">
             <button
@@ -96,8 +101,6 @@ export function PlaylistSectionToolbar({
           </div>
           {searchButton}
         </div>
-      ) : (
-        <div className="playlist-toolbar__row playlist-toolbar__row--no-cats">{searchButton}</div>
       )}
     </div>
   )

@@ -15,6 +15,20 @@ const nextConfig: NextConfig = {
       bodySizeLimit: '520mb',
     },
   },
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'ztblirxxptdwqobmervk.supabase.co',
+        port: '',
+        pathname: '/storage/v1/object/public/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'picsum.photos',
+      },
+    ],
+  },
   async redirects() {
     return [
       {

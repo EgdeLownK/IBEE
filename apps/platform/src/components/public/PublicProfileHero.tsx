@@ -1,8 +1,9 @@
 'use client'
 
-import { Share, UserMinus, UserPlus } from 'lucide-react'
+import { Share, UserMinus, UserPlus, Plus, Pencil } from 'lucide-react'
+import Image from 'next/image'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 interface Props {
   displayName: string
@@ -12,6 +13,7 @@ interface Props {
   bannerUrl: string | null
   entityId: string
   entitySlug: string
+  ownerId: string | null
   followersCount: number
   isAuthenticated: boolean
   isFollowing: boolean
@@ -33,6 +35,7 @@ export function PublicProfileHero({
   bannerUrl,
   entityId,
   entitySlug,
+  ownerId,
   followersCount: initialFollowersCount,
   isAuthenticated,
   isFollowing: initialIsFollowing,
@@ -41,6 +44,28 @@ export function PublicProfileHero({
   const [isFollowing, setIsFollowing] = useState(initialIsFollowing)
   const [followersCount, setFollowersCount] = useState(initialFollowersCount)
   const [busy, setBusy] = useState(false)
+  const [isAuthStateLoaded, setIsAuthStateLoaded] = useState(false)
+  const [isAuthed, setIsAuthed] = useState(isAuthenticated)
+  const [isOwner, setIsOwner] = useState(false)
+
+  useEffect(() => {
+    async function fetchState() {
+      try {
+        const res = await fetch(`/api/profile-state?entityId=${entityId}${ownerId ? `&ownerId=${ownerId}` : ''}`)
+        if (res.ok) {
+          const data = await res.json()
+          setIsAuthed(data.isAuthenticated)
+          setIsFollowing(data.isFollowing)
+          setIsOwner(data.isOwner)
+        }
+      } catch (err) {
+        console.error('[auth-state]', err)
+      } finally {
+        setIsAuthStateLoaded(true)
+      }
+    }
+    fetchState()
+  }, [entityId, ownerId])
 
   const initials = displayName
     .split(/\s+/)
@@ -75,8 +100,7 @@ export function PublicProfileHero({
       <div className="relative">
         <div className="profile-banner">
           {bannerUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={bannerUrl} alt="" className="profile-banner__img" width={800} height={172} />
+            <Image src={bannerUrl} alt="" className="profile-banner__img" width={800} height={172} priority />
           ) : (
             <div className="profile-banner__placeholder" aria-hidden="true">
               <span className="profile-banner__label">BANNER IMAGE 800×172</span>
@@ -92,8 +116,7 @@ export function PublicProfileHero({
         <div className="mt-4 flex items-center gap-4">
           <div className="profile-avatar">
             {avatarUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
+              <Image src={avatarUrl} alt={displayName} className="h-full w-full object-cover" width={172} height={172} priority />
             ) : (
               <span className="font-display text-[30px] font-semibold text-accent">{initials}</span>
             )}
@@ -115,7 +138,22 @@ export function PublicProfileHero({
         {bio && <p className="mb-0 mt-3 text-[13.5px] leading-normal text-neutral-600">{bio}</p>}
 
         <div className="mb-1 mt-5 flex items-center gap-2.5">
-          {isAuthenticated ? (
+          {!isAuthStateLoaded ? (
+             <div className="btn btn--accent opacity-50 cursor-wait">
+               <span className="opacity-0">Suivre</span>
+             </div>
+          ) : isOwner ? (
+            <>
+              <Link href="/dashboard/site?action=add-content" className="btn btn--dark flex-1 text-center justify-center">
+                <Plus className="h-4 w-4" aria-hidden="true" />
+                Ajouter contenu
+              </Link>
+              <Link href="/dashboard/site/general" className="btn btn--ghost flex-1 text-center justify-center">
+                <Pencil className="h-4 w-4" aria-hidden="true" />
+                Modifier profil
+              </Link>
+            </>
+          ) : isAuthed ? (
             <button
               type="button"
               className={`btn btn--accent${isFollowing ? ' btn--ghost' : ''}`}

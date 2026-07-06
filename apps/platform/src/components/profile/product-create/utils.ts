@@ -32,6 +32,7 @@ export function createInitialFormState(): ProductCreateFormState {
     physicalStockQuantity: '1',
     physicalCondition: 'new',
     digitalStockUnlimited: true,
+    variantOptions: [{ name: '', values: [] }],
     variants: [],
     digitalFileId: null,
     digitalFile: null,
@@ -63,15 +64,60 @@ export function formToDraft(form: ProductCreateFormState): ProductCreateDraft {
     pickupEnabled: form.pickupEnabled,
     deliveryEnabled: form.deliveryEnabled,
     physicalPickupLocation: form.physicalPickupLocation,
-    physicalStockQuantity: form.physicalStockQuantity,
+    physicalStockQuantity: '1', // Always 1 if no variants (or ignored)
     physicalCondition: form.physicalCondition,
     digitalStockUnlimited: form.digitalStockUnlimited,
-    variants: form.variants.map((v) => ({
-      pairs: v.pairs,
-      sku: v.sku,
-      price: v.price,
-      stock: v.stock,
-    })),
+    variants: form.variants.flatMap((v) => {
+      const basePairs = [...v.pairs]
+      if (form.physicalCondition !== 'new' && v.condition) {
+        const conditionLabels: Record<string, string> = {
+          like_new: 'Comme neuf',
+          very_good: 'Très bon état',
+          good: 'Bon état',
+          acceptable: 'Correct',
+        }
+        basePairs.push({ key: 'État', value: conditionLabels[v.condition] || 'Occasion' })
+      }
+      
+      if (v.subVariants && v.subVariants.length > 0) {
+        return v.subVariants.map((sub) => {
+          const subPairs = [...basePairs]
+          if (sub.key && sub.value) {
+             subPairs.push({ key: sub.key, value: sub.value })
+          }
+          if (form.physicalCondition !== 'new' && sub.condition) {
+            const conditionLabels: Record<string, string> = {
+              like_new: 'Comme neuf',
+              very_good: 'Très bon état',
+              good: 'Bon état',
+              acceptable: 'Correct',
+            }
+            // Remove the parent's condition and use the subvariant's
+            const filteredPairs = subPairs.filter(p => p.key !== 'État')
+            filteredPairs.push({ key: 'État', value: conditionLabels[sub.condition] || 'Occasion' })
+            return {
+              pairs: filteredPairs,
+              sku: sub.sku,
+              price: sub.price,
+              stock: sub.stock,
+            }
+          }
+          return {
+            pairs: subPairs,
+            sku: sub.sku,
+            price: sub.price,
+            stock: sub.stock,
+          }
+        })
+      }
+
+      return [{
+        pairs: basePairs,
+        sku: v.sku,
+        price: v.price,
+        stock: v.stock,
+      }]
+    }),
     digitalFileId: form.digitalFileId,
     digitalFileUploading: form.digitalFileUploading,
     customDetails: form.customDetails,
@@ -85,7 +131,7 @@ export function formToDraft(form: ProductCreateFormState): ProductCreateDraft {
   }
 }
 
-export function validateStep(form: ProductCreateFormState, step: 1 | 2 | 3) {
+export function validateStep(form: ProductCreateFormState, step: 1 | 2 | 3 | 4) {
   if (!form.type) return { ok: false, fieldErrors: { type: 'Choisis un type de produit.' } }
   return validateProductStep(step, formToDraft(form))
 }

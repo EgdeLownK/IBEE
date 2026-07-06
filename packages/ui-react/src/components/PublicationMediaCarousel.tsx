@@ -22,37 +22,32 @@ function getCropStyle(
   height: number | null | undefined,
   fullWidth: boolean
 ): React.CSSProperties {
+  if (!width || !height) {
+    return fullWidth
+      ? { aspectRatio: '16/9', objectFit: 'cover' }
+      : { aspectRatio: '16/9', objectFit: 'cover', maxHeight: 400 }
+  }
+
+  const ratio = width / height
+
   if (fullWidth) {
-    if (!width || !height) {
+    if (ratio >= 16 / 9) {
       return { aspectRatio: '16/9', objectFit: 'cover' }
-    }
-    const ratio = width / height
-    if (ratio >= 1.91) {
-      return { aspectRatio: '1.91/1', objectFit: 'cover' }
     }
     if (ratio >= 1) {
       return { aspectRatio: `${width}/${height}`, objectFit: 'cover' }
     }
-    if (ratio >= 0.8) {
-      return { aspectRatio: `${width}/${height}`, objectFit: 'cover' }
-    }
-    return { aspectRatio: '4/5', objectFit: 'cover' }
+    return { aspectRatio: '1/1', objectFit: 'cover' }
   }
 
-  if (!width || !height) {
-    return { aspectRatio: '3/2', objectFit: 'cover', maxHeight: 400 }
-  }
-  const ratio = width / height
-  if (ratio >= 1.91) {
-    return { aspectRatio: '1.91/1', objectFit: 'cover' }
+  // Not full width (e.g. modal overlay or detail page)
+  if (ratio >= 16 / 9) {
+    return { aspectRatio: '16/9', objectFit: 'cover' }
   }
   if (ratio >= 1) {
     return { aspectRatio: `${width}/${height}`, objectFit: 'contain', maxHeight: 400, background: 'var(--color-neutral-100)' }
   }
-  if (ratio >= 0.8) {
-    return { aspectRatio: `${width}/${height}`, objectFit: 'contain', maxHeight: 400, background: 'var(--color-neutral-100)' }
-  }
-  return { aspectRatio: '4/5', objectFit: 'cover' }
+  return { aspectRatio: '1/1', objectFit: 'contain', maxHeight: 400, background: 'var(--color-neutral-100)' }
 }
 
 export function PublicationMediaCarousel({ media, fullWidth = false }: Props) {

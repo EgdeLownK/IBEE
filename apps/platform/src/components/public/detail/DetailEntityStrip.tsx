@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import Link from 'next/link'
 import type { ReactNode } from 'react'
 
@@ -40,8 +41,7 @@ export function DetailEntityStrip({
     <header className="detail-entity-strip" aria-label={`Profil de ${displayName}`}>
       <div className="profile-banner">
         {bannerUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={bannerUrl} alt="" className="h-full w-full object-cover" />
+          <Image src={bannerUrl} alt="" className="h-full w-full object-cover" width={800} height={172} priority />
         ) : (
           <div className="profile-banner__placeholder profile-banner__placeholder--empty" aria-hidden="true" />
         )}
@@ -51,8 +51,7 @@ export function DetailEntityStrip({
         <div className="detail-entity-strip__group">
           <Link href={profileHref} className="profile-avatar" aria-label={`Voir le profil de ${displayName}`}>
             {avatarUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={avatarUrl} alt="" width={172} height={172} className="h-full w-full object-cover" />
+              <Image src={avatarUrl} alt="" width={172} height={172} className="h-full w-full object-cover" priority />
             ) : (
               <span className="font-display text-[30px] font-semibold text-accent">{initials}</span>
             )}

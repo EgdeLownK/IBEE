@@ -8,6 +8,7 @@ import { stepForField } from '@ibee/shared'
 import { createProductAction } from '@/app/dashboard/site/product-actions'
 import { StepDescription } from './steps/StepDescription'
 import { StepEssentials } from './steps/StepEssentials'
+import { StepFaq } from './steps/StepFaq'
 import { StepTypeSelect } from './steps/StepTypeSelect'
 import { StepTypeSpecific } from './steps/StepTypeSpecific'
 import type { CreatedShopProduct, ProductCategoryOption, ProductCreateFormState, ProductType } from './types'
@@ -46,7 +47,7 @@ export function ProductCreateWizard({
   useEffect(() => {
     if (!open) return
     function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') handleClose()
+      if (e.key === 'Escape') onClose()
     }
     document.documentElement.style.overflow = 'hidden'
     document.addEventListener('keydown', onKey)
@@ -81,12 +82,12 @@ export function ProductCreateWizard({
 
   function goNext() {
     if (form.step === 0) return
-    const result = validateStep(form, form.step as 1 | 2 | 3)
+    const result = validateStep(form, form.step as 1 | 2 | 3 | 4)
     if (!result.ok) {
       patchForm({ fieldErrors: result.fieldErrors, globalError: '' })
       return
     }
-    if (form.step < 3) {
+    if (form.step < 4) {
       patchForm({ step: (form.step + 1) as ProductCreateFormState['step'], fieldErrors: {}, globalError: '' })
     }
   }
@@ -98,7 +99,7 @@ export function ProductCreateWizard({
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    for (const s of [1, 2, 3] as const) {
+    for (const s of [1, 2, 3, 4] as const) {
       const result = validateStep(form, s)
       if (!result.ok) {
         patchForm({ step: s, fieldErrors: result.fieldErrors, globalError: '' })
@@ -112,9 +113,9 @@ export function ProductCreateWizard({
       if (!result.ok) {
         const fieldErrors = result.fieldErrors ?? {}
         const firstField = Object.keys(fieldErrors)[0]
-        const targetStep = firstField ? stepForField(firstField) : 3
+        const targetStep = firstField ? stepForField(firstField) : 4
         patchForm({
-          step: targetStep,
+          step: targetStep as ProductCreateFormState['step'],
           fieldErrors,
           globalError: result.error,
         })
@@ -156,27 +157,27 @@ export function ProductCreateWizard({
 
   return createPortal(
     <div className="pco-root" role="presentation">
-      <button type="button" className="pco-root__backdrop" aria-label="Fermer" onClick={handleClose} />
+      <button type="button" className="pco-root__backdrop" aria-label="Fermer" onClick={onClose} />
       <div className="pco__panel" role="dialog" aria-modal="true" aria-labelledby="pco-title">
         <header className="pco__header">
           <h2 id="pco-title" className="pco__title">
             Ajouter un produit
           </h2>
-          <button type="button" className="pco__close" aria-label="Fermer" onClick={handleClose}>
+          <button type="button" className="pco__close" aria-label="Fermer" onClick={onClose}>
             <X className="h-5 w-5" />
           </button>
         </header>
 
         {showSteps ? (
           <nav className="pco__steps" aria-label="Étapes de création">
-            {[1, 2, 3].map((n) => (
+            {[1, 2, 3, 4].map((n) => (
               <span
                 key={n}
                 className={`pco__step${form.step === n ? ' is-active' : ''}${form.step > n ? ' is-done' : ''}`}
               >
                 <span className="pco__step-num">{n}</span>
                 <span className="pco__step-label">
-                  {n === 1 ? "L'essentiel" : n === 2 ? step2 : 'Description'}
+                  {n === 1 ? "L'essentiel" : n === 2 ? step2 : n === 3 ? 'Description' : 'FAQ'}
                 </span>
               </span>
             ))}
@@ -206,13 +207,18 @@ export function ProductCreateWizard({
             {form.step === 3 ? (
               <StepDescription form={form} updateForm={updateForm} onChange={patchForm} />
             ) : null}
+            {form.step === 4 ? (
+              <StepFaq form={form} onChange={patchForm} />
+            ) : null}
           </div>
 
           <footer className="pco__actions">
             <div className="pco__actions-start">
-              <button type="button" className="pco__btn pco__btn--ghost" onClick={handleClose}>
-                {cancelLabel}
-              </button>
+              {form.step < 2 ? (
+                <button type="button" className="pco__btn pco__btn--ghost" onClick={handleClose}>
+                  {cancelLabel}
+                </button>
+              ) : null}
               {form.step > 1 ? (
                 <button type="button" className="pco__btn pco__btn--ghost" onClick={goPrev}>
                   <ArrowLeft className="h-4 w-4" /> Précédent
@@ -220,12 +226,12 @@ export function ProductCreateWizard({
               ) : null}
             </div>
             <div className="pco__actions-end">
-              {form.step >= 1 && form.step < 3 ? (
+              {form.step >= 1 && form.step < 4 ? (
                 <button type="button" className="pco__btn pco__btn--primary" onClick={goNext}>
                   Suivant <ArrowRight className="h-4 w-4" />
                 </button>
               ) : null}
-              {form.step === 3 ? (
+              {form.step === 4 ? (
                 <button type="submit" className="pco__btn pco__btn--primary" disabled={pending}>
                   {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                   <span>{pending ? 'Création...' : 'Créer le produit'}</span>

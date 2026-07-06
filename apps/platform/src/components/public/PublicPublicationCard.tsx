@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { PublicationMediaCarousel } from '@ibee/ui-react'
@@ -71,8 +72,7 @@ export function PublicPublicationCard({
       <div className="pub-card__head">
         <div className="pub-card__avatar">
           {entityAvatarUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={entityAvatarUrl} alt="" />
+            <Image src={entityAvatarUrl} alt="" width={40} height={40} />
           ) : (
             <span>{initial}</span>
           )}
