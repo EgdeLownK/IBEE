@@ -36,7 +36,7 @@ export const EVENT_PROFILE_RELATED_MOCK = [
 export const EVENT_SIMILAR_RELATED_MOCK = [
   { kind: 'event' as const, title: 'Événement à découvrir', meta: 'Événement · 20 juin' },
   { kind: 'service' as const, title: 'Prestation similaire', meta: 'Service · 45 min' },
-  { kind: 'product' as const, title: 'Produit similaire', meta: 'Produit · 24 €' },
+  { kind: 'product' as const, title: 'Produit similaire', meta: '', price_cents: 2400 },
   { kind: 'event' as const, title: 'Autre rendez-vous', meta: 'Événement · 1 août' },
   { kind: 'service' as const, title: 'Service recommandé', meta: 'Service · 30 min' },
 ]

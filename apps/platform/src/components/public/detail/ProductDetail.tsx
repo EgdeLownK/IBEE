@@ -31,6 +31,7 @@ type Props = {
   aggregates?: { count: number; average: number } | null
   entitySlug?: string
   hasNews?: boolean
+  newsItems?: PublicProductData['newsItems']
   embedMode?: boolean
   onCheckoutStateChange?: (state: {
     priceText: string | null
@@ -58,35 +59,60 @@ function starRow(n: number) {
   return Array.from({ length: 5 }, (_, i) => i < n)
 }
 
-function buildDetailRows(product: PublishedProduct, customDetails: CustomDetail[]) {
-  const rows: { label: string; value: string }[] = []
+function buildDetailCategories(product: PublishedProduct, customDetails: CustomDetail[]) {
+  const categories: { title: string; rows: { label: string; value: string }[] }[] = []
+  
+  const nativeRows: { label: string; value: string }[] = []
   if (product.type === 'digital') {
     if (product.digital_file_format) {
-      rows.push({
+      nativeRows.push({
         label: 'Format',
         value: FORMAT_LABELS[product.digital_file_format] ?? product.digital_file_format,
       })
     }
     if (product.digital_license) {
-      rows.push({
+      nativeRows.push({
         label: 'Licence',
         value: LICENSE_LABELS[product.digital_license] ?? product.digital_license,
       })
     }
     if (product.digital_language) {
-      rows.push({ label: 'Langue', value: product.digital_language.toUpperCase() })
+      nativeRows.push({ label: 'Langue', value: product.digital_language.toUpperCase() })
     }
     if (product.digital_pages_or_duration != null) {
-      rows.push({
+      nativeRows.push({
         label: product.digital_file_format === 'mp4' || product.digital_file_format === 'mp3' ? 'Durée' : 'Pages',
         value: String(product.digital_pages_or_duration),
       })
     }
-    for (const d of customDetails) {
-      rows.push({ label: d.family ?? d.label, value: d.value })
+  }
+  
+  if (nativeRows.length > 0) {
+    categories.push({ title: 'Général', rows: nativeRows })
+  }
+  
+  const grouped = new Map<string, { label: string; value: string }[]>()
+  const uncategorized: { label: string; value: string }[] = []
+  
+  for (const d of customDetails) {
+    if (d.family) {
+      const g = grouped.get(d.family) ?? []
+      g.push({ label: d.label, value: d.value })
+      grouped.set(d.family, g)
+    } else {
+      uncategorized.push({ label: d.label, value: d.value })
     }
   }
-  return rows
+  
+  if (uncategorized.length > 0) {
+    categories.push({ title: 'Caractéristiques', rows: uncategorized })
+  }
+  
+  for (const [title, rows] of grouped.entries()) {
+    categories.push({ title, rows })
+  }
+  
+  return categories
 }
 
 function computeStock(
@@ -118,6 +144,7 @@ export function ProductDetail({
   aggregates = null,
   entitySlug = '',
   hasNews = false,
+  newsItems = [],
   embedMode = false,
   onCheckoutStateChange,
 }: Props) {
@@ -172,7 +199,7 @@ export function ProductDetail({
   const inStock = computeStock(product, variants, selectedVariant?.id ?? null)
   const reviewCount = aggregates?.count ?? 0
   const reviewAverage = aggregates?.average ?? 0
-  const detailRows = buildDetailRows(product, customDetails)
+  const detailCategories = buildDetailCategories(product, customDetails)
 
   const needsVariant = variants.length > 0
   const canBuy = inStock && (!needsVariant || selectedVariant != null)
@@ -194,8 +221,8 @@ export function ProductDetail({
   const deliveryTags =
     product.type === 'physical'
       ? [
-          { label: 'Main propre', Icon: Handshake },
-          ...(product.pickup_enabled ? [{ label: 'Click & collect', Icon: Store }] : []),
+          ...(product.in_person_enabled ? [{ label: 'Main propre', Icon: Handshake }] : []),
+          ...(product.pickup_enabled ? [{ label: 'Click & Collect', Icon: Store }] : []),
           ...(product.delivery_enabled ? [{ label: 'Livraison', Icon: Truck }] : []),
         ]
       : [{ label: 'Téléchargement', Icon: Download }]
@@ -301,27 +328,29 @@ export function ProductDetail({
         )}
       </div>
 
-      {detailRows.length > 0 && (
+      {detailCategories.length > 0 && (
         <div className="product-detail__buybox-card">
           <div id="tous-les-details" className="product-detail__buybox-info scroll-mt-20">
             <h3 className="product-detail__info-title">Information</h3>
             <div className="product-detail__info-menus">
-              <details className="product-detail__tech-menu">
-                <summary>
-                  <span>Information générale</span>
-                  <span className="product-detail__tech-chevron" aria-hidden="true">
-                    <ChevronRight className="h-[18px] w-[18px]" />
-                  </span>
-                </summary>
-                <div className="product-detail__tech-panel">
-                  {detailRows.map((row, i) => (
-                    <div key={i} className="product-detail__tech-line">
-                      <span>{row.label}</span>
-                      <strong>{row.value}</strong>
-                    </div>
-                  ))}
-                </div>
-              </details>
+              {detailCategories.map((cat, catIndex) => (
+                <details key={catIndex} className="product-detail__tech-menu" open={catIndex === 0}>
+                  <summary>
+                    <span>{cat.title}</span>
+                    <span className="product-detail__tech-chevron" aria-hidden="true">
+                      <ChevronRight className="h-[18px] w-[18px]" />
+                    </span>
+                  </summary>
+                  <div className="product-detail__tech-panel">
+                    {cat.rows.map((row, i) => (
+                      <div key={i} className="product-detail__tech-line">
+                        <span>{row.label}</span>
+                        <strong>{row.value}</strong>
+                      </div>
+                    ))}
+                  </div>
+                </details>
+              ))}
             </div>
           </div>
         </div>
@@ -359,6 +388,7 @@ export function ProductDetail({
       {hasNews && entitySlug && (
         <NewsWidget
           entitySlug={entitySlug}
+          items={newsItems}
           profileBaseHref={embedMode ? embedProfileHref(entitySlug) : undefined}
         />
       )}

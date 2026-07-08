@@ -9,8 +9,10 @@ type Kind = 'service' | 'product' | 'event'
 type RelatedItem = {
   kind: Kind
   title: string
-  meta: string
+  meta?: string
   href?: string
+  cover_url?: string | null
+  price_cents?: number | null
 }
 
 const KIND_LABEL: Record<Kind, string> = {
@@ -45,11 +47,18 @@ export function RelatedContent({ title, items, moreHref = '#' }: Props) {
             const card = (
               <>
                 <div className="related__media" aria-hidden="true">
-                  <span className="related__badge">{KIND_LABEL[it.kind]}</span>
+                  {it.cover_url ? (
+                    <img src={it.cover_url} alt="" className="related__image object-cover w-full h-full" />
+                  ) : null}
+                  {it.price_cents != null && (
+                    <span className="related__price absolute top-2 right-2 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-semibold text-gray-900 shadow-sm">
+                      {(it.price_cents / 100).toFixed(2).replace('.', ',')} €
+                    </span>
+                  )}
                 </div>
                 <div className="related__body">
                   <h3 className="related__name">{it.title}</h3>
-                  <p className="related__meta">{it.meta}</p>
+                  {it.meta && <p className="related__meta">{it.meta}</p>}
                 </div>
               </>
             )

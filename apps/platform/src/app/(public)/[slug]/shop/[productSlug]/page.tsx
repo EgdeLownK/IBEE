@@ -15,8 +15,8 @@ type PageProps = {
 
 export async function generateMetadata({ params, searchParams }: PageProps): Promise<Metadata> {
   const { slug, productSlug } = await params
-  const { rating, sort } = await searchParams
-  const result = await loadPublicProduct(slug, productSlug, { rating, sort })
+  const { rating, sort, preview } = await searchParams
+  const result = await loadPublicProduct(slug, productSlug, { rating, sort, preview })
 
   if (result.kind !== 'ok') {
     return { title: 'Produit introuvable' }
@@ -48,7 +48,7 @@ export default async function ProductDetailRoute({ params, searchParams }: PageP
 
   if (preview === '1') noStore()
 
-  const result = await loadPublicProduct(slug, productSlug, { rating, sort })
+  const result = await loadPublicProduct(slug, productSlug, { rating, sort, preview })
 
   if (result.kind === 'redirect') {
     permanentRedirect(`/${slug}/shop/${result.newSlug}`)

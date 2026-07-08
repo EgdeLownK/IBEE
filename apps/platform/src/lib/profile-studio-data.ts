@@ -1,6 +1,7 @@
 import 'server-only'
 
 import { entityDetailExcerpt } from '@/lib/entity-detail-excerpt'
+import { extractFirstImageFromBlocks } from '@/lib/entity-content-blocks'
 import { getDashboardContext } from '@/lib/dashboard-context'
 import {
   defaultOpeningHours,
@@ -151,7 +152,7 @@ export async function loadProfileStudioPlaylists() {
       sale_price_cents: p.sale_price_cents,
       sale_ends_at: p.sale_ends_at,
       currency: p.currency,
-      image_url: p.product_media?.[0]?.url ?? null,
+      image_url: p.product_media?.[0]?.url ?? extractFirstImageFromBlocks(p.content_blocks) ?? null,
       image_urls: (p.product_media ?? [])
         .filter((m) => !m.media_type || m.media_type === 'image')
         .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))

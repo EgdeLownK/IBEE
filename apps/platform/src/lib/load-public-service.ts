@@ -11,18 +11,18 @@ import {
 
 export const PROFILE_RELATED_MOCK = [
   { kind: 'service' as const, title: 'Séance de coaching', meta: 'Service · 60 min' },
-  { kind: 'product' as const, title: 'Guide complet (PDF)', meta: 'Produit · 19 €' },
+  { kind: 'product' as const, title: 'Guide complet (PDF)', meta: '', price_cents: 1900 },
   { kind: 'event' as const, title: 'Atelier en ligne', meta: 'Événement · 12 juin' },
-  { kind: 'product' as const, title: 'Pack ressources', meta: 'Produit · 39 €' },
+  { kind: 'product' as const, title: 'Pack ressources', meta: '', price_cents: 3900 },
   { kind: 'service' as const, title: 'Audit personnalisé', meta: 'Service · sur devis' },
 ]
 
 export const SIMILAR_RELATED_MOCK = [
   { kind: 'service' as const, title: 'Prestation similaire', meta: 'Service · 45 min' },
   { kind: 'event' as const, title: 'Événement à découvrir', meta: 'Événement · 20 juin' },
-  { kind: 'product' as const, title: 'Produit similaire', meta: 'Produit · 24 €' },
+  { kind: 'product' as const, title: 'Produit similaire', meta: '', price_cents: 2400 },
   { kind: 'service' as const, title: 'Service recommandé', meta: 'Service · 30 min' },
-  { kind: 'product' as const, title: 'Autre suggestion', meta: 'Produit · 15 €' },
+  { kind: 'product' as const, title: 'Autre suggestion', meta: '', price_cents: 1500 },
 ]
 
 export async function loadPublicService(

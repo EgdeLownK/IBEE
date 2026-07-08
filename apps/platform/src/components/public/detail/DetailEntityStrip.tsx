@@ -65,7 +65,6 @@ export function DetailEntityStrip({
 
         {(ctaSlot || ctaHref) && (
           <div className="detail-entity-strip__buy">
-            {priceText && <span className="detail-entity-strip__price">{priceText}</span>}
             {ctaSlot ?? (
               <Link href={ctaHref!} className="detail-entity-strip__cta">
                 {ctaLabel}

@@ -21,6 +21,9 @@ export type SubVariantDraft = {
   stock: string
   sku: string
   condition?: string
+  promoEnabled?: boolean
+  salePrice?: string
+  saleEndsAt?: string
 }
 
 export type VariantDraft = {
@@ -31,6 +34,9 @@ export type VariantDraft = {
   stock: string
   condition?: string
   error?: string
+  promoEnabled?: boolean
+  salePrice?: string
+  saleEndsAt?: string
   subVariants?: SubVariantDraft[]
 }
 
@@ -38,7 +44,17 @@ export type DetailPair = { label: string; value: string }
 
 export type ContentBlockDraft =
   | { id: string; type: 'text'; content: string }
-  | { id: string; type: 'image'; url: string; previewUrl: string; uploading: boolean }
+  | { id: string; type: 'title'; content: string }
+  | { id: string; type: 'list'; items: string[] }
+  | { 
+      id: string
+      type: 'image'
+      slot_count: 1 | 2 | 3
+      images: ({ url: string; aspect_ratio: number; type: 'image' | 'video' } | null)[]
+      title?: string
+      description?: string
+      uploading: boolean 
+    }
 
 export type FaqDraft = { question: string; answer: string }
 
@@ -47,6 +63,7 @@ export type ProductCategoryOption = { id: string; name: string }
 export type ProductCreateFormState = {
   step: 0 | 1 | 2 | 3 | 4
   type: ProductType | null
+  audience: 'men' | 'women' | 'unisex' | null
   media: MediaDraft[]
   title: string
   descriptionShort: string
@@ -58,18 +75,20 @@ export type ProductCreateFormState = {
   categoryId: string
   newCategoryName: string
   pickupEnabled: boolean
+  inPersonEnabled: boolean
   deliveryEnabled: boolean
   physicalPickupLocation: string
   physicalStockQuantity: string
   physicalCondition: PhysicalCondition
   digitalStockUnlimited: boolean
+  variationMode: 'unique' | 'variants' | 'subvariants'
   variantOptions: { name: string; values: string[] }[]
   variants: VariantDraft[]
   digitalFileId: string | null
   digitalFile: EntityFileDto | null
   digitalFileUploading: boolean
   entityFiles: EntityFileDto[]
-  customDetails: DetailPair[]
+  customDetails: { category: string; items: { label: string; value: string }[] }[]
   contentBlocks: ContentBlockDraft[]
   faq: FaqDraft[]
   publish: boolean

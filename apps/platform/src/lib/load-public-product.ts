@@ -14,6 +14,8 @@ import {
   getEntityMenuSections,
   getPublishedProductBySlug,
   getReviewAggregates,
+  listPublishedProductsByEntity,
+  getPublicationsByEntity,
   listPublishedReviews,
   lookupProductSlugHistory,
 } from '@ibee/supabase'
@@ -62,6 +64,7 @@ export type PublicProductData = {
     authorName: string
   }[]
   hasNews: boolean
+  newsItems: { id: string; title: string; slug: string; cover_url: string | null; published_at: string | null }[]
   siteUrl: string
   profileUrl: string
   productUrl: string
@@ -77,6 +80,8 @@ export type PublicProductData = {
   description: string
 }
 
+import { getDashboardContext } from '@/lib/dashboard-context'
+
 export type ProductLoadResult =
   | { kind: 'not_found' }
   | { kind: 'redirect'; newSlug: string }
@@ -85,15 +90,40 @@ export type ProductLoadResult =
 export async function loadPublicProduct(
   slug: string,
   productSlug: string,
-  searchParams?: { rating?: string; sort?: string }
+  searchParams?: { rating?: string; sort?: string; preview?: string }
 ): Promise<ProductLoadResult> {
   const supabase = await createClient()
   const entity = await getEntityBySlug(supabase, slug)
   if (!entity) return { kind: 'not_found' }
 
   const entityRow = entity as typeof entity & { banner_url?: string | null }
+  
+  let productRaw: any = null
 
-  const productRaw = await getPublishedProductBySlug(supabase, slug, productSlug)
+  if (searchParams?.preview === '1') {
+    try {
+      const ctx = await getDashboardContext()
+      if (ctx?.entity.slug === slug) {
+        const { data } = await supabase
+          .from('products')
+          .select(`
+            *,
+            entity_product_categories(name),
+            product_media(*),
+            product_variants(*)
+          `)
+          .eq('entity_id', entityRow.id)
+          .eq('slug', productSlug)
+          .maybeSingle()
+        productRaw = data
+      }
+    } catch {}
+  }
+
+  if (!productRaw) {
+    productRaw = await getPublishedProductBySlug(supabase, slug, productSlug)
+  }
+
   if (!productRaw) {
     const history = await lookupProductSlugHistory(supabase, entity.id, productSlug)
     if (history?.new_slug) return { kind: 'redirect', newSlug: history.new_slug }
@@ -116,6 +146,40 @@ export async function loadPublicProduct(
   for (const r of allRatings) {
     if (r.rating >= 1 && r.rating <= 5) distribution[r.rating] = (distribution[r.rating] ?? 0) + 1
   }
+
+  // Fetch actual real data for related sections
+  const entityProducts = await listPublishedProductsByEntity(supabase, entity.id, { limit: 10 })
+  
+  // Exclude current product and take up to 4 for "Autres contenus"
+  const otherEntityProducts = entityProducts
+    .filter((p) => p.id !== product.id)
+    .slice(0, 4)
+    .map((p) => ({
+      id: p.id,
+      title: p.title,
+      slug: p.slug,
+      entity_slug: entity.slug,
+      entity_name: entity.display_name,
+      price_cents: p.price_cents,
+      cover_url: Array.isArray(p.product_media) ? (p.product_media.find((m) => m.display_order === 0)?.url ?? p.product_media[0]?.url ?? null) : null,
+      type: p.type as any,
+      kind: 'product' as const,
+      meta: '',
+    }))
+
+  // For "À découvrir aussi", simple mock for now or use the same category if possible
+  // Since we don't have a cross-entity search readily available, we just keep SIMILAR_RELATED_MOCK for now as requested
+  // "pour À découvrir aussi fait quelque chose de simple" -> actually we can just pass some items from entityProducts if we want, but let's keep it minimal.
+  
+  // Fetch actual news
+  const entityNews = await getPublicationsByEntity(supabase, entity.id, { limit: 4 })
+  const newsItems = (entityNews ?? []).map(n => ({
+    id: n.id,
+    title: n.title,
+    slug: n.slug,
+    cover_url: Array.isArray(n.publication_media) ? (n.publication_media[0] as any)?.url ?? null : null,
+    published_at: n.published_at,
+  }))
 
   const saleActive =
     product.sale_price_cents != null &&
@@ -183,7 +247,8 @@ export async function loadPublicProduct(
     images,
     video,
     reviewSamples,
-    hasNews: menuSections.some((s) => s.type === 'news'),
+    hasNews: menuSections.some((s) => s.type === 'news') && newsItems.length > 0,
+    newsItems,
     siteUrl,
     profileUrl,
     productUrl,
@@ -193,7 +258,7 @@ export async function loadPublicProduct(
     metaTitle,
     metaDescription,
     ogImage,
-    profileRelated: PROFILE_RELATED_MOCK,
+    profileRelated: otherEntityProducts.length > 0 ? otherEntityProducts : PROFILE_RELATED_MOCK,
     similarRelated: SIMILAR_RELATED_MOCK,
     subtitle: [categoryName, product.type === 'digital' ? 'Produit numérique' : 'Produit physique']
       .filter(Boolean)

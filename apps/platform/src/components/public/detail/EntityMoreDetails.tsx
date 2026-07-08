@@ -43,18 +43,54 @@ export function EntityMoreDetails({
 
       <div className="emd__body">
         {hasBlocks
-          ? contentBlocks.map((block, i) =>
-              block.type === 'text' ? (
-                <p key={i} className="emd__text">
-                  {block.content}
-                </p>
-              ) : (
-                <figure key={i} className="emd__figure">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={block.url} alt={block.alt ?? ''} className="emd__img" loading="lazy" />
-                </figure>
-              )
-            )
+          ? contentBlocks.map((block, i) => {
+              if (block.type === 'text') {
+                return (
+                  <p key={i} className="emd__text">
+                    {block.content}
+                  </p>
+                )
+              }
+              if (block.type === 'title') {
+                return (
+                  <h3 key={i} className="emd__subtitle">
+                    {block.content}
+                  </h3>
+                )
+              }
+              if (block.type === 'list') {
+                return (
+                  <ul key={i} className="emd__list">
+                    {block.items.map((item, idx) => (
+                      <li key={idx}>{item}</li>
+                    ))}
+                  </ul>
+                )
+              }
+              if (block.type === 'image') {
+                if (block.images && block.images.length > 0) {
+                  const useGrid = block.images.length > 1
+                  return (
+                    <div key={i} className={`emd__image-grid ${useGrid ? 'emd__image-grid--multiple' : ''}`}>
+                      {block.images.map((img, idx) => (
+                        <figure key={idx} className="emd__figure">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={img.url} alt="" className="emd__img" loading="lazy" />
+                        </figure>
+                      ))}
+                    </div>
+                  )
+                } else if (block.url) {
+                  return (
+                    <figure key={i} className="emd__figure">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={block.url} alt={block.alt ?? ''} className="emd__img" loading="lazy" />
+                    </figure>
+                  )
+                }
+              }
+              return null
+            })
           : hasFallback && <p className="emd__text">{fallback}</p>}
       </div>
     </section>

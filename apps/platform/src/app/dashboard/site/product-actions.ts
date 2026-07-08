@@ -2,6 +2,13 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidateAfterEntityMutation } from '@/lib/revalidate-public'
+import {
+  descriptionFromBlocks,
+  extractFirstImageFromBlocks,
+  parseBulletPoints,
+  parseDetailContentBlocks,
+  parseFaqItems,
+} from '@/lib/entity-content-blocks'
 import { digitalFormatFromName } from '@/lib/digital-product-utils'
 import {
   addProductMedia,
@@ -203,6 +210,7 @@ export async function createProductAction(input: ProductCreateInput) {
     const baseCommon = {
       entity_id: entity.id,
       type,
+      audience: input.audience ?? null,
       title,
       description_short: descriptionShort,
       price_cents: priceCents,
@@ -227,6 +235,7 @@ export async function createProductAction(input: ProductCreateInput) {
           ? (Number.isInteger(input.physical_stock_quantity) ? input.physical_stock_quantity! : 1)
           : null,
       pickup_enabled: type === 'physical' ? (input.pickup_enabled ?? false) : false,
+      in_person_enabled: type === 'physical' ? (input.in_person_enabled ?? false) : false,
       delivery_enabled: type === 'physical' ? (input.delivery_enabled ?? false) : false,
     }
 
@@ -299,8 +308,9 @@ export async function createProductAction(input: ProductCreateInput) {
             alt_text: i === 0 ? title : null,
           }))
         )
-      } catch (err) {
-        console.error('[createProductAction] addProductMedia', err)
+      } catch (err: any) {
+        console.error('[createProductAction] addProductMedia error', err)
+        return { ok: false as const, error: "Le produit a été créé mais l'ajout des images a échoué: " + (err?.message || 'Erreur inconnue') }
       }
     }
 
@@ -311,6 +321,8 @@ export async function createProductAction(input: ProductCreateInput) {
           ...(v.sku !== undefined ? { sku: v.sku } : {}),
           ...(v.price_cents_override !== undefined ? { price_cents_override: v.price_cents_override } : {}),
           ...(v.stock_quantity !== undefined ? { stock_quantity: v.stock_quantity } : {}),
+          ...(v.sale_price_cents_override !== undefined ? { sale_price_cents_override: v.sale_price_cents_override } : {}),
+          ...(v.sale_ends_at !== undefined ? { sale_ends_at: v.sale_ends_at } : {}),
         })
       } catch (err) {
         console.error('[createProductAction] createProductVariant', err)
@@ -352,6 +364,7 @@ export async function createProductAction(input: ProductCreateInput) {
     void purgeEntityCache(entity.slug, siteUrl())
     revalidateAfterEntityMutation(entity.slug, { productSlug })
 
+    const fallbackImg = extractFirstImageFromBlocks(input.content_blocks)
     return {
       ok: true as const,
       product: {
@@ -367,7 +380,7 @@ export async function createProductAction(input: ProductCreateInput) {
         category_id: resolvedCategoryId,
         type,
         physical_stock_quantity: baseCommon.physical_stock_quantity,
-        image_url: media[0]?.url ?? null,
+        image_url: media[0]?.url ?? fallbackImg,
       },
     }
   } catch (err) {

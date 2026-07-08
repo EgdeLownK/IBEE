@@ -177,7 +177,7 @@ export function ProductCreateWizard({
               >
                 <span className="pco__step-num">{n}</span>
                 <span className="pco__step-label">
-                  {n === 1 ? "L'essentiel" : n === 2 ? step2 : n === 3 ? 'Description' : 'FAQ'}
+                  {n === 1 ? "Présentation" : n === 2 ? step2 : n === 3 ? 'Description' : 'FAQ'}
                 </span>
               </span>
             ))}

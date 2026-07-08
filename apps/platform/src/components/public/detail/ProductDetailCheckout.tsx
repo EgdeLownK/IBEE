@@ -62,6 +62,7 @@ export function ProductDetailCheckout({ data, embedMode = false }: Props) {
           aggregates={data.aggregates}
           entitySlug={data.entity.slug}
           hasNews={data.hasNews}
+          newsItems={data.newsItems}
           embedMode={embedMode}
           onCheckoutStateChange={setCheckout}
         />

@@ -3032,6 +3032,7 @@ export type Database = {
           physical_stock_unlimited: boolean | null
           physical_weight_grams: number | null
           pickup_enabled: boolean
+          in_person_enabled: boolean
           price_cents: number
           published_at: string | null
           sale_ends_at: string | null
@@ -3091,6 +3092,7 @@ export type Database = {
           physical_stock_unlimited?: boolean | null
           physical_weight_grams?: number | null
           pickup_enabled?: boolean
+          in_person_enabled?: boolean
           price_cents: number
           published_at?: string | null
           sale_ends_at?: string | null
@@ -3150,6 +3152,7 @@ export type Database = {
           physical_stock_unlimited?: boolean | null
           physical_weight_grams?: number | null
           pickup_enabled?: boolean
+          in_person_enabled?: boolean
           price_cents?: number
           published_at?: string | null
           sale_ends_at?: string | null

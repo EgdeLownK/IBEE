@@ -1,11 +1,14 @@
 export type DetailContentBlock =
   | { type: 'text'; content: string }
-  | { type: 'image'; url: string; alt?: string }
+  | { type: 'title'; content: string }
+  | { type: 'list'; items: string[] }
+  | { type: 'image'; url?: string; alt?: string; images?: { url: string }[]; slot_count?: number }
 
 type RawBlock =
   | { type: 'text'; content: string }
-  | { type: 'image'; url: string; alt: string }
+  | { type: 'title'; content: string }
   | { type: 'list'; items: string[] }
+  | { type: 'image'; url?: string; alt?: string; images?: { url: string }[]; slot_count?: number }
 
 export function parseFaqItems(faq: unknown): { question: string; answer: string }[] {
   if (!Array.isArray(faq)) return []
@@ -44,12 +47,34 @@ export function parseDetailContentBlocks(entity: {
 
   return blocks.flatMap((b): DetailContentBlock[] => {
     if (b.type === 'text' && b.content) return [{ type: 'text', content: b.content }]
-    if (b.type === 'image' && b.url) return [{ type: 'image', url: b.url, alt: b.alt }]
+    if (b.type === 'title' && b.content) return [{ type: 'title', content: b.content }]
     if (b.type === 'list' && Array.isArray(b.items) && b.items.length > 0) {
-      return [{ type: 'text', content: b.items.map((item) => `• ${item}`).join('\n') }]
+      return [{ type: 'list', items: b.items }]
+    }
+    if (b.type === 'image') {
+      // Support for both old format (url, alt) and new format (images array)
+      if (b.images && Array.isArray(b.images)) {
+        return [{ type: 'image', images: b.images, slot_count: b.slot_count }]
+      } else if (b.url) {
+        return [{ type: 'image', url: b.url, alt: b.alt }]
+      }
     }
     return []
   })
+}
+
+export function extractFirstImageFromBlocks(blocks: unknown): string | null {
+  if (!Array.isArray(blocks)) return null
+  for (const b of blocks) {
+    if (b && typeof b === 'object' && (b as any).type === 'image') {
+      const imgBlock = b as any
+      if (imgBlock.images && Array.isArray(imgBlock.images) && imgBlock.images.length > 0) {
+        return imgBlock.images[0].url ?? null
+      }
+      if (imgBlock.url) return imgBlock.url
+    }
+  }
+  return null
 }
 
 export function descriptionFromBlocks(blocks: DetailContentBlock[], fallback: string): string {

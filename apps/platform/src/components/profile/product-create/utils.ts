@@ -12,45 +12,50 @@ export function nextId(prefix = 'id') {
   return `${prefix}${uid}`
 }
 
+export const DEFAULT_FORM_STATE: ProductCreateFormState = {
+  step: 1,
+  type: null,
+  audience: null,
+  media: [],
+  title: '',
+  descriptionShort: '',
+  bullets: [],
+  price: '',
+  promoEnabled: false,
+  salePrice: '',
+  saleEndsAt: '',
+  categoryId: '',
+  newCategoryName: '',
+  pickupEnabled: false,
+  inPersonEnabled: false,
+  deliveryEnabled: false,
+  physicalPickupLocation: '',
+  physicalStockQuantity: '',
+  physicalCondition: 'new',
+  digitalStockUnlimited: true,
+  variationMode: 'unique',
+  variantOptions: [],
+  variants: [],
+  digitalFileId: null,
+  digitalFile: null,
+  digitalFileUploading: false,
+  entityFiles: [],
+  customDetails: [],
+  contentBlocks: [],
+  faq: [],
+  publish: false,
+  fieldErrors: {},
+  globalError: '',
+}
+
 export function createInitialFormState(): ProductCreateFormState {
-  return {
-    step: 0,
-    type: null,
-    media: [],
-    title: '',
-    descriptionShort: '',
-    bullets: [],
-    price: '',
-    promoEnabled: false,
-    salePrice: '',
-    saleEndsAt: '',
-    categoryId: '',
-    newCategoryName: '',
-    pickupEnabled: false,
-    deliveryEnabled: false,
-    physicalPickupLocation: '',
-    physicalStockQuantity: '1',
-    physicalCondition: 'new',
-    digitalStockUnlimited: true,
-    variantOptions: [{ name: '', values: [] }],
-    variants: [],
-    digitalFileId: null,
-    digitalFile: null,
-    digitalFileUploading: false,
-    entityFiles: [],
-    customDetails: [],
-    contentBlocks: [],
-    faq: [],
-    publish: false,
-    fieldErrors: {},
-    globalError: '',
-  }
+  return { ...DEFAULT_FORM_STATE }
 }
 
 export function formToDraft(form: ProductCreateFormState): ProductCreateDraft {
-  if (!form.type) throw new Error('Type requis')
   return {
-    type: form.type,
+    type: form.type || 'physical',
+    audience: form.audience,
     title: form.title,
     descriptionShort: form.descriptionShort,
     bullets: form.bullets,
@@ -62,11 +67,13 @@ export function formToDraft(form: ProductCreateFormState): ProductCreateDraft {
     newCategoryName: form.newCategoryName,
     media: form.media.map((m) => ({ url: m.url, type: m.type, uploading: m.uploading })),
     pickupEnabled: form.pickupEnabled,
+    inPersonEnabled: form.inPersonEnabled,
     deliveryEnabled: form.deliveryEnabled,
     physicalPickupLocation: form.physicalPickupLocation,
     physicalStockQuantity: '1', // Always 1 if no variants (or ignored)
     physicalCondition: form.physicalCondition,
     digitalStockUnlimited: form.digitalStockUnlimited,
+    variationMode: form.variationMode,
     variants: form.variants.flatMap((v) => {
       const basePairs = [...v.pairs]
       if (form.physicalCondition !== 'new' && v.condition) {
@@ -121,11 +128,19 @@ export function formToDraft(form: ProductCreateFormState): ProductCreateDraft {
     digitalFileId: form.digitalFileId,
     digitalFileUploading: form.digitalFileUploading,
     customDetails: form.customDetails,
-    contentBlocks: form.contentBlocks.map((b) =>
-      b.type === 'text'
-        ? { type: 'text' as const, content: b.content }
-        : { type: 'image' as const, url: b.url, uploading: b.uploading }
-    ),
+    contentBlocks: form.contentBlocks.map((b) => {
+      if (b.type === 'text') return { type: 'text' as const, content: b.content }
+      if (b.type === 'title') return { type: 'title' as const, content: b.content }
+      if (b.type === 'list') return { type: 'list' as const, items: b.items }
+      return {
+        type: 'image' as const,
+        slot_count: b.slot_count,
+        images: b.images,
+        title: b.title || '',
+        description: b.description || '',
+        uploading: b.uploading,
+      }
+    }),
     faq: form.faq,
     publish: form.publish,
   }
@@ -151,10 +166,10 @@ export function truncateExcerpt(text: string, max = CARD_DETAIL_EXCERPT_MAX): st
 }
 
 export function step2Label(type: ProductCreateFormState['type']): string {
-  return type === 'digital' ? 'Fichier & détails' : 'Stock & variantes'
+  return type === 'digital' ? 'Fichier & détails' : 'Prix & logistique'
 }
 
-export const STEP_LABELS = ["L'essentiel", '', 'Description'] as const
+export const STEP_LABELS = ["Présentation", '', 'Description'] as const
 
 export function mediaHasVideo(media: ProductCreateFormState['media']): boolean {
   return media.some((m) => m.type === 'video')

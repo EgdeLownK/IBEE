@@ -1,5 +1,6 @@
 import { createPublicSupabaseClient } from '@/lib/site-url'
 import { entityDetailExcerpt } from '@/lib/entity-detail-excerpt'
+import { extractFirstImageFromBlocks } from '@/lib/entity-content-blocks'
 import {
   countEventRegistrations,
   defaultOpeningHours,
@@ -85,7 +86,7 @@ export async function loadPublicProfileBySlug(slug: string) {
     sale_price_cents: p.sale_price_cents,
     sale_ends_at: p.sale_ends_at,
     currency: p.currency,
-    image_url: p.product_media?.[0]?.url ?? null,
+    image_url: p.product_media?.[0]?.url ?? extractFirstImageFromBlocks(p.content_blocks) ?? null,
     image_urls: (p.product_media ?? [])
       .filter((m) => !m.media_type || m.media_type === 'image')
       .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))

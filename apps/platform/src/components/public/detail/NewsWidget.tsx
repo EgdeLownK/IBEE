@@ -5,28 +5,24 @@ import Link from 'next/link'
 import { formatRelativeDateFr } from '@/lib/format-date-fr'
 import { useHorizontalCarousel } from '@/hooks/useHorizontalCarousel'
 
-const MOCK_ITEMS = [
-  { title: 'Une nouveauté à découvrir', slug: '', publishedAt: new Date(Date.now() - 2 * 86400000).toISOString() },
-  { title: 'Retour sur le mois écoulé', slug: '', publishedAt: new Date(Date.now() - 7 * 86400000).toISOString() },
-  { title: 'Coulisses du projet', slug: '', publishedAt: new Date(Date.now() - 21 * 86400000).toISOString() },
-  { title: 'Les prochaines sorties', slug: '', publishedAt: new Date(Date.now() - 30 * 86400000).toISOString() },
-  { title: 'Merci pour votre soutien', slug: '', publishedAt: new Date(Date.now() - 35 * 86400000).toISOString() },
-]
+
 
 interface Props {
   entitySlug: string
   profileBaseHref?: string
   showHeader?: boolean
+  items?: { id: string; title: string; slug: string; published_at: string | null; cover_url?: string | null }[]
 }
 
-export function NewsWidget({ entitySlug, profileBaseHref, showHeader = true }: Props) {
+export function NewsWidget({ entitySlug, profileBaseHref, showHeader = true, items: propsItems = [] }: Props) {
   const profileBase = profileBaseHref ?? `/${entitySlug}`
   const { trackRef, canPrev, canNext, scrollPrev, scrollNext } = useHorizontalCarousel(14, 'nwidget__card')
 
-  const items = MOCK_ITEMS.map((item) => ({
+  const items = propsItems.map((item) => ({
     title: item.title,
-    href: item.slug ? `${profileBase}/news/${item.slug}` : `${profileBase}#news`,
-    date: formatRelativeDateFr(item.publishedAt),
+    href: `${profileBase}/news/${item.slug}`,
+    date: formatRelativeDateFr(item.published_at ?? new Date().toISOString()),
+    cover_url: item.cover_url,
   }))
 
   return (
@@ -45,7 +41,12 @@ export function NewsWidget({ entitySlug, profileBaseHref, showHeader = true }: P
           {items.map((n, i) => (
             <Link key={i} href={n.href} className="nwidget__card carousel-slide">
               <div className="nwidget__media" aria-hidden="true">
-                <span className="nwidget__badge">News</span>
+                {n.cover_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={n.cover_url} alt={n.title} className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
+                ) : (
+                  <span className="nwidget__badge">News</span>
+                )}
               </div>
               <div className="nwidget__body">
                 <h3 className="nwidget__name">{n.title}</h3>

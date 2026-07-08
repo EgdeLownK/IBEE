@@ -419,7 +419,7 @@ export function ProfileStudioSections({
             {shopFilter.filteredItems.map((p) => (
               <ProductTile
                 key={p.id}
-                href={p.slug ? `${detailBase}/shop/${p.slug}` : null}
+                href={p.slug ? `${detailBase}/shop/${p.slug}?preview=1` : null}
                 editHref={dashboardBaseUrl ? `${dashboardBaseUrl}/products/${p.id}` : undefined}
                 title={p.title}
                 detailExcerpt={p.detailExcerpt}
