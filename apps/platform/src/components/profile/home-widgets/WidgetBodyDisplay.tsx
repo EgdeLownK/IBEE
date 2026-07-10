@@ -448,29 +448,7 @@ export function WidgetBodyDisplay({
   const configured = isWidgetConfigured(widget.type, config)
   const filled = widgetHasDisplayContent(widget, ctx)
 
-  if (!filled) {
-    const empty = widgetEmptyContent(widget.type, 'unconfigured', { widgetId: widget.id })
-    return (
-      <div className="widget-empty">
-        <p className="widget-empty__msg">{readOnly ? empty.visitorMessage : empty.ownerMessage}</p>
-        {!readOnly && empty.ctaAction === 'data-open-home-widget-config' && (
-          <button type="button" className="widget-empty__cta" onClick={() => onConfigure(widget.id)}>
-            {empty.ctaLabel}
-          </button>
-        )}
-        {!readOnly && empty.ctaAction === 'data-open-faq-overlay' && onOpenFaq && (
-          <button type="button" className="widget-empty__cta" onClick={onOpenFaq}>
-            {empty.ctaLabel}
-          </button>
-        )}
-        {!readOnly && empty.ctaAction === 'data-open-publication-overlay' && onOpenAddContent && (
-          <button type="button" className="widget-empty__cta" onClick={onOpenAddContent}>
-            {empty.ctaLabel}
-          </button>
-        )}
-      </div>
-    )
-  }
+  if (!filled) return null
 
   if (!configured) return null
 

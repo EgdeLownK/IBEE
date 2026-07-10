@@ -167,11 +167,11 @@ export async function listProductsByEntity(
  */
 export async function createProduct(
   client: SupabaseClient<Database>,
-  data: Omit<ProductInsert, 'id' | 'created_at' | 'updated_at' | 'published_at' | 'archived_at'>
+  data: Omit<ProductInsert, 'id' | 'created_at' | 'updated_at' | 'archived_at'>
 ) {
   const insert: ProductInsert = {
     ...data,
-    published_at: data.status === 'published' ? new Date().toISOString() : null,
+    published_at: data.published_at !== undefined ? data.published_at : (data.status === 'published' ? new Date().toISOString() : null),
     archived_at: null,
   }
 

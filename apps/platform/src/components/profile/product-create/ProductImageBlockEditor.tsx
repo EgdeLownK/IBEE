@@ -40,14 +40,14 @@ export function ProductImageBlockEditor({ block, onChange }: Props) {
   const validImages = block.images.filter((img) => img?.url)
   const count = validImages.length
   
-  const isSquare = count >= 2 || (count === 1 && block.uploading)
-  const layout = isSquare ? 'square' : 'landscape'
-  const isTriple = count === 3 || (count === 2 && block.uploading)
-
   const renderedImages = [...validImages]
   if (count === 0 || block.uploading) {
     renderedImages.push(null)
   }
+
+  const isSquare = renderedImages.length >= 2
+  const layout = isSquare ? 'square' : 'landscape'
+  const isTriple = renderedImages.length === 3
 
   function patch(partial: Partial<ProductImageBlockDraft>) {
     onChange({ ...block, ...partial } as ProductImageBlockDraft)
@@ -116,10 +116,17 @@ export function ProductImageBlockEditor({ block, onChange }: Props) {
     }
   }
 
-  function pickSlot(slotIndex: number) {
+  function pickSlot(slotIndex: number, allowMultiple: boolean = false) {
     if (block.uploading) return
     replaceSlotRef.current = slotIndex
-    fileInputRef.current?.click()
+    if (fileInputRef.current) {
+      if (allowMultiple) {
+        fileInputRef.current.setAttribute('multiple', '')
+      } else {
+        fileInputRef.current.removeAttribute('multiple')
+      }
+      fileInputRef.current.click()
+    }
   }
 
   function clearSlot(slotIndex: number) {
@@ -183,7 +190,7 @@ export function ProductImageBlockEditor({ block, onChange }: Props) {
                     type="button"
                     className="hw-config__banner-slot-add"
                     aria-label="Ajouter une image"
-                    onClick={() => pickSlot(slotIndex)}
+                    onClick={() => pickSlot(slotIndex, true)}
                   >
                     <span className={`hw-config__banner-slot-frame hw-config__banner-slot-frame--${layout}`}>
                       <span className="hw-config__banner-slot-add-icon">
@@ -244,7 +251,7 @@ export function ProductImageBlockEditor({ block, onChange }: Props) {
                   type="button"
                   className="hw-config__banner-slot-hit"
                   aria-label="Modifier l'image"
-                  onClick={() => pickSlot(slotIndex)}
+                  onClick={() => pickSlot(slotIndex, false)}
                 >
                   <span className="hw-config__banner-slot-edit">Modifier</span>
                 </button>
@@ -267,7 +274,7 @@ export function ProductImageBlockEditor({ block, onChange }: Props) {
           <div className="flex justify-center mt-3">
             <button
               type="button"
-              onClick={() => pickSlot(count)}
+              onClick={() => pickSlot(count, true)}
               className="flex items-center gap-2 text-sm font-medium text-neutral-600 hover:text-black bg-neutral-100 hover:bg-neutral-200 px-4 py-2 rounded-lg transition-colors"
             >
               <Plus className="h-4 w-4" /> Ajouter une autre image ({count}/3)
@@ -280,16 +287,59 @@ export function ProductImageBlockEditor({ block, onChange }: Props) {
         ref={fileInputRef}
         type="file"
         accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
+        multiple
         hidden
         onChange={async (e) => {
-          const file = e.target.files?.[0]
+          const files = Array.from(e.target.files || [])
           e.target.value = ''
-          const slotIndex = replaceSlotRef.current
-          if (!file || slotIndex == null) return
+          const startIndex = replaceSlotRef.current
+          if (files.length === 0 || startIndex == null) return
+          
+          // If only 1 file is selected, use the existing ingestFile logic which supports cropping
+          if (files.length === 1) {
+            try {
+              await ingestFile(files[0], startIndex)
+            } catch (err) {
+              console.error(err)
+            }
+            return
+          }
+          
+          // For multiple files, upload them sequentially to avoid race conditions and skip manual crop
+          patch({ uploading: true })
           try {
-            await ingestFile(file, slotIndex)
+            const uploadedItems = []
+            for (let i = 0; i < Math.min(files.length, 3 - startIndex); i++) {
+              const file = files[i]
+              const fd = new FormData()
+              fd.append('file', file, file.name || 'image.jpg')
+              const result = await uploadProductMediaAction(fd)
+              if (result.ok) {
+                let aspect = 1
+                try {
+                  const objectUrl = URL.createObjectURL(file)
+                  const meta = await readImageMeta(objectUrl)
+                  if (meta) aspect = clampBlockAspect(meta.width / meta.height)
+                  URL.revokeObjectURL(objectUrl)
+                } catch {}
+                
+                uploadedItems.push({ url: result.url!, aspect_ratio: aspect, type: 'image' as const })
+              }
+            }
+            
+            const newImages = [...validImages]
+            for (let i = 0; i < uploadedItems.length; i++) {
+              newImages[startIndex + i] = uploadedItems[i]
+            }
+            
+            patch({ 
+              uploading: false, 
+              images: newImages, 
+              slot_count: Math.max(1, Math.min(newImages.length, 3)) as 1 | 2 | 3 
+            })
           } catch (err) {
             console.error(err)
+            patch({ uploading: false })
           }
         }}
       />

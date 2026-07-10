@@ -151,6 +151,18 @@ export function StepDescription({ form, updateForm, onChange }: Props) {
               />
             ) : b.type === 'list' ? (
               <div className="flex flex-col gap-2">
+                <input
+                  type="text"
+                  className="pco__input mb-2"
+                  placeholder="Description de la liste (optionnelle)"
+                  value={b.description || ''}
+                  onChange={(e) => {
+                    const contentBlocks = form.contentBlocks.map((x) =>
+                      x.id === b.id && x.type === 'list' ? { ...x, description: e.target.value } : x
+                    )
+                    onChange({ contentBlocks })
+                  }}
+                />
                 {b.items.map((item, i) => (
                   <div key={i} className="flex gap-2 items-start">
                     <span className="mt-2.5 h-1.5 w-1.5 rounded-full bg-neutral-800 shrink-0" />
@@ -249,11 +261,11 @@ export function StepDescription({ form, updateForm, onChange }: Props) {
         ))}
       </div>
       <div className="pco__block-add-row">
-        <button type="button" className="pco__add-btn" onClick={addTextBlock}>
-          <Type className="h-4 w-4" /> Texte
-        </button>
         <button type="button" className="pco__add-btn" onClick={addTitleBlock}>
           <Heading className="h-4 w-4" /> Titre
+        </button>
+        <button type="button" className="pco__add-btn" onClick={addTextBlock}>
+          <Type className="h-4 w-4" /> Texte
         </button>
         <button type="button" className="pco__add-btn" onClick={addListBlock}>
           <List className="h-4 w-4" /> Liste

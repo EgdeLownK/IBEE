@@ -86,21 +86,6 @@ export function StepFaq({ form, onChange }: Props) {
         {err('faq') && <p className="pco__error mt-2">{err('faq')}</p>}
       </div>
 
-      <div className="pco__field pco__publish mt-8">
-        <label className="pco__switch">
-          <input
-            type="checkbox"
-            checked={form.publish}
-            onChange={(e) => onChange({ publish: e.target.checked })}
-          />
-          <span className="pco__switch-track" aria-hidden="true">
-            <span className="pco__switch-thumb" />
-          </span>
-          <span className="pco__switch-label">
-            Publier immédiatement <span className="pco__switch-hint">(sinon brouillon)</span>
-          </span>
-        </label>
-      </div>
     </section>
   )
 }

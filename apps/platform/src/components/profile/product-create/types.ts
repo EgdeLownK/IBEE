@@ -13,18 +13,7 @@ export type MediaDraft = {
 
 export type VariantPair = { key: string; value: string }
 
-export type SubVariantDraft = {
-  id: string
-  key: string
-  value: string
-  price: string
-  stock: string
-  sku: string
-  condition?: string
-  promoEnabled?: boolean
-  salePrice?: string
-  saleEndsAt?: string
-}
+
 
 export type VariantDraft = {
   id: string
@@ -37,7 +26,6 @@ export type VariantDraft = {
   promoEnabled?: boolean
   salePrice?: string
   saleEndsAt?: string
-  subVariants?: SubVariantDraft[]
 }
 
 export type DetailPair = { label: string; value: string }
@@ -45,7 +33,7 @@ export type DetailPair = { label: string; value: string }
 export type ContentBlockDraft =
   | { id: string; type: 'text'; content: string }
   | { id: string; type: 'title'; content: string }
-  | { id: string; type: 'list'; items: string[] }
+  | { id: string; type: 'list'; items: string[]; description?: string }
   | { 
       id: string
       type: 'image'
@@ -68,6 +56,7 @@ export type ProductCreateFormState = {
   title: string
   descriptionShort: string
   bullets: string[]
+  sku: string
   price: string
   promoEnabled: boolean
   salePrice: string
@@ -81,7 +70,7 @@ export type ProductCreateFormState = {
   physicalStockQuantity: string
   physicalCondition: PhysicalCondition
   digitalStockUnlimited: boolean
-  variationMode: 'unique' | 'variants' | 'subvariants'
+  variationMode: 'unique' | 'variants'
   variantOptions: { name: string; values: string[] }[]
   variants: VariantDraft[]
   digitalFileId: string | null
@@ -91,7 +80,8 @@ export type ProductCreateFormState = {
   customDetails: { category: string; items: { label: string; value: string }[] }[]
   contentBlocks: ContentBlockDraft[]
   faq: FaqDraft[]
-  publish: boolean
+  publishMode: 'publish' | 'schedule'
+  scheduleDate: string
   fieldErrors: Record<string, string>
   globalError: string
 }

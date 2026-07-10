@@ -60,11 +60,16 @@ export function EntityMoreDetails({
               }
               if (block.type === 'list') {
                 return (
-                  <ul key={i} className="emd__list">
-                    {block.items.map((item, idx) => (
-                      <li key={idx}>{item}</li>
-                    ))}
-                  </ul>
+                  <div key={i} className="mb-4">
+                    {block.description && (
+                      <p className="emd__text mb-2 text-neutral-600">{block.description}</p>
+                    )}
+                    <ul className="emd__list !mb-0">
+                      {block.items.map((item, idx) => (
+                        <li key={idx}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
                 )
               }
               if (block.type === 'image') {

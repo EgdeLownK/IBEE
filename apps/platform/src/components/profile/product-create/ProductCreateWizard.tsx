@@ -141,13 +141,14 @@ export function ProductCreateWizard({
         type: p.type as CreatedShopProduct['type'],
         physical_stock_quantity: p.physical_stock_quantity,
       })
-      toast.success(form.publish ? 'Produit publié' : 'Produit enregistré en brouillon')
-      if (returnToAddContent) {
-        onClose()
-        onReturnToAddContent?.()
-      } else {
-        onClose()
-      }
+      toast.success(
+        form.publishMode === 'schedule'
+          ? 'Produit programmé'
+          : 'Produit publié'
+      )
+      // On success, we always just close the wizard completely,
+      // without returning to the AddContentDialog.
+      onClose()
     })
   }
 
@@ -185,6 +186,12 @@ export function ProductCreateWizard({
         ) : null}
 
         <form className="pco__form" onSubmit={handleSubmit} noValidate>
+          {Object.entries(form.fieldErrors).filter(([_, v]) => v !== '').length > 0 ? (
+            <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 mx-4 mt-4 rounded-md text-sm font-medium">
+              Attention, des champs sont invalides ou manquants : {Object.entries(form.fieldErrors).filter(([_, v]) => v !== '').map(([k]) => k).join(', ')}. Vérifiez tous les onglets.
+            </div>
+          ) : null}
+
           {form.globalError ? (
             <p className="pco__error-global" role="alert">
               {form.globalError}
@@ -225,17 +232,56 @@ export function ProductCreateWizard({
                 </button>
               ) : null}
             </div>
-            <div className="pco__actions-end">
+            <div className="pco__actions-end flex items-center gap-3">
               {form.step >= 1 && form.step < 4 ? (
                 <button type="button" className="pco__btn pco__btn--primary" onClick={goNext}>
                   Suivant <ArrowRight className="h-4 w-4" />
                 </button>
               ) : null}
               {form.step === 4 ? (
-                <button type="submit" className="pco__btn pco__btn--primary" disabled={pending}>
-                  {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                  <span>{pending ? 'Création...' : 'Créer le produit'}</span>
-                </button>
+                form.publishMode === 'schedule' ? (
+                  <div className="flex items-center gap-2 bg-gray-50 p-1.5 rounded-md border border-gray-200">
+                    <input
+                      type="datetime-local"
+                      value={form.scheduleDate}
+                      onChange={(e) => patchForm({ scheduleDate: e.target.value })}
+                      className="pco__input text-sm py-1 px-2 h-8 min-h-0 w-auto"
+                    />
+                    <button 
+                      type="button" 
+                      className="pco__btn pco__btn--ghost !h-8 !px-2"
+                      onClick={() => patchForm({ publishMode: 'publish', scheduleDate: '' })}
+                    >
+                      Annuler
+                    </button>
+                    <button
+                      type="button"
+                      className="pco__btn pco__btn--primary !h-8 !px-3"
+                      onClick={(e) => {
+                         if (!form.scheduleDate) return
+                         handleSubmit(e as any)
+                      }}
+                      disabled={pending || !form.scheduleDate}
+                    >
+                      {pending ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
+                      Valider
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <button 
+                      type="button" 
+                      className="pco__btn pco__btn--secondary"
+                      onClick={() => patchForm({ publishMode: 'schedule' })}
+                    >
+                      Programmer
+                    </button>
+                    <button type="submit" className="pco__btn pco__btn--primary" disabled={pending} onClick={() => patchForm({ publishMode: 'publish' })}>
+                      {pending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                      <span>{pending ? 'Création...' : 'Créer le produit'}</span>
+                    </button>
+                  </>
+                )
               ) : null}
             </div>
           </footer>

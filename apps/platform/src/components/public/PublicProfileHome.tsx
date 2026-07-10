@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { Plus } from 'lucide-react'
-import { sortHomeWidgetsByFixedOrder } from '@ibee/shared'
+import { sortHomeWidgetsByFixedOrder, widgetHasDisplayContent } from '@ibee/shared'
 import { WidgetBodyDisplay } from '@/components/profile/home-widgets/WidgetBodyDisplay'
 import type { HomeWidget } from '@/components/profile/home-widgets/types'
 import type { PublicProfileData } from '@/lib/load-public-profile'
@@ -87,28 +87,39 @@ export function PublicProfileHome({
 
   return (
     <div className="widget-stack widget-stack--home pb-7">
-      {widgets.map((widget) => (
-        <article key={widget.id} className="widget">
-          <WidgetBodyDisplay
-            widget={widget}
-            data={{
-              shopProducts,
-              playlistServices,
-              playlistEvents,
-              publications,
-              faqItems,
-              contactInfo,
-              productCategories,
-            }}
-            webBaseUrl={entityBaseUrl}
-            detailBaseUrl={detailBaseUrl}
-            onConfigure={() => { window.location.href = '/dashboard/site' }}
-            onOpenFaq={() => { window.location.href = '/dashboard/site' }}
-            onOpenAddContent={() => { window.location.href = '/dashboard/site?action=add-content' }}
-            readOnly={!isOwner}
-          />
-        </article>
-      ))}
+      {widgets.map((widget) => {
+        const ctx = {
+          products: shopProducts,
+          appointmentTypes: playlistServices,
+          events: playlistEvents,
+          publications,
+          faqItems,
+          contactInfo,
+        }
+        if (!widgetHasDisplayContent(widget, ctx)) return null
+        return (
+          <article key={widget.id} className="widget">
+            <WidgetBodyDisplay
+              widget={widget}
+              data={{
+                shopProducts,
+                playlistServices,
+                playlistEvents,
+                publications,
+                faqItems,
+                contactInfo,
+                productCategories,
+              }}
+              webBaseUrl={entityBaseUrl}
+              detailBaseUrl={detailBaseUrl}
+              onConfigure={() => { window.location.href = '/dashboard/site' }}
+              onOpenFaq={() => { window.location.href = '/dashboard/site' }}
+              onOpenAddContent={() => { window.location.href = '/dashboard/site?action=add-content' }}
+              readOnly={!isOwner}
+            />
+          </article>
+        )
+      })}
       
       {isOwner && (
         <div className="home-widgets__add">

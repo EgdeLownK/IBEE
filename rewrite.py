@@ -1,4 +1,6 @@
-'use client'
+import codecs
+
+content = """'use client'
 
 import { Trash2, Plus } from 'lucide-react'
 import { useState } from 'react'
@@ -85,7 +87,7 @@ export function StepTypeSpecific({ form, onChange }: Props) {
             Modes de remise <span className="pco__req">*</span>
           </span>
           <div className="flex flex-col gap-3 md:flex-row">
-            <label className={`flex-1 flex flex-col cursor-pointer border p-4 rounded-md transition-all ${form.inPersonEnabled ? 'border-neutral-900 bg-neutral-50 ring-1 ring-neutral-900' : 'border-neutral-200 bg-white hover:bg-neutral-50'}`}>
+            <label className={lex-1 flex flex-col cursor-pointer border p-4 rounded-md transition-all \}>
               <div className="flex items-center gap-3">
                 <input
                   type="checkbox"
@@ -97,7 +99,7 @@ export function StepTypeSpecific({ form, onChange }: Props) {
               </div>
               <span className="text-xs text-neutral-500 mt-1 pl-7">Remise en main propre</span>
             </label>
-            <label className={`flex-1 flex flex-col cursor-pointer border p-4 rounded-md transition-all ${form.pickupEnabled ? 'border-neutral-900 bg-neutral-50 ring-1 ring-neutral-900' : 'border-neutral-200 bg-white hover:bg-neutral-50'}`}>
+            <label className={lex-1 flex flex-col cursor-pointer border p-4 rounded-md transition-all \}>
               <div className="flex items-center gap-3">
                 <input
                   type="checkbox"
@@ -109,7 +111,7 @@ export function StepTypeSpecific({ form, onChange }: Props) {
               </div>
               <span className="text-xs text-neutral-500 mt-1 pl-7">Retrait en boutique</span>
             </label>
-            <label className={`flex-1 flex flex-col cursor-pointer border p-4 rounded-md transition-all ${form.deliveryEnabled ? 'border-neutral-900 bg-neutral-50 ring-1 ring-neutral-900' : 'border-neutral-200 bg-white hover:bg-neutral-50'}`}>
+            <label className={lex-1 flex flex-col cursor-pointer border p-4 rounded-md transition-all \}>
               <div className="flex items-center gap-3">
                 <input
                   type="checkbox"
@@ -147,22 +149,14 @@ export function StepTypeSpecific({ form, onChange }: Props) {
         <div className="flex bg-neutral-100 p-1 rounded-lg mb-4">
           <button
             type="button"
-            className={`flex-1 text-sm font-medium py-2 px-2 md:px-4 rounded-md transition-all ${
-              activeTab === 'bullets'
-                ? 'bg-white shadow-sm text-neutral-900'
-                : 'text-neutral-500 hover:text-neutral-900'
-            }`}
+            className={lex-1 text-sm font-medium py-2 px-2 md:px-4 rounded-md transition-all \}
             onClick={() => setActiveTab('bullets')}
           >
             Points forts
           </button>
           <button
             type="button"
-            className={`flex-1 text-sm font-medium py-2 px-2 md:px-4 rounded-md transition-all ${
-              activeTab === 'details'
-                ? 'bg-white shadow-sm text-neutral-900'
-                : 'text-neutral-500 hover:text-neutral-900'
-            }`}
+            className={lex-1 text-sm font-medium py-2 px-2 md:px-4 rounded-md transition-all \}
             onClick={() => setActiveTab('details')}
           >
             Informations produits
@@ -314,3 +308,9 @@ export function StepTypeSpecific({ form, onChange }: Props) {
     </section>
   )
 }
+"""
+
+with codecs.open(r'c:\Users\KillianLQ\IBEE\apps\platform\src\components\profile\product-create\steps\StepTypeSpecific.tsx', 'w', 'utf-8') as f:
+    f.write(content)
+
+print('Rewritten successfully.')

@@ -148,28 +148,37 @@ export async function loadPublicProduct(
   }
 
   // Fetch actual real data for related sections
-  const entityProducts = await listPublishedProductsByEntity(supabase, entity.id, { limit: 10 })
+  const entityProducts = await listPublishedProductsByEntity(supabase, entity.id, { limit: 12 })
   
-  // Exclude current product and take up to 4 for "Autres contenus"
-  const otherEntityProducts = entityProducts
-    .filter((p) => p.id !== product.id)
-    .slice(0, 4)
-    .map((p) => ({
-      id: p.id,
-      title: p.title,
-      slug: p.slug,
-      entity_slug: entity.slug,
-      entity_name: entity.display_name,
-      price_cents: p.price_cents,
-      cover_url: Array.isArray(p.product_media) ? (p.product_media.find((m) => m.display_order === 0)?.url ?? p.product_media[0]?.url ?? null) : null,
-      type: p.type as any,
-      kind: 'product' as const,
-      meta: '',
-    }))
+  // Exclude current product
+  const availableProducts = entityProducts.filter((p) => p.id !== product.id)
 
-  // For "À découvrir aussi", simple mock for now or use the same category if possible
-  // Since we don't have a cross-entity search readily available, we just keep SIMILAR_RELATED_MOCK for now as requested
-  // "pour À découvrir aussi fait quelque chose de simple" -> actually we can just pass some items from entityProducts if we want, but let's keep it minimal.
+  // For "À découvrir aussi", try to find products in the same category first
+  const sameCategoryProducts = availableProducts.filter((p) => p.category === product.category)
+  const differentCategoryProducts = availableProducts.filter((p) => p.category !== product.category)
+
+  const similarProductsRaw = [...sameCategoryProducts, ...differentCategoryProducts].slice(0, 4)
+  
+  // For "Autres contenus", pick the next ones
+  const otherProductsRaw = availableProducts
+    .filter((p) => !similarProductsRaw.find((s) => s.id === p.id))
+    .slice(0, 4)
+
+  const toRelatedItem = (p: typeof availableProducts[number]) => ({
+    id: p.id,
+    title: p.title,
+    slug: p.slug,
+    entity_slug: entity.slug,
+    entity_name: entity.display_name,
+    price_cents: p.price_cents,
+    cover_url: Array.isArray(p.product_media) ? (p.product_media.find((m) => m.display_order === 0)?.url ?? p.product_media[0]?.url ?? null) : null,
+    type: p.type as any,
+    kind: 'product' as const,
+    meta: '',
+  })
+
+  const otherEntityProducts = otherProductsRaw.map(toRelatedItem)
+  const similarEntityProducts = similarProductsRaw.map(toRelatedItem)
   
   // Fetch actual news
   const entityNews = await getPublicationsByEntity(supabase, entity.id, { limit: 4 })
@@ -258,8 +267,8 @@ export async function loadPublicProduct(
     metaTitle,
     metaDescription,
     ogImage,
-    profileRelated: otherEntityProducts.length > 0 ? otherEntityProducts : PROFILE_RELATED_MOCK,
-    similarRelated: SIMILAR_RELATED_MOCK,
+    profileRelated: otherEntityProducts,
+    similarRelated: similarEntityProducts,
     subtitle: [categoryName, product.type === 'digital' ? 'Produit numérique' : 'Produit physique']
       .filter(Boolean)
       .join(' · '),

@@ -37,6 +37,7 @@ type Props = {
     priceText: string | null
     variantId: string | null
     canBuy: boolean
+    isScheduled?: boolean
   }) => void
 }
 
@@ -202,16 +203,19 @@ export function ProductDetail({
   const detailCategories = buildDetailCategories(product, customDetails)
 
   const needsVariant = variants.length > 0
-  const canBuy = inStock && (!needsVariant || selectedVariant != null)
+  const isScheduled = !!product.published_at && new Date(product.published_at).getTime() > Date.now()
+  const canBuy = inStock && (!needsVariant || selectedVariant != null) && !isScheduled
 
   useEffect(() => {
     onCheckoutStateChange?.({
       priceText: formatDetailPrice(displayPriceCents, product.currency),
       variantId: selectedVariant?.id ?? null,
       canBuy,
+      isScheduled,
     })
   }, [
     canBuy,
+    isScheduled,
     displayPriceCents,
     onCheckoutStateChange,
     product.currency,
@@ -268,14 +272,6 @@ export function ProductDetail({
             {inStock ? 'En stock' : 'Indisponible'}
           </span>
         </div>
-        {deliveryTags.map(({ label, Icon }) => (
-          <div key={label} className="product-detail__stat">
-            <span className="product-detail__stat-label">{label}</span>
-            <span className="product-detail__stat-value product-detail__stat-icon">
-              <Icon className="h-5 w-5" aria-hidden="true" />
-            </span>
-          </div>
-        ))}
       </div>
 
       <div className="product-detail__media">
@@ -328,6 +324,40 @@ export function ProductDetail({
         )}
       </div>
 
+      {variants.length > 0 && attrKeys.length > 0 && (
+        <div className="product-detail__variants" id="variant-selector">
+          {attrKeys.map((key) => (
+            <div key={key}>
+              <p className="product-detail__variant-label">{key}</p>
+              <div className="flex flex-wrap gap-2">
+                {attrOptions[key]?.map((value) => (
+                  <button
+                    key={value}
+                    type="button"
+                    data-selected={selectedAttrs[key] === value ? 'true' : 'false'}
+                    className="product-detail__variant-btn"
+                    onClick={() => setSelectedAttrs((prev) => ({ ...prev, [key]: value }))}
+                  >
+                    {value}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {deliveryTags.length > 0 && (
+        <div className="product-detail__delivery-tags">
+          {deliveryTags.map(({ label, Icon }) => (
+            <span key={label} className="product-detail__delivery-tag">
+              <Icon className="h-4 w-4" aria-hidden="true" />
+              {label}
+            </span>
+          ))}
+        </div>
+      )}
+
       {detailCategories.length > 0 && (
         <div className="product-detail__buybox-card">
           <div id="tous-les-details" className="product-detail__buybox-info scroll-mt-20">
@@ -353,29 +383,6 @@ export function ProductDetail({
               ))}
             </div>
           </div>
-        </div>
-      )}
-
-      {variants.length > 0 && (
-        <div className="product-detail__variants" id="variant-selector">
-          {attrKeys.map((key) => (
-            <div key={key}>
-              <p className="product-detail__variant-label">{key}</p>
-              <div className="flex flex-wrap gap-2">
-                {attrOptions[key]?.map((value) => (
-                  <button
-                    key={value}
-                    type="button"
-                    data-selected={selectedAttrs[key] === value ? 'true' : 'false'}
-                    className="product-detail__variant-btn"
-                    onClick={() => setSelectedAttrs((prev) => ({ ...prev, [key]: value }))}
-                  >
-                    {value}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ))}
         </div>
       )}
 

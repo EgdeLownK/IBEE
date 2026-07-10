@@ -13,13 +13,14 @@ export function nextId(prefix = 'id') {
 }
 
 export const DEFAULT_FORM_STATE: ProductCreateFormState = {
-  step: 1,
+  step: 0,
   type: null,
   audience: null,
   media: [],
   title: '',
   descriptionShort: '',
   bullets: [],
+  sku: '',
   price: '',
   promoEnabled: false,
   salePrice: '',
@@ -43,7 +44,8 @@ export const DEFAULT_FORM_STATE: ProductCreateFormState = {
   customDetails: [],
   contentBlocks: [],
   faq: [],
-  publish: false,
+  publishMode: 'publish',
+  scheduleDate: '',
   fieldErrors: {},
   globalError: '',
 }
@@ -59,6 +61,7 @@ export function formToDraft(form: ProductCreateFormState): ProductCreateDraft {
     title: form.title,
     descriptionShort: form.descriptionShort,
     bullets: form.bullets,
+    sku: form.sku,
     price: form.price,
     promoEnabled: form.promoEnabled,
     salePrice: form.salePrice,
@@ -86,38 +89,6 @@ export function formToDraft(form: ProductCreateFormState): ProductCreateDraft {
         basePairs.push({ key: 'État', value: conditionLabels[v.condition] || 'Occasion' })
       }
       
-      if (v.subVariants && v.subVariants.length > 0) {
-        return v.subVariants.map((sub) => {
-          const subPairs = [...basePairs]
-          if (sub.key && sub.value) {
-             subPairs.push({ key: sub.key, value: sub.value })
-          }
-          if (form.physicalCondition !== 'new' && sub.condition) {
-            const conditionLabels: Record<string, string> = {
-              like_new: 'Comme neuf',
-              very_good: 'Très bon état',
-              good: 'Bon état',
-              acceptable: 'Correct',
-            }
-            // Remove the parent's condition and use the subvariant's
-            const filteredPairs = subPairs.filter(p => p.key !== 'État')
-            filteredPairs.push({ key: 'État', value: conditionLabels[sub.condition] || 'Occasion' })
-            return {
-              pairs: filteredPairs,
-              sku: sub.sku,
-              price: sub.price,
-              stock: sub.stock,
-            }
-          }
-          return {
-            pairs: subPairs,
-            sku: sub.sku,
-            price: sub.price,
-            stock: sub.stock,
-          }
-        })
-      }
-
       return [{
         pairs: basePairs,
         sku: v.sku,
@@ -142,7 +113,8 @@ export function formToDraft(form: ProductCreateFormState): ProductCreateDraft {
       }
     }),
     faq: form.faq,
-    publish: form.publish,
+    publishMode: form.publishMode,
+    scheduleDate: form.scheduleDate,
   }
 }
 

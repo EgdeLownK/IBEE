@@ -7,7 +7,7 @@ export type ProductMediaInput = { url: string; type: 'image' | 'video' }
 export type ContentBlockInput =
   | { type: 'text'; content: string }
   | { type: 'title'; content: string }
-  | { type: 'list'; items: string[] }
+  | { type: 'list'; items: string[]; description?: string }
   | {
       type: 'image'
       slot_count: 1 | 2 | 3
@@ -33,6 +33,7 @@ export type ProductCreateInput = {
   description_short: string
   price_cents: number
   status: 'draft' | 'published'
+  published_at?: string
   bullet_points?: string[]
   sale_price_cents?: number
   sale_ends_at?: string
@@ -60,6 +61,7 @@ export type ProductCreateDraft = {
   title: string
   descriptionShort: string
   bullets: string[]
+  sku: string
   price: string
   promoEnabled: boolean
   salePrice: string
@@ -100,7 +102,7 @@ export type ProductCreateDraft = {
   contentBlocks: (
     | { type: 'text'; content: string }
     | { type: 'title'; content: string }
-    | { type: 'list'; items: string[] }
+    | { type: 'list'; items: string[]; description?: string }
     | { 
         type: 'image'
         slot_count: 1 | 2 | 3
@@ -111,7 +113,8 @@ export type ProductCreateDraft = {
       }
   )[]
   faq: { question: string; answer: string }[]
-  publish: boolean
+  publishMode: 'publish' | 'schedule' | 'draft'
+  scheduleDate: string
 }
 
 export type ValidationResult = {
@@ -163,6 +166,10 @@ export function validateProductStep(step: 1 | 2 | 3 | 4, draft: ProductCreateDra
     for (const cat of draft.customDetails) {
       if (cat.category.trim().length > 40) {
         fail('custom_details', 'Le nom du groupe ne doit pas dépasser 40 caractères.')
+        break
+      }
+      if (draft.customDetails.length > 1 && cat.category.trim() === '') {
+        fail('custom_details', 'Veuillez nommer chaque groupe d\'informations (ex: Spécifications, Dimensions).')
         break
       }
       for (const d of cat.items) {
@@ -365,16 +372,20 @@ export function buildProductCreatePayload(draft: ProductCreateDraft): ProductCre
     }
   }
 
-  const payload: ProductCreateInput = {
-    type: draft.type,
-    audience: draft.audience || null,
-    title: draft.title.trim(),
-    description_short: draft.descriptionShort.trim(),
-    price_cents: basePrice,
-    status: draft.publish ? 'published' : 'draft',
-  }
+    const payload: ProductCreateInput = {
+      type: draft.type,
+      audience: draft.audience || null,
+      title: draft.title.trim(),
+      description_short: draft.descriptionShort.trim(),
+      price_cents: basePrice,
+      status: 'published',
+    }
 
-  const bullets = draft.bullets.map((b) => b.trim()).filter((b) => b.length > 0)
+    if (draft.publishMode === 'schedule' && draft.scheduleDate) {
+      payload.published_at = new Date(draft.scheduleDate).toISOString()
+    }
+
+    const bullets = draft.bullets.map((b) => b.trim()).filter((b) => b.length > 0)
   if (bullets.length > 0) payload.bullet_points = bullets
 
   if (draft.promoEnabled) {
@@ -406,7 +417,13 @@ export function buildProductCreatePayload(draft: ProductCreateDraft): ProductCre
       if (c.length > 0) blocks.push({ type: 'title', content: c })
     } else if (b.type === 'list') {
       const items = b.items.map((i) => i.trim()).filter((i) => i.length > 0)
-      if (items.length > 0) blocks.push({ type: 'list', items })
+      if (items.length > 0) {
+        const block: ContentBlockInput = { type: 'list', items }
+        if (b.description && b.description.trim().length > 0) {
+          block.description = b.description.trim()
+        }
+        blocks.push(block)
+      }
     } else if (b.type === 'image') {
       const slots = b.slot_count === 2 || b.slot_count === 3 ? b.slot_count : 1
       const validImages = []
@@ -453,6 +470,12 @@ export function buildProductCreatePayload(draft: ProductCreateDraft): ProductCre
     const sn = Number(draft.physicalStockQuantity)
     if (draft.variationMode === 'unique') {
       if (Number.isInteger(sn) && sn >= 0) payload.physical_stock_quantity = sn
+      if (draft.sku.trim()) {
+        payload.variants = [{
+          attributes: {},
+          sku: draft.sku.trim()
+        }]
+      }
     } else {
       const variants: VariantInput[] = []
       for (const v of draft.variants) {

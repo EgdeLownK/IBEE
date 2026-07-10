@@ -1038,7 +1038,7 @@ a.nwidget__card:hover {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  margin: 0 22px;
+  margin: 24px 22px 0;
 }
 .product-detail__buybox-info {
   border-top: 1px solid color-mix(in srgb, var(--color-border) 60%, transparent);
@@ -1174,6 +1174,27 @@ a.nwidget__card:hover {
   background: var(--color-accent-soft);
   color: var(--color-accent);
 }
+
+.product-detail__delivery-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 18px 22px 0;
+}
+
+.product-detail__delivery-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-surface) 82%, var(--color-panel));
+  color: var(--color-neutral-800);
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid var(--color-border);
+}
+
 .product-detail__tech-menu {
   border-radius: 14px;
   background: color-mix(in srgb, var(--color-panel) 72%, var(--color-surface));

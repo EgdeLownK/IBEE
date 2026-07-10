@@ -1,13 +1,13 @@
 export type DetailContentBlock =
   | { type: 'text'; content: string }
   | { type: 'title'; content: string }
-  | { type: 'list'; items: string[] }
+  | { type: 'list'; items: string[]; description?: string }
   | { type: 'image'; url?: string; alt?: string; images?: { url: string }[]; slot_count?: number }
 
 type RawBlock =
   | { type: 'text'; content: string }
   | { type: 'title'; content: string }
-  | { type: 'list'; items: string[] }
+  | { type: 'list'; items: string[]; description?: string }
   | { type: 'image'; url?: string; alt?: string; images?: { url: string }[]; slot_count?: number }
 
 export function parseFaqItems(faq: unknown): { question: string; answer: string }[] {
@@ -49,7 +49,7 @@ export function parseDetailContentBlocks(entity: {
     if (b.type === 'text' && b.content) return [{ type: 'text', content: b.content }]
     if (b.type === 'title' && b.content) return [{ type: 'title', content: b.content }]
     if (b.type === 'list' && Array.isArray(b.items) && b.items.length > 0) {
-      return [{ type: 'list', items: b.items }]
+      return [{ type: 'list', items: b.items, description: b.description }]
     }
     if (b.type === 'image') {
       // Support for both old format (url, alt) and new format (images array)

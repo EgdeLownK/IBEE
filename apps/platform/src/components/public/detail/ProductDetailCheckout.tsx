@@ -15,6 +15,7 @@ type CheckoutState = {
   priceText: string | null
   variantId: string | null
   canBuy: boolean
+  isScheduled?: boolean
 }
 
 interface Props {
@@ -48,6 +49,7 @@ export function ProductDetailCheckout({ data, embedMode = false }: Props) {
               productSlug={data.product.slug}
               variantId={checkout.variantId}
               disabled={!checkout.canBuy}
+              label={checkout.isScheduled ? "Bientôt disponible" : "Acheter"}
             />
           }
         />

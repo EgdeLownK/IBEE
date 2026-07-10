@@ -36,29 +36,7 @@ export function WidgetBodyPreview({ widget, data, onConfigure, onOpenFaq, onOpen
 
   const filled = widgetHasDisplayContent(widget, ctx)
 
-  if (!filled) {
-    const empty = widgetEmptyContent(widget.type, 'unconfigured', { widgetId: widget.id })
-    return (
-      <div className="widget-empty">
-        <p className="widget-empty__msg">{empty.ownerMessage}</p>
-        {empty.ctaAction === 'data-open-home-widget-config' && (
-          <button type="button" className="widget-empty__cta" onClick={() => onConfigure(widget.id)}>
-            {empty.ctaLabel}
-          </button>
-        )}
-        {empty.ctaAction === 'data-open-faq-overlay' && onOpenFaq && (
-          <button type="button" className="widget-empty__cta" onClick={onOpenFaq}>
-            {empty.ctaLabel}
-          </button>
-        )}
-        {empty.ctaAction === 'data-open-publication-overlay' && onOpenAddContent && (
-          <button type="button" className="widget-empty__cta" onClick={onOpenAddContent}>
-            {empty.ctaLabel}
-          </button>
-        )}
-      </div>
-    )
-  }
+  if (!filled) return null
 
   switch (widget.type) {
     case 'widget_highlight': {
