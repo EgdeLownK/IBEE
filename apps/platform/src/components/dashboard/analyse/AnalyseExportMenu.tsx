@@ -40,6 +40,9 @@ type Props = {
 const SCOPE_ICONS: Record<AnalyseScope, LucideIcon> = {
   web: LayoutGrid,
   news: Newspaper,
+  shop: ShoppingBag,
+  service: Briefcase,
+  event: CalendarDays,
 }
 
 function toggleAll<T extends string>(all: readonly T[], current: Set<T>, checked: boolean) {
