@@ -32,8 +32,8 @@ export async function POST(request: Request) {
     }
 
     if (result.status === 'checked_in') {
-      revalidatePath('/dashboard/activite/billetterie')
-      revalidatePath('/dashboard/activite/billetterie/check-in')
+      revalidatePath('/dashboard/billetterie')
+      revalidatePath('/dashboard/billetterie/check-in')
     }
 
     return NextResponse.json({ ok: true, result })

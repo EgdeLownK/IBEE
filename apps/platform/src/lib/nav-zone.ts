@@ -13,12 +13,12 @@ export function getNavZone(pathname: string, isPersonalMode: boolean): NavZone {
     return isPersonalMode ? 'personal-account' : 'activity'
   }
 
-  if (pathname.startsWith('/dashboard/analyse') || pathname.startsWith('/dashboard/activite/revenus')) {
+  if (pathname.startsWith('/dashboard/analyse') || pathname.startsWith('/dashboard/revenus')) {
     return 'profile-web'
   }
 
-  if (pathname.startsWith('/dashboard/activite')) {
-    return 'activity'
+  if (pathname.startsWith('/dashboard')) {
+    return 'profile-web'
   }
 
   if (isPersonalMode && isAccountPath(pathname)) {

@@ -1,29 +1,53 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { JobOffer, JobApplication } from '@ibee/supabase'
-import { Edit, MapPin, Eye, Download, Users, Archive, ArchiveRestore, Users2, CalendarDays, ChevronLeft } from 'lucide-react'
+import { Edit, MapPin, Eye, Download, Users, Archive, ArchiveRestore, Users2, CalendarDays, ChevronLeft, Search, Trash } from 'lucide-react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { JobOfferDialog } from './JobOfferDialog'
-import { updateApplicationStatusAction } from '../../../app/dashboard/talent/talent-actions'
+import { updateApplicationStatusAction, deleteJobOfferAction } from '../../../app/dashboard/talent/talent-actions'
 
 export function JobOfferDetails({ entityId, offer, applications }: { entityId: string; offer: JobOffer; applications: JobApplication[] }) {
+  const router = useRouter()
   const [isEditOpen, setIsEditOpen] = useState(false)
   const [showArchives, setShowArchives] = useState(false)
   const [selectedAppId, setSelectedAppId] = useState<string | null>(null)
-  const [filterStatus, setFilterStatus] = useState<string>('new')
+  const getDefaultStatus = (apps: JobApplication[]) => {
+    const activeApps = apps.filter(a => !a.is_archived)
+    if (activeApps.length === 0) return 'new'
+    if (activeApps.some(a => a.status === 'new')) return 'new'
+    if (activeApps.some(a => a.status === 'shortlisted')) return 'shortlisted'
+    if (activeApps.some(a => a.status === 'interviewing')) return 'interviewing'
+    if (activeApps.some(a => a.status === 'hired')) return 'hired'
+    if (activeApps.some(a => a.status === 'rejected')) return 'rejected'
+    return 'new'
+  }
+
+  const [filterStatus, setFilterStatus] = useState<string>(() => getDefaultStatus(applications))
+  const [searchQuery, setSearchQuery] = useState('')
+  const [localApplications, setLocalApplications] = useState<JobApplication[]>(applications)
+
+  useEffect(() => {
+    setLocalApplications(applications)
+  }, [applications])
 
   const handleStatusChange = async (appId: string, newStatus: any) => {
+    setLocalApplications(prev => prev.map(a => a.id === appId ? { ...a, status: newStatus } : a))
     await updateApplicationStatusAction(appId, newStatus, offer.id)
   }
 
-  const displayedApplications = applications.filter(a => {
+  const displayedApplications = localApplications.filter(a => {
     if (Boolean(a.is_archived) !== showArchives) return false
     if (filterStatus !== 'all' && a.status !== filterStatus) return false
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase()
+      const name = `${a.first_name} ${a.last_name}`.toLowerCase()
+      if (!name.includes(q)) return false
+    }
     return true
   })
-  
-  const selectedApp = displayedApplications.find(a => a.id === selectedAppId) || displayedApplications[0] || null
+  const selectedApp = localApplications.find(a => a.id === selectedAppId) || displayedApplications[0] || null
 
   // --- Analytics Logic ---
   const kpis = {
@@ -110,6 +134,18 @@ export function JobOfferDetails({ entityId, offer, applications }: { entityId: s
           >
             <Edit className="w-4 h-4 mr-2" />
             Modifier l'offre
+          </button>
+          <button 
+            onClick={async () => {
+              if (window.confirm("Êtes-vous sûr de vouloir supprimer cette offre ? Cette action est irréversible.")) {
+                await deleteJobOfferAction(entityId, offer.id)
+                router.push('/dashboard/talent')
+              }
+            }}
+            className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors bg-white border border-red-200 hover:bg-red-50 text-red-700 h-10 px-4 shadow-sm"
+          >
+            <Trash className="w-4 h-4 mr-2" />
+            Supprimer l'offre
           </button>
         </div>
       </div>
@@ -259,6 +295,20 @@ export function JobOfferDetails({ entityId, offer, applications }: { entityId: s
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* LEFT COLUMN: Scrollable List */}
             <div className="col-span-1 bg-white rounded-xl shadow-sm border border-neutral-200 overflow-hidden flex flex-col h-[600px]">
+              <div className="p-3 border-b border-neutral-100 bg-neutral-50/50">
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Search className="h-4 w-4 text-neutral-400" />
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Rechercher un candidat..."
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    className="block w-full rounded-md border-0 py-1.5 pl-9 text-neutral-900 ring-1 ring-inset ring-neutral-200 placeholder:text-neutral-400 focus:ring-2 focus:ring-inset focus:ring-neutral-900 sm:text-sm sm:leading-6"
+                  />
+                </div>
+              </div>
               <div className="overflow-y-auto flex-1 p-2 space-y-1">
                 {displayedApplications.map(app => (
                   <button
@@ -298,29 +348,52 @@ export function JobOfferDetails({ entityId, offer, applications }: { entityId: s
             <div className="col-span-2">
               {selectedApp ? (
                 <div className="bg-white rounded-xl shadow-sm border border-neutral-200 p-6 sticky top-6">
-                  <div className="flex justify-between items-start mb-6">
-                    <div>
-                      <h3 className="text-2xl font-bold text-neutral-900">{selectedApp.first_name} {selectedApp.last_name}</h3>
-                      <div className="text-neutral-500 mt-1">{selectedApp.email} {selectedApp.phone ? ` • ${selectedApp.phone}` : ''}</div>
+                  <div className="mb-6">
+                    <div className="mb-3">
+                      <span className={`inline-block px-2.5 py-1 text-sm font-bold rounded-md ${
+                        selectedApp.status === 'new' ? 'bg-blue-100 text-blue-800' :
+                        selectedApp.status === 'shortlisted' ? 'bg-yellow-100 text-yellow-800' :
+                        selectedApp.status === 'interviewing' ? 'bg-indigo-100 text-indigo-800' :
+                        selectedApp.status === 'hired' ? 'bg-green-100 text-green-800' :
+                        'bg-red-100 text-red-800'
+                      }`}>
+                        {selectedApp.status === 'new' ? 'Nouvelle' :
+                         selectedApp.status === 'shortlisted' ? 'Retenue' :
+                         selectedApp.status === 'interviewing' ? 'Rencontre' :
+                         selectedApp.status === 'hired' ? 'Validée' : 'Refusée'}
+                      </span>
                     </div>
-                    <select 
-                      value={selectedApp.status}
-                      disabled={showArchives}
-                      onChange={(e) => handleStatusChange(selectedApp.id, e.target.value)}
-                      className={`text-sm rounded-lg border-0 py-2 pl-3 pr-8 font-medium ring-1 ring-inset focus:ring-2 focus:ring-inset disabled:opacity-50 ${
-                        selectedApp.status === 'new' ? 'bg-blue-50 text-blue-700 ring-blue-600/20 focus:ring-blue-600' :
-                        selectedApp.status === 'shortlisted' ? 'bg-yellow-50 text-yellow-800 ring-yellow-600/20 focus:ring-yellow-600' :
-                        selectedApp.status === 'interviewing' ? 'bg-indigo-50 text-indigo-700 ring-indigo-600/20 focus:ring-indigo-600' :
-                        selectedApp.status === 'hired' ? 'bg-green-50 text-green-700 ring-green-600/20 focus:ring-green-600' :
-                        'bg-red-50 text-red-700 ring-red-600/20 focus:ring-red-600'
-                      }`}
-                    >
-                      <option value="new">Nouvelle</option>
-                      <option value="shortlisted">Retenue</option>
-                      <option value="interviewing">Rencontre</option>
-                      <option value="hired">Validée</option>
-                      <option value="rejected">Refusée</option>
-                    </select>
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="text-2xl font-bold text-neutral-900">{selectedApp.first_name} {selectedApp.last_name}</h3>
+                        <div className="text-neutral-500 mt-1">{selectedApp.email} {selectedApp.phone ? ` • ${selectedApp.phone}` : ''}</div>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex items-center gap-3">
+
+                      <div className="flex bg-neutral-100 p-1 rounded-lg border border-neutral-200">
+                        {[
+                          { id: 'shortlisted', label: 'Retenue' },
+                          { id: 'interviewing', label: 'Rencontre' },
+                          { id: 'hired', label: 'Validée' }
+                        ].map(status => (
+                          <button
+                            key={status.id}
+                            disabled={showArchives}
+                            onClick={() => handleStatusChange(selectedApp.id, status.id)}
+                            className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all disabled:opacity-50 ${
+                              selectedApp.status === status.id
+                                ? 'bg-white text-neutral-900 shadow-sm ring-1 ring-black/5'
+                                : 'text-neutral-500 hover:text-neutral-700 hover:bg-neutral-200/50'
+                            }`}
+                          >
+                            {status.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -362,6 +435,17 @@ export function JobOfferDetails({ entityId, offer, applications }: { entityId: s
                       </a>
                     </div>
                   )}
+
+                  {/* Danger Zone */}
+                  <div className="pt-6 mt-6 border-t border-neutral-100 flex justify-end">
+                    <button
+                      disabled={showArchives || selectedApp.status === 'rejected'}
+                      onClick={() => handleStatusChange(selectedApp.id, 'rejected')}
+                      className="px-4 py-2 text-sm font-medium text-red-700 bg-red-50 hover:bg-red-100 rounded-lg transition-colors border border-red-200 disabled:opacity-50 disabled:pointer-events-none"
+                    >
+                      Refuser la candidature
+                    </button>
+                  </div>
                 </div>
               ) : null}
             </div>

@@ -24,8 +24,8 @@ import { requireDashboardContext } from '@/lib/dashboard-context'
 import { revalidateAfterEntityMutation } from '@/lib/revalidate-public'
 import { randomBytes } from 'crypto'
 
-const BILLETTERIE_PATH = '/dashboard/activite/billetterie'
-const CHECKIN_PATH = '/dashboard/activite/billetterie/check-in'
+const BILLETTERIE_PATH = '/dashboard/billetterie'
+const CHECKIN_PATH = '/dashboard/billetterie/check-in'
 const MANUAL_REG_CONTACT_TTL_MS = 15 * 60 * 1000
 
 function createManualRegContactToken(): string {
@@ -35,7 +35,7 @@ function createManualRegContactToken(): string {
 function revalidateBilletterie() {
   revalidatePath(BILLETTERIE_PATH)
   revalidatePath(CHECKIN_PATH)
-  revalidatePath('/dashboard/activite/participants')
+  revalidatePath('/dashboard/participants')
 }
 
 export async function cancelRegistrationAction(registrationId: string) {
@@ -147,7 +147,7 @@ export async function banClientAction(input: {
       phone: input.phone,
     })
     revalidateBilletterie()
-    revalidatePath('/dashboard/activite/service')
+    revalidatePath('/dashboard/service')
     return { ok: true as const }
   } catch (err) {
     console.error('[banClientAction]', err)
@@ -164,7 +164,7 @@ export async function unbanClientAction(clientId: string) {
   try {
     await unbanClient(ctx.supabase, ctx.entity.id, clientId)
     revalidateBilletterie()
-    revalidatePath('/dashboard/activite/service')
+    revalidatePath('/dashboard/service')
     return { ok: true as const }
   } catch (err) {
     console.error('[unbanClientAction]', err)

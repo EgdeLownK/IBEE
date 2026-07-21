@@ -39,23 +39,11 @@ export function DetailEntityStrip({
 
   return (
     <header className="detail-entity-strip" aria-label={`Profil de ${displayName}`}>
-      <div className="profile-banner">
-        {bannerUrl ? (
-          <Image src={bannerUrl} alt="" className="h-full w-full object-cover" width={800} height={172} priority />
-        ) : (
-          <div className="profile-banner__placeholder profile-banner__placeholder--empty" aria-hidden="true" />
-        )}
-      </div>
+
 
       <div className="detail-entity-strip__avatar px-[22px] pb-0">
         <div className="detail-entity-strip__group">
-          <Link href={profileHref} className="profile-avatar" aria-label={`Voir le profil de ${displayName}`}>
-            {avatarUrl ? (
-              <Image src={avatarUrl} alt="" width={172} height={172} className="h-full w-full object-cover" priority />
-            ) : (
-              <span className="font-display text-[30px] font-semibold text-accent">{initials}</span>
-            )}
-          </Link>
+
 
           <div className="detail-entity-strip__id">
             <h1 className="detail-entity-strip__title">{title}</h1>

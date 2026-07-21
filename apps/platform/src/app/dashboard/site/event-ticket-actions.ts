@@ -45,7 +45,7 @@ async function requireOwnedEvent(eventId: string) {
 function revalidateEvent(entitySlug: string, eventSlug: string) {
   revalidatePath('/dashboard/site')
   revalidatePath(`/dashboard/site/events/${eventSlug}`)
-  revalidatePath('/dashboard/activite/billetterie')
+  revalidatePath('/dashboard/billetterie')
   revalidateAfterEntityMutation(entitySlug, { eventSlug })
 }
 

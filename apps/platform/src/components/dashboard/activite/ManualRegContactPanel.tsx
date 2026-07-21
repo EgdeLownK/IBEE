@@ -8,7 +8,7 @@ import {
   consumeManualRegContactSessionAction,
   createManualRegContactSessionAction,
   pollManualRegContactSessionAction,
-} from '@/app/dashboard/activite/billetterie-actions'
+} from '@/app/dashboard/billetterie-actions'
 import { buildManualRegContactUrl } from '@/lib/manual-reg-contact-url'
 
 export type ManualRegContact = {

@@ -15,14 +15,14 @@
   top: 10px;
   right: 10px;
   z-index: 8;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 160ms ease;
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .wfeat__shell--admin:hover .wfeat__admin-menu,
 .wfeat__shell--admin:focus-within .wfeat__admin-menu,
-.wfeat__admin-menu.is-open {
+.wfeat__admin-menu.is-open,
+.wfeat__card--stacked .wfeat__admin-menu {
   opacity: 1;
   pointer-events: auto;
 }
@@ -34,39 +34,90 @@
   border-radius: 16px;
   text-decoration: none;
   color: inherit;
-  background: var(--color-panel);
-  box-shadow:
-    0 0 0 0.5px color-mix(in srgb, var(--color-neutral-900) 8%, transparent),
-    0 2px 10px -4px rgba(15, 18, 28, 0.14);
-  transition:
-    transform 220ms cubic-bezier(0.25, 0.1, 0.25, 1),
-    box-shadow 220ms cubic-bezier(0.25, 0.1, 0.25, 1);
+  background: transparent;
 }
 
-.wfeat__card--split {
+.widget:has(.wfeat__card--stacked) {
+  background: transparent !important;
+  border-color: transparent !important;
+}
+
+.wfeat__card--stacked {
+  display: block;
+  margin: -16px;
+  container-type: inline-size;
+  border-radius: 14px 14px 16px 16px;
+  overflow: hidden;
+  transform: translateZ(0);
+  -webkit-mask-image: -webkit-radial-gradient(white, black);
+  background: transparent;
+  box-shadow: none;
+}
+
+.widget:not(.widget--header-hidden) .wfeat__card--stacked {
+  margin-top: 4px;
+}
+
+.wfeat__card--stacked .wfeat__body {
+  position: relative;
+  z-index: 3;
   display: grid;
-  grid-template-columns: minmax(0, 42%) minmax(0, 1fr);
-  min-height: 200px;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  row-gap: 4px;
+  background: transparent;
+  color: #000;
+  padding: 14px 4px 0;
 }
 
-.wfeat__card--split:hover {
-  transform: translateY(-1px);
-  box-shadow:
-    0 0 0 0.5px color-mix(in srgb, var(--color-neutral-900) 10%, transparent),
-    0 10px 28px -12px rgba(15, 18, 28, 0.22);
+.wfeat__card--stacked .wfeat__name {
+  grid-column: 1;
+  grid-row: 1;
+  color: var(--color-neutral-900);
+}
+
+.wfeat__card--stacked .wfeat__tag {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--color-neutral-900);
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+.wfeat__card--stacked .wfeat__tags {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.wfeat__card--stacked .wfeat__footer {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  margin-top: 0;
+  padding-top: 0;
+  justify-content: flex-end;
+}
+
+.wfeat__card--stacked .wfeat__cta {
+  background: var(--color-neutral-900);
+  color: #fff;
+}
+
+.wfeat__card--stacked .wfeat__media {
+  background: transparent;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.wfeat__card--stacked .wfeat__media-track {
+  background: transparent;
 }
 
 .wfeat__media {
   position: relative;
-  min-height: 200px;
   overflow: hidden;
-  background: var(--color-panel);
+  background: transparent;
 }
 
 .wfeat__media-track {
   display: flex;
-  height: 100%;
-  min-height: inherit;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   scrollbar-width: none;
@@ -79,27 +130,24 @@
 
 .wfeat__media-slide {
   flex: 0 0 100%;
-  height: 100%;
-  min-height: inherit;
   scroll-snap-align: start;
 }
 
 .wfeat__img {
   width: 100%;
-  height: 100%;
-  min-height: inherit;
+  height: auto;
+  max-height: 100cqw;
+  min-height: calc(100cqw * 9 / 16);
   object-fit: cover;
   display: block;
-  transition: transform 520ms cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 
-.wfeat__card--split:hover .wfeat__img {
-  transform: scale(1.03);
-}
+
 
 .wfeat__placeholder {
-  position: absolute;
-  inset: 0;
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -147,29 +195,32 @@
 .wfeat__badge {
   position: absolute;
   top: 10px;
-  left: 10px;
+  right: 10px;
   z-index: 3;
-  padding: 5px 10px;
+  padding: 0 10px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.82);
   border: 0.5px solid rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(14px) saturate(1.6);
   pointer-events: none;
   font-family: var(--font-display);
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  color: var(--color-neutral-600);
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--color-neutral-900);
 }
-
+.wfeat__admin-menu ~ .wfeat__badge {
+  right: 48px;
+}
 .wfeat__body {
   display: flex;
   flex-direction: column;
   justify-content: center;
   gap: 10px;
   min-width: 0;
-  padding: 16px 18px;
+  padding: 16px 22px;
   text-decoration: none;
   color: inherit;
 }

@@ -117,7 +117,7 @@ export function ProfileHeroEditor({ entity, onAddContent, onEntityChange }: Prop
       </div>
 
       <div className="px-[22px]">
-        <div className="mt-[-34px] flex items-end gap-4">
+        <div className="mt-6 flex items-center gap-4">
           <button
             type="button"
             className="profile-avatar profile-avatar--editable"
@@ -142,7 +142,7 @@ export function ProfileHeroEditor({ entity, onAddContent, onEntityChange }: Prop
               )}
             </span>
           </button>
-          <div className="min-w-0 flex-1 pb-1">
+          <div className="min-w-0 flex-1">
             <h1 className="m-0 truncate font-display text-[22px] font-semibold leading-tight text-neutral-900">
               {entity.display_name}
             </h1>
@@ -159,13 +159,13 @@ export function ProfileHeroEditor({ entity, onAddContent, onEntityChange }: Prop
         {entity.bio && <p className="mb-0 mt-3 text-[13.5px] leading-normal text-neutral-600">{entity.bio}</p>}
 
         <div className="mb-1 mt-5 flex items-center gap-2.5">
-          <button type="button" className="btn btn--dark flex-1" disabled={!onAddContent} onClick={onAddContent}>
+          <button type="button" className="btn btn--dark flex-1 text-center justify-center" disabled={!onAddContent} onClick={onAddContent}>
             <Plus className="h-4 w-4" aria-hidden="true" />
             Ajouter contenu
           </button>
           <button
             type="button"
-            className="btn btn--ghost flex-1"
+            className="btn btn--ghost flex-1 text-center justify-center"
             onClick={() => router.push('/dashboard/site/general')}
           >
             <Pencil className="h-4 w-4" aria-hidden="true" />

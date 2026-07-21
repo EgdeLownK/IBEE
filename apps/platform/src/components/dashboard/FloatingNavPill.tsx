@@ -148,15 +148,7 @@ export function FloatingNavPill({
       icon: <MessageCircle className="h-5 w-5" aria-hidden="true" />,
       isActive: onMessages,
     },
-    {
-      href: '/dashboard/activite',
-      label: 'Activité',
-      icon: <Activity className="h-5 w-5" aria-hidden="true" />,
-      isActive:
-        (currentPath.startsWith('/dashboard/activite') &&
-          !currentPath.startsWith('/dashboard/activite/revenus')) ||
-        currentPath.startsWith('/notifications'),
-    },
+
     {
       href: profileHref,
       label: 'Profile web',

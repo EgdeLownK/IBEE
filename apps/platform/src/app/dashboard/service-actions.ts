@@ -12,11 +12,11 @@ import {
 } from '@ibee/supabase'
 import { requireDashboardContext } from '@/lib/dashboard-context'
 
-const SERVICE_PATH = '/dashboard/activite/service'
+const SERVICE_PATH = '/dashboard/service'
 
 function revalidateService() {
   revalidatePath(SERVICE_PATH)
-  revalidatePath('/dashboard/activite/rendez-vous')
+  revalidatePath('/dashboard/rendez-vous')
 }
 
 export async function confirmBookingAction(bookingId: string) {

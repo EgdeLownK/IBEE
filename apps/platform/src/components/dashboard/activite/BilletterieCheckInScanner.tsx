@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react'
 import { Camera, Keyboard } from 'lucide-react'
 import type { EventCheckInResult } from '@ibee/supabase'
-import { checkInRegistrationAction } from '@/app/dashboard/activite/billetterie-actions'
+import { checkInRegistrationAction } from '@/app/dashboard/billetterie-actions'
 
 export type CheckInScannerMode = 'staff-mobile' | 'staff-desktop'
 

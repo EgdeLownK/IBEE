@@ -13,8 +13,8 @@ type Props = {
 
 function shouldHideSwitcher(pathname: string): boolean {
   return (
-    pathname.startsWith('/dashboard/activite/revenus') ||
-    pathname.startsWith('/dashboard/activite/billetterie/check-in')
+    pathname.startsWith('/dashboard/revenus') ||
+    pathname.startsWith('/dashboard/billetterie/check-in')
   )
 }
 

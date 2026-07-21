@@ -13,7 +13,7 @@ import {
   UserPlus,
   X,
 } from 'lucide-react'
-import { cancelRegistrationAction, banClientAction, unbanClientAction } from '@/app/dashboard/activite/billetterie-actions'
+import { cancelRegistrationAction, banClientAction, unbanClientAction } from '@/app/dashboard/billetterie-actions'
 import type { LoadedBilletterieDashboard } from '@/lib/load-billetterie-data'
 import type { BilletterieEventLine, EventFeedSegment } from '@/lib/event-catalog-view'
 import {

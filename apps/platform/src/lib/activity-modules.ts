@@ -11,12 +11,12 @@ export type ActivityModuleDefinition = {
   matchPath: (pathname: string) => boolean
 }
 
-const SHOP_PATHS = ['/dashboard/activite/boutique', '/dashboard/activite/commandes']
+const SHOP_PATHS = ['/dashboard/boutique', '/dashboard/commandes']
 const SERVICE_PATHS = [
-  '/dashboard/activite/service',
-  '/dashboard/activite/rendez-vous',
+  '/dashboard/service',
+  '/dashboard/rendez-vous',
 ]
-const EVENT_PATHS = ['/dashboard/activite/billetterie', '/dashboard/activite/participants', '/dashboard/activite/billetterie/check-in']
+const EVENT_PATHS = ['/dashboard/billetterie', '/dashboard/participants', '/dashboard/billetterie/check-in']
 
 function matchesPrefix(pathname: string, prefixes: string[]): boolean {
   return prefixes.some((prefix) => pathname.startsWith(prefix))
@@ -26,21 +26,21 @@ export const ACTIVITY_MODULE_DEFINITIONS: ActivityModuleDefinition[] = [
   {
     key: 'shop',
     label: PROFILE_TAB_LABELS.shop,
-    href: '/dashboard/activite/boutique',
+    href: '/dashboard/boutique',
     icon: PROFILE_TAB_ICONS.shop,
     matchPath: (pathname) => matchesPrefix(pathname, SHOP_PATHS),
   },
   {
     key: 'appointments',
     label: PROFILE_TAB_LABELS.appointments,
-    href: '/dashboard/activite/service',
+    href: '/dashboard/service',
     icon: PROFILE_TAB_ICONS.appointments,
     matchPath: (pathname) => matchesPrefix(pathname, SERVICE_PATHS),
   },
   {
     key: 'events',
     label: PROFILE_TAB_LABELS.events,
-    href: '/dashboard/activite/billetterie',
+    href: '/dashboard/billetterie',
     icon: PROFILE_TAB_ICONS.events,
     matchPath: (pathname) => matchesPrefix(pathname, EVENT_PATHS),
   },
@@ -69,7 +69,7 @@ export function getActiveModuleFromPath(
   )
 }
 
-export const ACTIVITY_HUB_PATH = '/dashboard/activite'
+export const ACTIVITY_HUB_PATH = '/dashboard'
 export const ACTIVITY_STUDIO_PATH = '/dashboard/site'
 
 export function resolveActivityLandingPath(capabilities: ActivityCapabilitiesView): string {

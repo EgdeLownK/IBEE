@@ -33,6 +33,7 @@ export type BoutiqueProductLine = {
   title: string
   slug: string
   type: 'physical' | 'digital'
+  physicalCondition: string | null
   imageUrl: string | null
   priceCents: number
   currency: string
@@ -87,6 +88,7 @@ export type BoutiqueOrderView = {
   notes: string | null
   productHint: string | null
   productType: 'physical' | 'digital' | null
+  physicalCondition: string | null
   imageUrl: string | null
   needsAction: boolean
   isTrialPeriod: boolean
@@ -269,7 +271,8 @@ function resolveUrgency(displayStatus: BoutiqueDisplayStatus): number {
 
 export function mapOrderToView(
   order: OrderWithLines,
-  events: BoutiqueOrderEventView[] = []
+  events: BoutiqueOrderEventView[] = [],
+  physicalCondition: string | null = null
 ): BoutiqueOrderView {
   const lines = order.order_lines ?? []
   const items: BoutiqueOrderItem[] = lines.map((line) => ({
@@ -322,6 +325,7 @@ export function mapOrderToView(
     notes: order.notes,
     productHint: firstLine?.title_snapshot ?? null,
     productType: firstLine?.product_type ?? null,
+    physicalCondition,
     imageUrl: null,
     needsAction,
     isTrialPeriod,

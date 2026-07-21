@@ -6,7 +6,7 @@ import {
   blockAvailabilityDateAction,
   removeAvailabilityExceptionAction,
   saveWeeklyAvailabilityAction,
-} from '@/app/dashboard/activite/service-actions'
+} from '@/app/dashboard/service-actions'
 import type { ServiceDashboardData } from '@/lib/service-booking-view'
 import {
   formatPlanningDate,

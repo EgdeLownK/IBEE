@@ -33,7 +33,7 @@ export function BilletterieDashboard({ data }: Props) {
 
   const todayLive = data.today.todayEventLive
   const checkInHref = todayLive
-    ? `/dashboard/activite/billetterie/check-in?eventId=${todayLive.eventId}${isMobile ? '&scan=1' : ''}`
+    ? `/dashboard/billetterie/check-in?eventId=${todayLive.eventId}${isMobile ? '&scan=1' : ''}`
     : null
 
   return (

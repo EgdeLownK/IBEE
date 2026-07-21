@@ -52,9 +52,6 @@ type Props = {
 
 const SCOPES: { id: Scope; label: string; Icon: LucideIcon }[] = [
   { id: 'web', label: 'Profil web', Icon: LayoutGrid },
-  { id: 'service', label: 'Service', Icon: Briefcase },
-  { id: 'shop', label: 'Shop', Icon: ShoppingBag },
-  { id: 'event', label: 'Event', Icon: CalendarDays },
   { id: 'news', label: 'News', Icon: Newspaper },
 ]
 

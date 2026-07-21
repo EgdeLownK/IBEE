@@ -39,9 +39,6 @@ type Props = {
 
 const SCOPE_ICONS: Record<AnalyseScope, LucideIcon> = {
   web: LayoutGrid,
-  service: Briefcase,
-  shop: ShoppingBag,
-  event: CalendarDays,
   news: Newspaper,
 }
 

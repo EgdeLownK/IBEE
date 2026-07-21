@@ -69,7 +69,7 @@ export function buildAccountShellData(user: User, entity: EntityRow): AccountShe
     personalAccount: {
       displayName: personalName,
       email: user.email ?? '',
-      avatarUrl: user.user_metadata?.avatar_url ?? entity.avatar_url,
+      avatarUrl: user.user_metadata?.avatar_url ?? null,
       handle: `ibee.app/${entity.slug}`,
     },
     projectAccounts: [primaryProject, ...demoProjects],

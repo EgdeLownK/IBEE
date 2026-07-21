@@ -84,7 +84,7 @@ export async function savePayoutScheduleAction(input: {
       isActive: input.isActive,
       allocations,
     })
-    revalidatePath('/dashboard/activite/revenus')
+    revalidatePath('/dashboard/revenus')
     return { ok: true, data: { id: schedule.id } }
   } catch (err) {
     console.error('[savePayoutScheduleAction]', err)
@@ -138,7 +138,7 @@ export async function createOneTimePayoutAction(input: {
         email: ctx.user.email ?? '',
       }
     )
-    revalidatePath('/dashboard/activite/revenus')
+    revalidatePath('/dashboard/revenus')
     return { ok: true, data: { transferIds: transfers.map((transfer) => transfer.id) } }
   } catch (err) {
     console.error('[createOneTimePayoutAction]', err)
@@ -153,7 +153,7 @@ export async function disablePayoutScheduleAction(): Promise<ActionResult> {
 
   try {
     await deletePayoutSchedule(ctx.supabase, ctx.entity.id)
-    revalidatePath('/dashboard/activite/revenus')
+    revalidatePath('/dashboard/revenus')
     return { ok: true, data: undefined }
   } catch (err) {
     console.error('[disablePayoutScheduleAction]', err)
@@ -178,7 +178,7 @@ export async function exportPayoutTransfersAction(): Promise<
     const csv = buildPayoutTransfersCsv(pending)
     const transferIds = pending.map((transfer) => transfer.id)
     await markPayoutTransfersExported(ctx.supabase, ctx.entity.id, transferIds)
-    revalidatePath('/dashboard/activite/revenus')
+    revalidatePath('/dashboard/revenus')
 
     const date = new Date().toISOString().slice(0, 10)
     return {
@@ -208,7 +208,7 @@ export async function completePayoutTransfersAction(
 
   try {
     await markPayoutTransfersCompleted(ctx.supabase, ctx.entity.id, transferIds)
-    revalidatePath('/dashboard/activite/revenus')
+    revalidatePath('/dashboard/revenus')
     return { ok: true, data: undefined }
   } catch (err) {
     console.error('[completePayoutTransfersAction]', err)

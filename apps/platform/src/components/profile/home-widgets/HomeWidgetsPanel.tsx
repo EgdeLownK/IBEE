@@ -91,6 +91,8 @@ type Props = {
   onOpenAddContent?: () => void
 }
 
+import { SharedHomeWidgetsList } from './SharedHomeWidgetsList'
+
 export function HomeWidgetsPanel({ data, onOpenAddContent }: Props) {
   const [widgets, setWidgets] = useState<HomeWidget[]>(() => mapStudioWidgets(data.homeWidgets))
   const [addMenuOpen, setAddMenuOpen] = useState(false)
@@ -98,7 +100,6 @@ export function HomeWidgetsPanel({ data, onOpenAddContent }: Props) {
   const [faqOpen, setFaqOpen] = useState(false)
   const [bioOpen, setBioOpen] = useState(false)
   const [newWidgetId, setNewWidgetId] = useState<string | null>(null)
-  /** IDs de widgets fraîchement sauvegardés — évite la suppression auto par stale closure. */
   const justSavedWidgetIds = useRef<Set<string>>(new Set())
   const [faqItems, setFaqItems] = useState(data.faqItems)
   const [contactInfo, setContactInfo] = useState(data.contactInfo)
@@ -113,52 +114,6 @@ export function HomeWidgetsPanel({ data, onOpenAddContent }: Props) {
     () => new Set(widgets.filter((w) => isSingleInstanceHomeWidget(w.type)).map((w) => w.type)),
     [widgets]
   )
-
-  const widgetCountByType = useMemo(() => {
-    const acc: Record<string, number> = {}
-    widgets.forEach((w) => {
-      acc[w.type] = (acc[w.type] ?? 0) + 1
-    })
-    return acc
-  }, [widgets])
-
-  function widgetCardTitle(widget: HomeWidget, index: number): string {
-    const carouselLink = homeWidgetCarouselSectionLink(widget.type, widget.config, data.webEditUrl)
-    if (carouselLink) return carouselLink.label
-
-    if (widget.type === 'widget_highlight') {
-      const cfg = parseHighlightConfig(widget.config)
-      if (cfg) {
-        const { kind, id } = cfg.item
-        if (kind === 'product') {
-          const p = data.shopProducts.find((x) => x.id === id)
-          if (p) return p.title
-        }
-        if (kind === 'service') {
-          const s = data.playlistServices.find((x) => x.id === id)
-          if (s) return s.title
-        }
-        if (kind === 'event') {
-          const ev = data.playlistEvents.find((x) => x.id === id)
-          if (ev) return ev.title
-        }
-        if (kind === 'news') {
-          const pub = data.publications.find((x) => x.id === id)
-          if (pub) return pub.title
-        }
-      }
-      return 'Mise en avant'
-    }
-
-    const base = homeWidgetLabel(widget.type)
-    if ((widgetCountByType[widget.type] ?? 0) <= 1) return base
-    const sameTypeIndex = widgets.slice(0, index + 1).filter((w) => w.type === widget.type).length
-    return `${base} ${sameTypeIndex}`
-  }
-
-  function widgetCardTitleHref(widget: HomeWidget): string | undefined {
-    return homeWidgetCarouselSectionLink(widget.type, widget.config, data.webEditUrl)?.href
-  }
 
   const pickerData: WidgetPickerData = useMemo(
     () => ({
@@ -243,7 +198,6 @@ export function HomeWidgetsPanel({ data, onOpenAddContent }: Props) {
     })
   }
 
-  /** Ferme un dialog issu d'un ajout : supprime le widget s'il est resté vide. */
   function closeEditorDialog() {
     const pendingId = newWidgetId
     if (pendingId) {
@@ -286,46 +240,14 @@ export function HomeWidgetsPanel({ data, onOpenAddContent }: Props) {
   return (
     <div className="profile-section">
       <div className="profile-section__widgets">
-        {widgets.map((widget, index) => {
-          const filled = widgetHasDisplayContent(widget, displayCtx)
-          const editMode = widgetEditMode(widget.type)
-          const featuredSingle = isHomeWidgetFeaturedSingle(widget.type, widget.config)
-          const headerVariant = featuredSingle ? 'hidden' : 'default'
-          return (
-            <WidgetCard
-              key={widget.id}
-              title={widgetCardTitle(widget, index)}
-              titleHref={widgetCardTitleHref(widget)}
-              filled={filled}
-              headerVariant={headerVariant}
-              editMode={editMode}
-              onEdit={() => openWidgetEditor(widget)}
-              onDelete={() => handleDelete(widget.id)}
-            >
-              <WidgetBodyDisplay
-                widget={widget}
-                data={panelData}
-                webBaseUrl={data.webEditUrl}
-                embedInWidgetCard
-                adminMenu={
-                  featuredSingle ? (
-                    <WidgetAdminMenu
-                      placement="card"
-                      editMode={editMode}
-                      onEdit={() => openWidgetEditor(widget)}
-                      onDelete={() => handleDelete(widget.id)}
-                    />
-                  ) : undefined
-                }
-                onConfigure={(id) => {
-                  const w = widgets.find((x) => x.id === id)
-                  if (w) openWidgetEditor(w)
-                }}
-                onOpenFaq={widget.type === 'widget_faq' ? () => setFaqOpen(true) : undefined}
-              />
-            </WidgetCard>
-          )
-        })}
+        <SharedHomeWidgetsList
+          widgets={widgets}
+          data={panelData}
+          webBaseUrl={data.webEditUrl}
+          isOwner={true}
+          onEditWidget={openWidgetEditor}
+          onDeleteWidget={handleDelete}
+        />
 
         <div className="home-widgets__add">
           <div className="relative">

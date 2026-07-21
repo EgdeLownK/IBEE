@@ -22,14 +22,20 @@ function AppShellInner({ children, webUrl }: Omit<Props, 'accountData'>) {
   const { isPersonalMode, activeProject } = useAccountContext()
   const zone = getNavZone(pathname, isPersonalMode)
   const showSidebar = shouldShowSidebar(zone, true)
-  const webProfileUrl = `/${activeProject.slug}`
+  const webProfileUrl = '/dashboard/site'
   const webProfileActive =
     pathname === webProfileUrl ||
     pathname.startsWith(`${webProfileUrl}/`) ||
     pathname.startsWith('/dashboard/site') ||
     pathname.startsWith('/dashboard/equipe') ||
     pathname.startsWith('/dashboard/analyse') ||
-    pathname.startsWith('/dashboard/activite/revenus')
+    pathname.startsWith('/dashboard/revenus') ||
+    pathname.startsWith('/dashboard/boutique') ||
+    pathname.startsWith('/dashboard/commandes') ||
+    pathname.startsWith('/dashboard/service') ||
+    pathname.startsWith('/dashboard/rendez-vous') ||
+    pathname.startsWith('/dashboard/billetterie') ||
+    pathname.startsWith('/dashboard/participants')
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {

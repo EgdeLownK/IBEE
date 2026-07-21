@@ -153,46 +153,6 @@ export function TalentDashboard({ entityId, offers }: { entityId: string; offers
                         >
                           Ouvrir
                         </Link>
-                        
-                        <div className="relative">
-                          <button 
-                            onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === offer.id ? null : offer.id) }}
-                            className="inline-flex items-center justify-center w-8 h-8 rounded-md text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100 transition-colors"
-                          >
-                            <MoreHorizontal className="h-4 w-4" />
-                          </button>
-
-                          {openMenuId === offer.id && (
-                            <>
-                              <div className="fixed inset-0 z-10" onClick={() => setOpenMenuId(null)} />
-                              <div className="absolute right-0 top-full z-20 mt-1 w-44 rounded-lg border border-neutral-200 bg-white py-1 shadow-lg text-left">
-                                {offer.apply_url && (
-                                  <a 
-                                    href={offer.apply_url} 
-                                    target="_blank" 
-                                    rel="noreferrer" 
-                                    className="flex items-center gap-2 px-4 py-2 text-sm text-neutral-600 hover:bg-neutral-50 transition-colors"
-                                    onClick={(e) => e.stopPropagation()}
-                                  >
-                                    <ExternalLink className="h-3.5 w-3.5" /> Lien externe
-                                  </a>
-                                )}
-                                <button
-                                  onClick={(e) => { e.stopPropagation(); handleEdit(offer); setOpenMenuId(null); }}
-                                  className="flex w-full items-center gap-2 px-4 py-2 text-sm text-neutral-600 hover:bg-neutral-50 transition-colors"
-                                >
-                                  <Edit className="h-3.5 w-3.5" /> Modifier
-                                </button>
-                                <button
-                                  onClick={(e) => { e.stopPropagation(); handleDelete(offer.id); setOpenMenuId(null); }}
-                                  className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                                >
-                                  <Trash className="h-3.5 w-3.5" /> Supprimer
-                                </button>
-                              </div>
-                            </>
-                          )}
-                        </div>
                       </div>
                     </td>
                   </tr>

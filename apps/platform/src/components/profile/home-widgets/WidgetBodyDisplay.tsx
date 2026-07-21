@@ -129,7 +129,6 @@ function WidgetFeaturedCard({
   imageUrl,
   imageUrls,
   placeholder,
-  badgeLabel,
   title,
   tags,
   priceLabel,
@@ -143,7 +142,6 @@ function WidgetFeaturedCard({
   imageUrl: string | null
   imageUrls?: string[]
   placeholder: React.ReactNode
-  badgeLabel: string
   title: string
   tags: string[]
   priceLabel: string
@@ -160,25 +158,25 @@ function WidgetFeaturedCard({
   return (
     <section className="wfeat wfeat--embedded">
       <div className={`wfeat__shell${adminMenu ? ' wfeat__shell--admin' : ''}`}>
-        {adminMenu}
-        <div className="wfeat__card wfeat__card--split">
-          <div className="wfeat__media">
-            <span className="wfeat__badge">{badgeLabel}</span>
-            {images.length > 0 ? (
-              <>
-                <div className="wfeat__media-track" ref={trackRef}>
-                  {images.map((url, i) => (
-                    <div key={`${url}-${i}`} className="wfeat__media-slide">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={url} alt="" className="wfeat__img" loading="lazy" />
-                    </div>
-                  ))}
-                </div>
+        <div 
+          className="relative rounded-2xl overflow-hidden group w-full bg-neutral-100"
+          style={{ containerType: 'inline-size' }}
+        >
+          {images.length > 0 ? (
+            <>
+              <div className="wfeat__media-track" ref={trackRef}>
+                {images.map((url, i) => (
+                  <div key={`${url}-${i}`} className="wfeat__media-slide">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={url} alt="" className="wfeat__img" loading="lazy" />
+                  </div>
+                ))}
+              </div>
                 {images.length > 1 && (
                   <>
                     <button
                       type="button"
-                      className="wfeat__media-nav wfeat__media-nav--prev"
+                      className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 flex items-center justify-center rounded-full bg-white/80 text-black backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-0"
                       aria-label="Image précédente"
                       disabled={!canPrev}
                       onClick={scrollPrev}
@@ -187,7 +185,7 @@ function WidgetFeaturedCard({
                     </button>
                     <button
                       type="button"
-                      className="wfeat__media-nav wfeat__media-nav--next"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 flex items-center justify-center rounded-full bg-white/80 text-black backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-0"
                       aria-label="Image suivante"
                       disabled={!canNext}
                       onClick={scrollNext}
@@ -198,36 +196,48 @@ function WidgetFeaturedCard({
                 )}
               </>
             ) : (
-              <span className="wfeat__placeholder" aria-hidden="true">
+              <span className="w-full aspect-[4/5] sm:aspect-[16/9] flex items-center justify-center text-neutral-400" aria-hidden="true">
                 {placeholder}
               </span>
             )}
-          </div>
-          <Link href={href} className="wfeat__body">
-            <h3 className="wfeat__name">{title}</h3>
-            {tags.length > 0 && (
-              <div className="wfeat__tags">
-                {tags.map((tag) => (
-                  <span key={tag} className="wfeat__tag">
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            )}
-            <div className="wfeat__footer">
-              {!hidePrice && (
-                <div className={`wfeat__price${promo ? ' wfeat__price--promo' : ''}`}>
-                  {promo && oldPriceLabel ? (
-                    <>
-                      <span className="wfeat__price-now">{priceLabel}</span>
-                      <s className="wfeat__price-was">{oldPriceLabel}</s>
-                    </>
-                  ) : (
-                    <span className="wfeat__price-now">{priceLabel}</span>
-                  )}
-                </div>
+          
+          {/* Gradient Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent pointer-events-none z-[2]" />
+
+          {/* Admin Menu & Price Badge */}
+          {adminMenu}
+          {!hidePrice && priceLabel ? (
+            <span className="wfeat__badge shadow-sm">
+              {promo && oldPriceLabel ? (
+                <>
+                  <span>{priceLabel}</span>
+                  <s className="ml-1.5 text-neutral-500 font-medium text-[11px]">{oldPriceLabel}</s>
+                </>
+              ) : (
+                <span>{priceLabel}</span>
               )}
-              <span className="wfeat__cta">{ctaLabel}</span>
+            </span>
+          ) : null}
+
+          <Link href={href} className="absolute inset-0 z-10 flex flex-col justify-end p-5 sm:p-6 text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white">
+            <div className="flex justify-between items-center gap-4 w-full">
+              <div className="flex-1 min-w-0">
+                <h3 className="font-display text-xl sm:text-2xl font-bold leading-tight line-clamp-2 drop-shadow-sm">{title}</h3>
+                {tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2.5">
+                    {tags.map((tag) => (
+                      <span key={tag} className="inline-flex px-2.5 py-1 rounded-full bg-white/20 text-white text-[11px] sm:text-xs font-medium backdrop-blur-md border border-white/10">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="flex-shrink-0">
+                <span className="inline-flex items-center h-10 px-5 sm:px-6 rounded-full bg-white text-black font-display text-sm font-bold shadow-lg transition-transform group-hover:scale-105">
+                  {ctaLabel}
+                </span>
+              </div>
             </div>
           </Link>
         </div>
@@ -465,13 +475,12 @@ export function WidgetBodyDisplay({
           imageUrl={p.image_url}
           imageUrls={p.image_urls}
           placeholder={<ShoppingBag className="h-10 w-10" />}
-          badgeLabel="Shop"
           title={p.title}
           tags={[p.type === 'digital' ? 'Numérique' : 'Physique']}
           priceLabel={formatPrice(promo ? p.sale_price_cents : p.price_cents, p.currency)}
           oldPriceLabel={promo ? formatPrice(p.price_cents, p.currency) : null}
           promo={promo}
-          ctaLabel="Voir"
+          ctaLabel="Ouvrir"
           adminMenu={adminMenu}
         />
       )
@@ -486,7 +495,6 @@ export function WidgetBodyDisplay({
           imageUrl={s.image_url}
           imageUrls={s.image_urls}
           placeholder={<CalendarClock className="h-10 w-10" />}
-          badgeLabel="Service"
           title={s.title}
           tags={[`${s.duration_minutes} min`, loc[s.location_type] ?? 'Visio']}
           priceLabel={formatPrice(promo ? s.promo_price_cents : s.price_cents, s.currency)}
@@ -508,7 +516,6 @@ export function WidgetBodyDisplay({
           imageUrl={ev.image_url}
           imageUrls={ev.image_urls}
           placeholder={<Zap className="h-10 w-10" />}
-          badgeLabel="Event"
           title={ev.title}
           tags={[tag]}
           priceLabel={formatPrice(ev.price_cents, ev.currency)}
@@ -527,7 +534,6 @@ export function WidgetBodyDisplay({
         imageUrl={imageUrls[0] ?? null}
         imageUrls={imageUrls}
         placeholder={<Mail className="h-10 w-10" />}
-        badgeLabel="News"
         title={pub.title}
         tags={[relativeDate(pub.published_at)]}
         priceLabel=""
@@ -681,13 +687,12 @@ export function WidgetBodyDisplay({
           imageUrl={p.image_url}
           imageUrls={p.image_urls}
           placeholder={<ShoppingBag className="h-10 w-10" />}
-          badgeLabel="Shop"
           title={p.title}
           tags={[p.type === 'digital' ? 'Numérique' : 'Physique']}
           priceLabel={formatPrice(promo ? p.sale_price_cents : p.price_cents, p.currency)}
           oldPriceLabel={promo ? formatPrice(p.price_cents, p.currency) : null}
           promo={promo}
-          ctaLabel="Voir"
+          ctaLabel="Ouvrir"
           adminMenu={adminMenu}
         />
       )
@@ -736,7 +741,6 @@ export function WidgetBodyDisplay({
           imageUrl={s.image_url}
           imageUrls={s.image_urls}
           placeholder={<CalendarClock className="h-10 w-10" />}
-          badgeLabel="Service"
           title={s.title}
           tags={[`${s.duration_minutes} min`, loc[s.location_type] ?? 'Visio']}
           priceLabel={formatPrice(promo ? s.promo_price_cents : s.price_cents, s.currency)}
@@ -791,7 +795,6 @@ export function WidgetBodyDisplay({
           imageUrl={ev.image_url}
           imageUrls={ev.image_urls}
           placeholder={<Zap className="h-10 w-10" />}
-          badgeLabel="Event"
           title={ev.title}
           tags={[tag]}
           priceLabel={formatPrice(ev.price_cents, ev.currency)}

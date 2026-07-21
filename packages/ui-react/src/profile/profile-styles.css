@@ -327,6 +327,11 @@
   padding-right: 0;
 }
 
+.widget--transparent {
+  background: transparent !important;
+  border-color: transparent !important;
+}
+
 .widget:has(.banner-welcome--full) {
   padding-block: 0;
 }

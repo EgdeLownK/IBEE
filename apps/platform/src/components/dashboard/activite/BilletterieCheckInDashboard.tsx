@@ -47,7 +47,7 @@ export function BilletterieCheckInDashboard({ data: initialData, preferScanMode 
     >
       <header className="boutique-dash__head">
         <div className="boutique-dash__head-main">
-          <Link href="/dashboard/activite/billetterie" className="billetterie-checkin__back">
+          <Link href="/dashboard/billetterie" className="billetterie-checkin__back">
             <ArrowLeft className="h-4 w-4" aria-hidden="true" />
             {getActivityModuleLabel('events')}
           </Link>
@@ -67,7 +67,7 @@ export function BilletterieCheckInDashboard({ data: initialData, preferScanMode 
       {data.events.length === 0 ? (
         <div className="billetterie-checkin__empty">
           <p>Aucun événement à venir dans les 14 prochains jours.</p>
-          <Link href="/dashboard/activite/billetterie" className="btn btn--ghost">
+          <Link href="/dashboard/billetterie" className="btn btn--ghost">
             Retour {getActivityModuleLabel('events')}
           </Link>
         </div>

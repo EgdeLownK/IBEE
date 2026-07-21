@@ -59,7 +59,7 @@ export default async function EventDetailRoute({ params, searchParams }: PagePro
   return (
     <>
       <EventSchemaJsonLd data={data} />
-      <EventDetailPage data={data} />
+      <EventDetailPage data={data} embedMode={preview === 'dashboard' ? 'dashboard' : preview === '1'} />
       <TrackPageView
         events={[
           {

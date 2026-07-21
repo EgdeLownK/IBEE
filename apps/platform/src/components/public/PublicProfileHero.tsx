@@ -51,7 +51,7 @@ export function PublicProfileHero({
   useEffect(() => {
     async function fetchState() {
       try {
-        const res = await fetch(`/api/profile-state?entityId=${entityId}${ownerId ? `&ownerId=${ownerId}` : ''}`)
+        const res = await fetch(`/api/profile-state?entityId=${entityId}${ownerId ? `&ownerId=${ownerId}` : ''}`, { cache: 'no-store' })
         if (res.ok) {
           const data = await res.json()
           setIsAuthed(data.isAuthenticated)
@@ -113,7 +113,7 @@ export function PublicProfileHero({
       </div>
 
       <div className="px-[22px]">
-        <div className="mt-4 flex items-center gap-4">
+        <div className="mt-6 flex items-center gap-4">
           <div className="profile-avatar">
             {avatarUrl ? (
               <Image src={avatarUrl} alt={displayName} className="h-full w-full object-cover" width={172} height={172} priority />
@@ -144,13 +144,9 @@ export function PublicProfileHero({
              </div>
           ) : isOwner ? (
             <>
-              <Link href="/dashboard/site?action=add-content" className="btn btn--dark flex-1 text-center justify-center">
-                <Plus className="h-4 w-4" aria-hidden="true" />
-                Ajouter contenu
-              </Link>
-              <Link href="/dashboard/site/general" className="btn btn--ghost flex-1 text-center justify-center">
+              <Link href="/dashboard/site" className="btn btn--dark flex-1 text-center justify-center">
                 <Pencil className="h-4 w-4" aria-hidden="true" />
-                Modifier profil
+                Passer en mode édition
               </Link>
             </>
           ) : isAuthed ? (

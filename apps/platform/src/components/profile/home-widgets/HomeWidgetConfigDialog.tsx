@@ -336,7 +336,7 @@ export function HomeWidgetConfigDialog({ widget, pickerData, onClose, onSaved }:
                 Choisis <strong>un contenu</strong> à mettre en avant (produit, service, événement ou actualité).
               </p>
               <fieldset className="hw-config__fieldset">
-                {(['product', 'service', 'event', 'news'] as const).map((kind) => {
+                {(['news'] as const).map((kind) => {
                   const available = highlightKindHasContent(kind, pickerData)
                   return (
                     <label
@@ -400,7 +400,7 @@ export function HomeWidgetConfigDialog({ widget, pickerData, onClose, onSaved }:
                 </p>
               )}
               <div className="hw-config__source-grid" role="radiogroup" aria-label="Type de carrousel">
-                {CAROUSEL_SOURCE_KINDS.map((kind) => {
+                {CAROUSEL_SOURCE_KINDS.filter(k => k === 'news').map((kind) => {
                   const available = carouselSourceHasContent(kind, pickerData)
                   return (
                     <button

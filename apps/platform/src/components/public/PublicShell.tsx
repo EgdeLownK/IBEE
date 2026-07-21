@@ -19,7 +19,7 @@ function PublicShellInner({ children, webUrl }: Omit<Props, 'accountData'>) {
   const pathname = usePathname() ?? '/'
   const { isPersonalMode, activeProject } = useAccountContext()
   const zone = getNavZone(pathname, isPersonalMode)
-  const webProfileUrl = `/${activeProject.slug}`
+  const webProfileUrl = '/dashboard/site'
   const webProfileActive =
     pathname === webProfileUrl || pathname.startsWith(`${webProfileUrl}/`)
   const showSidebar = shouldShowSidebar(zone, true)

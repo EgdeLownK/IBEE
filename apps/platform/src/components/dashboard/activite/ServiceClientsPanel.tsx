@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Mail, Phone, Users } from 'lucide-react'
-import { updateClientNotesAction } from '@/app/dashboard/activite/service-actions'
+import { updateClientNotesAction } from '@/app/dashboard/service-actions'
 import {
   formatBookingSlot,
   type ServiceBookingView,

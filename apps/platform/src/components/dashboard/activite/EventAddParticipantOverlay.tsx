@@ -6,7 +6,7 @@ import { CheckCircle2, Loader2, Ticket, User, UserPlus, X } from 'lucide-react'
 import {
   createManualRegistrationAction,
   loadManualParticipantFormAction,
-} from '@/app/dashboard/activite/billetterie-actions'
+} from '@/app/dashboard/billetterie-actions'
 import { ManualRegContactPanel } from '@/components/dashboard/activite/ManualRegContactPanel'
 
 type FormData = {

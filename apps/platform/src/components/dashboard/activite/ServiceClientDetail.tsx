@@ -9,7 +9,7 @@ import {
   confirmBookingAction,
   markBookingNoShowAction,
   updateClientNotesAction,
-} from '@/app/dashboard/activite/service-actions'
+} from '@/app/dashboard/service-actions'
 import {
   formatBookingSlot,
   formatServiceMoney,

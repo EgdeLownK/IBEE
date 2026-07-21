@@ -19,6 +19,7 @@ import { HistoryEditDialog } from './history/HistoryEditDialog'
 import { EventCreateWizard } from './event-create/EventCreateWizard'
 import { ProductCreateWizard } from './product-create/ProductCreateWizard'
 import { ServiceCreateWizard } from './service-create/ServiceCreateWizard'
+import { JobOfferDialog } from '../dashboard/talent/JobOfferDialog'
 
 type Publication = ProfileStudioData['publications'][number]
 type HistoryBlock = ProfileStudioData['historyBlocks'][number]
@@ -50,6 +51,8 @@ export function ProfileStudio() {
   const [serviceReturnToAddContent, setServiceReturnToAddContent] = useState(false)
   const [eventWizardOpen, setEventWizardOpen] = useState(false)
   const [eventReturnToAddContent, setEventReturnToAddContent] = useState(false)
+  const [jobOfferWizardOpen, setJobOfferWizardOpen] = useState(false)
+  const [jobOfferReturnToAddContent, setJobOfferReturnToAddContent] = useState(false)
   const [publications, setPublications] = useState<Publication[]>([])
   const [historyBlocks, setHistoryBlocks] = useState<HistoryBlock[]>(shell.historyBlocks)
   const [shopProducts, setShopProducts] = useState<ShopProduct[]>([])
@@ -143,7 +146,7 @@ export function ProfileStudio() {
   }, [activeType, visibleTabTypes])
 
   const addContentSectionTypes = useMemo(
-    () => new Set(['news', 'shop', 'appointments', 'events', 'history']),
+    () => new Set(['news', 'history', 'talent']),
     []
   )
 
@@ -169,6 +172,11 @@ export function ProfileStudio() {
   function openEventWizard(fromAddContent = false) {
     setEventReturnToAddContent(fromAddContent)
     setEventWizardOpen(true)
+  }
+
+  function openJobOfferWizard(fromAddContent = false) {
+    setJobOfferReturnToAddContent(fromAddContent)
+    setJobOfferWizardOpen(true)
   }
 
   function handlePublished(pub: {
@@ -275,6 +283,7 @@ export function ProfileStudio() {
         onOpenProduct={() => openProductWizard(true)}
         onOpenService={() => openServiceWizard(true)}
         onOpenEvent={() => openEventWizard(true)}
+        onOpenTalent={() => openJobOfferWizard(true)}
       />
 
       <HistoryEditDialog
@@ -352,6 +361,18 @@ export function ProfileStudio() {
           ])
           setActiveType('events')
         }}
+      />
+
+      <JobOfferDialog
+        open={jobOfferWizardOpen}
+        onOpenChange={(isOpen) => {
+          setJobOfferWizardOpen(isOpen)
+          if (!isOpen && jobOfferReturnToAddContent) {
+            setAddContentOpen(true)
+            setJobOfferReturnToAddContent(false)
+          }
+        }}
+        entityId={shell.entity.id}
       />
     </div>
   )

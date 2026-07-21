@@ -55,11 +55,12 @@ export function ProductBuyButton({
   }
 
   return (
-    <div className="flex flex-col items-end gap-1">
+    <div className="flex flex-col items-stretch gap-1 w-full">
       <button
         type="button"
-        className={className}
+        className={`${className} w-full flex justify-center`}
         disabled={disabled || loading}
+        data-state={loading ? 'loading' : disabled ? 'unavailable' : 'ready'}
         onClick={handleBuy}
       >
         {loading ? (

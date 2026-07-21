@@ -1,13 +1,16 @@
 'use client'
 
 import type { ReactNode } from 'react'
-import { usePathname } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
 import {
+  CalendarClock,
   ChartColumnBig,
   Heart,
   PanelsTopLeft,
   Plug,
+  ShoppingBag,
   Sparkles,
+  Ticket,
   TrendingUp,
   Users,
 } from 'lucide-react'
@@ -24,35 +27,29 @@ type SidebarItem = {
 
 export function ProfileSidebar() {
   const pathname = usePathname() ?? ''
+  const searchParams = useSearchParams()
+
+  const isPreviewDashboard = searchParams?.get('preview') === 'dashboard'
 
   const generalItems: SidebarItem[] = [
     {
       href: '/dashboard/site',
       label: 'Mon site web',
       icon: <PanelsTopLeft className="h-5 w-5" aria-hidden="true" />,
-      isActive: pathname.startsWith('/dashboard/site'),
+      isActive:
+        pathname.startsWith('/dashboard/site') ||
+        pathname.startsWith('/profile-preview/') ||
+        pathname.startsWith('/feed-detail/') ||
+        (isPreviewDashboard &&
+          (pathname.includes('/shop/') ||
+            pathname.includes('/events/') ||
+            pathname.includes('/services/'))),
     },
-    {
-      href: '/dashboard/equipe',
-      label: 'Équipe',
-      icon: <Users className="h-5 w-5" aria-hidden="true" />,
-      isActive: pathname.startsWith('/dashboard/equipe'),
-    },
+
   ]
 
   const pilotageItems: SidebarItem[] = [
-    {
-      href: '/dashboard/analyse',
-      label: 'Analyse',
-      icon: <ChartColumnBig className="h-5 w-5" aria-hidden="true" />,
-      isActive: pathname.startsWith('/dashboard/analyse'),
-    },
-    {
-      href: '/dashboard/activite/revenus',
-      label: 'Revenus projet',
-      icon: <TrendingUp className="h-5 w-5" aria-hidden="true" />,
-      isActive: pathname.startsWith('/dashboard/activite/revenus'),
-    },
+
     {
       href: '/dashboard/talent',
       label: 'Talent',
@@ -61,29 +58,20 @@ export function ProfileSidebar() {
     },
   ]
 
-  const toolsItems: SidebarItem[] = [
-    {
-      href: '#connecteur',
-      label: 'Connecteur',
-      icon: <Plug className="h-5 w-5" aria-hidden="true" />,
-    },
-  ]
+
 
   return (
     <MainRail ariaLabel="Navigation profil web">
       <div className="sidebar-nav__body">
         <div className="sidebar__section">
-          <p className="sidebar__label">Profile web</p>
+          <p className="sidebar__label">Générale</p>
           {generalItems.map((item) => renderItem(item))}
         </div>
         <div className="sidebar__section">
           <p className="sidebar__label">Pilotage</p>
           {pilotageItems.map((item) => renderItem(item))}
         </div>
-        <div className="sidebar__section">
-          <p className="sidebar__label">Outils</p>
-          {toolsItems.map((item) => renderItem(item))}
-        </div>
+
       </div>
       <div className="sidebar-nav__footer">
         <ProjectAccountSwitcher variant="sidebar" />

@@ -79,7 +79,7 @@ export function formToDraft(form: ProductCreateFormState): ProductCreateDraft {
     variationMode: form.variationMode,
     variants: form.variants.flatMap((v) => {
       const basePairs = [...v.pairs]
-      if (form.physicalCondition !== 'new' && v.condition) {
+      if (v.condition && v.condition !== 'new') {
         const conditionLabels: Record<string, string> = {
           like_new: 'Comme neuf',
           very_good: 'Très bon état',

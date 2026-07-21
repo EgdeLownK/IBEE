@@ -18,6 +18,7 @@ import {
   Zap,
   ChevronLeft,
   ChevronRight,
+  Users,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import {
@@ -57,6 +58,7 @@ interface Props {
   onOpenProduct?: () => void
   onOpenService?: () => void
   onOpenEvent?: () => void
+  onOpenTalent?: () => void
   onPublished: (publication: {
     id: string
     title: string
@@ -86,6 +88,7 @@ export function AddContentDialog({
   onOpenProduct,
   onOpenService,
   onOpenEvent,
+  onOpenTalent,
   onPublished,
 }: Props) {
   const hasNews = activeSectionTypes.has('news')
@@ -94,9 +97,7 @@ export function AddContentDialog({
   const toolbarItems = useMemo((): ToolbarItem[] => {
     const all: ToolbarItem[] = [
       { type: 'news', label: 'News', mode: 'composer', Icon: Newspaper },
-      { type: 'shop', label: 'Produit', mode: 'overlay', Icon: ShoppingBag },
-      { type: 'appointments', label: 'Service', mode: 'overlay', Icon: CalendarDays },
-      { type: 'events', label: 'Event', mode: 'overlay', Icon: Zap },
+      { type: 'talent', label: 'Talent', mode: 'overlay', Icon: Users },
       { type: 'history', label: 'Histoire', mode: 'overlay', Icon: BookOpen },
     ]
     return all.filter((item) => activeSectionTypes.has(item.type))
@@ -304,6 +305,11 @@ export function AddContentDialog({
     if (item.type === 'events' && onOpenEvent) {
       onClose()
       onOpenEvent()
+      return
+    }
+    if (item.type === 'talent' && onOpenTalent) {
+      onClose()
+      onOpenTalent()
       return
     }
     onClose()

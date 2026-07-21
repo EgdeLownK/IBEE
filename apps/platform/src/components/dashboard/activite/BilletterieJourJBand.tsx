@@ -12,7 +12,7 @@ type Props = {
 
 export function BilletterieJourJBand({ live }: Props) {
   const isMobile = useCheckInMobileLayout()
-  const checkInHref = `/dashboard/activite/billetterie/check-in?eventId=${live.eventId}${isMobile ? '&scan=1' : ''}`
+  const checkInHref = `/dashboard/billetterie/check-in?eventId=${live.eventId}${isMobile ? '&scan=1' : ''}`
 
   return (
     <section className="billetterie-jourj" aria-label="Événement jour J">

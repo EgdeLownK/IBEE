@@ -6,14 +6,17 @@ import { EntityDetailBody } from './EntityDetailBody'
 import { EventParticipationCta } from './EventParticipationCta'
 import { ProductFaq } from './ProductFaq'
 import { RelatedContent } from './RelatedContent'
-import { embedProfileHref } from '@/lib/embed-public-urls'
+import { embedProfileHref, mapEventDataForEmbed } from '@/lib/embed-public-urls'
 
 interface Props {
   data: PublicEventData
-  embedMode?: boolean
+  embedMode?: boolean | 'dashboard'
 }
 
-export function EventDetailPage({ data, embedMode = false }: Props) {
+export function EventDetailPage({ data: initialData, embedMode = false }: Props) {
+  const data = embedMode
+    ? mapEventDataForEmbed(initialData, embedMode === 'dashboard' ? 'dashboard' : 'preview')
+    : initialData
   const subtitle = [`${data.dayChip} ${data.monthChip}`, data.locLabel].filter(Boolean).join(' · ')
 
   return (

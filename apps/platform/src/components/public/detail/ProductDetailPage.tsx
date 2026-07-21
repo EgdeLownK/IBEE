@@ -14,17 +14,11 @@ interface Props {
 export function ProductDetailPage({ data }: Props) {
   return (
     <main className="profile-page">
-      <ProfileShell>
-        <DetailTopBar backHref={data.backHref} title={`Voir le profil de ${data.entity.display_name}`} />
+      <div className="flex justify-center items-start gap-8 mx-auto w-full max-w-[1152px] xl:px-8 lg:px-4">
+        <ProfileShell>
+          <DetailTopBar backHref={data.backHref} title={`Voir le profil de ${data.entity.display_name}`} />
 
-        <DetailEntityStrip
-          displayName={data.entity.display_name}
-          avatarUrl={data.entity.avatar_url}
-          bannerUrl={data.entity.banner_url}
-          profileHref={data.profileHref}
-          title={data.product.title}
-          subtitle={data.subtitle}
-        />
+
 
         <ProductDetail
           product={data.product}
@@ -60,6 +54,9 @@ export function ProductDetailPage({ data }: Props) {
           </section>
         </div>
       </ProfileShell>
+
+      <aside id="buybox-portal" className="hidden lg:block w-[320px] shrink-0 sticky top-8 bg-surface border border-border shadow-shell rounded-2xl p-6" />
+      </div>
     </main>
   )
 }

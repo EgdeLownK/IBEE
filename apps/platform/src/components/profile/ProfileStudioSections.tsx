@@ -419,7 +419,7 @@ export function ProfileStudioSections({
             {shopFilter.filteredItems.map((p) => (
               <ProductTile
                 key={p.id}
-                href={p.slug ? `${detailBase}/shop/${p.slug}?preview=1` : null}
+                href={p.slug ? `${detailBase}/shop/${p.slug}?preview=${dashboardBaseUrl ? 'dashboard' : '1'}` : null}
                 editHref={dashboardBaseUrl ? `${dashboardBaseUrl}/products/${p.id}` : undefined}
                 title={p.title}
                 detailExcerpt={p.detailExcerpt}
@@ -462,7 +462,7 @@ export function ProfileStudioSections({
             {serviceFilter.filteredItems.map((s) => (
               <ProductTile
                 key={s.id}
-                href={s.slug ? `${detailBase}/services/${s.slug}` : null}
+                href={s.slug ? `${detailBase}/services/${s.slug}?preview=${dashboardBaseUrl ? 'dashboard' : '1'}` : null}
                 editHref={dashboardBaseUrl ? `${dashboardBaseUrl}/services/${s.id}` : undefined}
                 title={s.title}
                 detailExcerpt={s.detailExcerpt}
@@ -505,7 +505,7 @@ export function ProfileStudioSections({
             {eventFilter.filteredItems.map((ev) => (
               <EventListRow
                 key={ev.id}
-                href={ev.slug ? `${detailBase}/events/${ev.slug}` : null}
+                href={ev.slug ? `${detailBase}/events/${ev.slug}?preview=${dashboardBaseUrl ? 'dashboard' : '1'}` : null}
                 editHref={!readOnly && dashboardBaseUrl ? `${dashboardBaseUrl}/events/${ev.id}` : undefined}
                 onDelete={
                   !readOnly && dashboardBaseUrl

@@ -6,14 +6,17 @@ import { EntityDetailBody } from './EntityDetailBody'
 import { ProductFaq } from './ProductFaq'
 import { ProductReviewsList } from './ProductReviewsList'
 import { RelatedContent } from './RelatedContent'
-import { embedProfileHref } from '@/lib/embed-public-urls'
+import { embedProfileHref, mapServiceDataForEmbed } from '@/lib/embed-public-urls'
 
 interface Props {
   data: PublicServiceData
-  embedMode?: boolean
+  embedMode?: boolean | 'dashboard'
 }
 
-export function ServiceDetailPage({ data, embedMode = false }: Props) {
+export function ServiceDetailPage({ data: initialData, embedMode = false }: Props) {
+  const data = embedMode
+    ? mapServiceDataForEmbed(initialData, embedMode === 'dashboard' ? 'dashboard' : 'preview')
+    : initialData
   const subtitle = [`${data.service.duration_minutes} min`, data.locLabel].filter(Boolean).join(' · ')
 
   return (

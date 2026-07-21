@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { confirmOrderLabelsPrintedAction } from '@/app/dashboard/activite/boutique-actions'
+import { confirmOrderLabelsPrintedAction } from '@/app/dashboard/boutique-actions'
 import { PRINT_CANCELLED_ERROR, printShippingLabels } from '@/lib/boutique-order-label'
 import type { BoutiqueOrderView } from '@/lib/boutique-order-view'
 

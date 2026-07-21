@@ -268,7 +268,7 @@ async function loadProductCatalog(
       client
         .from('products')
         .select(
-          'id, title, slug, type, price_cents, currency, product_media(url, media_type, display_order)'
+          'id, title, slug, type, price_cents, currency, physical_condition, product_media(url, media_type, display_order)'
         )
         .eq('entity_id', entityId)
         .eq('status', 'published')
@@ -308,6 +308,7 @@ async function loadProductCatalog(
       title: product.title,
       slug: product.slug,
       type: product.type as 'physical' | 'digital',
+      physicalCondition: product.physical_condition ?? null,
       imageUrl: cover?.url ?? null,
       priceCents: product.price_cents,
       currency: product.currency,
@@ -346,10 +347,14 @@ export async function loadBoutiqueDashboardData(
     const imageByProductId = new Map(
       products.map((product) => [product.id, product.imageUrl] as const)
     )
+    const conditionByProductId = new Map(
+      products.map((product) => [product.id, product.physicalCondition] as const)
+    )
 
     const orders = ordersRaw.map((order) => {
-      const base = mapOrderToView(order)
       const productId = order.order_lines?.[0]?.product_id ?? null
+      const physicalCondition = productId ? (conditionByProductId.get(productId) ?? null) : null
+      const base = mapOrderToView(order, [], physicalCondition)
       const imageUrl = productId ? (imageByProductId.get(productId) ?? null) : null
       const dbEvents = eventsByOrder.get(order.id) ?? []
       return {

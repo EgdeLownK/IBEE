@@ -8,7 +8,6 @@ import {
   ChevronRight,
   CircleCheck,
   Clock,
-  FileText,
   Package,
   Printer,
   Search,
@@ -19,14 +18,15 @@ import {
 import {
   addOrderCommentAction,
   confirmOrderLabelsPrintedAction,
-  sendOrderInvoiceAction,
-} from '@/app/dashboard/activite/boutique-actions'
+  updateBoutiqueOrderAction,
+} from '@/app/dashboard/boutique-actions'
 import { canPrintShippingLabel, PRINT_CANCELLED_ERROR, printShippingLabels } from '@/lib/boutique-order-label'
 import {
   formatBoutiqueMoney,
   formatBoutiqueRelativeTime,
   type BoutiqueDisplayStatus,
   type BoutiqueOrderView,
+  type OrderFulfillmentStatus,
 } from '@/lib/boutique-order-view'
 import { ActiviteCatalogThumb } from './ActiviteCatalogThumb'
 
@@ -284,6 +284,68 @@ export function OrderTimeline({ order }: { order: BoutiqueOrderView }) {
   )
 }
 
+function StatusSelectMenu({
+  order,
+  pending,
+  onChange
+}: {
+  order: BoutiqueOrderView
+  pending: boolean
+  onChange: (status: OrderFulfillmentStatus) => void
+}) {
+  const [open, setOpen] = useState(false)
+  
+  const cfg = STATUS_CONFIG[order.displayStatus]
+
+  return (
+    <div className="relative">
+      <button 
+        type="button" 
+        onClick={() => setOpen(!open)}
+        disabled={pending}
+        className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-neutral-200 bg-white hover:bg-neutral-50 shadow-sm transition-all disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent text-sm font-medium text-neutral-900"
+        aria-label="Modifier le statut"
+      >
+        <span className="text-neutral-500">{cfg.icon}</span>
+        <span>{cfg.label}</span>
+        <ChevronRight className={`ml-1 h-4 w-4 text-neutral-400 transition-transform duration-200 ${open ? 'rotate-90' : 'rotate-0'}`} />
+      </button>
+
+      {open && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
+          <div className="absolute left-0 top-full mt-2 w-48 rounded-xl border border-neutral-200 bg-white shadow-lg z-20 py-1.5 flex flex-col animate-in fade-in zoom-in-95 duration-100">
+            <div className="px-3 py-1.5 text-[10px] font-semibold text-neutral-500 uppercase tracking-wider mb-1">
+              Changer le statut
+            </div>
+            {[
+              { val: 'pending', label: 'À traiter' },
+              { val: 'ready', label: 'Prêt' },
+              { val: 'shipped', label: 'Transit' },
+              { val: 'delivered', label: 'Livré' },
+              { val: 'returned', label: 'Retours' },
+            ].map((opt) => (
+              <button
+                key={opt.val}
+                type="button"
+                className={`text-left px-3 py-2 text-sm transition-colors hover:bg-neutral-50 ${order.fulfillmentStatus === opt.val ? 'bg-neutral-50 font-medium text-neutral-900 border-l-2 border-neutral-900' : 'text-neutral-600 border-l-2 border-transparent'}`}
+                onClick={() => {
+                  setOpen(false)
+                  if (order.fulfillmentStatus !== opt.val) {
+                    onChange(opt.val as OrderFulfillmentStatus)
+                  }
+                }}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
 export function OrderDetail({
   order,
   onClose,
@@ -333,17 +395,7 @@ export function OrderDetail({
     })
   }
 
-  function handleSendInvoice() {
-    setError(null)
-    startTransition(async () => {
-      const result = await sendOrderInvoiceAction(order.id)
-      if (!result.ok) {
-        setError(result.error)
-        return
-      }
-      router.refresh()
-    })
-  }
+
 
   function handlePrintLabel() {
     setError(null)
@@ -377,25 +429,30 @@ export function OrderDetail({
         <div className="order-detail__header-main">
           <p className="order-detail__ref">{order.ref}</p>
           <p className="order-detail__date">{date}</p>
-          <div className="order-detail__status-row">
-            <StatusBadge status={order.displayStatus} />
-            {order.productType ? (
-              <span className="order-detail__type-pill">
-                {order.productType === 'digital' ? 'Digital' : 'Physique'}
-              </span>
-            ) : null}
+          <div className="order-detail__status-row flex items-center flex-wrap gap-2">
+            <StatusSelectMenu
+              order={order}
+              pending={pending}
+              onChange={(newStatus) => {
+                setError(null)
+                startTransition(async () => {
+                  const result = await updateBoutiqueOrderAction({
+                    orderId: order.id,
+                    fulfillmentStatus: newStatus,
+                  })
+                  if (!result.ok) {
+                    setError(result.error)
+                    return
+                  }
+                  onUpdated?.(order.id, { fulfillmentStatus: newStatus })
+                  router.refresh()
+                })
+              }}
+            />
           </div>
         </div>
         <div className="order-detail__header-actions">
-          <button
-            type="button"
-            className="order-detail__header-btn"
-            onClick={handleSendInvoice}
-            disabled={pending}
-          >
-            <FileText className="h-4 w-4" aria-hidden="true" />
-            Envoyer facture
-          </button>
+
           {showPrintButton && printable ? (
             <button
               type="button"

@@ -18,7 +18,7 @@ function TodayEventLiveLink({
   live: NonNullable<BilletterieTodaySnapshot['todayEventLive']>
 }) {
   const isMobile = useCheckInMobileLayout()
-  const href = `/dashboard/activite/billetterie/check-in?eventId=${live.eventId}${isMobile ? '&scan=1' : ''}`
+  const href = `/dashboard/billetterie/check-in?eventId=${live.eventId}${isMobile ? '&scan=1' : ''}`
 
   return (
     <Link href={href}>{live.eventTitle}</Link>

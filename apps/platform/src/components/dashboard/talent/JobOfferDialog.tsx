@@ -1,10 +1,11 @@
 'use client'
 
 import { useEffect, useState, useTransition } from 'react'
+import { createPortal } from 'react-dom'
 import { JobOffer, JobCompType, JobCompFreq } from '@ibee/supabase'
 import { createJobOfferAction, updateJobOfferAction } from '../../../app/dashboard/talent/talent-actions'
 import { Input } from '@ibee/ui-react'
-import { ArrowDown, ArrowUp, Edit, Image as ImageIcon, Plus, Trash, Trash2, Type, X, ExternalLink, List } from 'lucide-react'
+import { ArrowDown, ArrowUp, Edit, Image as ImageIcon, Plus, Trash, Trash2, Type, X, ExternalLink, List, ArrowLeft, ArrowRight, Loader2 } from 'lucide-react'
 import { HISTORY_MAX_BLOCKS, HISTORY_TEXT_MAX, HistoryBlock, parseHistoryBlocks } from '@ibee/shared'
 import { 
   DraftBlock, 
@@ -61,7 +62,20 @@ export function JobOfferDialog({ open, onOpenChange, entityId, offer }: JobOffer
     }
   }, [open, offer])
 
-  if (!open) return null
+  useEffect(() => {
+    if (!open) return
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') onOpenChange(false)
+    }
+    document.documentElement.style.overflow = 'hidden'
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.documentElement.style.overflow = ''
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [open, onOpenChange])
+
+  if (!open || typeof document === 'undefined') return null
 
   // --- Step 2 Block Functions ---
   function moveBlock(index: number, dir: -1 | 1) {
@@ -168,254 +182,259 @@ export function JobOfferDialog({ open, onOpenChange, entityId, offer }: JobOffer
     })
   }
 
-  return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      {step === 1 ? (
-        <div className="bg-white rounded-xl shadow-lg w-full max-w-[500px] p-6 relative max-h-[90vh] overflow-y-auto">
-          <h2 className="text-xl font-semibold mb-4">
-            {isEditing ? "Modifier l'offre" : "Nouvelle offre d'emploi"}
+  return createPortal(
+    <div className="pco-root" role="presentation">
+      <button type="button" className="pco-root__backdrop" aria-label="Fermer" onClick={() => onOpenChange(false)} />
+      <div className="pco__panel" role="dialog" aria-modal="true" aria-labelledby="pco-title">
+        <header className="pco__header">
+          <h2 id="pco-title" className="pco__title">
+            {isEditing ? "Modifier l'offre" : "Nouvelle offre"}
           </h2>
+          <button type="button" className="pco__close" aria-label="Fermer" onClick={() => onOpenChange(false)}>
+            <X className="h-5 w-5" />
+          </button>
+        </header>
 
-          <div className="space-y-4">
-            {error && <p className="text-sm text-red-600">{error}</p>}
-            
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Titre du poste *</label>
-              <Input value={title} onChange={(e) => setTitle(e.target.value)} required placeholder="Ex: Développeur Fullstack React" />
+        <nav className="pco__steps" aria-label="Étapes de création">
+          {[1, 2].map((n) => (
+            <span
+              key={n}
+              className={`pco__step${step === n ? ' is-active' : ''}${step > n ? ' is-done' : ''}`}
+            >
+              <span className="pco__step-num">{n}</span>
+              <span className="pco__step-label">
+                {n === 1 ? 'Informations' : 'Contenu'}
+              </span>
+            </span>
+          ))}
+        </nav>
+
+        <div className="pco__scroll">
+          {error ? (
+            <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 mx-4 mt-4 rounded-md text-sm font-medium">
+              {error}
             </div>
+          ) : null}
 
-            <div className="grid grid-cols-2 gap-4">
+          {step === 1 ? (
+            <div className="space-y-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Type de contrat *</label>
-                <select value={contractType} onChange={(e) => setContractType(e.target.value as any)} className="block w-full rounded-lg border border-neutral-200 bg-white px-4 py-3 text-neutral-900 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-neutral-900/20 hover:border-neutral-300">
-                  <option value="cdi">CDI</option>
-                  <option value="cdd">CDD</option>
-                  <option value="mission">Mission / Freelance</option>
-                </select>
+                <label className="text-sm font-medium">Titre du poste *</label>
+                <Input value={title} onChange={(e) => setTitle(e.target.value)} required placeholder="Ex: Développeur Fullstack React" />
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Lieu de travail *</label>
-                <select value={locationType} onChange={(e) => setLocationType(e.target.value as any)} className="block w-full rounded-lg border border-neutral-200 bg-white px-4 py-3 text-neutral-900 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-neutral-900/20 hover:border-neutral-300">
-                  <option value="onsite">Sur site</option>
-                  <option value="remote">100% Télétravail</option>
-                  <option value="hybrid">Hybride</option>
-                </select>
-              </div>
-            </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Ville (optionnel)</label>
-              <Input value={locationText} onChange={(e) => setLocationText(e.target.value)} placeholder="Ex: Paris, France" />
-            </div>
-
-            <div className="border-t border-neutral-100 pt-4 mt-2">
-              <h3 className="text-sm font-semibold mb-3">Rémunération</h3>
-              <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-xs font-medium text-neutral-500">Type</label>
-                  <select value={compType} onChange={(e) => setCompType(e.target.value as any)} className="block w-full rounded-lg border border-neutral-200 bg-white px-4 py-3 text-neutral-900 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-neutral-900/20 hover:border-neutral-300">
-                    <option value="">Non spécifié</option>
-                    <option value="fixed">Fixe (€)</option>
-                    <option value="percentage">Pourcentage (%)</option>
+                  <label className="text-sm font-medium">Type de contrat *</label>
+                  <select value={contractType} onChange={(e) => setContractType(e.target.value as any)} className="block w-full rounded-lg border border-neutral-200 bg-white px-4 py-3 text-neutral-900 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-neutral-900/20 hover:border-neutral-300">
+                    <option value="cdi">CDI</option>
+                    <option value="cdd">CDD</option>
+                    <option value="mission">Mission / Freelance</option>
                   </select>
                 </div>
-                {compType && (
-                  <div className="flex gap-4">
-                    <div className="flex-1 space-y-2">
-                      <label className="text-xs font-medium text-neutral-500">
-                        Montant
-                      </label>
-                      <div className="relative">
-                        <Input 
-                          type="number"
-                          placeholder="0.00" 
-                          value={compAmount}
-                          onChange={(e) => setCompAmount(e.target.value)}
-                          className="pr-8"
-                        />
-                        <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-neutral-500 text-sm">
-                          {compType === 'percentage' ? '%' : '€'}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex-1 space-y-2">
-                      <label className="text-xs font-medium text-neutral-500">
-                        Fréquence
-                      </label>
-                      <select value={compFreq} onChange={(e) => setCompFreq(e.target.value as any)} className="block w-full rounded-lg border border-neutral-200 bg-white px-4 py-3 text-neutral-900 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-neutral-900/20 hover:border-neutral-300">
-                        <option value="">Au choix</option>
-                        <option value="weekly">Par semaine</option>
-                        <option value="monthly">Par mois</option>
-                        <option value="mission">À la mission</option>
-                      </select>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="border-t border-neutral-100 pt-4 mt-2 space-y-2">
-              <label className="text-sm font-medium">Lien ou Email pour postuler (optionnel)</label>
-              <Input value={applyUrl} onChange={(e) => setApplyUrl(e.target.value)} placeholder="Ex: https://forms.gle/... ou jobs@entreprise.com" />
-            </div>
-
-            <div className="mt-6 flex justify-end gap-2 pt-4">
-              <button type="button" className="px-4 py-2 bg-neutral-100 hover:bg-neutral-200 text-neutral-900 rounded-md text-sm font-medium transition" onClick={() => onOpenChange(false)}>
-                Annuler
-              </button>
-              <button type="button" onClick={handleNext} className="px-4 py-2 bg-neutral-900 hover:bg-neutral-800 text-white rounded-md text-sm font-medium transition">
-                Suivant (Étape 2)
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : (
-        <div className="bg-white rounded-xl shadow-lg w-full max-w-3xl flex flex-col relative max-h-[90vh]">
-          <div className="p-6 border-b border-neutral-100 flex items-center justify-between">
-            <div>
-              <p className="text-xs font-semibold text-neutral-500 mb-1 uppercase tracking-wider">Étape 2 / 2</p>
-              <h2 className="text-xl font-semibold">Description de l'offre</h2>
-              <p className="text-sm text-neutral-500 mt-1">Composez l'offre avec des blocs texte et images.</p>
-            </div>
-          </div>
-
-          <div className="flex-1 overflow-y-auto p-6 bg-neutral-50">
-            {error && <p className="text-sm text-red-600 mb-4">{error}</p>}
-
-            <div className="space-y-6 max-w-xl mx-auto">
-              {blocks.length === 0 ? (
-                <div className="text-center py-12 border-2 border-dashed border-neutral-200 rounded-xl bg-white">
-                  <div className="w-12 h-12 bg-neutral-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <Type className="h-6 w-6 text-neutral-400" />
-                  </div>
-                  <h3 className="text-lg font-medium text-neutral-900">La description est vide</h3>
-                  <p className="text-neutral-500 mt-1 mb-4 text-sm">Ajoutez votre premier bloc pour décrire l'offre.</p>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Lieu de travail *</label>
+                  <select value={locationType} onChange={(e) => setLocationType(e.target.value as any)} className="block w-full rounded-lg border border-neutral-200 bg-white px-4 py-3 text-neutral-900 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-neutral-900/20 hover:border-neutral-300">
+                    <option value="onsite">Sur site</option>
+                    <option value="remote">100% Télétravail</option>
+                    <option value="hybrid">Hybride</option>
+                  </select>
                 </div>
-              ) : (
-                blocks.map((block, i) => (
-                  <article key={block.id} className="bg-white rounded-xl shadow-sm border border-neutral-200 overflow-hidden">
-                    <header className="flex items-center justify-between px-4 py-3 border-b border-neutral-100 bg-neutral-50">
-                      <div className="flex items-center gap-3">
-                        <span className="flex items-center justify-center w-6 h-6 rounded-full bg-neutral-200 text-xs font-medium text-neutral-700">
-                          {i + 1}
-                        </span>
-                        <span className="text-sm font-medium text-neutral-600">
-                          {block.type === 'text' ? 'Paragraphe' : block.type === 'image' ? 'Visuel' : 'Liste'}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <button type="button" disabled={i === 0} onClick={() => moveBlock(i, -1)} className="p-1.5 text-neutral-400 hover:text-neutral-900 disabled:opacity-30 rounded hover:bg-neutral-200">
-                          <ArrowUp className="w-4 h-4" />
-                        </button>
-                        <button type="button" disabled={i === blocks.length - 1} onClick={() => moveBlock(i, 1)} className="p-1.5 text-neutral-400 hover:text-neutral-900 disabled:opacity-30 rounded hover:bg-neutral-200">
-                          <ArrowDown className="w-4 h-4" />
-                        </button>
-                        <div className="w-px h-4 bg-neutral-300 mx-1" />
-                        <button type="button" onClick={() => removeBlock(i)} className="p-1.5 text-red-400 hover:text-red-600 rounded hover:bg-red-50">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </header>
-                    <div className="p-4">
-                      {block.type === 'text' ? (
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Ville (optionnel)</label>
+                <Input value={locationText} onChange={(e) => setLocationText(e.target.value)} placeholder="Ex: Paris, France" />
+              </div>
+
+              <div className="border-t border-neutral-100 pt-4 mt-2">
+                <h3 className="text-sm font-semibold mb-3">Rémunération</h3>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-xs font-medium text-neutral-500">Type</label>
+                    <select value={compType} onChange={(e) => setCompType(e.target.value as any)} className="block w-full rounded-lg border border-neutral-200 bg-white px-4 py-3 text-neutral-900 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-neutral-900/20 hover:border-neutral-300">
+                      <option value="">Non spécifié</option>
+                      <option value="fixed">Fixe (€)</option>
+                      <option value="percentage">Pourcentage (%)</option>
+                    </select>
+                  </div>
+                  {compType && (
+                    <div className="flex gap-4">
+                      <div className="flex-1 space-y-2">
+                        <label className="text-xs font-medium text-neutral-500">
+                          Montant
+                        </label>
                         <div className="relative">
-                          <textarea
-                            className="w-full min-h-[120px] rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-900 resize-y"
-                            maxLength={HISTORY_TEXT_MAX}
-                            placeholder="Ex. : Nous recherchons une personne passionnée par..."
-                            value={block.content}
-                            onChange={(e) => updateBlock(i, { ...block, content: e.target.value })}
+                          <Input 
+                            type="number"
+                            placeholder="0.00" 
+                            value={compAmount}
+                            onChange={(e) => setCompAmount(e.target.value)}
+                            className="pr-8"
                           />
-                          <div className="absolute bottom-3 right-3 text-xs text-neutral-400 bg-white/80 px-1 rounded">
-                            {block.content.length} / {HISTORY_TEXT_MAX}
+                          <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-neutral-500 text-sm">
+                            {compType === 'percentage' ? '%' : '€'}
                           </div>
                         </div>
-                      ) : block.type === 'list' ? (
-                        <div className="space-y-3 px-2 py-1">
-                          {block.items.map((item, itemIndex) => (
-                            <div key={item.id} className="flex items-start gap-3">
-                              <div className="mt-2.5 h-1.5 w-1.5 rounded-full bg-neutral-400 shrink-0" />
-                              <input
-                                type="text"
-                                className="flex-1 rounded-md border border-neutral-200 px-3 py-2 text-sm focus:border-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-400"
-                                placeholder="Élément de la liste..."
-                                value={item.value}
-                                onChange={(e) => {
-                                  const newItems = [...block.items]
-                                  newItems[itemIndex] = { ...newItems[itemIndex], value: e.target.value }
-                                  updateBlock(i, { ...block, items: newItems })
-                                }}
-                              />
+                      </div>
+                      <div className="flex-1 space-y-2">
+                        <label className="text-xs font-medium text-neutral-500">
+                          Fréquence
+                        </label>
+                        <select value={compFreq} onChange={(e) => setCompFreq(e.target.value as any)} className="block w-full rounded-lg border border-neutral-200 bg-white px-4 py-3 text-neutral-900 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-neutral-900/20 hover:border-neutral-300">
+                          <option value="">Au choix</option>
+                          <option value="weekly">Par semaine</option>
+                          <option value="monthly">Par mois</option>
+                          <option value="mission">À la mission</option>
+                        </select>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="border-t border-neutral-100 pt-4 mt-2 space-y-2">
+                <label className="text-sm font-medium">Lien ou Email pour postuler (optionnel)</label>
+                <Input value={applyUrl} onChange={(e) => setApplyUrl(e.target.value)} placeholder="Ex: https://forms.gle/... ou jobs@entreprise.com" />
+              </div>
+            </div>
+          ) : (
+            <section className="pco__stage p-6">
+              <span className="pco__label">
+                Contenu détaillé de l'offre <span className="pco__hint">(max {HISTORY_MAX_BLOCKS} blocs)</span>
+              </span>
+              <div className="pco__blocks">
+                {blocks.map((b, i) => (
+                  <div key={b.id} className="pco__block-card">
+                    <div className="pco__block-head">
+                      <span className="pco__block-tag">{b.type === 'text' ? 'Texte' : b.type === 'list' ? 'Liste' : 'Image'}</span>
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          className="pco__icon-btn"
+                          disabled={i === 0}
+                          onClick={() => moveBlock(i, -1)}
+                        >
+                          <ArrowUp className="h-4 w-4" />
+                        </button>
+                        <button
+                          type="button"
+                          className="pco__icon-btn"
+                          disabled={i === blocks.length - 1}
+                          onClick={() => moveBlock(i, 1)}
+                        >
+                          <ArrowDown className="h-4 w-4" />
+                        </button>
+                        <button
+                          type="button"
+                          className="pco__icon-btn text-red-500 hover:text-red-600 hover:bg-red-50"
+                          aria-label="Supprimer"
+                          onClick={() => removeBlock(i)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                    {b.type === 'text' ? (
+                      <textarea
+                        className="pco__input"
+                        rows={4}
+                        maxLength={HISTORY_TEXT_MAX}
+                        placeholder="Ex. : Nous recherchons une personne passionnée par..."
+                        value={b.content}
+                        onChange={(e) => updateBlock(i, { ...b, content: e.target.value })}
+                      />
+                    ) : b.type === 'list' ? (
+                      <div className="flex flex-col gap-2">
+                        {b.items.map((item, itemIndex) => (
+                          <div key={item.id} className="flex gap-2 items-start">
+                            <span className="mt-2.5 h-1.5 w-1.5 rounded-full bg-neutral-800 shrink-0" />
+                            <textarea
+                              className="pco__input flex-1 min-h-[40px] resize-none"
+                              rows={1}
+                              placeholder="Élément de la liste"
+                              value={item.value}
+                              onChange={(e) => {
+                                const newItems = [...b.items]
+                                newItems[itemIndex] = { ...newItems[itemIndex], value: e.target.value }
+                                updateBlock(i, { ...b, items: newItems })
+                              }}
+                            />
+                            {b.items.length > 1 && (
                               <button
                                 type="button"
-                                className="mt-1 p-1.5 text-neutral-400 hover:text-red-600 transition-colors"
                                 onClick={() => {
-                                  const newItems = block.items.filter((_, idx) => idx !== itemIndex)
-                                  updateBlock(i, { ...block, items: newItems })
+                                  const newItems = b.items.filter((_, idx) => idx !== itemIndex)
+                                  updateBlock(i, { ...b, items: newItems })
                                 }}
-                                aria-label="Supprimer cet élément"
+                                className="pco__icon-btn mt-1 text-neutral-400 hover:text-red-500"
                               >
                                 <X className="h-4 w-4" />
                               </button>
-                            </div>
-                          ))}
-                          <button
-                            type="button"
-                            className="text-sm text-neutral-500 hover:text-neutral-900 font-medium inline-flex items-center gap-1 mt-2"
-                            onClick={() => {
-                              updateBlock(i, { ...block, items: [...block.items, { id: nextBlockId(), value: '' }] })
-                            }}
-                          >
-                            <Plus className="h-4 w-4" /> Ajouter une puce
-                          </button>
-                        </div>
-                      ) : (
-                        <HistoryImageBlockEditor
-                          block={block}
-                          onChange={(next) => updateBlock(i, next)}
-                        />
-                      )}
-                    </div>
-                  </article>
-                ))
-              )}
-
-              <div className="pt-4 border-t border-neutral-200">
-                <p className="text-sm font-medium text-neutral-900 mb-3">Ajouter un bloc</p>
-                <div className="grid grid-cols-3 gap-3">
-                  <button type="button" onClick={addTextBlock} className="flex flex-col items-center justify-center p-4 rounded-xl border border-neutral-200 bg-white hover:border-neutral-400 hover:shadow-sm transition-all group">
-                    <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
-                      <Type className="w-5 h-5" />
-                    </div>
-                    <span className="text-sm font-medium text-neutral-900">Texte</span>
-                  </button>
-                  <button type="button" onClick={addListBlock} className="flex flex-col items-center justify-center p-4 rounded-xl border border-neutral-200 bg-white hover:border-neutral-400 hover:shadow-sm transition-all group">
-                    <div className="w-10 h-10 rounded-full bg-orange-50 text-orange-600 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
-                      <List className="w-5 h-5" />
-                    </div>
-                    <span className="text-sm font-medium text-neutral-900">Liste</span>
-                  </button>
-                  <button type="button" onClick={addImageBlock} className="flex flex-col items-center justify-center p-4 rounded-xl border border-neutral-200 bg-white hover:border-neutral-400 hover:shadow-sm transition-all group">
-                    <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
-                      <ImageIcon className="w-5 h-5" />
-                    </div>
-                    <span className="text-sm font-medium text-neutral-900">Image</span>
-                  </button>
-                </div>
+                            )}
+                          </div>
+                        ))}
+                        <button
+                          type="button"
+                          className="text-sm font-medium text-neutral-500 hover:text-neutral-900 self-start mt-1 flex items-center gap-1"
+                          onClick={() => {
+                            updateBlock(i, { ...b, items: [...b.items, { id: nextBlockId(), value: '' }] })
+                          }}
+                        >
+                          <Plus className="h-3 w-3" /> Ajouter un élément
+                        </button>
+                      </div>
+                    ) : (
+                      <HistoryImageBlockEditor
+                        block={b}
+                        onChange={(next) => updateBlock(i, next)}
+                      />
+                    )}
+                  </div>
+                ))}
               </div>
-            </div>
-          </div>
-
-          <div className="p-6 border-t border-neutral-100 flex justify-between items-center bg-white rounded-b-xl">
-            <button type="button" className="px-4 py-2 bg-neutral-100 hover:bg-neutral-200 text-neutral-900 rounded-md text-sm font-medium transition" onClick={() => setStep(1)}>
-              Retour
-            </button>
-            <button type="button" onClick={handleSubmit} disabled={isPending} className="px-6 py-2 bg-neutral-900 hover:bg-neutral-800 text-white rounded-md text-sm font-medium transition disabled:opacity-50">
-              {isPending ? 'Enregistrement...' : isEditing ? 'Mettre à jour l\'offre' : 'Créer l\'offre'}
-            </button>
-          </div>
+              <div className="pco__block-add-row">
+                <button type="button" className="pco__add-btn" onClick={addTextBlock}>
+                  <Type className="h-4 w-4" /> Texte
+                </button>
+                <button type="button" className="pco__add-btn" onClick={addListBlock}>
+                  <List className="h-4 w-4" /> Liste
+                </button>
+                <button type="button" className="pco__add-btn" onClick={addImageBlock}>
+                  <ImageIcon className="h-4 w-4" /> Image
+                </button>
+              </div>
+            </section>
+          )}
         </div>
-      )}
-    </div>
+
+        <footer className="pco__actions">
+          <div className="pco__actions-start">
+            {step === 1 ? (
+              <button type="button" className="pco__btn pco__btn--ghost" onClick={() => onOpenChange(false)}>
+                Annuler
+              </button>
+            ) : (
+              <button type="button" className="pco__btn pco__btn--ghost" onClick={() => setStep(1)}>
+                <ArrowLeft className="h-4 w-4" /> Précédent
+              </button>
+            )}
+          </div>
+          <div className="pco__actions-end flex items-center gap-3">
+            {step === 1 ? (
+              <button type="button" className="pco__btn pco__btn--primary" onClick={handleNext}>
+                Suivant <ArrowRight className="h-4 w-4" />
+              </button>
+            ) : (
+              <button type="button" className="pco__btn pco__btn--primary" disabled={isPending} onClick={handleSubmit}>
+                {isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                <span>{isPending ? 'Enregistrement...' : isEditing ? 'Mettre à jour l\'offre' : 'Créer l\'offre'}</span>
+              </button>
+            )}
+          </div>
+        </footer>
+      </div>
+    </div>,
+    document.body
   )
 }

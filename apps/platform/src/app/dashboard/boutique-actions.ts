@@ -41,7 +41,7 @@ export async function addOrderCommentAction(orderId: string, comment: string) {
       actorUserId: ctx.user.id,
     })
 
-    revalidatePath('/dashboard/activite/boutique')
+    revalidatePath('/dashboard/boutique')
     return { ok: true as const }
   } catch (err) {
     console.error('[addOrderCommentAction]', err)
@@ -71,7 +71,7 @@ export async function sendOrderInvoiceAction(orderId: string) {
       actorUserId: ctx.user.id,
     })
 
-    revalidatePath('/dashboard/activite/boutique')
+    revalidatePath('/dashboard/boutique')
     return { ok: true as const, email: order.buyer_email }
   } catch (err) {
     console.error('[sendOrderInvoiceAction]', err)
@@ -149,7 +149,7 @@ export async function updateBoutiqueOrderAction(input: {
       })
     }
 
-    revalidatePath('/dashboard/activite/boutique')
+    revalidatePath('/dashboard/boutique')
     return { ok: true as const }
   } catch (err) {
     console.error('[updateBoutiqueOrderAction]', err)
@@ -210,7 +210,7 @@ export async function confirmOrderLabelsPrintedAction(orderIds: string[]) {
       return { ok: false as const, error: 'Aucune commande n’a pu être mise à jour.' }
     }
 
-    revalidatePath('/dashboard/activite/boutique')
+    revalidatePath('/dashboard/boutique')
     return { ok: true as const, confirmed }
   } catch (err) {
     console.error('[confirmOrderLabelsPrintedAction]', err)
@@ -291,7 +291,7 @@ export async function updateBoutiqueStockAction(input: {
 
       if (error) throw error
 
-      revalidatePath('/dashboard/activite/boutique')
+      revalidatePath('/dashboard/boutique')
       return { ok: true as const }
     }
 
@@ -326,7 +326,7 @@ export async function updateBoutiqueStockAction(input: {
       if (error) throw error
     }
 
-    revalidatePath('/dashboard/activite/boutique')
+    revalidatePath('/dashboard/boutique')
     return { ok: true as const }
   } catch (err) {
     console.error('[updateBoutiqueStockAction]', err)
@@ -361,7 +361,7 @@ export async function resendDigitalLinkAction(orderId: string) {
       actorUserId: ctx.user.id,
     })
 
-    revalidatePath('/dashboard/activite/boutique')
+    revalidatePath('/dashboard/boutique')
     return { ok: true as const, email: order.buyer_email }
   } catch (err) {
     console.error('[resendDigitalLinkAction]', err)

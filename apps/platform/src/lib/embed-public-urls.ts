@@ -16,8 +16,7 @@ export function embedDetailBase(entitySlug: string): string {
   return `/feed-detail/${entitySlug}`
 }
 
-/** Convertit un chemin public (/slug, /slug/shop/x, /slug#shop) en route embed iframe. */
-export function toEmbedPublicHref(href: string): string {
+export function toEmbedPublicHref(href: string, context: 'preview' | 'dashboard' = 'preview'): string {
   if (!href || href.startsWith('http') || href.startsWith('#')) return href
 
   const hashIndex = href.indexOf('#')
@@ -28,11 +27,11 @@ export function toEmbedPublicHref(href: string): string {
   if (parts.length === 0) return href
 
   if (parts.length === 1) {
-    return embedProfileHref(parts[0]!, hash)
+    return context === 'dashboard' ? '/dashboard/site' : embedProfileHref(parts[0]!, hash)
   }
 
   if (parts.length === 2 && DETAIL_SECTIONS.has(parts[1]!)) {
-    return embedProfileHref(parts[0]!, parts[1]!)
+    return context === 'dashboard' ? `/dashboard/site#${parts[1]}` : embedProfileHref(parts[0]!, parts[1]!)
   }
 
   if (parts.length === 3 && DETAIL_SECTIONS.has(parts[1]!)) {
@@ -43,13 +42,6 @@ export function toEmbedPublicHref(href: string): string {
   return href
 }
 
-function mapRelatedItems(items: RelatedItem[]): RelatedItem[] {
-  return items.map((it) => ({
-    ...it,
-    href: it.href ? toEmbedPublicHref(it.href) : undefined,
-  }))
-}
-
 export function mapProductDataForEmbed<T extends {
   entity: { slug: string }
   basePath: string
@@ -57,14 +49,14 @@ export function mapProductDataForEmbed<T extends {
   profileHref: string
   profileRelated: RelatedItem[]
   similarRelated: RelatedItem[]
-}>(data: T): T {
+}>(data: T, context: 'preview' | 'dashboard' = 'preview'): T {
   return {
     ...data,
-    basePath: toEmbedPublicHref(data.basePath),
-    backHref: toEmbedPublicHref(data.backHref),
-    profileHref: embedProfileHref(data.entity.slug),
-    profileRelated: mapRelatedItems(data.profileRelated),
-    similarRelated: mapRelatedItems(data.similarRelated),
+    basePath: toEmbedPublicHref(data.basePath, context),
+    backHref: toEmbedPublicHref(data.backHref, context),
+    profileHref: context === 'dashboard' ? '/dashboard/site' : embedProfileHref(data.entity.slug),
+    profileRelated: data.profileRelated.map((it) => ({ ...it, href: it.href ? toEmbedPublicHref(it.href, context) : undefined })),
+    similarRelated: data.similarRelated.map((it) => ({ ...it, href: it.href ? toEmbedPublicHref(it.href, context) : undefined })),
   }
 }
 
@@ -74,13 +66,13 @@ export function mapEventDataForEmbed<T extends {
   profileHref: string
   profileRelated: RelatedItem[]
   similarRelated: RelatedItem[]
-}>(data: T): T {
+}>(data: T, context: 'preview' | 'dashboard' = 'preview'): T {
   return {
     ...data,
-    backHref: toEmbedPublicHref(data.backHref),
-    profileHref: embedProfileHref(data.entity.slug),
-    profileRelated: mapRelatedItems(data.profileRelated),
-    similarRelated: mapRelatedItems(data.similarRelated),
+    backHref: toEmbedPublicHref(data.backHref, context),
+    profileHref: context === 'dashboard' ? '/dashboard/site' : embedProfileHref(data.entity.slug),
+    profileRelated: data.profileRelated.map((it) => ({ ...it, href: it.href ? toEmbedPublicHref(it.href, context) : undefined })),
+    similarRelated: data.similarRelated.map((it) => ({ ...it, href: it.href ? toEmbedPublicHref(it.href, context) : undefined })),
   }
 }
 
@@ -92,14 +84,14 @@ export function mapServiceDataForEmbed<T extends {
   bookingHref: string
   profileRelated: RelatedItem[]
   similarRelated: RelatedItem[]
-}>(data: T): T {
+}>(data: T, context: 'preview' | 'dashboard' = 'preview'): T {
   return {
     ...data,
-    basePath: toEmbedPublicHref(data.basePath),
-    backHref: toEmbedPublicHref(data.backHref),
-    profileHref: embedProfileHref(data.entity.slug),
-    bookingHref: toEmbedPublicHref(data.bookingHref),
-    profileRelated: mapRelatedItems(data.profileRelated),
-    similarRelated: mapRelatedItems(data.similarRelated),
+    basePath: toEmbedPublicHref(data.basePath, context),
+    backHref: toEmbedPublicHref(data.backHref, context),
+    profileHref: context === 'dashboard' ? '/dashboard/site' : embedProfileHref(data.entity.slug),
+    bookingHref: toEmbedPublicHref(data.bookingHref, context),
+    profileRelated: data.profileRelated.map((it) => ({ ...it, href: it.href ? toEmbedPublicHref(it.href, context) : undefined })),
+    similarRelated: data.similarRelated.map((it) => ({ ...it, href: it.href ? toEmbedPublicHref(it.href, context) : undefined })),
   }
 }

@@ -9,7 +9,7 @@ import {
   disablePayoutScheduleAction,
   exportPayoutTransfersAction,
   savePayoutScheduleAction,
-} from '@/app/dashboard/activite/payout-actions'
+} from '@/app/dashboard/payout-actions'
 import { useAccountContext } from '@/components/dashboard/AccountContext'
 import type { RevenuProjetData } from '@/lib/load-revenu-projet-data'
 import {

@@ -85,6 +85,7 @@ export function getVisibleProfileTabs(
   const menuSet = new Set(menuList.map((s) => s.type))
 
   const isVisible = (tab: ProfileTabType): boolean => {
+    if (tab === 'shop' || tab === 'appointments' || tab === 'events') return false
     if (!hasProfileTabContent(tab, content)) return false
     if (mode === 'studio') return true
     if (tab === 'home') return true

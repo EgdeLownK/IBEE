@@ -80,7 +80,9 @@ export function StepTypeSpecific({ form, onChange }: Props) {
           ) : null}
         </>
       ) : (
-        <div className="pco__field border-b border-neutral-200 pb-8">
+        <>
+
+          <div className="pco__field border-b border-neutral-200 pb-8">
           <span className="pco__label mb-3">
             Modes de remise <span className="pco__req">*</span>
           </span>
@@ -141,6 +143,7 @@ export function StepTypeSpecific({ form, onChange }: Props) {
           ) : null}
           {err('pickup_enabled') ? <p className="pco__error mt-2">{err('pickup_enabled')}</p> : null}
         </div>
+        </>
       )}
 
       <div className="pco__field mt-6">

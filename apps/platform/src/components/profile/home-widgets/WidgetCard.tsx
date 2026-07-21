@@ -7,6 +7,7 @@ interface Props {
   title: string
   titleHref?: string
   filled?: boolean
+  transparentBackground?: boolean
   editMode?: WidgetEditMode
   /** Masque l'en-tête (titre + menu) — ex. carte mise en avant avec menu dans la card */
   headerVariant?: 'default' | 'hidden'
@@ -19,6 +20,7 @@ export function WidgetCard({
   title,
   titleHref,
   filled = false,
+  transparentBackground = false,
   editMode = 'config',
   headerVariant = 'default',
   onEdit,
@@ -35,7 +37,7 @@ export function WidgetCard({
 
   return (
     <div className="widget-sort-item">
-      <article className={`widget${filled ? ' widget--filled' : ''}${hidden ? ' widget--header-hidden' : ''}`}>
+      <article className={`widget${filled ? ' widget--filled' : ''}${transparentBackground ? ' widget--transparent' : ''}${hidden ? ' widget--header-hidden' : ''}`}>
         {!hidden && (
           <header className="widget__head">
             {titleHref ? (
