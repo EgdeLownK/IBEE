@@ -13,13 +13,14 @@ import {
   type BoutiqueDashboardData,
   type BoutiqueOrderFilter,
   type BoutiqueOrderView,
+  type OrderFulfillmentStatus,
 } from '@/lib/boutique-order-view'
 import { canPrintShippingLabel } from '@/lib/boutique-order-label'
 import { InboxOrderCard, OrderDetail, StatusBadge } from './boutique-orders-ui'
 import { BoutiqueInboxFilterSummary } from './BoutiqueInboxFilterSummary'
 import { BoutiqueSidePanel } from './BoutiqueSidePanel'
 import { usePrintOrderLabels } from './use-print-order-labels'
-import type { OrderFulfillmentStatus } from '@repo/database'
+
 
 type Props = {
   data: Pick<BoutiqueDashboardData, 'orders' | 'stockItems' | 'products'>
