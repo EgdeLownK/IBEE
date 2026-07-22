@@ -147,10 +147,14 @@ export async function createJobApplication(
   return data
 }
 
+type ApplicationWithOffer = JobApplication & {
+  entity_job_offers: { title: string; entity_id: string } | null
+}
+
 export async function listMyApplications(
   client: Client,
   userId: string
-): Promise<(JobApplication & { entity_job_offers: { title: string; entity_id: string } | null })[]> {
+): Promise<ApplicationWithOffer[]> {
   const { data, error } = await client
     .from('entity_job_applications')
     .select('*, entity_job_offers(title, entity_id)')
@@ -158,7 +162,7 @@ export async function listMyApplications(
     .order('created_at', { ascending: false })
 
   if (error) throw error
-  return (data ?? []) as any
+  return (data ?? []) as unknown as ApplicationWithOffer[]
 }
 
 export async function listActiveJobOffersByEntity(
