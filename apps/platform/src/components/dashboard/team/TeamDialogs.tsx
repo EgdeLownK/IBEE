@@ -334,7 +334,7 @@ export function TeamInviteDialog({ open, roles, onClose, onInvite }: InviteProps
     if (open) {
       const inviteableRoles = roles.filter((role) => role.inviteable !== false)
       setEmail('')
-      setRoleId(inviteableRoles[0]?.id ?? '')
+      setRoleId(inviteableRoles[inviteableRoles.length - 1]?.id ?? '')
       setError('')
     }
   }, [open, roles])

@@ -9,6 +9,7 @@ export type TeamPermissionKey =
   | 'connecteur'
   | 'team'
   | 'revenue'
+  | 'talent'
 
 export type TeamPermissions = Record<TeamPermissionKey, boolean>
 
@@ -64,6 +65,11 @@ export const TEAM_PERMISSION_GROUPS: TeamPermissionGroup[] = [
         key: 'events',
         label: 'Événements',
         description: 'Créer et gérer les événements',
+      },
+      {
+        key: 'talent',
+        label: 'Recrutement',
+        description: 'Créer et gérer les offres, voir les candidatures',
       },
     ],
   },
@@ -203,6 +209,19 @@ export const DEFAULT_TEAM_ROLES: TeamRoleDefinition[] = [
     bg: 'rgba(44, 141, 74, 0.12)',
     fg: 'rgb(44, 141, 74)',
     permissions: clonePermissions(MANAGER_PERMISSIONS),
+    inviteable: true,
+  },
+  {
+    id: 'recruiter',
+    roleKey: 'recruiter',
+    label: 'Recruteur·se',
+    bg: 'rgba(59, 130, 246, 0.12)',
+    fg: 'rgb(59, 130, 246)',
+    permissions: {
+      ...clonePermissions(createEmptyPermissions()),
+      talent: true,
+      messages: true,
+    },
     inviteable: true,
   },
   {
