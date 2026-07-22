@@ -314,4 +314,9 @@ export { createServerClient } from './auth/server'
 export { createBrowserClient } from './auth/browser'
 export { getSupabaseEnv } from './auth/env'
 
+export { getUserProfile, upsertUserProfile } from './user-profiles'
+export type { UserProfile } from './user-profiles'
+
+export { listFavoritesByUser, addFavorite, removeFavorite } from './favorites'
+
 export * from './project-talent'
