@@ -408,3 +408,43 @@ export async function teamEmailAlreadyUsed(
 export function getOwnerRole(roles: TeamRoleRecord[]) {
   return roles.find((role) => role.role_key === 'owner' && role.locked)
 }
+
+export type AccessibleEntity = {
+  id: string
+  display_name: string
+  slug: string
+  avatar_url: string | null
+  role: string | null
+}
+
+export async function listAccessibleEntities(
+  client: Client,
+  userId: string,
+  email: string
+): Promise<{ owned: AccessibleEntity[]; member: AccessibleEntity[] }> {
+  // Entités dont l'user est owner
+  const { data: owned, error: ownedError } = await client
+    .from('entity')
+    .select('id, display_name, slug, avatar_url, role')
+    .eq('user_id', userId)
+
+  if (ownedError) throw ownedError
+
+  // Entités dont l'user est membre (par email)
+  const { data: memberRows, error: memberError } = await client
+    .from('entity_team_members')
+    .select('entity_id, entity(id, display_name, slug, avatar_url, role)')
+    .ilike('email', email)
+
+  if (memberError) throw memberError
+
+  const ownedIds = new Set((owned ?? []).map((e) => e.id))
+  const memberEntities = (memberRows ?? [])
+    .map((row) => row.entity as unknown as AccessibleEntity | null)
+    .filter((e): e is AccessibleEntity => e !== null && !ownedIds.has(e.id))
+
+  return {
+    owned: owned ?? [],
+    member: memberEntities,
+  }
+}

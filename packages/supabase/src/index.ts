@@ -142,8 +142,9 @@ export {
   touchTeamInvitation,
   teamEmailAlreadyUsed,
   getOwnerRole,
+  listAccessibleEntities,
 } from './team'
-export type { TeamRoleRecord, TeamRoleSaveInput } from './team'
+export type { TeamRoleRecord, TeamRoleSaveInput, AccessibleEntity } from './team'
 export type { Database } from './types'
 
 // Products
