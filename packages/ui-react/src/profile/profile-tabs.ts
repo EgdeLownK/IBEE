@@ -1,5 +1,6 @@
 import {
   BookOpen,
+  Briefcase,
   CalendarDays,
   House,
   Newspaper,
@@ -15,6 +16,7 @@ export const PROFILE_TAB_LABELS: Record<string, string> = {
   events: 'Event',
   news: 'News',
   history: 'Histoire',
+  jobs: 'Offres',
 }
 
 export const PROFILE_TAB_ICONS: Record<string, LucideIcon> = {
@@ -24,6 +26,7 @@ export const PROFILE_TAB_ICONS: Record<string, LucideIcon> = {
   events: Zap,
   news: Newspaper,
   history: BookOpen,
+  jobs: Briefcase,
 }
 
 export const PROFILE_TAB_ORDER = [
@@ -33,6 +36,7 @@ export const PROFILE_TAB_ORDER = [
   'appointments',
   'events',
   'history',
+  'jobs',
 ] as const
 
 /** Onglets activité : ordre dynamique selon l'ajout (position menu). */

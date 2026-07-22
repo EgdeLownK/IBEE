@@ -10,6 +10,7 @@ export type ProfileTabContent = {
   playlistServicesCount: number
   playlistEventsCount: number
   historyBlocksCount: number
+  jobOffersCount: number
 }
 
 const ACTIVITY_TAB_SET = new Set<string>(PROFILE_ACTIVITY_TAB_TYPES)
@@ -31,6 +32,8 @@ export function hasProfileTabContent(
       return content.playlistEventsCount > 0
     case 'history':
       return content.historyBlocksCount > 0
+    case 'jobs':
+      return content.jobOffersCount > 0
     default:
       return false
   }
@@ -102,6 +105,7 @@ export function getVisibleProfileTabs(
   }
 
   if (isVisible('history')) result.push('history')
+  if (isVisible('jobs')) result.push('jobs')
 
   return result
 }
@@ -112,6 +116,7 @@ export function profileTabContentFromLists(lists: {
   playlistServices?: readonly unknown[]
   playlistEvents?: readonly unknown[]
   historyBlocks?: readonly unknown[]
+  jobOffers?: readonly unknown[]
 }): ProfileTabContent {
   return {
     publicationsCount: lists.publications?.length ?? 0,
@@ -119,6 +124,7 @@ export function profileTabContentFromLists(lists: {
     playlistServicesCount: lists.playlistServices?.length ?? 0,
     playlistEventsCount: lists.playlistEvents?.length ?? 0,
     historyBlocksCount: lists.historyBlocks?.length ?? 0,
+    jobOffersCount: lists.jobOffers?.length ?? 0,
   }
 }
 

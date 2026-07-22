@@ -12,6 +12,7 @@ import { embedDetailBase, embedProfileHref } from '@/lib/embed-public-urls'
 import { trackAnalyticsEvents } from '@/lib/analytics-client'
 import { PublicProfileMenuTabs } from './PublicProfileMenuTabs'
 import { PublicProfileHome } from './PublicProfileHome'
+import { PublicJobOffersList } from './jobs/PublicJobOffersList'
 
 interface Props {
   data: PublicProfileData
@@ -31,6 +32,7 @@ export function PublicProfileTabsController({ data, embedMode = false }: Props) 
         playlistServices: data.playlistServices,
         playlistEvents: data.playlistEvents,
         historyBlocks: data.historyBlocks,
+        jobOffers: data.jobOffers,
       }),
     [
       data.publications,
@@ -38,6 +40,7 @@ export function PublicProfileTabsController({ data, embedMode = false }: Props) 
       data.playlistServices,
       data.playlistEvents,
       data.historyBlocks,
+      data.jobOffers,
     ]
   )
 
@@ -109,6 +112,8 @@ export function PublicProfileTabsController({ data, embedMode = false }: Props) 
           entityBaseUrl={webBaseUrl}
           detailBaseUrl={detailBaseUrl}
         />
+      ) : activeType === 'jobs' ? (
+        <PublicJobOffersList offers={data.jobOffers} entitySlug={data.entity.slug} />
       ) : (
         <ProfileStudioSections
           activeType={activeType}
