@@ -12,75 +12,8 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.1"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
-
-      entity_expenses: {
-        Row: {
-          id: string,
-          entity_id: string,
-          amount_cents: number,
-          description: string,
-          status: Database["public"]["Enums"]["entity_expense_status"],
-          incurred_at: string,
-          created_at: string,
-          updated_at: string,
-        },
-        Insert: {
-          id?: string,
-          entity_id: string,
-          amount_cents: number,
-          description: string,
-          status?: Database["public"]["Enums"]["entity_expense_status"],
-          incurred_at?: string,
-          created_at?: string,
-          updated_at?: string,
-        },
-        Update: {
-          id?: string,
-          entity_id?: string,
-          amount_cents?: number,
-          description?: string,
-          status?: Database["public"]["Enums"]["entity_expense_status"],
-          incurred_at?: string,
-          created_at?: string,
-          updated_at?: string,
-        },
-        Relationships: [
-          {
-            foreignKeyName: "entity_expenses_entity_id_fkey",
-            columns: ["entity_id"],
-            isOneToOne: false,
-            referencedRelation: "entity",
-            referencedColumns: ["id"],
-          }
-        ]
-      },
       appointment_types: {
         Row: {
           auto_accept_bookings: boolean
@@ -868,6 +801,54 @@ export type Database = {
           },
         ]
       }
+      entity_expenses: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          description: string
+          entity_id: string
+          id: string
+          incurred_at: string
+          status: Database["public"]["Enums"]["entity_expense_status"]
+          updated_at: string
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string
+          description: string
+          entity_id: string
+          id?: string
+          incurred_at?: string
+          status?: Database["public"]["Enums"]["entity_expense_status"]
+          updated_at?: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          description?: string
+          entity_id?: string
+          id?: string
+          incurred_at?: string
+          status?: Database["public"]["Enums"]["entity_expense_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entity_expenses_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entity"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entity_expenses_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "publication_comments_with_author"
+            referencedColumns: ["author_entity_id"]
+          },
+        ]
+      }
       entity_faq_items: {
         Row: {
           answer: string
@@ -1152,6 +1133,7 @@ export type Database = {
       entity_job_applications: {
         Row: {
           age: number | null
+          applicant_user_id: string | null
           created_at: string
           education_level: string | null
           email: string
@@ -1171,6 +1153,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          age?: number | null
+          applicant_user_id?: string | null
           created_at?: string
           education_level?: string | null
           email: string
@@ -1190,6 +1174,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          age?: number | null
+          applicant_user_id?: string | null
           created_at?: string
           education_level?: string | null
           email?: string
@@ -2268,6 +2254,45 @@ export type Database = {
           },
         ]
       }
+      favorites: {
+        Row: {
+          anonymous_id: string | null
+          created_at: string
+          entity_id: string
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          anonymous_id?: string | null
+          created_at?: string
+          entity_id: string
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          anonymous_id?: string | null
+          created_at?: string
+          entity_id?: string
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "favorites_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entity"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "favorites_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "publication_comments_with_author"
+            referencedColumns: ["author_entity_id"]
+          },
+        ]
+      }
       follows: {
         Row: {
           created_at: string
@@ -2951,6 +2976,8 @@ export type Database = {
           price_cents_override: number | null
           primary_image_url: string | null
           product_id: string
+          sale_ends_at: string | null
+          sale_price_cents_override: number | null
           sku: string | null
           stock_quantity: number
           updated_at: string
@@ -2963,6 +2990,8 @@ export type Database = {
           price_cents_override?: number | null
           primary_image_url?: string | null
           product_id: string
+          sale_ends_at?: string | null
+          sale_price_cents_override?: number | null
           sku?: string | null
           stock_quantity?: number
           updated_at?: string
@@ -2975,6 +3004,8 @@ export type Database = {
           price_cents_override?: number | null
           primary_image_url?: string | null
           product_id?: string
+          sale_ends_at?: string | null
+          sale_price_cents_override?: number | null
           sku?: string | null
           stock_quantity?: number
           updated_at?: string
@@ -2992,6 +3023,7 @@ export type Database = {
       products: {
         Row: {
           archived_at: string | null
+          audience: string | null
           bullet_points: Json
           category: string | null
           category_id: string | null
@@ -3017,6 +3049,7 @@ export type Database = {
           entity_id: string
           faq: Json
           id: string
+          in_person_enabled: boolean
           og_image_url: string | null
           physical_brand: string | null
           physical_color: string | null
@@ -3032,7 +3065,6 @@ export type Database = {
           physical_stock_unlimited: boolean | null
           physical_weight_grams: number | null
           pickup_enabled: boolean
-          in_person_enabled: boolean
           price_cents: number
           published_at: string | null
           sale_ends_at: string | null
@@ -3050,6 +3082,7 @@ export type Database = {
         }
         Insert: {
           archived_at?: string | null
+          audience?: string | null
           bullet_points?: Json
           category?: string | null
           category_id?: string | null
@@ -3077,6 +3110,7 @@ export type Database = {
           entity_id: string
           faq?: Json
           id?: string
+          in_person_enabled?: boolean
           og_image_url?: string | null
           physical_brand?: string | null
           physical_color?: string | null
@@ -3092,7 +3126,6 @@ export type Database = {
           physical_stock_unlimited?: boolean | null
           physical_weight_grams?: number | null
           pickup_enabled?: boolean
-          in_person_enabled?: boolean
           price_cents: number
           published_at?: string | null
           sale_ends_at?: string | null
@@ -3110,6 +3143,7 @@ export type Database = {
         }
         Update: {
           archived_at?: string | null
+          audience?: string | null
           bullet_points?: Json
           category?: string | null
           category_id?: string | null
@@ -3137,6 +3171,7 @@ export type Database = {
           entity_id?: string
           faq?: Json
           id?: string
+          in_person_enabled?: boolean
           og_image_url?: string | null
           physical_brand?: string | null
           physical_color?: string | null
@@ -3152,7 +3187,6 @@ export type Database = {
           physical_stock_unlimited?: boolean | null
           physical_weight_grams?: number | null
           pickup_enabled?: boolean
-          in_person_enabled?: boolean
           price_cents?: number
           published_at?: string | null
           sale_ends_at?: string | null
@@ -3420,6 +3454,33 @@ export type Database = {
             referencedColumns: ["author_entity_id"]
           },
         ]
+      }
+      user_profiles: {
+        Row: {
+          created_at: string
+          default_resume_url: string | null
+          first_name: string | null
+          last_name: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          default_resume_url?: string | null
+          first_name?: string | null
+          last_name?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          default_resume_url?: string | null
+          first_name?: string | null
+          last_name?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       wishlist_items: {
         Row: {
@@ -3737,6 +3798,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      entity_user_has_permission: {
+        Args: { p_entity_id: string; p_permission: string }
+        Returns: boolean
+      }
       expire_stale_booking_checkouts: { Args: never; Returns: number }
       expire_stale_event_ticket_checkouts: { Args: never; Returns: number }
       generate_event_ticket_code: { Args: never; Returns: string }
@@ -4026,9 +4091,6 @@ export type Database = {
       }
     }
     Enums: {
-
-      entity_expense_status: "pending" | "paid" | "cancelled",
-
       analytics_event_type:
         | "profile_view"
         | "section_view"
@@ -4069,6 +4131,7 @@ export type Database = {
         | "all_events"
         | "specific_events"
       discount_code_type: "percentage" | "fixed_amount" | "free_shipping"
+      entity_expense_status: "pending" | "completed" | "cancelled"
       entity_job_application_status:
         | "new"
         | "shortlisted"
@@ -4288,9 +4351,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       analytics_event_type: [
@@ -4337,6 +4397,7 @@ export const Constants = {
         "specific_events",
       ],
       discount_code_type: ["percentage", "fixed_amount", "free_shipping"],
+      entity_expense_status: ["pending", "completed", "cancelled"],
       entity_job_application_status: [
         "new",
         "shortlisted",
