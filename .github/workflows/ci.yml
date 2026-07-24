@@ -36,3 +36,23 @@ jobs:
           NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-anon-key
 
       - run: pnpm run -r --if-present test
+
+  db-tests:
+    name: RLS pgTAP tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      # Seul le conteneur Postgres est nécessaire pour pgTAP — exclure le reste
+      # (auth, storage, studio...) accélère nettement le job.
+      - name: Start Supabase (DB only)
+        run: supabase start -x gotrue,realtime,storage-api,imgproxy,kong,mailpit,postgrest,postgres-meta,studio,edge-runtime,logflare,vector,supavisor
+
+      - name: Run pgTAP tests
+        run: supabase test db
