@@ -15,6 +15,7 @@ import { createPortal } from 'react-dom'
 import { useHorizontalCarousel } from '@/hooks/useHorizontalCarousel'
 import type { DetailContentBlock } from '@/lib/entity-content-blocks'
 import { formatDetailPrice } from '@/lib/detail-format'
+import { isProductScheduled, msUntilScheduled } from '@/lib/product-schedule'
 import type { PublicProductData, PublishedProduct, PublishedProductVariant } from '@/lib/load-public-product'
 import { EntityMoreDetails } from './EntityMoreDetails'
 import { NewsWidget } from './NewsWidget'
@@ -219,8 +220,20 @@ export function ProductDetail({
   const detailCategories = buildDetailCategories(product, customDetails)
 
   const needsVariant = variants.length > 0
-  const isScheduled = !!product.published_at && new Date(product.published_at).getTime() > Date.now()
+  // Date.now() ne doit jamais être appelé pendant le render (react-hooks/purity) :
+  // l'état est initialisé une fois au mount, puis corrigé par un timer si la date
+  // de publication passe pendant que la page reste ouverte (voir product-schedule.ts).
+  const [isScheduled, setIsScheduled] = useState(() =>
+    isProductScheduled(product.published_at, Date.now())
+  )
   const canBuy = inStock && (!needsVariant || selectedVariant != null) && !isScheduled
+
+  useEffect(() => {
+    const delay = msUntilScheduled(product.published_at, Date.now())
+    if (delay == null) return
+    const timer = setTimeout(() => setIsScheduled(false), delay)
+    return () => clearTimeout(timer)
+  }, [product.published_at])
 
   useEffect(() => {
     onCheckoutStateChange?.({
