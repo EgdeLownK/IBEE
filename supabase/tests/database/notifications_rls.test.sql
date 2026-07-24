@@ -43,6 +43,7 @@ select lives_ok(
 
 select throws_ok(
   $$insert into public.notifications (recipient_user_id, type) values ('a0000000-0000-0000-0000-00000000000a', 'new_follower')$$,
+  '42501',
   'destinataire (A) : ne peut pas créer de notification directement (aucune policy INSERT — système seul)'
 );
 

@@ -34,6 +34,7 @@ select results_eq(
 
 select throws_ok(
   $$insert into public.favorites (user_id, entity_id) values (null, 'a0000000-0000-0000-0000-00000000000a')$$,
+  '42501',
   'anonyme : ne peut pas insérer de favori (même avec user_id null)'
 );
 
@@ -54,6 +55,7 @@ select lives_ok(
 
 select throws_ok(
   $$insert into public.favorites (user_id, entity_id) values ('b0000000-0000-0000-0000-00000000000b', 'a0000000-0000-0000-0000-00000000000a')$$,
+  '42501',
   'owner (A) : ne peut pas insérer un favori au nom de B'
 );
 
@@ -62,6 +64,7 @@ set local request.jwt.claim.sub = 'b0000000-0000-0000-0000-00000000000b';
 
 select throws_ok(
   $$insert into public.favorites (user_id, entity_id) values ('a0000000-0000-0000-0000-00000000000a', 'a0000000-0000-0000-0000-00000000000a')$$,
+  '42501',
   'autre user (B) : ne peut pas insérer un favori au nom de A'
 );
 

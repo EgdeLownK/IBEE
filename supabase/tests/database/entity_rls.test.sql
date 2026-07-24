@@ -43,6 +43,7 @@ select lives_ok(
 
 select throws_ok(
   $$insert into public.entity (slug, display_name, user_id) values ('test-entity-new', 'New', 'a0000000-0000-0000-0000-00000000000a')$$,
+  '42501',
   'owner (A) : ne peut pas créer d''entité directement (aucune policy INSERT — passe par le trigger auth)'
 );
 
