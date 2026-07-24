@@ -51,13 +51,15 @@ Toute tâche touchant 3+ fichiers ou introduisant un nouveau pattern : poser le 
 L'agent principal devient orchestrateur : il décompose, délègue à des sous-agents spécialisés, et garde son contexte clean. L'orchestrateur reste responsable du respect des garde-fous — les sous-agents n'héritent pas automatiquement des règles.
 
 ### 3. Auto-amélioration
-Chaque erreur significative (bug introduit, mauvaise approche, oubli de vérification) est loguée dans la mémoire de session. La session suivante ne reproduira pas la même erreur. Les erreurs techniques runtime vont dans `pieges-claude-code.md` (technique/). Les erreurs de processus vont dans la mémoire Claude Code.
+Chaque erreur significative (bug introduit, mauvaise approche, oubli de vérification) est loguée dans la mémoire de session. La session suivante ne reproduira pas la même erreur. Les pièges techniques qui passent le filtre de `.claude/rules/collaboration.md` §Traçabilité vont en dur dans `.ibee-brain/_BRAIN-DEV.md` (section concernée). Les erreurs de processus vont dans la mémoire Claude Code.
 
 ### 4. Vérifier après chaque tâche
 Après chaque tâche d'implémentation, exécuter la chaîne de vérification :
 1. `pnpm type-check` — zéro erreurs TypeScript
 2. `pnpm build` — build complet passe
 3. Tests unitaires si existants
+4. Modif UI/CSS/JS client : demander à Killian une vérification navigateur (hard refresh)
+   avant de considérer la tâche close — "0 erreurs TypeScript ≠ runtime OK".
 Si un check échoue, diagnostiquer et corriger avant de présenter le résultat à Killian.
 
 ### 5. Fix autonome des bugs
@@ -74,16 +76,25 @@ Toute modification passe par une Pull Request sur `main` :
 
 Exception : fix d'urgence d'un seul fichier peut aller directement sur `main` si Killian le demande.
 
+### 7. Commentaires (obligatoire)
+
+- Tout fichier créé commence par un commentaire d'en-tête : rôle du fichier en 1-3 lignes.
+- Toute fonction exportée ou non-triviale : JSDoc/commentaire — but, paramètres importants, retour.
+- Toute logique complexe (calcul, condition métier, workaround) : commentaire expliquant
+  le **pourquoi**, pas le quoi.
+- En français, concis, mis à jour quand le code change (un commentaire faux est pire qu'absent).
+- Objectif : Killian doit pouvoir comprendre n'importe quel fichier sans aide.
+- S'applique aussi aux sous-agents : l'orchestrateur vérifie que le code délégué est commenté.
+
 ## Brain
 
-Le brain (`.ibee-brain/`) est la mémoire long terme du projet.
-- `DIGEST.md` — résumé stratégique pour onboarding externe
-- `_BRAIN-STATE.md` — tableau de bord (lu en début de session)
-- `_decision-log-code.md` — décisions techniques (code, stack, UI, patterns) — lu avant un choix code
-- `_decision-log-projet.md` — décisions non-code (business, méthode, stratégie) — lu avant un choix projet
-- `pilier/` — vision, non-négociable (`fondation-projet.md` = persona, modèle économique, promesse, différenciation)
-- `technique/` — règles tech, stack, pièges, opérations brain, guide entretiens, setup Claude Code, commandes gstack
-- `marche/` — intelligence marché, concurrents, entretiens
+Le brain (`.ibee-brain/`) est la mémoire long terme du projet. Racine à 5 fichiers (voir `_BRAIN-RULES.md` §Structure) :
+- `_IBEE.md` — pilier produit & boussole (promesse, différenciateur, JTBD, doctrines non-négociables). Fondateur.
+- `_BRAIN-DEV.md` — doctrine technique unique (architecture, versions, patterns sécurité/SEO, coûts, inventaire). Fondateur.
+- `_BRAIN-STATE.md` — tableau de bord (dette ouverte, prochaine action, dernière session) — lu en début de session.
+- `_BRAIN-RULES.md` — grammaire du brain.
+- `README.md` — index sémantique.
+- Sous-dossiers thématiques : `app/` (specs), `marche/` (marché, persona, concurrents), `wiki/` (recherches externes), `marketing/` (présence publique, interviews).
 
 ## Doctrine des surfaces (post-migration Astro → Next)
 
@@ -97,6 +108,21 @@ Le brain (`.ibee-brain/`) est la mémoire long terme du projet.
 - Cache prod : `revalidatePath` (Vercel) — pas de purge Cloudflare.
 - Invalidation : `revalidatePublicPaths` / `revalidateAfterEntityMutation` dans les mutations.
 
+## Format de rapport (relais vers Claude chat)
+
+Killian relaie les rapports à Claude chat (qui pilote ; toi tu codes). Tout rapport de fin
+de tâche ou de phase suit ce format, sans prose autour :
+
+    ## RAPPORT — [titre court]
+    **TL;DR** : 2-3 phrases max.
+    **FAIT** : fichier → quoi (1 ligne chacun)
+    **VÉRIFIÉ** : type-check ✅/❌ · build ✅/❌ · tests ✅/❌ · vérif navigateur ✅/❌/n.a.
+    **À VALIDER PAR KILLIAN** : liste ou "rien"
+    **QUESTIONS** : numérotées, chacune avec ta recommandation (tranchable par oui/non)
+    **RISQUES / DÉCOUVERTES** : liste ou "rien"
+
+Chemins complets, pas de répétition du contexte connu, une question = une recommandation.
+
 ## Règle d'or
 
-Si une décision contredit `.ibee-brain/pilier/`, alerter Killian avant d'exécuter.
+Si une décision contredit `.ibee-brain/_IBEE.md`, alerter Killian avant d'exécuter.

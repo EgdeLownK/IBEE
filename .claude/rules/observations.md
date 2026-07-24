@@ -14,9 +14,9 @@ Les Claudes sont sur le terrain. Killian ne l'est pas. Les observations doivent 
 
 ## Comment remonter
 
-Deux actions, dans cet ordre :
-1. **Dans le chat** : signaler à Killian au moment où c'est détecté (court, factuel)
-2. **Dans `.ibee-brain/_observations.md`** : ajouter une entrée en fin de session, après go de Killian
+**Dans le chat** : signaler à Killian au moment où c'est détecté (court, factuel).
+
+> `_observations.md` a été retiré du brain (structure simplifiée à 5 fichiers racine, 2026-07-24) — il n'y a plus de canal d'écriture dédié. Si Killian veut qu'une observation persiste au-delà de la session, elle doit être portée dans le fichier canonique concerné (`_BRAIN-STATE.md` §Dette si actionnable techniquement, sinon laissée au chat). Pas de nouveau fichier créé pour ça sans son accord.
 
 ## Ton
 
@@ -30,4 +30,4 @@ Factuel, pas de dramatisation. "Voici ce que j'ai observé, voici ce qui pourrai
 
 ## Lecture
 
-Ce fichier `_observations.md` n'est **pas** lu systématiquement au démarrage de session par Claude Code. Il est écrit en fin de session si une observation a été détectée. Claude chat le lit systématiquement dans son setup (pour synthétiser et faire remonter à Killian).
+Sans fichier dédié, la remontée se fait uniquement dans le chat au moment détecté (voir §Comment remonter).

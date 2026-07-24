@@ -9,20 +9,16 @@ Toute modification dans `.ibee-brain/` suit la grammaire définie dans `_BRAIN-R
 ## Lecture systématique au démarrage de session
 
 - **Important** `_BRAIN-RULES.md` — grammaire
-- `_BRAIN-DEV.md` — état dev
-- `_BRAIN-PRODUCT.md` — état produit
-- `_LAST-SESSION.md` — dernière session
-- **Important** `_INDEX.md` — carte sémantique
+- `_BRAIN-DEV.md` — doctrine technique
+- `_BRAIN-STATE.md` — dashboard vivant (statut migration, dette ouverte, dernière session)
+- `_IBEE.md` — doctrine produit
+- **Important** `README.md` — carte sémantique
 
 ## Maintenance
 
-- `_BRAIN-DEV.md` : mettre à jour en fin de session significative
-- `_LAST-SESSION.md` : réécrire intégralement à chaque clôture de session (fichier éphémère, écrasé)
-- `_decision-log-code.md` : ajouter une entrée pour toute décision technique qui passe le filtre 2 conditions (voir règle en tête du fichier)
-- `_decision-log-projet.md` : idem pour décisions non-code
+- `_BRAIN-DEV.md` : mettre à jour en fin de session significative touchant la doctrine technique. Toute décision ou piège technique qui passe le filtre 2 conditions (voir `.claude/rules/collaboration.md` §Traçabilité) devient une ligne dans la section concernée, pas une entrée de log séparée.
+- `_BRAIN-STATE.md` : mettre à jour à chaque avancée significative (dette, prochaine action). Section « Dernière session » réécrite intégralement à chaque clôture (5 lignes max, écrasée).
 
 ## Garde-fou
 
-Alerter Killian avant toute modification de `_BRAIN-RULES.md` (fichier fondateur).
-
-Modifier un pilier (`pilier/*`) → alerter Killian avant d'exécuter.
+Alerter Killian avant toute modification de `_BRAIN-RULES.md`, `_BRAIN-DEV.md` ou `_IBEE.md` (fichiers fondateurs).
