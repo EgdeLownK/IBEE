@@ -7,6 +7,14 @@ create extension if not exists pgtap with schema extensions;
 select plan(9);
 
 -- Fixtures posées en tant que superuser (RLS bypassée pour la préparation des données).
+-- entity.user_id / favorites.user_id référencent auth.users (FK) : insérer les
+-- utilisateurs de test d'abord. Note : ceci déclenche le trigger on_auth_user_created
+-- qui crée une entity supplémentaire par utilisateur — sans impact sur les
+-- assertions ci-dessous (tout est de toute façon annulé par le rollback final).
+insert into auth.users (id, email) values
+  ('a0000000-0000-0000-0000-00000000000a', 'test-fav-a@test.local'),
+  ('b0000000-0000-0000-0000-00000000000b', 'test-fav-b@test.local');
+
 insert into public.entity (id, slug, display_name, user_id) values
   ('a0000000-0000-0000-0000-00000000000a', 'test-fav-owner-a', 'Owner A', 'a0000000-0000-0000-0000-00000000000a'),
   ('b0000000-0000-0000-0000-00000000000b', 'test-fav-owner-b', 'Owner B', 'b0000000-0000-0000-0000-00000000000b');

@@ -6,6 +6,13 @@ create extension if not exists pgtap with schema extensions;
 
 select plan(6);
 
+-- entity.user_id référence auth.users (FK) : insérer les utilisateurs de test
+-- d'abord. Déclenche on_auth_user_created (crée une entity par utilisateur),
+-- sans impact sur les assertions ci-dessous qui filtrent par id explicite.
+insert into auth.users (id, email) values
+  ('a0000000-0000-0000-0000-00000000000a', 'test-entity-a@test.local'),
+  ('b0000000-0000-0000-0000-00000000000b', 'test-entity-b@test.local');
+
 insert into public.entity (id, slug, display_name, user_id) values
   ('a0000000-0000-0000-0000-00000000000a', 'test-entity-owner-a', 'Owner A', 'a0000000-0000-0000-0000-00000000000a'),
   ('b0000000-0000-0000-0000-00000000000b', 'test-entity-owner-b', 'Owner B', 'b0000000-0000-0000-0000-00000000000b');

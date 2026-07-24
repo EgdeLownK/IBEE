@@ -6,6 +6,13 @@ create extension if not exists pgtap with schema extensions;
 
 select plan(6);
 
+-- notifications.recipient_user_id référence auth.users (FK) : insérer les
+-- utilisateurs de test d'abord (déclenche on_auth_user_created, sans impact
+-- ici puisque ce test ne touche pas à la table entity).
+insert into auth.users (id, email) values
+  ('a0000000-0000-0000-0000-00000000000a', 'test-notif-a@test.local'),
+  ('b0000000-0000-0000-0000-00000000000b', 'test-notif-b@test.local');
+
 insert into public.notifications (id, recipient_user_id, type) values
   ('11100000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-00000000000a', 'new_follower'),
   ('22200000-0000-0000-0000-000000000002', 'b0000000-0000-0000-0000-00000000000b', 'new_follower');
