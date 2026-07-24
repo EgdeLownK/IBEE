@@ -23,7 +23,14 @@ export async function POST(request: Request) {
       end_at,
     } = body
 
-    if (!appointment_type_id || !entity_id || !booker_name || !booker_email || !start_at || !end_at) {
+    if (
+      !appointment_type_id ||
+      !entity_id ||
+      !booker_name ||
+      !booker_email ||
+      !start_at ||
+      !end_at
+    ) {
       return NextResponse.json({ error: 'Champs obligatoires manquants' }, { status: 400 })
     }
 
@@ -37,7 +44,7 @@ export async function POST(request: Request) {
     if (requiresBookingPayment(service)) {
       return NextResponse.json(
         { error: 'Ce service nécessite un paiement en ligne.' },
-        { status: 400 }
+        { status: 400 },
       )
     }
 
@@ -45,7 +52,7 @@ export async function POST(request: Request) {
     if (await isEntityEmailBanned(supabase, entity_id, bookerEmail)) {
       return NextResponse.json(
         { error: 'Réservation impossible pour cette adresse email.' },
-        { status: 403 }
+        { status: 403 },
       )
     }
 

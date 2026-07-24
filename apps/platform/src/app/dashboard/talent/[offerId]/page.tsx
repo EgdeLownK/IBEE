@@ -5,7 +5,7 @@ import { JobOfferDetails } from '../../../../components/dashboard/talent/JobOffe
 
 export default async function JobOfferPage({ params }: { params: Promise<{ offerId: string }> }) {
   const ctx = await getDashboardContext()
-  
+
   if (!ctx) {
     redirect('/login')
   }

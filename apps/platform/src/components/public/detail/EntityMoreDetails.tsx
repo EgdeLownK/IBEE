@@ -76,7 +76,10 @@ export function EntityMoreDetails({
                 if (block.images && block.images.length > 0) {
                   const useGrid = block.images.length > 1
                   return (
-                    <div key={i} className={`emd__image-grid ${useGrid ? 'emd__image-grid--multiple' : ''}`}>
+                    <div
+                      key={i}
+                      className={`emd__image-grid ${useGrid ? 'emd__image-grid--multiple' : ''}`}
+                    >
                       {block.images.map((img, idx) => (
                         <figure key={idx} className="emd__figure">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -89,7 +92,12 @@ export function EntityMoreDetails({
                   return (
                     <figure key={i} className="emd__figure">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={block.url} alt={block.alt ?? ''} className="emd__img" loading="lazy" />
+                      <img
+                        src={block.url}
+                        alt={block.alt ?? ''}
+                        className="emd__img"
+                        loading="lazy"
+                      />
                     </figure>
                   )
                 }

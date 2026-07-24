@@ -16,13 +16,10 @@ export default async function ActiviteBilletteriePage() {
   if (!ctx) redirect('/login')
 
   const capabilities = await getActivityCapabilities(ctx.supabase, ctx.entity.id)
-  if (!isActivityModuleEnabled(capabilities, 'events')) redirect(resolveActivityLandingPath(capabilities))
+  if (!isActivityModuleEnabled(capabilities, 'events'))
+    redirect(resolveActivityLandingPath(capabilities))
 
-  const data = await loadBilletterieDashboardData(
-    ctx.supabase,
-    ctx.entity.id,
-    ctx.entity.slug
-  )
+  const data = await loadBilletterieDashboardData(ctx.supabase, ctx.entity.id, ctx.entity.slug)
 
   return (
     <Suspense fallback={null}>

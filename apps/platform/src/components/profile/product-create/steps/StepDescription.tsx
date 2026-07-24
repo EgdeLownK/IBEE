@@ -2,7 +2,18 @@
 
 import { useRef } from 'react'
 import { flushSync } from 'react-dom'
-import { Image as ImageIcon, Loader2, Plus, Trash2, Type, Heading, List, X, ArrowUp, ArrowDown } from 'lucide-react'
+import {
+  Image as ImageIcon,
+  Loader2,
+  Plus,
+  Trash2,
+  Type,
+  Heading,
+  List,
+  X,
+  ArrowUp,
+  ArrowDown,
+} from 'lucide-react'
 import { toast } from 'sonner'
 import { uploadProductMediaAction } from '@/app/dashboard/site/product-actions'
 import { ProductImageBlockEditor } from '../ProductImageBlockEditor'
@@ -91,7 +102,15 @@ export function StepDescription({ form, updateForm, onChange }: Props) {
         {form.contentBlocks.map((b, i) => (
           <div key={b.id} className="pco__block-card">
             <div className="pco__block-head">
-              <span className="pco__block-tag">{b.type === 'text' ? 'Texte' : b.type === 'title' ? 'Titre' : b.type === 'list' ? 'Liste' : 'Image'}</span>
+              <span className="pco__block-tag">
+                {b.type === 'text'
+                  ? 'Texte'
+                  : b.type === 'title'
+                    ? 'Titre'
+                    : b.type === 'list'
+                      ? 'Liste'
+                      : 'Image'}
+              </span>
               <div className="flex items-center gap-1">
                 <button
                   type="button"
@@ -130,7 +149,7 @@ export function StepDescription({ form, updateForm, onChange }: Props) {
                 value={b.content}
                 onChange={(e) => {
                   const contentBlocks = form.contentBlocks.map((x) =>
-                    x.id === b.id && x.type === 'text' ? { ...x, content: e.target.value } : x
+                    x.id === b.id && x.type === 'text' ? { ...x, content: e.target.value } : x,
                   )
                   onChange({ contentBlocks })
                 }}
@@ -144,7 +163,7 @@ export function StepDescription({ form, updateForm, onChange }: Props) {
                 value={b.content}
                 onChange={(e) => {
                   const contentBlocks = form.contentBlocks.map((x) =>
-                    x.id === b.id && x.type === 'title' ? { ...x, content: e.target.value } : x
+                    x.id === b.id && x.type === 'title' ? { ...x, content: e.target.value } : x,
                   )
                   onChange({ contentBlocks })
                 }}
@@ -158,7 +177,9 @@ export function StepDescription({ form, updateForm, onChange }: Props) {
                   value={b.description || ''}
                   onChange={(e) => {
                     const contentBlocks = form.contentBlocks.map((x) =>
-                      x.id === b.id && x.type === 'list' ? { ...x, description: e.target.value } : x
+                      x.id === b.id && x.type === 'list'
+                        ? { ...x, description: e.target.value }
+                        : x,
                     )
                     onChange({ contentBlocks })
                   }}
@@ -251,7 +272,7 @@ export function StepDescription({ form, updateForm, onChange }: Props) {
                 block={b}
                 onChange={(updatedBlock) => {
                   const contentBlocks = form.contentBlocks.map((x) =>
-                    x.id === b.id && x.type === 'image' ? updatedBlock : x
+                    x.id === b.id && x.type === 'image' ? updatedBlock : x,
                   )
                   onChange({ contentBlocks })
                 }}

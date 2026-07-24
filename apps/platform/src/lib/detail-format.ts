@@ -29,7 +29,7 @@ export function parseReviewRatings(ratingParam: string | undefined): number[] {
       ratingParam
         .split(',')
         .map((r) => parseInt(r, 10))
-        .filter((n) => Number.isInteger(n) && n >= 1 && n <= 5)
-    )
+        .filter((n) => Number.isInteger(n) && n >= 1 && n <= 5),
+    ),
   ).sort((a, b) => b - a)
 }

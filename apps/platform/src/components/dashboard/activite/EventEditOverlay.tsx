@@ -102,6 +102,6 @@ export function EventEditOverlay({ eventId, open, onClose }: Props) {
         </div>
       </div>
     </div>,
-    document.body
+    document.body,
   )
 }

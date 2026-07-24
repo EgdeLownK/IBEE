@@ -5,18 +5,30 @@ import Link from 'next/link'
 import { formatRelativeDateFr } from '@/lib/format-date-fr'
 import { useHorizontalCarousel } from '@/hooks/useHorizontalCarousel'
 
-
-
 interface Props {
   entitySlug: string
   profileBaseHref?: string
   showHeader?: boolean
-  items?: { id: string; title: string; slug: string; published_at: string | null; cover_url?: string | null }[]
+  items?: {
+    id: string
+    title: string
+    slug: string
+    published_at: string | null
+    cover_url?: string | null
+  }[]
 }
 
-export function NewsWidget({ entitySlug, profileBaseHref, showHeader = true, items: propsItems = [] }: Props) {
+export function NewsWidget({
+  entitySlug,
+  profileBaseHref,
+  showHeader = true,
+  items: propsItems = [],
+}: Props) {
   const profileBase = profileBaseHref ?? `/${entitySlug}`
-  const { trackRef, canPrev, canNext, scrollPrev, scrollNext } = useHorizontalCarousel(14, 'nwidget__card')
+  const { trackRef, canPrev, canNext, scrollPrev, scrollNext } = useHorizontalCarousel(
+    14,
+    'nwidget__card',
+  )
 
   const items = propsItems.map((item) => ({
     title: item.title,
@@ -43,7 +55,12 @@ export function NewsWidget({ entitySlug, profileBaseHref, showHeader = true, ite
               <div className="nwidget__media" aria-hidden="true">
                 {n.cover_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={n.cover_url} alt={n.title} className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
+                  <img
+                    src={n.cover_url}
+                    alt={n.title}
+                    className="absolute inset-0 h-full w-full object-cover"
+                    loading="lazy"
+                  />
                 ) : (
                   <span className="nwidget__badge">News</span>
                 )}

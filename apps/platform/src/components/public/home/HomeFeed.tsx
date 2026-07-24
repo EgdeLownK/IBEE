@@ -15,7 +15,7 @@ function mergeRows(current: HomeFeedRow[], incoming: HomeFeedRow[]) {
   const posts = new Set(
     current
       .filter((row): row is Extract<HomeFeedRow, { type: 'post' }> => row.type === 'post')
-      .map((row) => `${row.post.kind}:${row.post.id}`)
+      .map((row) => `${row.post.kind}:${row.post.id}`),
   )
 
   const next = [...current]
@@ -33,7 +33,9 @@ function mergeRows(current: HomeFeedRow[], incoming: HomeFeedRow[]) {
 }
 
 function findFirstPost(rows: HomeFeedRow[]): HomeFeedPost | null {
-  const row = rows.find((item): item is Extract<HomeFeedRow, { type: 'post' }> => item.type === 'post')
+  const row = rows.find(
+    (item): item is Extract<HomeFeedRow, { type: 'post' }> => item.type === 'post',
+  )
   return row?.post ?? null
 }
 
@@ -94,7 +96,8 @@ export function HomeFeed({ initial }: Props) {
     setSelectedPost((current) => {
       if (!current) return first
       const stillVisible = rows.some(
-        (row) => row.type === 'post' && row.post.kind === current.kind && row.post.id === current.id
+        (row) =>
+          row.type === 'post' && row.post.kind === current.kind && row.post.id === current.id,
       )
       return stillVisible ? current : first
     })
@@ -145,7 +148,7 @@ export function HomeFeed({ initial }: Props) {
       (entries) => {
         if (entries[0]?.isIntersecting) void loadMore()
       },
-      { rootMargin: '240px 0px' }
+      { rootMargin: '240px 0px' },
     )
 
     observer.observe(node)

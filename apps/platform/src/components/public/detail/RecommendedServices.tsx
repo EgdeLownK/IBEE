@@ -35,11 +35,7 @@ export function RecommendedServices({ services, entitySlug, title = 'Autres serv
       <h2 className="reco__title">{title}</h2>
       <div className="flex flex-col gap-2">
         {visible.map((svc) => (
-          <Link
-            key={svc.id}
-            href={`/${entitySlug}/services/${svc.slug}`}
-            className="reco__row"
-          >
+          <Link key={svc.id} href={`/${entitySlug}/services/${svc.slug}`} className="reco__row">
             <div className="reco__row-cover">
               {svc.gallery_images?.[0] ? (
                 // eslint-disable-next-line @next/next/no-img-element

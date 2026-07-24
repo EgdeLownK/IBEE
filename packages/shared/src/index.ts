@@ -123,24 +123,19 @@ export {
   serviceStepForField,
   SERVICE_LOCATION_TYPES,
 } from './service-create'
-export type {
-  ServiceCreateInput,
-  ServiceCreateDraft,
-  ServiceLocationType,
-} from './service-create'
+export type { ServiceCreateInput, ServiceCreateDraft, ServiceLocationType } from './service-create'
 export {
   validateEventStep,
   buildEventCreatePayload,
   eventStepForField,
   EVENT_LOCATION_TYPES,
 } from './event-create'
-export type {
-  EventCreateInput,
-  EventCreateDraft,
-  EventLocationType,
-} from './event-create'
+export type { EventCreateInput, EventCreateDraft, EventLocationType } from './event-create'
 export { validateEntityProfile, buildEntityProfileUpdate } from './entity-profile'
-export type { EntityProfileInput, ValidationResult as EntityProfileValidationResult } from './entity-profile'
+export type {
+  EntityProfileInput,
+  ValidationResult as EntityProfileValidationResult,
+} from './entity-profile'
 export {
   ANALYTICS_EVENT_TYPES,
   ANALYTICS_SECTION_TYPES,

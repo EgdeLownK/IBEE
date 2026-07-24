@@ -42,7 +42,10 @@ export function PublicProfileHome({
   useEffect(() => {
     async function fetchState() {
       try {
-        const res = await fetch(`/api/profile-state?entityId=${entityId}${ownerId ? `&ownerId=${ownerId}` : ''}`, { cache: 'no-store' })
+        const res = await fetch(
+          `/api/profile-state?entityId=${entityId}${ownerId ? `&ownerId=${ownerId}` : ''}`,
+          { cache: 'no-store' },
+        )
         if (res.ok) {
           const data = await res.json()
           setIsOwner(data.isOwner)
@@ -60,20 +63,31 @@ export function PublicProfileHome({
         (homeWidgets.filter((w) => w.is_active !== false) as HomeWidget[]).map((w) => ({
           ...w,
           config: (w.config ?? {}) as Record<string, unknown>,
-        }))
+        })),
       ),
-    [homeWidgets]
+    [homeWidgets],
   )
 
-  const sharedData = useMemo(() => ({
-    shopProducts,
-    playlistServices,
-    playlistEvents,
-    publications,
-    faqItems,
-    contactInfo,
-    productCategories,
-  }), [shopProducts, playlistServices, playlistEvents, publications, faqItems, contactInfo, productCategories])
+  const sharedData = useMemo(
+    () => ({
+      shopProducts,
+      playlistServices,
+      playlistEvents,
+      publications,
+      faqItems,
+      contactInfo,
+      productCategories,
+    }),
+    [
+      shopProducts,
+      playlistServices,
+      playlistEvents,
+      publications,
+      faqItems,
+      contactInfo,
+      productCategories,
+    ],
+  )
 
   return (
     <SharedHomeWidgetsList
@@ -82,8 +96,12 @@ export function PublicProfileHome({
       webBaseUrl={entityBaseUrl}
       detailBaseUrl={detailBaseUrl}
       isOwner={isOwner}
-      onEditWidget={() => { window.location.href = '/dashboard/site' }}
-      onAddWidgetClick={() => { window.location.href = '/dashboard/site' }}
+      onEditWidget={() => {
+        window.location.href = '/dashboard/site'
+      }}
+      onAddWidgetClick={() => {
+        window.location.href = '/dashboard/site'
+      }}
     />
   )
 }

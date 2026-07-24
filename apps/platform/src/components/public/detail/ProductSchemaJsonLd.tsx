@@ -31,7 +31,7 @@ export function ProductSchemaJsonLd({ data }: Props) {
   } = data
 
   const variants = ((product.product_variants ?? []) as PublishedProductVariant[]).filter(
-    (v) => v.is_active
+    (v) => v.is_active,
   )
   const currency = product.currency
 
@@ -47,9 +47,7 @@ export function ProductSchemaJsonLd({ data }: Props) {
     inStock = variants.some((v) => v.stock_quantity > 0)
   } else if (product.type === 'digital') {
     inStock =
-      product.digital_stock_unlimited !== false
-        ? true
-        : (product.digital_stock_quantity ?? 0) > 0
+      product.digital_stock_unlimited !== false ? true : (product.digital_stock_quantity ?? 0) > 0
   } else {
     inStock = !!product.physical_stock_unlimited || (product.physical_stock_quantity ?? 0) > 0
   }
@@ -144,6 +142,9 @@ export function ProductSchemaJsonLd({ data }: Props) {
   }
 
   return (
-    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
   )
 }

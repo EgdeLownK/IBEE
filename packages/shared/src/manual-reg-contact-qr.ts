@@ -13,9 +13,7 @@ export function parseContactFromQr(raw: string): ParsedContactQr | null {
   try {
     const url = new URL(trimmed)
     const payload =
-      url.searchParams.get('contact') ??
-      url.searchParams.get('c') ??
-      url.hash.replace(/^#/, '')
+      url.searchParams.get('contact') ?? url.searchParams.get('c') ?? url.hash.replace(/^#/, '')
     if (payload) {
       const parsed = parseIbeeContactJson(decodeURIComponent(payload))
       if (parsed) return parsed

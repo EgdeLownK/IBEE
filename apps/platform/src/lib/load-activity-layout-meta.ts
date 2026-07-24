@@ -9,7 +9,7 @@ type Client = SupabaseClient<Database>
 export async function loadActivityTodayEventId(
   client: Client,
   entityId: string,
-  eventsEnabled: boolean
+  eventsEnabled: boolean,
 ): Promise<string | null> {
   if (!eventsEnabled) return null
 

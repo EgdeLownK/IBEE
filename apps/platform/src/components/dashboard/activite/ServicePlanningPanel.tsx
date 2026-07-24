@@ -21,7 +21,7 @@ type Props = {
 
 export function ServicePlanningPanel({ data }: Props) {
   const [weeklyHours, setWeeklyHours] = useState<WeeklyHoursDay[]>(() =>
-    schedulesToWeeklyHours(data.schedules)
+    schedulesToWeeklyHours(data.schedules),
   )
   const [blockDate, setBlockDate] = useState('')
   const [blockReason, setBlockReason] = useState('')
@@ -41,12 +41,12 @@ export function ServicePlanningPanel({ data }: Props) {
         if (dateCmp !== 0) return dateCmp
         return (a.startTime ?? '').localeCompare(b.startTime ?? '')
       }),
-    [data.exceptions]
+    [data.exceptions],
   )
 
   function updateWeeklyDay(dayOfWeek: number, patch: Partial<WeeklyHoursDay>) {
     setWeeklyHours((current) =>
-      current.map((day) => (day.dayOfWeek === dayOfWeek ? { ...day, ...patch } : day))
+      current.map((day) => (day.dayOfWeek === dayOfWeek ? { ...day, ...patch } : day)),
     )
   }
 
@@ -196,7 +196,9 @@ export function ServicePlanningPanel({ data }: Props) {
               {sortedExceptions.map((item) => (
                 <li key={item.id} className="service-planning__exception">
                   <div>
-                    <p className="service-planning__exception-date">{formatPlanningDate(item.date)}</p>
+                    <p className="service-planning__exception-date">
+                      {formatPlanningDate(item.date)}
+                    </p>
                     <p className="service-planning__exception-meta">
                       {item.isBlocked
                         ? item.reason?.trim() || 'Jour bloqué'

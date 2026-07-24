@@ -2,11 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidateAfterEntityMutation } from '@/lib/revalidate-public'
-import {
-  createAppointmentType,
-  getEntityByUserId,
-  purgeEntityCache,
-} from '@ibee/supabase'
+import { createAppointmentType, getEntityByUserId, purgeEntityCache } from '@ibee/supabase'
 import {
   buildServiceCreatePayload,
   validateServiceStep,
@@ -57,7 +53,7 @@ function inputToDraft(input: ServiceCreateInput) {
     contentBlocks: (input.content_blocks ?? []).map((b) =>
       b.type === 'text'
         ? { type: 'text' as const, content: b.content }
-        : { type: 'image' as const, url: b.url, uploading: false }
+        : { type: 'image' as const, url: b.url, uploading: false },
     ),
     faq: input.faq ?? [],
     isActive: input.is_active,
@@ -164,7 +160,10 @@ export async function createServiceAction(input: ServiceCreateInput) {
             position: nextPosition,
           })
         } else if (!existing.is_active) {
-          await supabase.from('entity_menu_sections').update({ is_active: true }).eq('id', existing.id)
+          await supabase
+            .from('entity_menu_sections')
+            .update({ is_active: true })
+            .eq('id', existing.id)
         }
       } catch (err) {
         console.error('[createServiceAction] ensure appointments section', err)

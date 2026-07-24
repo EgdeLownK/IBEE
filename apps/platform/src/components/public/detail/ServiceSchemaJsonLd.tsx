@@ -1,10 +1,7 @@
 import type { PublicServiceData } from '@/lib/load-public-service'
 
 interface Props {
-  data: Pick<
-    PublicServiceData,
-    'service' | 'entity' | 'serviceUrl' | 'profileUrl' | 'textContent'
-  >
+  data: Pick<PublicServiceData, 'service' | 'entity' | 'serviceUrl' | 'profileUrl' | 'textContent'>
 }
 
 export function ServiceSchemaJsonLd({ data }: Props) {
@@ -40,6 +37,9 @@ export function ServiceSchemaJsonLd({ data }: Props) {
   }
 
   return (
-    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+    />
   )
 }

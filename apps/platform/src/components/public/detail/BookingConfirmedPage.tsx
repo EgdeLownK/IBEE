@@ -46,8 +46,8 @@ export function BookingConfirmedPage({ data, bookerName, dateRecap }: Props) {
             {bookerName ? `Merci ${bookerName} !` : 'Rendez-vous demandé !'}
           </h1>
           <p className="mt-2 text-sm text-neutral-500">
-            Votre demande a bien été envoyée. {data.entity.display_name} reviendra vers vous pour confirmer le
-            créneau.
+            Votre demande a bien été envoyée. {data.entity.display_name} reviendra vers vous pour
+            confirmer le créneau.
           </p>
 
           <div className="mt-8 rounded-xl border border-neutral-200 bg-neutral-0 p-5 text-left">

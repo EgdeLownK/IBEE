@@ -179,7 +179,9 @@ export function HistoryImageBlockEditor({ block, onChange }: Props) {
                 className={`hist-edit__layout-icon hist-edit__layout-icon--${n === 1 ? 'landscape' : 'square'}`}
                 aria-hidden="true"
               >
-                {n === 1 ? <i /> : (
+                {n === 1 ? (
+                  <i />
+                ) : (
                   <span style={{ display: 'flex', gap: 3 }}>
                     {Array.from({ length: n }).map((_, i) => (
                       <i key={i} style={{ width: 14, height: 14 }} />
@@ -192,7 +194,9 @@ export function HistoryImageBlockEditor({ block, onChange }: Props) {
         </div>
       </div>
 
-      <div className={`hw-config__banner-workspace${block.uploading ? ' is-uploading' : ''}${blockError ? ' has-error' : ''}`}>
+      <div
+        className={`hw-config__banner-workspace${block.uploading ? ' is-uploading' : ''}${blockError ? ' has-error' : ''}`}
+      >
         {blockError && <p className="hist-edit__block-error">{blockError}</p>}
         <div
           className={`hw-config__banner-row hw-config__banner-row--${layout}${slots === 3 ? ' hw-config__banner-row--triple' : ''}`}
@@ -211,7 +215,9 @@ export function HistoryImageBlockEditor({ block, onChange }: Props) {
                     aria-label="Ajouter une image"
                     onClick={() => pickSlot(slotIndex)}
                   >
-                    <span className={`hw-config__banner-slot-frame hw-config__banner-slot-frame--${layout}`}>
+                    <span
+                      className={`hw-config__banner-slot-frame hw-config__banner-slot-frame--${layout}`}
+                    >
                       <span className="hw-config__banner-slot-add-icon">
                         <ImageIcon className="h-5 w-5" />
                       </span>
@@ -226,7 +232,11 @@ export function HistoryImageBlockEditor({ block, onChange }: Props) {
               <div
                 key={slotIndex}
                 className={`hw-config__banner-slot hw-config__banner-slot--${layout}${warn ? ' hw-config__banner-slot--warn' : ''}`}
-                style={slots === 1 ? ({ '--banner-aspect': String(img.aspect_ratio) } as React.CSSProperties) : undefined}
+                style={
+                  slots === 1
+                    ? ({ '--banner-aspect': String(img.aspect_ratio) } as React.CSSProperties)
+                    : undefined
+                }
               >
                 <div className="hw-config__banner-slot-media">
                   <img src={img.url} alt="" draggable={false} />

@@ -30,7 +30,9 @@ const VIDEO_TYPES = ['video/mp4', 'video/webm']
 const IMAGE_EXT = new Set(['jpg', 'jpeg', 'png', 'webp', 'gif', 'avif', 'heic', 'heif'])
 const VIDEO_EXT = new Set(['mp4', 'webm', 'mov'])
 
-function resolveUploadMediaType(file: File): { mediaType: 'image' | 'video'; contentType: string } | null {
+function resolveUploadMediaType(
+  file: File,
+): { mediaType: 'image' | 'video'; contentType: string } | null {
   if (IMAGE_TYPES.includes(file.type)) {
     return { mediaType: 'image', contentType: file.type }
   }
@@ -87,7 +89,8 @@ export async function uploadProductMediaAction(formData: FormData) {
   }
 
   const resolved = resolveUploadMediaType(file)
-  if (!resolved) return { ok: false as const, error: 'Format non supporté (jpeg, png, webp, gif, mp4, webm).' }
+  if (!resolved)
+    return { ok: false as const, error: 'Format non supporté (jpeg, png, webp, gif, mp4, webm).' }
   const { mediaType, contentType } = resolved
 
   if (mediaType === 'image' && file.size > MAX_IMAGE_BYTES) {
@@ -132,7 +135,11 @@ export async function createProductAction(input: ProductCreateInput) {
 
   const type = input.type
   if (type !== 'digital' && type !== 'physical') {
-    return { ok: false as const, error: 'Type de produit invalide.', fieldErrors: { type: 'Choisis un type de produit.' } }
+    return {
+      ok: false as const,
+      error: 'Type de produit invalide.',
+      fieldErrors: { type: 'Choisis un type de produit.' },
+    }
   }
 
   const title = input.title?.trim() ?? ''
@@ -140,7 +147,8 @@ export async function createProductAction(input: ProductCreateInput) {
   else if (title.length > 100) fieldErrors.title = 'Le titre ne peut pas dépasser 100 caractères.'
 
   const descriptionShort = input.description_short?.trim() ?? ''
-  if (descriptionShort.length < 1) fieldErrors.description_short = 'La description courte est obligatoire.'
+  if (descriptionShort.length < 1)
+    fieldErrors.description_short = 'La description courte est obligatoire.'
   else if (descriptionShort.length > 160) {
     fieldErrors.description_short = 'La description courte ne peut pas dépasser 160 caractères.'
   }
@@ -177,7 +185,11 @@ export async function createProductAction(input: ProductCreateInput) {
       }
       resolvedCategoryId = input.category_id
     } else if (input.new_category_name?.trim()) {
-      const cat = await getOrCreateProductCategory(supabase, entity.id, input.new_category_name.trim())
+      const cat = await getOrCreateProductCategory(
+        supabase,
+        entity.id,
+        input.new_category_name.trim(),
+      )
       resolvedCategoryId = cat.id
     }
 
@@ -229,10 +241,14 @@ export async function createProductAction(input: ProductCreateInput) {
       digital_license: null as never,
       physical_condition: (type === 'physical' ? input.physical_condition : null) as never,
       physical_pickup_location:
-        type === 'physical' && input.pickup_enabled ? (input.physical_pickup_location ?? null) : null,
+        type === 'physical' && input.pickup_enabled
+          ? (input.physical_pickup_location ?? null)
+          : null,
       physical_stock_quantity:
         type === 'physical'
-          ? (Number.isInteger(input.physical_stock_quantity) ? input.physical_stock_quantity! : 1)
+          ? Number.isInteger(input.physical_stock_quantity)
+            ? input.physical_stock_quantity!
+            : 1
           : null,
       pickup_enabled: type === 'physical' ? (input.pickup_enabled ?? false) : false,
       in_person_enabled: type === 'physical' ? (input.in_person_enabled ?? false) : false,
@@ -306,11 +322,16 @@ export async function createProductAction(input: ProductCreateInput) {
             media_type: m.type,
             display_order: i,
             alt_text: i === 0 ? title : null,
-          }))
+          })),
         )
       } catch (err: any) {
         console.error('[createProductAction] addProductMedia error', err)
-        return { ok: false as const, error: "Le produit a été créé mais l'ajout des images a échoué: " + (err?.message || 'Erreur inconnue') }
+        return {
+          ok: false as const,
+          error:
+            "Le produit a été créé mais l'ajout des images a échoué: " +
+            (err?.message || 'Erreur inconnue'),
+        }
       }
     }
 
@@ -319,9 +340,13 @@ export async function createProductAction(input: ProductCreateInput) {
         await createProductVariant(supabase, productId, {
           attributes: v.attributes,
           ...(v.sku !== undefined ? { sku: v.sku } : {}),
-          ...(v.price_cents_override !== undefined ? { price_cents_override: v.price_cents_override } : {}),
+          ...(v.price_cents_override !== undefined
+            ? { price_cents_override: v.price_cents_override }
+            : {}),
           ...(v.stock_quantity !== undefined ? { stock_quantity: v.stock_quantity } : {}),
-          ...(v.sale_price_cents_override !== undefined ? { sale_price_cents_override: v.sale_price_cents_override } : {}),
+          ...(v.sale_price_cents_override !== undefined
+            ? { sale_price_cents_override: v.sale_price_cents_override }
+            : {}),
           ...(v.sale_ends_at !== undefined ? { sale_ends_at: v.sale_ends_at } : {}),
         })
       } catch (err) {
@@ -354,7 +379,10 @@ export async function createProductAction(input: ProductCreateInput) {
             position: nextPosition,
           })
         } else if (!existing.is_active) {
-          await supabase.from('entity_menu_sections').update({ is_active: true }).eq('id', existing.id)
+          await supabase
+            .from('entity_menu_sections')
+            .update({ is_active: true })
+            .eq('id', existing.id)
         }
       } catch (err) {
         console.error('[createProductAction] ensure shop section', err)

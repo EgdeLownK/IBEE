@@ -6,7 +6,15 @@ import type { ProjectRevenueSnapshot } from '@ibee/supabase'
 import type { ReactNode } from 'react'
 
 const WEEK_DAYS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'] as const
-const WEEK_DATES = ['17 Juin', '18 Juin', '19 Juin', '20 Juin', '21 Juin', '22 Juin', '23 Juin'] as const
+const WEEK_DATES = [
+  '17 Juin',
+  '18 Juin',
+  '19 Juin',
+  '20 Juin',
+  '21 Juin',
+  '22 Juin',
+  '23 Juin',
+] as const
 const YEAR_MONTHS = [
   'Jan',
   'Fév',
@@ -110,7 +118,7 @@ export function RevenuScreen({
 
   const max = Math.max(...chart.values, 1)
   const total = chart.values.reduce((sum, value) => sum + value, 0)
-  const headAmount = selectedIndex == null ? total : chart.values[selectedIndex] ?? 0
+  const headAmount = selectedIndex == null ? total : (chart.values[selectedIndex] ?? 0)
   const headLabel =
     selectedIndex == null
       ? chart.periodLabel
@@ -207,9 +215,7 @@ export function RevenuScreen({
           {balanceExtra ? <div className="revenu-balance__extra">{balanceExtra}</div> : null}
         </div>
         <div className="revenu-balance__row">
-          <span className="revenu-balance__amount">
-            {formatEuro(displayedBalanceCents / 100)}
-          </span>
+          <span className="revenu-balance__amount">{formatEuro(displayedBalanceCents / 100)}</span>
           {balanceAction ?? (
             <button type="button" className="revenu-cashout-btn">
               <ArrowDownToLine className="h-4 w-4" aria-hidden="true" />

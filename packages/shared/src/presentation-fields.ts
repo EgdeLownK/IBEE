@@ -1,8 +1,7 @@
 /** Champs présentation partagés service / event (étape finale). */
 
 export type ContentBlockInput =
-  | { type: 'text'; content: string }
-  | { type: 'image'; url: string; alt?: string }
+  { type: 'text'; content: string } | { type: 'image'; url: string; alt?: string }
 
 export type FaqInput = { question: string; answer: string }
 
@@ -10,15 +9,14 @@ export type PresentationDraft = {
   highlights: string[]
   gallery: { url: string; uploading: boolean }[]
   contentBlocks: (
-    | { type: 'text'; content: string }
-    | { type: 'image'; url: string; uploading: boolean }
+    { type: 'text'; content: string } | { type: 'image'; url: string; uploading: boolean }
   )[]
   faq: { question: string; answer: string }[]
 }
 
 export function validatePresentationFields(
   draft: PresentationDraft,
-  fail: (field: string, msg: string) => void
+  fail: (field: string, msg: string) => void,
 ): void {
   if (draft.gallery.some((g) => g.uploading)) {
     fail('gallery_images', "Patiente, une image est en cours d'envoi.")

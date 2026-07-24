@@ -10,12 +10,10 @@ export type FetchAnalyseScopeInput = {
 }
 
 export type FetchAnalyseScopeResult =
-  | { ok: true; data: AnalyseScopePayload }
-  | { ok: false; error: string }
+  { ok: true; data: AnalyseScopePayload } | { ok: false; error: string }
 
 export type FetchAnalyseRankingChartResult =
-  | { ok: true; data: AnalyseBarPoint[] }
-  | { ok: false; error: string }
+  { ok: true; data: AnalyseBarPoint[] } | { ok: false; error: string }
 
 function buildAnalyseSearchParams(input: FetchAnalyseScopeInput) {
   const params = new URLSearchParams()
@@ -28,7 +26,7 @@ function buildAnalyseSearchParams(input: FetchAnalyseScopeInput) {
 }
 
 export async function fetchAnalyseScope(
-  input: FetchAnalyseScopeInput
+  input: FetchAnalyseScopeInput,
 ): Promise<FetchAnalyseScopeResult> {
   const params = buildAnalyseSearchParams(input)
   const res = await fetch(`/api/dashboard/analyse?${params}`)

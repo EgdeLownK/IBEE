@@ -21,7 +21,7 @@ export function BoutiqueInboxFilterSummary({ orders, filter }: Props) {
         key: `${line.orderId}-${index}`,
         name: item.name,
         qty: item.qty,
-      }))
+      })),
     )
   }, [orders, filter])
 

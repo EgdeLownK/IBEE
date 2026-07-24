@@ -11,10 +11,7 @@ import {
 } from '@ibee/supabase'
 import { TeamDashboard } from '@/components/dashboard/team/TeamDashboard'
 import { TeamPageSkeleton } from '@/components/dashboard/team/TeamPageSkeleton'
-import {
-  buildTeamPageDataFromEntity,
-  mapRoleRecordToDefinition,
-} from '@/lib/team-data'
+import { buildTeamPageDataFromEntity, mapRoleRecordToDefinition } from '@/lib/team-data'
 import { getDashboardContext } from '@/lib/dashboard-context'
 import { measureDashboardLoad } from '@/lib/dashboard-perf'
 
@@ -42,10 +39,7 @@ async function EquipePageLoader({
   if (!ownerRole) redirect('/login')
 
   const [members, pending] = await measureDashboardLoad('page:equipe', () =>
-    Promise.all([
-      listTeamMembers(supabase, entityId),
-      listTeamInvitations(supabase, entityId),
-    ])
+    Promise.all([listTeamMembers(supabase, entityId), listTeamInvitations(supabase, entityId)]),
   )
 
   const data = buildTeamPageDataFromEntity({

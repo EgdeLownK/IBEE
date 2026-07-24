@@ -7,7 +7,7 @@ import { getStripe } from '@/lib/stripe'
 export async function refundBookingPayment(
   supabase: SupabaseClient<Database>,
   bookingId: string,
-  paymentIntentId: string
+  paymentIntentId: string,
 ) {
   if (!process.env.STRIPE_SECRET_KEY) {
     console.warn('[refundBookingPayment] STRIPE_SECRET_KEY manquante — remboursement ignoré')

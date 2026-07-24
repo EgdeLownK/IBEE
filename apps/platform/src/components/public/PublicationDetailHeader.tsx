@@ -32,7 +32,13 @@ export function PublicationDetailHeader({
             aria-label={`Voir le profil de ${displayName}`}
           >
             {avatarUrl ? (
-              <Image src={avatarUrl} alt="" width={40} height={40} className="h-full w-full object-cover" />
+              <Image
+                src={avatarUrl}
+                alt=""
+                width={40}
+                height={40}
+                className="h-full w-full object-cover"
+              />
             ) : (
               <span className="text-sm font-semibold text-accent">{initial}</span>
             )}

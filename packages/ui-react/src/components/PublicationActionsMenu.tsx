@@ -30,7 +30,10 @@ export function PublicationActionsMenu({ publicationId, editUrl, onDelete }: Pro
       {/* Trigger */}
       <button
         type="button"
-        onClick={(e) => { e.stopPropagation(); setMenuOpen(!menuOpen) }}
+        onClick={(e) => {
+          e.stopPropagation()
+          setMenuOpen(!menuOpen)
+        }}
         className="flex h-8 w-8 items-center justify-center rounded-full text-neutral-400 transition hover:bg-neutral-100 hover:text-neutral-600"
         aria-label="Actions de la publication"
       >
@@ -51,7 +54,11 @@ export function PublicationActionsMenu({ publicationId, editUrl, onDelete }: Pro
             </a>
             <button
               type="button"
-              onClick={(e) => { e.stopPropagation(); setConfirmOpen(true); setMenuOpen(false) }}
+              onClick={(e) => {
+                e.stopPropagation()
+                setConfirmOpen(true)
+                setMenuOpen(false)
+              }}
               className="flex w-full items-center gap-2 px-4 py-2 text-sm text-error hover:bg-error/5 transition-colors"
             >
               <Trash2 className="h-3.5 w-3.5" /> Supprimer
@@ -62,12 +69,20 @@ export function PublicationActionsMenu({ publicationId, editUrl, onDelete }: Pro
 
       {/* Delete confirmation dialog */}
       {confirmOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={(e) => { if (e.target === e.currentTarget) setConfirmOpen(false) }}>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setConfirmOpen(false)
+          }}
+        >
           <div className="fixed inset-0 bg-neutral-900/40" />
           <div className="relative w-[90vw] max-w-md rounded-xl bg-neutral-0 p-6 shadow-lg">
-            <h3 className="text-base font-semibold text-neutral-900">Supprimer cette publication ?</h3>
+            <h3 className="text-base font-semibold text-neutral-900">
+              Supprimer cette publication ?
+            </h3>
             <p className="mt-2 text-sm text-neutral-500">
-              Cette action est irréversible. La publication et ses commentaires seront définitivement supprimés.
+              Cette action est irréversible. La publication et ses commentaires seront
+              définitivement supprimés.
             </p>
             <div className="mt-6 flex justify-end gap-3">
               <button

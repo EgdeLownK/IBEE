@@ -26,11 +26,7 @@ export function PublicProfileMenuTabs({
   tabsReady = true,
   onTabChange,
 }: Props) {
-  const visibleTabs = getVisibleProfileTabs(
-    'public',
-    menuSections,
-    tabContent
-  )
+  const visibleTabs = getVisibleProfileTabs('public', menuSections, tabContent)
 
   if (visibleTabs.length === 0) {
     return (

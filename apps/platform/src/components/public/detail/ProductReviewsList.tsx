@@ -28,7 +28,7 @@ function buildQuery(
   basePath: string,
   activeRatings: number[],
   activeSort: 'recent' | 'oldest',
-  opts: { toggleRating?: number; clearRatings?: boolean; sort?: 'recent' | 'oldest' } = {}
+  opts: { toggleRating?: number; clearRatings?: boolean; sort?: 'recent' | 'oldest' } = {},
 ) {
   let ratings = [...activeRatings]
   if (opts.toggleRating != null) {
@@ -46,7 +46,11 @@ function buildQuery(
 }
 
 function fmtDate(d: string) {
-  return new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(d))
+  return new Intl.DateTimeFormat('fr-FR', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  }).format(new Date(d))
 }
 
 export function ProductReviewsList({
@@ -96,7 +100,9 @@ export function ProductReviewsList({
                     aria-current={selected ? 'true' : undefined}
                     className={`reviews-bar${selected ? ' is-selected' : ''}`}
                   >
-                    <span className={`reviews-bar__stars ${selected ? 'text-accent' : 'text-amber-500'}`}>
+                    <span
+                      className={`reviews-bar__stars ${selected ? 'text-accent' : 'text-amber-500'}`}
+                    >
                       {Array.from({ length: n }, (_, i) => (
                         <Star key={i} className="h-3 w-3 fill-current" aria-hidden="true" />
                       ))}
@@ -138,7 +144,9 @@ export function ProductReviewsList({
 
           <div className="reviews-list">
             {reviews.length === 0 ? (
-              <p className="py-6 text-center text-sm text-neutral-400">Aucun avis pour le moment.</p>
+              <p className="py-6 text-center text-sm text-neutral-400">
+                Aucun avis pour le moment.
+              </p>
             ) : (
               reviews.map((review) => (
                 <article key={review.id} className="review-item">
@@ -162,12 +170,18 @@ export function ProductReviewsList({
                       {fmtDate(review.created_at)}
                     </time>
                   </div>
-                  {review.title && <h3 className="mt-2 text-sm font-semibold text-neutral-900">{review.title}</h3>}
-                  <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-neutral-600">{review.content}</p>
+                  {review.title && (
+                    <h3 className="mt-2 text-sm font-semibold text-neutral-900">{review.title}</h3>
+                  )}
+                  <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-neutral-600">
+                    {review.content}
+                  </p>
                   {review.seller_reply && (
                     <div className="review-item__reply">
                       <p className="text-xs font-semibold text-neutral-900">Réponse du vendeur</p>
-                      <p className="mt-1 whitespace-pre-wrap text-sm text-neutral-600">{review.seller_reply}</p>
+                      <p className="mt-1 whitespace-pre-wrap text-sm text-neutral-600">
+                        {review.seller_reply}
+                      </p>
                     </div>
                   )}
                 </article>

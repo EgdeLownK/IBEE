@@ -2,10 +2,7 @@
 
 import { useMemo } from 'react'
 import { Activity } from 'lucide-react'
-import {
-  buildServiceRecentActivity,
-  formatServiceRelativeTime,
-} from '@/lib/service-catalog-view'
+import { buildServiceRecentActivity, formatServiceRelativeTime } from '@/lib/service-catalog-view'
 import type { ServiceBookingView } from '@/lib/service-booking-view'
 
 type Props = {

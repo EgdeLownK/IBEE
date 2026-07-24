@@ -1,5 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
-import { descriptionFromBlocks, parseDetailContentBlocks, parseFaqItems } from '@/lib/entity-content-blocks'
+import {
+  descriptionFromBlocks,
+  parseDetailContentBlocks,
+  parseFaqItems,
+} from '@/lib/entity-content-blocks'
 import { formatDetailPrice, locationLabel, parseReviewRatings } from '@/lib/detail-format'
 import {
   getAppointmentTypeBySlug,
@@ -28,7 +32,7 @@ export const SIMILAR_RELATED_MOCK = [
 export async function loadPublicService(
   slug: string,
   serviceSlug: string,
-  searchParams?: { rating?: string; sort?: string }
+  searchParams?: { rating?: string; sort?: string },
 ) {
   const supabase = await createClient()
   const entity = await getEntityBySlug(supabase, slug)
@@ -136,7 +140,7 @@ export async function loadPublicService(
     bookingHref: `/${entity.slug}/services/${service.slug}/booking`,
     description: descriptionFromBlocks(
       detailContentBlocks,
-      `${service.title} — Service par ${entity.display_name}`
+      `${service.title} — Service par ${entity.display_name}`,
     ),
     textContent,
     profileRelated: PROFILE_RELATED_MOCK,

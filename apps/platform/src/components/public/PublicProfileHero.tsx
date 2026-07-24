@@ -51,7 +51,10 @@ export function PublicProfileHero({
   useEffect(() => {
     async function fetchState() {
       try {
-        const res = await fetch(`/api/profile-state?entityId=${entityId}${ownerId ? `&ownerId=${ownerId}` : ''}`, { cache: 'no-store' })
+        const res = await fetch(
+          `/api/profile-state?entityId=${entityId}${ownerId ? `&ownerId=${ownerId}` : ''}`,
+          { cache: 'no-store' },
+        )
         if (res.ok) {
           const data = await res.json()
           setIsAuthed(data.isAuthenticated)
@@ -100,7 +103,14 @@ export function PublicProfileHero({
       <div className="relative">
         <div className="profile-banner">
           {bannerUrl ? (
-            <Image src={bannerUrl} alt="" className="profile-banner__img" width={800} height={172} priority />
+            <Image
+              src={bannerUrl}
+              alt=""
+              className="profile-banner__img"
+              width={800}
+              height={172}
+              priority
+            />
           ) : (
             <div className="profile-banner__placeholder" aria-hidden="true">
               <span className="profile-banner__label">BANNER IMAGE 800×172</span>
@@ -116,7 +126,14 @@ export function PublicProfileHero({
         <div className="mt-6 flex items-center gap-4">
           <div className="profile-avatar">
             {avatarUrl ? (
-              <Image src={avatarUrl} alt={displayName} className="h-full w-full object-cover" width={172} height={172} priority />
+              <Image
+                src={avatarUrl}
+                alt={displayName}
+                className="h-full w-full object-cover"
+                width={172}
+                height={172}
+                priority
+              />
             ) : (
               <span className="font-display text-[30px] font-semibold text-accent">{initials}</span>
             )}
@@ -131,7 +148,10 @@ export function PublicProfileHero({
 
         {followersCount > 0 && (
           <p className="mb-0 mt-4 text-[13.5px] text-neutral-600">
-            <b className="font-display font-bold text-neutral-900">{formatFollowers(followersCount)}</b> abonnés
+            <b className="font-display font-bold text-neutral-900">
+              {formatFollowers(followersCount)}
+            </b>{' '}
+            abonnés
           </p>
         )}
 
@@ -139,12 +159,15 @@ export function PublicProfileHero({
 
         <div className="mb-1 mt-5 flex items-center gap-2.5">
           {!isAuthStateLoaded ? (
-             <div className="btn btn--accent opacity-50 cursor-wait">
-               <span className="opacity-0">Suivre</span>
-             </div>
+            <div className="btn btn--accent opacity-50 cursor-wait">
+              <span className="opacity-0">Suivre</span>
+            </div>
           ) : isOwner ? (
             <>
-              <Link href="/dashboard/site" className="btn btn--dark flex-1 text-center justify-center">
+              <Link
+                href="/dashboard/site"
+                className="btn btn--dark flex-1 text-center justify-center"
+              >
                 <Pencil className="h-4 w-4" aria-hidden="true" />
                 Passer en mode édition
               </Link>

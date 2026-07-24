@@ -16,7 +16,8 @@ export default async function ActiviteBoutiquePage() {
   if (!ctx) redirect('/login')
 
   const capabilities = await getActivityCapabilities(ctx.supabase, ctx.entity.id)
-  if (!isActivityModuleEnabled(capabilities, 'shop')) redirect(resolveActivityLandingPath(capabilities))
+  if (!isActivityModuleEnabled(capabilities, 'shop'))
+    redirect(resolveActivityLandingPath(capabilities))
 
   const data = await loadBoutiqueDashboardData(ctx.supabase, ctx.entity.id)
 

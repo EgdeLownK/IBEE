@@ -34,15 +34,18 @@ export async function GET(req: NextRequest) {
           offset: parseAnalyseOffset(searchParams.get('offset') ?? undefined),
           rankingLimit,
         }),
-      { scope, period }
+      { scope, period },
     )
 
     return Response.json(
       { ok: true, data },
-      { headers: { 'Cache-Control': DASHBOARD_PRIVATE_CACHE } }
+      { headers: { 'Cache-Control': DASHBOARD_PRIVATE_CACHE } },
     )
   } catch (err) {
     console.error('[GET /api/dashboard/analyse]', err)
-    return Response.json({ ok: false, error: 'Impossible de charger les données.' }, { status: 500 })
+    return Response.json(
+      { ok: false, error: 'Impossible de charger les données.' },
+      { status: 500 },
+    )
   }
 }

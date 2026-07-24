@@ -32,7 +32,7 @@ export function EventPlacesPanel({ eventId, places }: Props) {
 
   useEffect(() => {
     setDrafts(
-      Object.fromEntries(places.map((place) => [place.id, place.capacity?.toString() ?? '']))
+      Object.fromEntries(places.map((place) => [place.id, place.capacity?.toString() ?? ''])),
     )
   }, [places])
 

@@ -35,7 +35,7 @@ export function ServiceWeekAgenda({
   const weekDays = useMemo(() => getWeekDays(weekStart), [weekStart])
   const bookingsByDay = useMemo(
     () => groupBookingsByDay(bookings, weekStart),
-    [bookings, weekStart]
+    [bookings, weekStart],
   )
 
   function shiftWeek(delta: number) {
@@ -98,9 +98,7 @@ export function ServiceWeekAgenda({
               onClick={() => onSelectDay(iso)}
             >
               <span className="service-agenda__day-label">{formatPlanningDate(iso)}</span>
-              <span className="service-agenda__day-count">
-                {count > 0 ? `${count} RDV` : '—'}
-              </span>
+              <span className="service-agenda__day-count">{count > 0 ? `${count} RDV` : '—'}</span>
               {exception ? (
                 <span className="service-agenda__day-badge">
                   {exception.isBlocked ? 'Bloqué' : 'Spécial'}

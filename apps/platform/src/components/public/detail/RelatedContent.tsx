@@ -28,7 +28,10 @@ interface Props {
 }
 
 export function RelatedContent({ title, items, moreHref = '#' }: Props) {
-  const { trackRef, canPrev, canNext, scrollPrev, scrollNext } = useHorizontalCarousel(14, 'related__card')
+  const { trackRef, canPrev, canNext, scrollPrev, scrollNext } = useHorizontalCarousel(
+    14,
+    'related__card',
+  )
 
   if (items.length === 0) return null
 
@@ -48,7 +51,11 @@ export function RelatedContent({ title, items, moreHref = '#' }: Props) {
               <>
                 <div className="related__media" aria-hidden="true">
                   {it.cover_url ? (
-                    <img src={it.cover_url} alt="" className="related__image object-cover w-full h-full" />
+                    <img
+                      src={it.cover_url}
+                      alt=""
+                      className="related__image object-cover w-full h-full"
+                    />
                   ) : null}
                   {it.price_cents != null && (
                     <span className="related__price absolute top-2 right-2 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-semibold text-gray-900 shadow-sm">

@@ -76,13 +76,21 @@ export function ServiceCreateWizard({
       return
     }
     if (form.step < 3) {
-      patchForm({ step: (form.step + 1) as ServiceCreateFormState['step'], fieldErrors: {}, globalError: '' })
+      patchForm({
+        step: (form.step + 1) as ServiceCreateFormState['step'],
+        fieldErrors: {},
+        globalError: '',
+      })
     }
   }
 
   function goPrev() {
     if (form.step <= 1) return
-    patchForm({ step: (form.step - 1) as ServiceCreateFormState['step'], fieldErrors: {}, globalError: '' })
+    patchForm({
+      step: (form.step - 1) as ServiceCreateFormState['step'],
+      fieldErrors: {},
+      globalError: '',
+    })
   }
 
   function handleSubmit(e: React.FormEvent) {
@@ -140,8 +148,18 @@ export function ServiceCreateWizard({
 
   return createPortal(
     <div className="pco-root" role="presentation">
-      <button type="button" className="pco-root__backdrop" aria-label="Fermer" onClick={handleClose} />
-      <div className="pco__panel" role="dialog" aria-modal="true" aria-labelledby="svc-wizard-title">
+      <button
+        type="button"
+        className="pco-root__backdrop"
+        aria-label="Fermer"
+        onClick={handleClose}
+      />
+      <div
+        className="pco__panel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="svc-wizard-title"
+      >
         <header className="pco__header">
           <h2 id="svc-wizard-title" className="pco__title">
             Ajouter un service
@@ -208,6 +226,6 @@ export function ServiceCreateWizard({
         </form>
       </div>
     </div>,
-    document.body
+    document.body,
   )
 }

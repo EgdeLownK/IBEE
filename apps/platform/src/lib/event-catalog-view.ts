@@ -58,7 +58,7 @@ function hasCustomRegistrationFields(fields: unknown): boolean {
 export function buildBilletterieEventLines(
   events: EventRecord[],
   ticketTypes: EventTicketType[],
-  registrations: BilletterieRegistrationView[]
+  registrations: BilletterieRegistrationView[],
 ): BilletterieEventLine[] {
   const ticketsByEvent = new Map<string, EventTicketType[]>()
   for (const ticket of ticketTypes) {
@@ -143,7 +143,7 @@ export function formatEventRevenue(cents: number, currency = 'EUR'): string {
 
 export function filterRegistrationsByEvent(
   registrations: BilletterieRegistrationView[],
-  eventId: string | null
+  eventId: string | null,
 ): BilletterieRegistrationView[] {
   if (!eventId) return registrations
   return registrations.filter((reg) => reg.eventId === eventId)
@@ -151,7 +151,7 @@ export function filterRegistrationsByEvent(
 
 export function searchEventLines(
   events: BilletterieEventLine[],
-  query: string
+  query: string,
 ): BilletterieEventLine[] {
   const q = query.trim().toLowerCase()
   if (!q) return events
@@ -241,7 +241,7 @@ export function isEventPast(startAt: string, endAt: string | null): boolean {
 }
 
 export function getEventFeedSegment(
-  event: Pick<BilletterieEventLine, 'startAt' | 'endAt'>
+  event: Pick<BilletterieEventLine, 'startAt' | 'endAt'>,
 ): EventFeedSegment {
   return isEventPast(event.startAt, event.endAt) ? 'past' : 'upcoming'
 }
@@ -270,7 +270,7 @@ export function isEventStartToday(startAt: string): boolean {
 
 /** Sous-groupe dans l'onglet À venir : aujourd'hui (ou en cours) puis jours futurs. */
 export function getEventUpcomingSubsegment(
-  event: Pick<BilletterieEventLine, 'startAt' | 'endAt'>
+  event: Pick<BilletterieEventLine, 'startAt' | 'endAt'>,
 ): EventUpcomingSubsegment {
   const now = Date.now()
   const started = new Date(event.startAt).getTime() < now

@@ -245,14 +245,12 @@ export async function updateBoutiqueStockAction(input: {
   }
 
   try {
-    let product:
-      | {
-          id: string
-          entity_id: string
-          type: 'physical' | 'digital'
-          digital_stock_unlimited?: boolean
-        }
-      | null = null
+    let product: {
+      id: string
+      entity_id: string
+      type: 'physical' | 'digital'
+      digital_stock_unlimited?: boolean
+    } | null = null
     let productError: unknown = null
 
     const primary = await ctx.supabase

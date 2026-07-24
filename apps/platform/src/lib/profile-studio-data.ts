@@ -39,7 +39,7 @@ function mapHomeWidgets(homeWidgetsRaw: Awaited<ReturnType<typeof getEntityHomeW
 
 function mapContactInfo(
   entityId: string,
-  contactInfoRaw: Awaited<ReturnType<typeof getEntityContactInfo>> | null
+  contactInfoRaw: Awaited<ReturnType<typeof getEntityContactInfo>> | null,
 ) {
   return (
     contactInfoRaw ?? {
@@ -123,19 +123,21 @@ export async function loadProfileStudioPlaylists() {
 
   const [productReviewStats, serviceReviewStats, eventRegistrationCounts] = await Promise.all([
     Promise.all(
-      products.map((p) => getReviewAggregates(supabase, p.id).catch(() => ({ count: 0, average: 0 })))
+      products.map((p) =>
+        getReviewAggregates(supabase, p.id).catch(() => ({ count: 0, average: 0 })),
+      ),
     ),
     Promise.all(
       appointmentTypes.map((s) =>
-        getServiceReviewAggregates(supabase, s.id).catch(() => ({ count: 0, average: 0 }))
-      )
+        getServiceReviewAggregates(supabase, s.id).catch(() => ({ count: 0, average: 0 })),
+      ),
     ),
     Promise.all(
       upcomingEvents.map((ev) =>
         ev.capacity != null
           ? countEventRegistrations(supabase, ev.id).catch(() => 0)
-          : Promise.resolve(0)
-      )
+          : Promise.resolve(0),
+      ),
     ),
   ])
 

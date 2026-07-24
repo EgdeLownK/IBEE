@@ -40,7 +40,7 @@ function mapEntity(row: EntityEmbed | null | undefined) {
 function formatPrice(cents: number | null | undefined, currency: string) {
   if (cents == null) return null
   return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: currency || 'EUR' }).format(
-    cents / 100
+    cents / 100,
   )
 }
 
@@ -48,9 +48,7 @@ function getProductImageUrl(product: {
   og_image_url: string | null
   product_media: { url: string; media_type: string; display_order: number }[] | null
 }) {
-  const media = [...(product.product_media ?? [])].sort(
-    (a, b) => a.display_order - b.display_order
-  )
+  const media = [...(product.product_media ?? [])].sort((a, b) => a.display_order - b.display_order)
   const image = media.find((m) => m.media_type === 'image')
   if (image?.url) return image.url
   if (product.og_image_url) return product.og_image_url
@@ -63,7 +61,7 @@ function getGalleryImageUrl(images: string[] | null | undefined) {
 }
 
 function getPublicationImageUrl(
-  media: { url: string; type: string | null; position: number | null }[] | null | undefined
+  media: { url: string; type: string | null; position: number | null }[] | null | undefined,
 ) {
   const sorted = [...(media ?? [])].sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
   const image = sorted.find((m) => m.type !== 'video')
@@ -79,7 +77,7 @@ async function fetchProductPosts(client: Client): Promise<HomeFeedPost[]> {
       og_image_url,
       product_media (url, media_type, display_order),
       entity:entity_id (id, slug, display_name, avatar_url)
-    `
+    `,
     )
     .eq('status', 'published')
     .not('published_at', 'is', null)
@@ -122,7 +120,7 @@ async function fetchEventPosts(client: Client): Promise<HomeFeedPost[]> {
       `
       id, title, slug, price_cents, currency, start_at, created_at, gallery_images,
       entity:entity_id (id, slug, display_name, avatar_url)
-    `
+    `,
     )
     .eq('is_published', true)
     .gte('start_at', now)
@@ -162,7 +160,7 @@ async function fetchServicePosts(client: Client): Promise<HomeFeedPost[]> {
       `
       id, title, slug, price_cents, promo_price_cents, currency, created_at, gallery_images,
       entity:entity_id (id, slug, display_name, avatar_url)
-    `
+    `,
     )
     .eq('is_active', true)
     .order('created_at', { ascending: false })
@@ -203,7 +201,7 @@ async function fetchNewsItems(client: Client, limit = 16): Promise<HomeFeedNewsI
       id, title, slug, published_at,
       publication_media (url, type, position),
       entity:entity_id (id, slug, display_name, avatar_url)
-    `
+    `,
     )
     .eq('status', 'published')
     .not('published_at', 'is', null)
@@ -251,12 +249,14 @@ async function fetchRecommendedProfiles(client: Client, limit = 12): Promise<Hom
     }))
 }
 
-const VIEW_EVENT_BY_KIND: Record<HomeFeedPostKind, Database['public']['Enums']['analytics_event_type']> =
-  {
-    product: 'product_view',
-    event: 'event_view',
-    service: 'service_view',
-  }
+const VIEW_EVENT_BY_KIND: Record<
+  HomeFeedPostKind,
+  Database['public']['Enums']['analytics_event_type']
+> = {
+  product: 'product_view',
+  event: 'event_view',
+  service: 'service_view',
+}
 
 async function attachViewCounts(client: Client, posts: HomeFeedPost[]) {
   const byKind = new Map<HomeFeedPostKind, string[]>()
@@ -276,7 +276,7 @@ async function attachViewCounts(client: Client, posts: HomeFeedPost[]) {
         {
           p_resource_ids: ids,
           p_event_type: VIEW_EVENT_BY_KIND[kind],
-        } as never
+        } as never,
       )) as {
         data: { resource_id: string; view_count: number }[] | null
         error: { message: string } | null
@@ -303,7 +303,7 @@ function buildFeedRows(
   posts: HomeFeedPost[],
   news: HomeFeedNewsItem[],
   profiles: HomeFeedProfile[],
-  includeCarousels: boolean
+  includeCarousels: boolean,
 ): HomeFeedRow[] {
   const rows: HomeFeedRow[] = []
   let newsInserted = false
@@ -338,7 +338,7 @@ function buildFeedRows(
 
 export async function getHomeFeedPage(
   client: Client,
-  opts: { cursor?: HomeFeedCursor | null; limit?: number } = {}
+  opts: { cursor?: HomeFeedCursor | null; limit?: number } = {},
 ): Promise<HomeFeedPage> {
   const limit = opts.limit ?? DEFAULT_LIMIT
   const includeCarousels = !opts.cursor

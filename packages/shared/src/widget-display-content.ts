@@ -111,7 +111,7 @@ export function widgetHasDisplayContent(
     }
     case 'widget_announcement': {
       const ann = parseAnnouncementConfig(config)
-      return !!(ann?.images?.length)
+      return !!ann?.images?.length
     }
     case 'widget_faq':
       parseFaqConfig(config)

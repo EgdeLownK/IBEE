@@ -2,7 +2,17 @@
 
 import { useRef, useState, useEffect } from 'react'
 import { flushSync } from 'react-dom'
-import { ChevronDown, ChevronLeft, ChevronRight, Crop, ImagePlus, Loader2, Plus, Trash2, X } from 'lucide-react'
+import {
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Crop,
+  ImagePlus,
+  Loader2,
+  Plus,
+  Trash2,
+  X,
+} from 'lucide-react'
 import { toast } from 'sonner'
 import { uploadProductMediaAction } from '@/app/dashboard/site/product-actions'
 import { BannerImageCropDialog } from '@/components/profile/history/BannerImageCropDialog'
@@ -70,20 +80,29 @@ function OptionRow({
         value={optName}
         onChange={(e) => onChangeName(e.target.value)}
       />
-      <div 
-        className="pco__input flex-[2] flex flex-wrap gap-1 items-center cursor-text !py-1 min-h-[38px]" 
+      <div
+        className="pco__input flex-[2] flex flex-wrap gap-1 items-center cursor-text !py-1 min-h-[38px]"
         onClick={() => document.getElementById(`opt-input-${index}`)?.focus()}
       >
         {optValues.map((v, i) => (
-          <span key={i} className="flex items-center gap-1 bg-neutral-100 text-sm px-2 py-0.5 rounded border border-neutral-200">
+          <span
+            key={i}
+            className="flex items-center gap-1 bg-neutral-100 text-sm px-2 py-0.5 rounded border border-neutral-200"
+          >
             {v}
-            <button type="button" onClick={() => removeValue(i)} className="text-neutral-500 hover:text-neutral-900"><X className="h-3 w-3" /></button>
+            <button
+              type="button"
+              onClick={() => removeValue(i)}
+              className="text-neutral-500 hover:text-neutral-900"
+            >
+              <X className="h-3 w-3" />
+            </button>
           </span>
         ))}
         <input
           id={`opt-input-${index}`}
           type="text"
-          placeholder={optValues.length === 0 ? "Valeurs (ex: Rouge)" : ""}
+          placeholder={optValues.length === 0 ? 'Valeurs (ex: Rouge)' : ''}
           className="flex-1 bg-transparent border-none outline-none min-w-[80px] text-sm"
           value={val}
           onChange={(e) => setVal(e.target.value)}
@@ -93,7 +112,6 @@ function OptionRow({
     </div>
   )
 }
-
 
 type Props = {
   form: ProductCreateFormState
@@ -115,7 +133,7 @@ export function StepEssentials({ form, categories, updateForm, onChange }: Props
   function variantErr(vi: number) {
     for (const key of Object.keys(form.fieldErrors)) {
       if (key.startsWith(`variants_${vi}_`)) {
-        return "Une erreur est présente dans cette variante ou ses sous-variantes (prix, stock, sku, attribut manquant, prix remisé)."
+        return 'Une erreur est présente dans cette variante ou ses sous-variantes (prix, stock, sku, attribut manquant, prix remisé).'
       }
     }
     return null
@@ -130,17 +148,21 @@ export function StepEssentials({ form, categories, updateForm, onChange }: Props
   function generateVariants() {
     const maxOpts = 1
     const defaultOpts = [{ name: '', values: [] }]
-    const optsToProcess = (form.variantOptions.length >= maxOpts ? form.variantOptions : defaultOpts).slice(0, maxOpts)
-    
-    const validOptions = optsToProcess.map((o, i) => {
-      const vals = [...(o.values || [])]
-      const input = document.getElementById(`opt-input-${i}`) as HTMLInputElement
-      if (input && input.value.trim()) {
-        const v = input.value.trim()
-        if (!vals.includes(v)) vals.push(v)
-      }
-      return { ...o, values: vals }
-    }).filter(o => o.values.length > 0)
+    const optsToProcess = (
+      form.variantOptions.length >= maxOpts ? form.variantOptions : defaultOpts
+    ).slice(0, maxOpts)
+
+    const validOptions = optsToProcess
+      .map((o, i) => {
+        const vals = [...(o.values || [])]
+        const input = document.getElementById(`opt-input-${i}`) as HTMLInputElement
+        if (input && input.value.trim()) {
+          const v = input.value.trim()
+          if (!vals.includes(v)) vals.push(v)
+        }
+        return { ...o, values: vals }
+      })
+      .filter((o) => o.values.length > 0)
 
     if (validOptions.length === 0) {
       return
@@ -148,11 +170,14 @@ export function StepEssentials({ form, categories, updateForm, onChange }: Props
 
     let newVariantsToAdd: typeof form.variants = []
 
-    const combine = (options: typeof validOptions, currentIndex: number): {key: string; value: string}[][] => {
+    const combine = (
+      options: typeof validOptions,
+      currentIndex: number,
+    ): { key: string; value: string }[][] => {
       if (currentIndex === options.length) return [[]]
       const currentOpt = options[currentIndex]!
       const subsequent = combine(options, currentIndex + 1)
-      const results: {key: string; value: string}[][] = []
+      const results: { key: string; value: string }[][] = []
       const keyName = currentOpt.name.trim() || 'Variante'
       for (const val of currentOpt.values) {
         for (const sub of subsequent) {
@@ -164,24 +189,32 @@ export function StepEssentials({ form, categories, updateForm, onChange }: Props
 
     const combinations = combine(validOptions, 0)
     newVariantsToAdd = combinations.map((pairs) => {
-      return { id: nextId('v'), pairs, sku: '', price: '', stock: '', promoEnabled: false, salePrice: '', saleEndsAt: '' }
+      return {
+        id: nextId('v'),
+        pairs,
+        sku: '',
+        price: '',
+        stock: '',
+        promoEnabled: false,
+        salePrice: '',
+        saleEndsAt: '',
+      }
     })
-    
+
     // Append to existing variants, respecting max 20
     const combinedVariants = [...form.variants, ...newVariantsToAdd].slice(0, 20)
 
-    onChange({ 
+    onChange({
       variants: combinedVariants,
-      variantOptions: [{ name: '', values: [] }] // Reset input
+      variantOptions: [{ name: '', values: [] }], // Reset input
     })
-    
+
     // Clear DOM inputs
     form.variantOptions.forEach((_, i) => {
       const input = document.getElementById(`opt-input-${i}`) as HTMLInputElement
       if (input) input.value = ''
     })
   }
-
 
   async function uploadOneMedia(file: File) {
     const isVideo = file.type.startsWith('video/') || /\.(mp4|webm|mov)$/i.test(file.name)
@@ -236,9 +269,7 @@ export function StepEssentials({ form, categories, updateForm, onChange }: Props
         return {
           ...prev,
           media: prev.media.map((m) =>
-            m.id === id
-              ? { ...m, url: result.url, type: result.type, uploading: false }
-              : m
+            m.id === id ? { ...m, url: result.url, type: result.type, uploading: false } : m,
           ),
         }
       })
@@ -298,7 +329,7 @@ export function StepEssentials({ form, categories, updateForm, onChange }: Props
 
     const fd = new FormData()
     fd.append('file', result.blob, 'image.jpg')
-    
+
     try {
       const uploadResult = await uploadProductMediaAction(fd)
 
@@ -339,7 +370,6 @@ export function StepEssentials({ form, categories, updateForm, onChange }: Props
     }
   }
 
-
   return (
     <section className="pco__stage">
       <div className="pco__field border-b border-neutral-200 pb-6 mb-6">
@@ -361,8 +391,14 @@ export function StepEssentials({ form, categories, updateForm, onChange }: Props
           </button>
         </div>
         <div className="px-1 text-sm text-neutral-500">
-          {form.variationMode === 'unique' && <p>Un seul article sans variantes (ex: un livre, une oeuvre originale).</p>}
-          {form.variationMode === 'variants' && <p>Un article avec un choix simple (ex: T-shirt noir décliné en différentes tailles).</p>}
+          {form.variationMode === 'unique' && (
+            <p>Un seul article sans variantes (ex: un livre, une oeuvre originale).</p>
+          )}
+          {form.variationMode === 'variants' && (
+            <p>
+              Un article avec un choix simple (ex: T-shirt noir décliné en différentes tailles).
+            </p>
+          )}
         </div>
       </div>
 
@@ -539,7 +575,9 @@ export function StepEssentials({ form, categories, updateForm, onChange }: Props
         <div className="pco__field mt-6 p-4 bg-neutral-50 rounded-lg border border-neutral-200 flex flex-col gap-4 animate-in fade-in slide-in-from-top-2">
           <div className="flex gap-4 flex-wrap md:flex-nowrap">
             <div className="flex-1 min-w-[120px]">
-              <label className="pco__label" htmlFor="pco-unique-price">Prix (€) <span className="pco__req">*</span></label>
+              <label className="pco__label" htmlFor="pco-unique-price">
+                Prix (€) <span className="pco__req">*</span>
+              </label>
               <input
                 id="pco-unique-price"
                 type="number"
@@ -552,9 +590,11 @@ export function StepEssentials({ form, categories, updateForm, onChange }: Props
               />
               {err('price') ? <p className="pco__error">{err('price')}</p> : null}
             </div>
-            
+
             <div className="flex-1 min-w-[100px]">
-              <label className="pco__label" htmlFor="pco-unique-stock">Stock <span className="pco__req">*</span></label>
+              <label className="pco__label" htmlFor="pco-unique-stock">
+                Stock <span className="pco__req">*</span>
+              </label>
               <input
                 id="pco-unique-stock"
                 type="number"
@@ -565,12 +605,16 @@ export function StepEssentials({ form, categories, updateForm, onChange }: Props
                 value={form.physicalStockQuantity}
                 onChange={(e) => onChange({ physicalStockQuantity: e.target.value })}
               />
-              {err('physical_stock_quantity') ? <p className="pco__error">{err('physical_stock_quantity')}</p> : null}
+              {err('physical_stock_quantity') ? (
+                <p className="pco__error">{err('physical_stock_quantity')}</p>
+              ) : null}
             </div>
-            
+
             {form.type === 'physical' && (
               <div className="flex-1 min-w-[120px] relative group">
-                <label className="pco__label" htmlFor="pco-unique-condition">État <span className="pco__req">*</span></label>
+                <label className="pco__label" htmlFor="pco-unique-condition">
+                  État <span className="pco__req">*</span>
+                </label>
                 <div className="relative mt-1">
                   <select
                     id="pco-unique-condition"
@@ -590,7 +634,9 @@ export function StepEssentials({ form, categories, updateForm, onChange }: Props
             )}
 
             <div className="flex-1 min-w-[100px]">
-              <label className="pco__label" htmlFor="pco-unique-sku">SKU</label>
+              <label className="pco__label" htmlFor="pco-unique-sku">
+                SKU
+              </label>
               <input
                 id="pco-unique-sku"
                 type="text"
@@ -603,7 +649,7 @@ export function StepEssentials({ form, categories, updateForm, onChange }: Props
               {err('sku') ? <p className="pco__error">{err('sku')}</p> : null}
             </div>
           </div>
-          
+
           <div className="flex flex-col gap-2 mt-2 pt-2 border-t border-neutral-200">
             <label className="pco__check">
               <input
@@ -613,7 +659,7 @@ export function StepEssentials({ form, categories, updateForm, onChange }: Props
               />
               <span className="font-medium text-xs">Promotion</span>
             </label>
-            
+
             {form.promoEnabled && (
               <div className="flex gap-2 animate-in fade-in slide-in-from-top-1">
                 <input
@@ -630,7 +676,9 @@ export function StepEssentials({ form, categories, updateForm, onChange }: Props
                   id="pco-unique-sale-ends"
                   type="date"
                   className="pco__input !py-1 text-sm w-36 bg-white"
-                  value={form.saleEndsAt ? new Date(form.saleEndsAt).toISOString().split('T')[0] : ''}
+                  value={
+                    form.saleEndsAt ? new Date(form.saleEndsAt).toISOString().split('T')[0] : ''
+                  }
                   onChange={(e) => onChange({ saleEndsAt: e.target.value })}
                 />
               </div>
@@ -651,15 +699,15 @@ export function StepEssentials({ form, categories, updateForm, onChange }: Props
                 onChange({
                   variants: [
                     ...form.variants,
-                    { id, pairs: [{ key: '', value: '' }], price: '', stock: '', sku: '' }
-                  ]
+                    { id, pairs: [{ key: '', value: '' }], price: '', stock: '', sku: '' },
+                  ],
                 })
               }}
             >
               <Plus className="h-4 w-4" /> Ajouter une variante
             </button>
           </div>
-          
+
           <div className="flex flex-col gap-4">
             {form.variants.length === 0 ? (
               <div className="text-center p-8 bg-neutral-50 rounded-lg border border-neutral-200 border-dashed text-neutral-500 text-sm">
@@ -667,18 +715,23 @@ export function StepEssentials({ form, categories, updateForm, onChange }: Props
               </div>
             ) : (
               form.variants.map((v, i) => (
-                <VariantCard key={v.id} v={v} vi={i} form={form} onChange={onChange} errorMsg={err(`variant_${i}`)} />
+                <VariantCard
+                  key={v.id}
+                  v={v}
+                  vi={i}
+                  form={form}
+                  onChange={onChange}
+                  errorMsg={err(`variant_${i}`)}
+                />
               ))
             )}
           </div>
           {err('variants') ? <p className="pco__error mt-2">{err('variants')}</p> : null}
         </div>
       )}
-
     </section>
   )
 }
-
 
 export function VariantCard({
   v,
@@ -693,44 +746,43 @@ export function VariantCard({
   onChange: (u: Partial<import('../types').ProductCreateFormState>) => void
   errorMsg?: string | null
 }) {
-
   return (
     <div className="pco__variant-card !p-3 bg-neutral-50 rounded-lg border border-neutral-200">
       <div className="flex justify-between items-center mb-3">
-          <div className="flex items-center gap-2 font-semibold text-sm flex-1">
-            <input
-              type="text"
-              className="bg-white border border-neutral-200 hover:border-neutral-300 focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 outline-none px-2 py-1.5 rounded-md w-1/2 transition-all text-sm font-medium shadow-sm"
-              placeholder="Attribut (ex: Taille)"
-              value={v.pairs[0]?.key === 'Option' && !v.pairs[0]?.value ? '' : v.pairs[0]?.key || ''}
-              onChange={(e) => {
-                const variants = form.variants.map((x) => {
-                  if (x.id !== v.id) return x
-                  const pairs = [...x.pairs]
-                  if (!pairs[0]) pairs[0] = { key: '', value: '' }
-                  pairs[0].key = e.target.value
-                  return { ...x, pairs }
-                })
-                onChange({ variants })
-              }}
-            />
-            <input
-              type="text"
-              className="bg-white border border-neutral-200 hover:border-neutral-300 focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 outline-none px-2 py-1.5 rounded-md w-1/2 transition-all text-sm font-medium shadow-sm"
-              placeholder="Valeur (ex: M, Rouge...)"
-              value={v.pairs[0]?.value || ''}
-              onChange={(e) => {
-                const variants = form.variants.map((x) => {
-                  if (x.id !== v.id) return x
-                  const pairs = [...x.pairs]
-                  if (!pairs[0]) pairs[0] = { key: '', value: '' }
-                  pairs[0].value = e.target.value
-                  return { ...x, pairs }
-                })
-                onChange({ variants })
-              }}
-            />
-          </div>
+        <div className="flex items-center gap-2 font-semibold text-sm flex-1">
+          <input
+            type="text"
+            className="bg-white border border-neutral-200 hover:border-neutral-300 focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 outline-none px-2 py-1.5 rounded-md w-1/2 transition-all text-sm font-medium shadow-sm"
+            placeholder="Attribut (ex: Taille)"
+            value={v.pairs[0]?.key === 'Option' && !v.pairs[0]?.value ? '' : v.pairs[0]?.key || ''}
+            onChange={(e) => {
+              const variants = form.variants.map((x) => {
+                if (x.id !== v.id) return x
+                const pairs = [...x.pairs]
+                if (!pairs[0]) pairs[0] = { key: '', value: '' }
+                pairs[0].key = e.target.value
+                return { ...x, pairs }
+              })
+              onChange({ variants })
+            }}
+          />
+          <input
+            type="text"
+            className="bg-white border border-neutral-200 hover:border-neutral-300 focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 outline-none px-2 py-1.5 rounded-md w-1/2 transition-all text-sm font-medium shadow-sm"
+            placeholder="Valeur (ex: M, Rouge...)"
+            value={v.pairs[0]?.value || ''}
+            onChange={(e) => {
+              const variants = form.variants.map((x) => {
+                if (x.id !== v.id) return x
+                const pairs = [...x.pairs]
+                if (!pairs[0]) pairs[0] = { key: '', value: '' }
+                pairs[0].value = e.target.value
+                return { ...x, pairs }
+              })
+              onChange({ variants })
+            }}
+          />
+        </div>
         <button
           type="button"
           className="pco__icon-btn shrink-0 text-red-500 hover:bg-red-50 ml-2"
@@ -739,115 +791,115 @@ export function VariantCard({
           <Trash2 className="h-4 w-4" />
         </button>
       </div>
-      
+
       <div className="pt-2">
         <div className="flex flex-wrap md:flex-nowrap gap-2 mb-3">
-              <input
-              type="number"
-              min={0}
-              step={0.01}
-              className="pco__input !py-1.5 text-sm flex-1 min-w-[80px]"
-              placeholder="Prix (€)"
-              value={v.price}
-              onChange={(e) => {
-                const variants = form.variants.map((x) =>
-                  x.id === v.id ? { ...x, price: e.target.value } : x
-                )
-                onChange({ variants })
-              }}
-            />
-            <input
-              type="number"
-              min={0}
-              step={1}
-              className="pco__input !py-1.5 text-sm flex-1 min-w-[70px]"
-              placeholder="Stock"
-              value={v.stock}
-              onChange={(e) => {
-                const variants = form.variants.map((x) =>
-                  x.id === v.id ? { ...x, stock: e.target.value } : x
-                )
-                onChange({ variants })
-              }}
-            />
-            {form.type === 'physical' && (
-              <div className="relative flex-1 min-w-[110px] group">
-                <select
-                  className="pco__input !py-1.5 text-sm w-full appearance-none pr-8 cursor-pointer"
-                  value={v.condition || 'new'}
-                  onChange={(e) => {
-                    const variants = form.variants.map((x) =>
-                      x.id === v.id ? { ...x, condition: e.target.value } : x
-                    )
-                    onChange({ variants })
-                  }}
-                >
-                  <option value="new">Neuf</option>
-                  <option value="like_new">Comme neuf</option>
-                  <option value="very_good">Très bon état</option>
-                  <option value="good">Bon état</option>
-                  <option value="acceptable">Correct</option>
-                </select>
-                <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-400 group-hover:text-neutral-900 transition-all group-hover:translate-y-[1px] pointer-events-none" />
-              </div>
-            )}
-            <input
-              type="text"
-              maxLength={80}
-              className="pco__input !py-1.5 text-sm flex-1 min-w-[80px]"
-              placeholder="SKU"
-              value={v.sku}
-              onChange={(e) => {
-                const variants = form.variants.map((x) =>
-                  x.id === v.id ? { ...x, sku: e.target.value } : x
-                )
-                onChange({ variants })
-              }}
-            />
-          </div>
-          <div className="flex flex-col gap-2 mt-2 border-t border-neutral-100 pt-2">
-            <label className="pco__check">
-              <input
-                type="checkbox"
-                checked={v.promoEnabled || false}
+          <input
+            type="number"
+            min={0}
+            step={0.01}
+            className="pco__input !py-1.5 text-sm flex-1 min-w-[80px]"
+            placeholder="Prix (€)"
+            value={v.price}
+            onChange={(e) => {
+              const variants = form.variants.map((x) =>
+                x.id === v.id ? { ...x, price: e.target.value } : x,
+              )
+              onChange({ variants })
+            }}
+          />
+          <input
+            type="number"
+            min={0}
+            step={1}
+            className="pco__input !py-1.5 text-sm flex-1 min-w-[70px]"
+            placeholder="Stock"
+            value={v.stock}
+            onChange={(e) => {
+              const variants = form.variants.map((x) =>
+                x.id === v.id ? { ...x, stock: e.target.value } : x,
+              )
+              onChange({ variants })
+            }}
+          />
+          {form.type === 'physical' && (
+            <div className="relative flex-1 min-w-[110px] group">
+              <select
+                className="pco__input !py-1.5 text-sm w-full appearance-none pr-8 cursor-pointer"
+                value={v.condition || 'new'}
                 onChange={(e) => {
                   const variants = form.variants.map((x) =>
-                    x.id === v.id ? { ...x, promoEnabled: e.target.checked } : x
+                    x.id === v.id ? { ...x, condition: e.target.value } : x,
+                  )
+                  onChange({ variants })
+                }}
+              >
+                <option value="new">Neuf</option>
+                <option value="like_new">Comme neuf</option>
+                <option value="very_good">Très bon état</option>
+                <option value="good">Bon état</option>
+                <option value="acceptable">Correct</option>
+              </select>
+              <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-400 group-hover:text-neutral-900 transition-all group-hover:translate-y-[1px] pointer-events-none" />
+            </div>
+          )}
+          <input
+            type="text"
+            maxLength={80}
+            className="pco__input !py-1.5 text-sm flex-1 min-w-[80px]"
+            placeholder="SKU"
+            value={v.sku}
+            onChange={(e) => {
+              const variants = form.variants.map((x) =>
+                x.id === v.id ? { ...x, sku: e.target.value } : x,
+              )
+              onChange({ variants })
+            }}
+          />
+        </div>
+        <div className="flex flex-col gap-2 mt-2 border-t border-neutral-100 pt-2">
+          <label className="pco__check">
+            <input
+              type="checkbox"
+              checked={v.promoEnabled || false}
+              onChange={(e) => {
+                const variants = form.variants.map((x) =>
+                  x.id === v.id ? { ...x, promoEnabled: e.target.checked } : x,
+                )
+                onChange({ variants })
+              }}
+            />
+            <span className="font-medium text-xs">Promotion</span>
+          </label>
+          {v.promoEnabled && (
+            <div className="flex gap-2">
+              <input
+                type="number"
+                min={0}
+                step={0.01}
+                className="pco__input !py-1 text-sm w-24 bg-white"
+                placeholder="Prix remisé"
+                value={v.salePrice || ''}
+                onChange={(e) => {
+                  const variants = form.variants.map((x) =>
+                    x.id === v.id ? { ...x, salePrice: e.target.value } : x,
                   )
                   onChange({ variants })
                 }}
               />
-              <span className="font-medium text-xs">Promotion</span>
-            </label>
-            {v.promoEnabled && (
-              <div className="flex gap-2">
-                <input
-                  type="number"
-                  min={0}
-                  step={0.01}
-                  className="pco__input !py-1 text-sm w-24 bg-white"
-                  placeholder="Prix remisé"
-                  value={v.salePrice || ''}
-                  onChange={(e) => {
-                    const variants = form.variants.map((x) =>
-                      x.id === v.id ? { ...x, salePrice: e.target.value } : x
-                    )
-                    onChange({ variants })
-                  }}
-                />
-                <input
-                  type="date"
-                  className="pco__input !py-1 text-sm w-36 bg-white"
-                  value={v.saleEndsAt ? new Date(v.saleEndsAt).toISOString().split('T')[0] : ''}
-                  onChange={(e) => {
-                    const variants = form.variants.map((x) =>
-                      x.id === v.id ? { ...x, saleEndsAt: e.target.value } : x
-                    )
-                    onChange({ variants })
-                  }}
-                />
-              </div>
-            )}
+              <input
+                type="date"
+                className="pco__input !py-1 text-sm w-36 bg-white"
+                value={v.saleEndsAt ? new Date(v.saleEndsAt).toISOString().split('T')[0] : ''}
+                onChange={(e) => {
+                  const variants = form.variants.map((x) =>
+                    x.id === v.id ? { ...x, saleEndsAt: e.target.value } : x,
+                  )
+                  onChange({ variants })
+                }}
+              />
+            </div>
+          )}
         </div>
       </div>
       {errorMsg ? <p className="pco__error mt-2">{errorMsg}</p> : null}

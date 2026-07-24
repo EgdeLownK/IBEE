@@ -25,7 +25,7 @@ export async function GET() {
         capabilities,
         signals: filterActivitySignals(data.signals, capabilities),
       },
-      { headers: { 'Cache-Control': PRIVATE_NO_STORE } }
+      { headers: { 'Cache-Control': PRIVATE_NO_STORE } },
     )
   } catch (err) {
     console.error('[api/home/activity-hub]', err)

@@ -57,7 +57,7 @@ export function formToDraft(form: ServiceCreateFormState): ServiceCreateDraft {
     contentBlocks: form.contentBlocks.map((b) =>
       b.type === 'text'
         ? { type: 'text' as const, content: b.content }
-        : { type: 'image' as const, url: b.url, uploading: b.uploading }
+        : { type: 'image' as const, url: b.url, uploading: b.uploading },
     ),
     faq: form.faq,
     isActive: form.isActive,

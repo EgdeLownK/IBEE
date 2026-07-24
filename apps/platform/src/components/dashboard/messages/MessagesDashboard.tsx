@@ -42,13 +42,13 @@ export function MessagesDashboard({ data }: Props) {
       (t) =>
         t.contactName.toLowerCase().includes(q) ||
         t.contactEmail.toLowerCase().includes(q) ||
-        t.lastPreview.toLowerCase().includes(q)
+        t.lastPreview.toLowerCase().includes(q),
     )
   }, [data.threads, search])
 
   const selectedThread =
     data.threads.find((t) => t.threadKey === selectedThreadKey) ??
-    (compact ? null : filteredThreads[0] ?? null)
+    (compact ? null : (filteredThreads[0] ?? null))
 
   const composerVisible = Boolean(selectedThread && (!compact || mobileView === 'chat'))
 

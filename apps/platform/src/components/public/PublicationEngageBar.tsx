@@ -16,9 +16,7 @@ type Props = {
 function resolveShareUrl(shareUrl: string): string {
   if (/^https?:\/\//i.test(shareUrl)) return shareUrl
   const origin =
-    typeof window !== 'undefined'
-      ? window.location.origin
-      : (process.env.NEXT_PUBLIC_WEB_URL ?? '')
+    typeof window !== 'undefined' ? window.location.origin : (process.env.NEXT_PUBLIC_WEB_URL ?? '')
   return `${origin}${shareUrl.startsWith('/') ? shareUrl : `/${shareUrl}`}`
 }
 

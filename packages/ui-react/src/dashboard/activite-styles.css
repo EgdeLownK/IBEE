@@ -177,7 +177,10 @@
   background: var(--color-surface);
   text-align: left;
   cursor: pointer;
-  transition: background 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+  transition:
+    background 140ms ease,
+    border-color 140ms ease,
+    box-shadow 140ms ease;
 }
 
 .order-row:hover {
@@ -524,7 +527,9 @@
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 140ms ease, color 140ms ease;
+  transition:
+    background 140ms ease,
+    color 140ms ease;
 }
 
 .order-detail__btn--primary {
@@ -698,7 +703,10 @@
   color: var(--color-neutral-800);
   text-decoration: none;
   cursor: pointer;
-  transition: border-color 120ms, background 120ms, color 120ms;
+  transition:
+    border-color 120ms,
+    background 120ms,
+    color 120ms;
 }
 
 .boutique-dash__head-btn:hover {
@@ -831,7 +839,10 @@
   color: var(--color-neutral-600);
   background: var(--color-panel);
   cursor: pointer;
-  transition: border-color 120ms, background 120ms, color 120ms;
+  transition:
+    border-color 120ms,
+    background 120ms,
+    color 120ms;
 }
 
 .boutique-signals__pill.is-active {
@@ -1310,7 +1321,10 @@ body.boutique-print-overlay-open {
   border-radius: 12px;
   background: var(--color-panel);
   cursor: pointer;
-  transition: border-color 120ms, background 120ms, box-shadow 120ms;
+  transition:
+    border-color 120ms,
+    background 120ms,
+    box-shadow 120ms;
 }
 
 .boutique-order-card--media {
@@ -1586,7 +1600,9 @@ body.boutique-print-overlay-open {
   font-weight: 600;
   color: var(--color-neutral-500);
   cursor: pointer;
-  transition: color 0.15s ease, border-color 0.15s ease;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease;
 }
 
 .boutique-side-panel__tab:hover {
@@ -2781,7 +2797,10 @@ body.boutique-print-overlay-open {
   font-weight: 500;
   background: transparent;
   color: var(--color-neutral-500);
-  transition: background 140ms, box-shadow 140ms, color 140ms;
+  transition:
+    background 140ms,
+    box-shadow 140ms,
+    color 140ms;
 }
 
 .boutique-tabs__btn.is-active {
@@ -3841,7 +3860,10 @@ body.boutique-print-overlay-open {
   border-radius: 12px;
   background: var(--color-panel);
   cursor: pointer;
-  transition: border-color 120ms, background 120ms, box-shadow 120ms;
+  transition:
+    border-color 120ms,
+    background 120ms,
+    box-shadow 120ms;
 }
 
 .event-list-card__date {
@@ -4215,7 +4237,10 @@ body.boutique-print-overlay-open {
   text-align: left;
   cursor: pointer;
   appearance: none;
-  transition: border-color 120ms, background 120ms, box-shadow 120ms;
+  transition:
+    border-color 120ms,
+    background 120ms,
+    box-shadow 120ms;
 }
 
 .event-place-picker__item:hover {
@@ -4515,7 +4540,10 @@ body.boutique-print-overlay-open {
   background: var(--color-panel);
   cursor: pointer;
   text-align: left;
-  transition: border-color 120ms, background 120ms, box-shadow 120ms;
+  transition:
+    border-color 120ms,
+    background 120ms,
+    box-shadow 120ms;
 }
 
 .participant-card:hover {
@@ -4813,7 +4841,9 @@ body.boutique-print-overlay-open {
   background: var(--color-panel);
   cursor: pointer;
   text-align: center;
-  transition: border-color 0.15s ease, background 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
 }
 
 .service-agenda__day:hover {
@@ -5517,7 +5547,10 @@ body.boutique-print-overlay-open {
   color: var(--color-neutral-600);
   text-decoration: none;
   white-space: nowrap;
-  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
 }
 
 .activity-module-nav__item:hover {
@@ -5552,7 +5585,9 @@ body.boutique-print-overlay-open {
   background: var(--color-surface);
   text-decoration: none;
   color: inherit;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .activity-hub__card:hover {
@@ -5804,7 +5839,9 @@ body.boutique-print-overlay-open {
   background: transparent;
   text-align: left;
   cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
 }
 
 .activity-inbox-row:hover {
@@ -7141,7 +7178,9 @@ body.boutique-print-overlay-open {
   background: #fff;
   text-decoration: none;
   color: inherit;
-  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+  transition:
+    border-color 0.12s ease,
+    box-shadow 0.12s ease;
 }
 
 .activity-flux__tool-card:hover {

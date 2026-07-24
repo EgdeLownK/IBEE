@@ -1,0 +1,29 @@
+node_modules
+.turbo
+.next
+out
+dist
+*.tsbuildinfo
+pnpm-lock.yaml
+next-env.d.ts
+
+# Auto-généré, ne jamais formater manuellement — regénéré par `pnpm gen-types`
+packages/supabase/src/types.ts
+
+# SQL, markdown, brain — hors scope du formatage JS/TS
+supabase/
+.ibee-brain/
+*.md
+
+# Scripts de debug ponctuels committés (housekeeping séparé, pas ce lot)
+scratch/
+script.js
+test_db.mjs
+
+# Artefacts non-source (bundle décodé / export HTML) trackés à la racine —
+# pas du code applicatif, ne doivent jamais être reformatés
+.tmp-bundle-*.jsx
+.tmp-profile-standalone.jsx
+.tmp-standalone-decoded.html
+IBEE Profil (offline).html
+IBEE Profile (standalone).html

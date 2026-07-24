@@ -28,7 +28,7 @@ export function BilletterieDashboard({ data }: Props) {
   const isMobile = useCheckInMobileLayout()
 
   const upcomingCount = data.registrations.filter(
-    (r) => r.status === 'confirmed' && new Date(r.eventStartAt).getTime() >= Date.now()
+    (r) => r.status === 'confirmed' && new Date(r.eventStartAt).getTime() >= Date.now(),
   ).length
 
   const todayLive = data.today.todayEventLive
@@ -53,7 +53,10 @@ export function BilletterieDashboard({ data }: Props) {
         </div>
         <div className="boutique-dash__head-actions">
           {checkInHref ? (
-            <Link href={checkInHref} className="boutique-dash__head-btn boutique-dash__head-btn--primary">
+            <Link
+              href={checkInHref}
+              className="boutique-dash__head-btn boutique-dash__head-btn--primary"
+            >
               <QrCode className="h-4 w-4" aria-hidden="true" />
               Mode entrée
             </Link>

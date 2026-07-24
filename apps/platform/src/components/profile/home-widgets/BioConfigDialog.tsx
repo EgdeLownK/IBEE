@@ -292,7 +292,7 @@ export function BioConfigDialog({ open, contactInfo, onClose, onSaved }: Props) 
                           checked={row.open}
                           onChange={(e) =>
                             setHourRows((prev) =>
-                              prev.map((r, j) => (j === i ? { ...r, open: e.target.checked } : r))
+                              prev.map((r, j) => (j === i ? { ...r, open: e.target.checked } : r)),
                             )
                           }
                         />
@@ -305,7 +305,9 @@ export function BioConfigDialog({ open, contactInfo, onClose, onSaved }: Props) 
                         value={row.start_time}
                         onChange={(e) =>
                           setHourRows((prev) =>
-                            prev.map((r, j) => (j === i ? { ...r, start_time: e.target.value } : r))
+                            prev.map((r, j) =>
+                              j === i ? { ...r, start_time: e.target.value } : r,
+                            ),
                           )
                         }
                       />
@@ -317,7 +319,7 @@ export function BioConfigDialog({ open, contactInfo, onClose, onSaved }: Props) 
                         value={row.end_time}
                         onChange={(e) =>
                           setHourRows((prev) =>
-                            prev.map((r, j) => (j === i ? { ...r, end_time: e.target.value } : r))
+                            prev.map((r, j) => (j === i ? { ...r, end_time: e.target.value } : r)),
                           )
                         }
                       />

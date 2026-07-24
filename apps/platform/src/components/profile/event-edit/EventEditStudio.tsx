@@ -14,7 +14,10 @@ import {
   saveEventTicketTypeAction,
 } from '@/app/dashboard/site/event-ticket-actions'
 import type { EventEditData } from '@/lib/load-event-edit'
-import type { EventRegistrationField, EventRegistrationFieldType } from '@/lib/event-registration-fields'
+import type {
+  EventRegistrationField,
+  EventRegistrationFieldType,
+} from '@/lib/event-registration-fields'
 
 type ActivityRow = EventEditData['activities'][number]
 
@@ -71,7 +74,7 @@ function ActivityEditRow({
           startAt: new Date(startAt).toISOString(),
           endAt: endAt ? new Date(endAt).toISOString() : null,
           capacity: capacity.trim() ? Number(capacity) : null,
-        })
+        }),
     )
   }
 
@@ -121,7 +124,12 @@ function ActivityEditRow({
         >
           Enregistrer
         </button>
-        <button type="button" className="btn btn--ghost btn--sm" disabled={pending} onClick={onDelete}>
+        <button
+          type="button"
+          className="btn btn--ghost btn--sm"
+          disabled={pending}
+          onClick={onDelete}
+        >
           <Trash2 className="h-4 w-4" />
           Supprimer
         </button>
@@ -180,7 +188,7 @@ export function EventEditStudio({ data, publicEventHref, embedded = false }: Pro
 
   const sortedTicketTypes = useMemo(
     () => [...ticketTypes].sort((a, b) => a.title.localeCompare(b.title)),
-    [ticketTypes]
+    [ticketTypes],
   )
 
   function run(action: () => Promise<{ ok: boolean; error?: string }>, onSuccess?: () => void) {
@@ -206,7 +214,10 @@ export function EventEditStudio({ data, publicEventHref, embedded = false }: Pro
   return (
     <div className={embedded ? 'px-1 py-2' : 'mx-auto max-w-3xl px-4 py-8'}>
       {!embedded ? (
-        <Link href="/dashboard/site" className="inline-flex items-center gap-2 text-sm text-neutral-600 hover:text-neutral-900">
+        <Link
+          href="/dashboard/site"
+          className="inline-flex items-center gap-2 text-sm text-neutral-600 hover:text-neutral-900"
+        >
           <ArrowLeft className="h-4 w-4" aria-hidden="true" />
           Retour au studio
         </Link>
@@ -221,7 +232,12 @@ export function EventEditStudio({ data, publicEventHref, embedded = false }: Pro
           {!embedded ? (
             <>
               {' · '}
-              <a href={publicEventHref} className="text-accent underline" target="_blank" rel="noopener noreferrer">
+              <a
+                href={publicEventHref}
+                className="text-accent underline"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 Voir la page publique
               </a>
             </>
@@ -234,8 +250,8 @@ export function EventEditStudio({ data, publicEventHref, embedded = false }: Pro
       <section className="mb-10 rounded-2xl border border-border bg-surface p-5">
         <h2 className="m-0 text-lg font-semibold">Places</h2>
         <p className="mt-1 text-sm text-neutral-500">
-          Créneaux ou disciplines à l&apos;intérieur de l&apos;événement (foot, basket…). Les billets se
-          rattachent ensuite à une place.
+          Créneaux ou disciplines à l&apos;intérieur de l&apos;événement (foot, basket…). Les
+          billets se rattachent ensuite à une place.
         </p>
 
         <ul className="mt-4 space-y-3">
@@ -248,12 +264,13 @@ export function EventEditStudio({ data, publicEventHref, embedded = false }: Pro
               run={run}
               onSaved={(patch) => {
                 setActivities((prev) =>
-                  prev.map((item) => (item.id === activity.id ? { ...item, ...patch } : item))
+                  prev.map((item) => (item.id === activity.id ? { ...item, ...patch } : item)),
                 )
               }}
               onDelete={() =>
-                run(() => deleteEventActivityAction(data.event.id, activity.id), () =>
-                  setActivities((prev) => prev.filter((item) => item.id !== activity.id))
+                run(
+                  () => deleteEventActivityAction(data.event.id, activity.id),
+                  () => setActivities((prev) => prev.filter((item) => item.id !== activity.id)),
                 )
               }
             />
@@ -313,7 +330,7 @@ export function EventEditStudio({ data, publicEventHref, embedded = false }: Pro
               () => {
                 setNewActivity({ title: '', startAt: '', endAt: '', capacity: '' })
                 window.location.reload()
-              }
+              },
             )
           }
         >
@@ -332,7 +349,10 @@ export function EventEditStudio({ data, publicEventHref, embedded = false }: Pro
 
         <ul className="mt-4 space-y-3">
           {sortedTicketTypes.map((ticket) => (
-            <li key={ticket.id} className="flex items-start justify-between gap-3 rounded-xl border border-border p-3">
+            <li
+              key={ticket.id}
+              className="flex items-start justify-between gap-3 rounded-xl border border-border p-3"
+            >
               <div>
                 <p className="m-0 font-medium">{ticket.title}</p>
                 <p className="m-0 mt-1 text-sm text-neutral-600">
@@ -349,8 +369,9 @@ export function EventEditStudio({ data, publicEventHref, embedded = false }: Pro
                 className="btn btn--ghost btn--sm"
                 disabled={pending}
                 onClick={() =>
-                  run(() => deleteEventTicketTypeAction(data.event.id, ticket.id), () =>
-                    setTicketTypes((prev) => prev.filter((t) => t.id !== ticket.id))
+                  run(
+                    () => deleteEventTicketTypeAction(data.event.id, ticket.id),
+                    () => setTicketTypes((prev) => prev.filter((t) => t.id !== ticket.id)),
                   )
                 }
               >
@@ -403,11 +424,7 @@ export function EventEditStudio({ data, publicEventHref, embedded = false }: Pro
         <button
           type="button"
           className="btn btn--accent mt-3"
-          disabled={
-            pending ||
-            !newTicket.title.trim() ||
-            (hasActivities && !newTicket.activityId)
-          }
+          disabled={pending || !newTicket.title.trim() || (hasActivities && !newTicket.activityId)}
           onClick={() =>
             run(
               () =>
@@ -429,7 +446,7 @@ export function EventEditStudio({ data, publicEventHref, embedded = false }: Pro
                   salesEndAt: '',
                 })
                 window.location.reload()
-              }
+              },
             )
           }
         >
@@ -440,17 +457,22 @@ export function EventEditStudio({ data, publicEventHref, embedded = false }: Pro
 
       <section className="mb-10 rounded-2xl border border-border bg-surface p-5">
         <h2 className="m-0 text-lg font-semibold">Formulaire d&apos;inscription</h2>
-        <p className="mt-1 text-sm text-neutral-500">Champs collectés en plus du nom et de l&apos;email.</p>
+        <p className="mt-1 text-sm text-neutral-500">
+          Champs collectés en plus du nom et de l&apos;email.
+        </p>
 
         <div className="mt-4 space-y-3">
           {fields.map((field, index) => (
-            <div key={field.id} className="grid gap-2 rounded-xl border border-border p-3 md:grid-cols-4">
+            <div
+              key={field.id}
+              className="grid gap-2 rounded-xl border border-border p-3 md:grid-cols-4"
+            >
               <input
                 className="field md:col-span-2"
                 value={field.label}
                 onChange={(e) =>
                   setFields((prev) =>
-                    prev.map((f, i) => (i === index ? { ...f, label: e.target.value } : f))
+                    prev.map((f, i) => (i === index ? { ...f, label: e.target.value } : f)),
                   )
                 }
               />
@@ -460,8 +482,10 @@ export function EventEditStudio({ data, publicEventHref, embedded = false }: Pro
                 onChange={(e) =>
                   setFields((prev) =>
                     prev.map((f, i) =>
-                      i === index ? { ...f, type: e.target.value as EventRegistrationFieldType } : f
-                    )
+                      i === index
+                        ? { ...f, type: e.target.value as EventRegistrationFieldType }
+                        : f,
+                    ),
                   )
                 }
               >
@@ -477,7 +501,7 @@ export function EventEditStudio({ data, publicEventHref, embedded = false }: Pro
                   checked={field.required}
                   onChange={(e) =>
                     setFields((prev) =>
-                      prev.map((f, i) => (i === index ? { ...f, required: e.target.checked } : f))
+                      prev.map((f, i) => (i === index ? { ...f, required: e.target.checked } : f)),
                     )
                   }
                 />
@@ -488,7 +512,12 @@ export function EventEditStudio({ data, publicEventHref, embedded = false }: Pro
         </div>
 
         <div className="mt-3 flex flex-wrap gap-2">
-          <button type="button" className="btn btn--ghost" onClick={addField} disabled={fields.length >= 8}>
+          <button
+            type="button"
+            className="btn btn--ghost"
+            onClick={addField}
+            disabled={fields.length >= 8}
+          >
             Ajouter un champ
           </button>
           <button
@@ -501,7 +530,7 @@ export function EventEditStudio({ data, publicEventHref, embedded = false }: Pro
                   eventId: data.event.id,
                   cancelMinHours: Number(cancelMinHours) || 0,
                   registrationFields: fields,
-                })
+                }),
               )
             }
           >
@@ -527,11 +556,16 @@ export function EventEditStudio({ data, publicEventHref, embedded = false }: Pro
 
       <section className="rounded-2xl border border-border bg-surface p-5">
         <h2 className="m-0 text-lg font-semibold">Codes promo</h2>
-        <p className="mt-1 text-sm text-neutral-500">Réductions sur les billets payants de cet événement.</p>
+        <p className="mt-1 text-sm text-neutral-500">
+          Réductions sur les billets payants de cet événement.
+        </p>
 
         <ul className="mt-4 space-y-2">
           {promoCodes.map((promo) => (
-            <li key={promo.id} className="flex items-center justify-between rounded-xl border border-border px-3 py-2">
+            <li
+              key={promo.id}
+              className="flex items-center justify-between rounded-xl border border-border px-3 py-2"
+            >
               <span className="font-mono text-sm font-semibold">{promo.code}</span>
               <span className="text-sm text-neutral-600">
                 {promo.type === 'percentage' ? `${promo.value}%` : `${promo.value} €`}
@@ -541,8 +575,9 @@ export function EventEditStudio({ data, publicEventHref, embedded = false }: Pro
                 className="btn btn--ghost btn--sm"
                 disabled={pending}
                 onClick={() =>
-                  run(() => deleteEventPromoCodeAction(data.event.id, promo.id), () =>
-                    setPromoCodes((prev) => prev.filter((p) => p.id !== promo.id))
+                  run(
+                    () => deleteEventPromoCodeAction(data.event.id, promo.id),
+                    () => setPromoCodes((prev) => prev.filter((p) => p.id !== promo.id)),
                   )
                 }
               >
@@ -594,7 +629,7 @@ export function EventEditStudio({ data, publicEventHref, embedded = false }: Pro
               () => {
                 setNewPromo({ code: '', type: 'percentage', value: '', maxUses: '', endsAt: '' })
                 window.location.reload()
-              }
+              },
             )
           }
         >

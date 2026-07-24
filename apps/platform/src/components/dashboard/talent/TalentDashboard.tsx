@@ -4,7 +4,10 @@ import { useState, useMemo } from 'react'
 import { Plus, Edit, Trash, ExternalLink, Search, Power, MoreHorizontal } from 'lucide-react'
 import { JobOffer } from '@ibee/supabase'
 import { JobOfferDialog } from './JobOfferDialog'
-import { deleteJobOfferAction, updateJobOfferAction } from '../../../app/dashboard/talent/talent-actions'
+import {
+  deleteJobOfferAction,
+  updateJobOfferAction,
+} from '../../../app/dashboard/talent/talent-actions'
 import Link from 'next/link'
 
 export function TalentDashboard({ entityId, offers }: { entityId: string; offers: JobOffer[] }) {
@@ -36,10 +39,14 @@ export function TalentDashboard({ entityId, offers }: { entityId: string; offers
 
   const getContractLabel = (type: string) => {
     switch (type) {
-      case 'cdi': return 'CDI'
-      case 'cdd': return 'CDD'
-      case 'mission': return 'Mission / Freelance'
-      default: return type
+      case 'cdi':
+        return 'CDI'
+      case 'cdd':
+        return 'CDD'
+      case 'mission':
+        return 'Mission / Freelance'
+      default:
+        return type
     }
   }
 
@@ -51,15 +58,13 @@ export function TalentDashboard({ entityId, offers }: { entityId: string; offers
     if (offer.compensation_frequency === 'weekly') freq = ' / semaine'
     if (offer.compensation_frequency === 'monthly') freq = ' / mois'
     if (offer.compensation_frequency === 'mission') freq = ' / mission'
-    
+
     return `${amount}${unit}${freq}`
   }
 
   const filteredAndSortedOffers = useMemo(() => {
     return offers
-      .filter((offer) => 
-        offer.title.toLowerCase().includes(searchQuery.toLowerCase())
-      )
+      .filter((offer) => offer.title.toLowerCase().includes(searchQuery.toLowerCase()))
       .sort((a, b) => {
         if (a.status === 'active' && b.status !== 'active') return -1
         if (a.status !== 'active' && b.status === 'active') return 1
@@ -72,9 +77,14 @@ export function TalentDashboard({ entityId, offers }: { entityId: string; offers
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-display text-2xl font-semibold text-neutral-900">Talent</h1>
-          <p className="text-sm text-neutral-500 mt-1">Gérez vos offres d'emploi et recrutements.</p>
+          <p className="text-sm text-neutral-500 mt-1">
+            Gérez vos offres d'emploi et recrutements.
+          </p>
         </div>
-        <button onClick={handleCreate} className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-950 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-neutral-900 text-neutral-50 hover:bg-neutral-900/90 h-10 px-4 py-2">
+        <button
+          onClick={handleCreate}
+          className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-950 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-neutral-900 text-neutral-50 hover:bg-neutral-900/90 h-10 px-4 py-2"
+        >
           <Plus className="mr-2 h-4 w-4" /> Nouvelle offre
         </button>
       </div>
@@ -102,7 +112,12 @@ export function TalentDashboard({ entityId, offers }: { entityId: string; offers
             ) : (
               <>
                 <p>Aucune offre d'emploi pour le moment.</p>
-                <button className="mt-4 inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-950 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-neutral-200 bg-white hover:bg-neutral-100 hover:text-neutral-900 h-10 px-4 py-2" onClick={handleCreate}>Créer votre première offre</button>
+                <button
+                  className="mt-4 inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-950 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-neutral-200 bg-white hover:bg-neutral-100 hover:text-neutral-900 h-10 px-4 py-2"
+                  onClick={handleCreate}
+                >
+                  Créer votre première offre
+                </button>
               </>
             )}
           </div>
@@ -123,32 +138,38 @@ export function TalentDashboard({ entityId, offers }: { entityId: string; offers
                   <tr key={offer.id} className="hover:bg-neutral-50/50 transition-colors">
                     <td className="px-6 py-4">
                       <div className="font-medium text-neutral-900">{offer.title}</div>
-                      {getCompensationLabel(offer) && <div className="text-xs text-neutral-500 mt-0.5">{getCompensationLabel(offer)}</div>}
+                      {getCompensationLabel(offer) && (
+                        <div className="text-xs text-neutral-500 mt-0.5">
+                          {getCompensationLabel(offer)}
+                        </div>
+                      )}
                     </td>
-                    <td className="px-6 py-4">
-                      {getContractLabel(offer.contract_type)}
-                    </td>
+                    <td className="px-6 py-4">{getContractLabel(offer.contract_type)}</td>
                     <td className="px-6 py-4 text-neutral-600">
-                      {offer.location_type === 'remote' ? '100% Télétravail' : offer.location_text || 'Sur site'}
+                      {offer.location_type === 'remote'
+                        ? '100% Télétravail'
+                        : offer.location_text || 'Sur site'}
                     </td>
                     <td className="px-6 py-4">
                       <button
                         onClick={() => handleToggleStatus(offer)}
                         className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
-                          offer.status === 'active' 
-                            ? 'bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20 hover:bg-green-100' 
+                          offer.status === 'active'
+                            ? 'bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20 hover:bg-green-100'
                             : 'bg-neutral-50 text-neutral-600 ring-1 ring-inset ring-neutral-500/10 hover:bg-neutral-100'
                         }`}
                         title="Cliquez pour changer le statut"
                       >
-                        <span className={`h-1.5 w-1.5 rounded-full ${offer.status === 'active' ? 'bg-green-600' : 'bg-neutral-400'}`} />
+                        <span
+                          className={`h-1.5 w-1.5 rounded-full ${offer.status === 'active' ? 'bg-green-600' : 'bg-neutral-400'}`}
+                        />
                         {offer.status === 'active' ? 'Active' : 'Inactive'}
                       </button>
                     </td>
                     <td className="px-6 py-4 text-right relative">
                       <div className="flex items-center justify-end gap-2">
-                        <Link 
-                          href={`/dashboard/talent/${offer.id}`} 
+                        <Link
+                          href={`/dashboard/talent/${offer.id}`}
                           className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-950 focus-visible:ring-offset-2 bg-neutral-900 text-neutral-50 hover:bg-neutral-900/90 h-8 px-3"
                         >
                           Ouvrir
@@ -163,11 +184,11 @@ export function TalentDashboard({ entityId, offers }: { entityId: string; offers
         )}
       </div>
 
-      <JobOfferDialog 
-        open={isDialogOpen} 
-        onOpenChange={setIsDialogOpen} 
-        entityId={entityId} 
-        offer={selectedOffer} 
+      <JobOfferDialog
+        open={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        entityId={entityId}
+        offer={selectedOffer}
       />
     </div>
   )

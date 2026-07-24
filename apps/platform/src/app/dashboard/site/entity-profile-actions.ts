@@ -3,7 +3,11 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidateAfterEntityMutation } from '@/lib/revalidate-public'
 import { getEntityByUserId, purgeEntityCache } from '@ibee/supabase'
-import { buildEntityProfileUpdate, validateEntityProfile, type EntityProfileInput } from '@ibee/shared'
+import {
+  buildEntityProfileUpdate,
+  validateEntityProfile,
+  type EntityProfileInput,
+} from '@ibee/shared'
 
 const siteUrl = () => process.env.NEXT_PUBLIC_WEB_URL ?? 'http://localhost:3000'
 
@@ -39,7 +43,7 @@ function resolveImageType(file: File): string | null {
 async function uploadProfileImage(
   file: File,
   entityId: string,
-  kind: 'avatar' | 'banner'
+  kind: 'avatar' | 'banner',
 ): Promise<{ ok: true; url: string } | { ok: false; error: string }> {
   const contentType = resolveImageType(file)
   if (!contentType) {
@@ -191,7 +195,7 @@ export async function updateEntityProfileAction(input: EntityProfileInput) {
 
   if (error) {
     console.error('[updateEntityProfileAction]', error)
-    return { ok: false as const, error: 'Erreur lors de l\'enregistrement.' }
+    return { ok: false as const, error: "Erreur lors de l'enregistrement." }
   }
 
   void purgeEntityCache(ctx.entity.slug, siteUrl())

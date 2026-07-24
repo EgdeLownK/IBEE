@@ -18,13 +18,7 @@ export type BoutiqueDisplayStatus =
   | 'en_essai'
   | 'retour_demande'
 
-export type BoutiqueOrderFilter =
-  | 'all'
-  | 'to-treat'
-  | 'ready'
-  | 'shipping'
-  | 'trial'
-  | 'returns'
+export type BoutiqueOrderFilter = 'all' | 'to-treat' | 'ready' | 'shipping' | 'trial' | 'returns'
 
 export type BoutiqueProductTypeFilter = 'all' | 'physical' | 'digital'
 
@@ -150,7 +144,7 @@ const SHOP_ACTIVITY_LIMIT = 20
 
 export function buildShopRecentActivity(
   orders: BoutiqueOrderView[],
-  limit = SHOP_ACTIVITY_LIMIT
+  limit = SHOP_ACTIVITY_LIMIT,
 ): BoutiqueShopActivityItem[] {
   const items: BoutiqueShopActivityItem[] = []
 
@@ -168,9 +162,7 @@ export function buildShopRecentActivity(
     }
   }
 
-  return items
-    .sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime())
-    .slice(0, limit)
+  return items.sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime()).slice(0, limit)
 }
 
 export function formatBoutiqueMoney(cents: number, currency = 'EUR'): string {
@@ -191,7 +183,9 @@ export function formatBoutiqueRelativeTime(iso: string): string {
   return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
 }
 
-function formatShippingAddress(raw: Database['public']['Tables']['orders']['Row']['shipping_address']): string | null {
+function formatShippingAddress(
+  raw: Database['public']['Tables']['orders']['Row']['shipping_address'],
+): string | null {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null
   const addr = raw as Record<string, string>
   const parts = [addr.line1, addr.line2, addr.postal_code, addr.city, addr.country].filter(Boolean)
@@ -201,11 +195,10 @@ function formatShippingAddress(raw: Database['public']['Tables']['orders']['Row'
 function resolveTrialAndReturn(
   notes: string | null,
   fulfillmentStatus: OrderFulfillmentStatus,
-  paymentStatus: OrderPaymentStatus
+  paymentStatus: OrderPaymentStatus,
 ): { isTrialPeriod: boolean; isReturnRequest: boolean } {
   const normalized = notes?.toLowerCase() ?? ''
-  const isTrialPeriod =
-    normalized.includes('essai') || normalized.includes('trial')
+  const isTrialPeriod = normalized.includes('essai') || normalized.includes('trial')
   const isReturnRequest =
     fulfillmentStatus === 'returned' ||
     normalized.includes('retour') ||
@@ -217,7 +210,7 @@ function resolveTrialAndReturn(
 function resolveDisplayStatus(
   paymentStatus: OrderPaymentStatus,
   fulfillmentStatus: OrderFulfillmentStatus,
-  flags: { isTrialPeriod: boolean; isReturnRequest: boolean }
+  flags: { isTrialPeriod: boolean; isReturnRequest: boolean },
 ): BoutiqueDisplayStatus {
   if (flags.isReturnRequest && paymentStatus !== 'refunded' && paymentStatus !== 'cancelled') {
     return 'retour_demande'
@@ -225,7 +218,11 @@ function resolveDisplayStatus(
   if (paymentStatus === 'cancelled') return 'annulee'
   if (paymentStatus === 'refunded' || paymentStatus === 'partially_refunded') return 'remboursee'
   if (paymentStatus === 'pending' || paymentStatus === 'failed') return 'en_attente_paiement'
-  if (flags.isTrialPeriod && fulfillmentStatus !== 'delivered' && fulfillmentStatus !== 'not_applicable') {
+  if (
+    flags.isTrialPeriod &&
+    fulfillmentStatus !== 'delivered' &&
+    fulfillmentStatus !== 'not_applicable'
+  ) {
     return 'en_essai'
   }
 
@@ -272,7 +269,7 @@ function resolveUrgency(displayStatus: BoutiqueDisplayStatus): number {
 export function mapOrderToView(
   order: OrderWithLines,
   events: BoutiqueOrderEventView[] = [],
-  physicalCondition: string | null = null
+  physicalCondition: string | null = null,
 ): BoutiqueOrderView {
   const lines = order.order_lines ?? []
   const items: BoutiqueOrderItem[] = lines.map((line) => ({
@@ -284,7 +281,7 @@ export function mapOrderToView(
   const { isTrialPeriod, isReturnRequest } = resolveTrialAndReturn(
     order.notes,
     order.fulfillment_status,
-    order.status
+    order.status,
   )
   const displayStatus = resolveDisplayStatus(order.status, order.fulfillment_status, {
     isTrialPeriod,
@@ -300,8 +297,7 @@ export function mapOrderToView(
   const productType = firstLine?.product_type
   const shippingFromDb = formatShippingAddress(order.shipping_address)
   const shippingAddress =
-    shippingFromDb ??
-    (productType === 'digital' ? 'Produit numérique — livraison par email' : null)
+    shippingFromDb ?? (productType === 'digital' ? 'Produit numérique — livraison par email' : null)
 
   return {
     id: order.id,
@@ -351,7 +347,7 @@ export function buildTodaySnapshot(orders: BoutiqueOrderView[]): BoutiqueTodaySn
   return {
     toTreatCount: orders.filter((o) => o.needsAction).length,
     shippedTodayCount: paidToday.filter(
-      (o) => o.fulfillmentStatus === 'shipped' || o.fulfillmentStatus === 'delivered'
+      (o) => o.fulfillmentStatus === 'shipped' || o.fulfillmentStatus === 'delivered',
     ).length,
     revenueTodayCents: paidToday.reduce((sum, o) => sum + o.totalCents, 0),
   }
@@ -370,7 +366,7 @@ export function buildBoutiqueKpis(orders: BoutiqueOrderView[]): BoutiqueKpiSnaps
   return {
     toTreatCount: orders.filter((o) => o.needsAction).length,
     shippedTodayCount: paidToday.filter(
-      (o) => o.fulfillmentStatus === 'shipped' || o.fulfillmentStatus === 'delivered'
+      (o) => o.fulfillmentStatus === 'shipped' || o.fulfillmentStatus === 'delivered',
     ).length,
     inTransitCount: orders.filter((o) => o.displayStatus === 'expediee').length,
     pendingPaymentCount: orders.filter((o) => o.displayStatus === 'en_attente_paiement').length,
@@ -416,7 +412,7 @@ export const BOUTIQUE_PRODUCT_TYPE_FILTERS: ReadonlyArray<{
 
 export function matchesBoutiqueProductTypeFilter(
   order: BoutiqueOrderView,
-  filter: BoutiqueProductTypeFilter
+  filter: BoutiqueProductTypeFilter,
 ): boolean {
   if (filter === 'all') return true
   return order.productType === filter
@@ -424,20 +420,18 @@ export function matchesBoutiqueProductTypeFilter(
 
 export function countBoutiqueOrdersByProductType(
   orders: BoutiqueOrderView[],
-  productType: Exclude<BoutiqueProductTypeFilter, 'all'>
+  productType: Exclude<BoutiqueProductTypeFilter, 'all'>,
 ): number {
   return orders.filter((order) => order.productType === productType).length
 }
 
 export function sortOrdersByArrival(orders: BoutiqueOrderView[]): BoutiqueOrderView[] {
-  return [...orders].sort(
-    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
-  )
+  return [...orders].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
 }
 
 export function matchesBoutiqueOrderFilter(
   order: BoutiqueOrderView,
-  filter: BoutiqueOrderFilter
+  filter: BoutiqueOrderFilter,
 ): boolean {
   switch (filter) {
     case 'all':
@@ -459,7 +453,7 @@ export function matchesBoutiqueOrderFilter(
 
 export function searchBoutiqueOrders(
   orders: BoutiqueOrderView[],
-  query: string
+  query: string,
 ): BoutiqueOrderView[] {
   const q = query.trim().toLowerCase()
   if (!q) return orders
@@ -482,20 +476,20 @@ export function filterBoutiqueOrders(
   orders: BoutiqueOrderView[],
   filter: BoutiqueOrderFilter,
   searchQuery = '',
-  productTypeFilter: BoutiqueProductTypeFilter = 'all'
+  productTypeFilter: BoutiqueProductTypeFilter = 'all',
 ): BoutiqueOrderView[] {
   const searched = searchBoutiqueOrders(orders, searchQuery)
   const filtered = searched.filter(
     (order) =>
       matchesBoutiqueOrderFilter(order, filter) &&
-      matchesBoutiqueProductTypeFilter(order, productTypeFilter)
+      matchesBoutiqueProductTypeFilter(order, productTypeFilter),
   )
   return sortOrdersByArrival(filtered)
 }
 
 export function countBoutiqueOrdersByFilter(
   orders: BoutiqueOrderView[],
-  filter: BoutiqueOrderFilter
+  filter: BoutiqueOrderFilter,
 ): number {
   return orders.filter((order) => matchesBoutiqueOrderFilter(order, filter)).length
 }
@@ -537,14 +531,14 @@ export function classifyInboxOrder(order: BoutiqueOrderView): BoutiqueOrderGroup
 
 export function filterInboxOrders(
   orders: BoutiqueOrderView[],
-  filter: BoutiqueInboxFilter
+  filter: BoutiqueInboxFilter,
 ): BoutiqueOrderView[] {
   return filterBoutiqueOrders(orders, filter)
 }
 
 export function groupInboxOrders(
   orders: BoutiqueOrderView[],
-  filter: BoutiqueInboxFilter
+  filter: BoutiqueInboxFilter,
 ): BoutiqueOrderGroup[] {
   const visible = filterInboxOrders(orders, filter)
   const groups: BoutiqueOrderGroup[] = [
@@ -577,7 +571,7 @@ export function countPhysicalToShip(orders: BoutiqueOrderView[]): number {
       o.productType === 'physical' &&
       (o.fulfillmentStatus === 'pending' ||
         o.fulfillmentStatus === 'to_ship' ||
-        o.fulfillmentStatus === 'ready')
+        o.fulfillmentStatus === 'ready'),
   ).length
 }
 
@@ -600,9 +594,7 @@ export type BoutiqueToTreatSummary = {
 }
 
 /** Récap détaillé pour le filtre « À traiter » uniquement. */
-export function buildBoutiqueToTreatSummary(
-  orders: BoutiqueOrderView[]
-): BoutiqueToTreatSummary {
+export function buildBoutiqueToTreatSummary(orders: BoutiqueOrderView[]): BoutiqueToTreatSummary {
   const cartonCount = orders.length
   const hasPhysical = orders.some((order) => order.productType === 'physical')
   const cartonLabel =

@@ -211,7 +211,9 @@
   color: var(--color-neutral-500);
   background: transparent;
   cursor: pointer;
-  transition: background 120ms, color 120ms;
+  transition:
+    background 120ms,
+    color 120ms;
 }
 
 .anal-period__btn.is-on {
@@ -298,7 +300,9 @@
   background: transparent;
   color: var(--color-neutral-500);
   cursor: pointer;
-  transition: background 140ms ease, color 140ms ease;
+  transition:
+    background 140ms ease,
+    color 140ms ease;
 }
 
 .anal-export-menu__close:hover {
@@ -426,7 +430,9 @@
   border-radius: 8px;
   background: var(--color-panel);
   color: var(--color-neutral-600);
-  transition: background 140ms ease, color 140ms ease;
+  transition:
+    background 140ms ease,
+    color 140ms ease;
 }
 
 .anal-export-option__icon {
@@ -483,7 +489,10 @@
   color: var(--color-neutral-500);
   background: transparent;
   cursor: pointer;
-  transition: background 140ms ease, color 140ms ease, box-shadow 140ms ease;
+  transition:
+    background 140ms ease,
+    color 140ms ease,
+    box-shadow 140ms ease;
 }
 
 .anal-export-menu__period-btn.is-on {
@@ -515,7 +524,10 @@
   color: var(--color-neutral-700);
   cursor: pointer;
   box-shadow: 0 1px 2px rgb(15 23 42 / 6%);
-  transition: background 120ms ease, color 120ms ease, opacity 120ms ease;
+  transition:
+    background 120ms ease,
+    color 120ms ease,
+    opacity 120ms ease;
 }
 
 .anal-export-menu__range-nav:hover:not(:disabled) {
@@ -583,7 +595,10 @@
   cursor: pointer;
   text-decoration: none;
   box-shadow: 0 1px 2px rgb(15 23 42 / 10%);
-  transition: background 140ms ease, opacity 140ms ease, transform 80ms ease;
+  transition:
+    background 140ms ease,
+    opacity 140ms ease,
+    transform 80ms ease;
 }
 
 .anal-export-menu__submit:hover:not(:disabled) {
@@ -627,7 +642,10 @@
   font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
-  transition: background 120ms, color 120ms, transform 80ms;
+  transition:
+    background 120ms,
+    color 120ms,
+    transform 80ms;
 }
 
 .anal-scope__tab:hover {
@@ -666,7 +684,9 @@
   border: 1px solid transparent;
   text-align: left;
   cursor: pointer;
-  transition: border-color 120ms, background 120ms;
+  transition:
+    border-color 120ms,
+    background 120ms;
 }
 
 .anal-kpi:hover {
@@ -777,7 +797,10 @@
   background: var(--color-panel);
   color: var(--color-neutral-700);
   cursor: pointer;
-  transition: background 120ms, color 120ms, opacity 120ms;
+  transition:
+    background 120ms,
+    color 120ms,
+    opacity 120ms;
 }
 
 .anal-chart__nav-btn:hover:not(:disabled) {
@@ -890,7 +913,9 @@
   width: 100%;
   background: var(--color-panel-2);
   border-radius: 10px 10px 0 0;
-  transition: height 320ms cubic-bezier(0.2, 0.8, 0.2, 1), background 160ms;
+  transition:
+    height 320ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    background 160ms;
 }
 
 .anal-bar:hover .anal-bar__fill {
@@ -999,7 +1024,9 @@
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: background 120ms, color 120ms;
+  transition:
+    background 120ms,
+    color 120ms;
 }
 
 .anal-card__more:hover {
@@ -1105,14 +1132,13 @@
   text-align: center;
   border-radius: 14px;
   border: 1.5px dashed color-mix(in srgb, var(--color-border) 85%, var(--color-neutral-400));
-  background:
-    repeating-linear-gradient(
-      135deg,
-      var(--color-panel) 0,
-      var(--color-panel) 8px,
-      var(--color-panel-2) 8px,
-      var(--color-panel-2) 16px
-    );
+  background: repeating-linear-gradient(
+    135deg,
+    var(--color-panel) 0,
+    var(--color-panel) 8px,
+    var(--color-panel-2) 8px,
+    var(--color-panel-2) 16px
+  );
 }
 
 .anal-ranking-empty__icon {

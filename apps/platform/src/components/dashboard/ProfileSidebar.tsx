@@ -45,11 +45,9 @@ export function ProfileSidebar() {
             pathname.includes('/events/') ||
             pathname.includes('/services/'))),
     },
-
   ]
 
   const pilotageItems: SidebarItem[] = [
-
     {
       href: '/dashboard/talent',
       label: 'Talent',
@@ -57,8 +55,6 @@ export function ProfileSidebar() {
       isActive: pathname.startsWith('/dashboard/talent'),
     },
   ]
-
-
 
   return (
     <MainRail ariaLabel="Navigation profil web">
@@ -71,7 +67,6 @@ export function ProfileSidebar() {
           <p className="sidebar__label">Pilotage</p>
           {pilotageItems.map((item) => renderItem(item))}
         </div>
-
       </div>
       <div className="sidebar-nav__footer">
         <ProjectAccountSwitcher variant="sidebar" />

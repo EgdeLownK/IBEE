@@ -12,7 +12,7 @@ export type ActivityOverlayData = {
 
 export async function loadActivityOverlayData(
   client: Client,
-  entityId: string
+  entityId: string,
 ): Promise<ActivityOverlayData> {
   const categories = await listProductCategories(client, entityId).catch(() => [])
   return {

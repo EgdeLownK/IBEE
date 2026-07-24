@@ -81,10 +81,7 @@ export function MessagesChatPanel({
   const draftRef = useRef(draft)
   draftRef.current = draft
 
-  const timeline = useMemo(
-    () => (thread ? buildTimeline(thread.messages) : []),
-    [thread]
-  )
+  const timeline = useMemo(() => (thread ? buildTimeline(thread.messages) : []), [thread])
 
   const handleSend = useCallback(() => {
     if (!thread) return

@@ -2,7 +2,9 @@ import { createHmac, timingSafeEqual } from 'node:crypto'
 
 function getSecret(): string {
   const secret =
-    process.env.BOOKING_EMAIL_SECRET ?? process.env.CRON_SECRET ?? process.env.SUPABASE_SERVICE_ROLE_KEY
+    process.env.BOOKING_EMAIL_SECRET ??
+    process.env.CRON_SECRET ??
+    process.env.SUPABASE_SERVICE_ROLE_KEY
   if (!secret) {
     throw new Error('Secret manquant pour signer les liens d’annulation.')
   }
@@ -19,7 +21,7 @@ export function createEventCancelToken(registrationId: string, expiresAtMs: numb
 }
 
 export function verifyEventCancelToken(
-  token: string
+  token: string,
 ): { registrationId: string; expiresAtMs: number } | null {
   const [encoded, signature] = token.split('.')
   if (!encoded || !signature) return null
@@ -43,7 +45,11 @@ export function verifyEventCancelToken(
   return { registrationId, expiresAtMs }
 }
 
-export function buildEventCancelUrl(registrationId: string, startAtIso: string, cancelMinHours: number): string {
+export function buildEventCancelUrl(
+  registrationId: string,
+  startAtIso: string,
+  cancelMinHours: number,
+): string {
   const base = process.env.NEXT_PUBLIC_WEB_URL ?? 'http://localhost:3000'
   const startMs = new Date(startAtIso).getTime()
   const expiresAtMs = startMs - cancelMinHours * 60 * 60 * 1000

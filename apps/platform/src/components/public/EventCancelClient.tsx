@@ -24,7 +24,9 @@ export function EventCancelClient() {
       return
     }
     setStatus('done')
-    setMessage(data.refunded ? 'Inscription annulée et remboursement initié.' : 'Inscription annulée.')
+    setMessage(
+      data.refunded ? 'Inscription annulée et remboursement initié.' : 'Inscription annulée.',
+    )
   }
 
   if (!token) {
@@ -39,7 +41,12 @@ export function EventCancelClient() {
     <div className="space-y-4 text-center">
       <p className="m-0 text-sm text-neutral-600">Confirmer l’annulation de votre inscription ?</p>
       {status === 'error' ? <p className="m-0 text-sm text-error">{message}</p> : null}
-      <button type="button" className="btn btn--accent" disabled={status === 'loading'} onClick={handleCancel}>
+      <button
+        type="button"
+        className="btn btn--accent"
+        disabled={status === 'loading'}
+        onClick={handleCancel}
+      >
         {status === 'loading' ? 'Annulation…' : 'Annuler mon inscription'}
       </button>
     </div>

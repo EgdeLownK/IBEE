@@ -18,7 +18,7 @@ export function buildBucketLabels(period: AnalysePeriod, window: PeriodWindow): 
 export function mergeBucketRows(
   labels: string[],
   rows: { bucket_index: number; value: number }[],
-  _period: AnalysePeriod
+  _period: AnalysePeriod,
 ): AnalyseBarPoint[] {
   const map = new Map(rows.map((row) => [row.bucket_index, row.value]))
   return labels.map((label, index) => ({
@@ -38,11 +38,9 @@ function inWindow(ts: number, window: PeriodWindow) {
 export function bucketTimestamps(
   timestamps: string[],
   period: AnalysePeriod,
-  window: PeriodWindow
+  window: PeriodWindow,
 ): AnalyseBarPoint[] {
-  const filtered = timestamps
-    .map(parseTs)
-    .filter((ts) => inWindow(ts, window))
+  const filtered = timestamps.map(parseTs).filter((ts) => inWindow(ts, window))
 
   if (period === 'week') {
     return Array.from({ length: 7 }, (_, i) => {
@@ -52,7 +50,9 @@ export function bucketTimestamps(
       dayStart.setHours(0, 0, 0, 0)
       const dayEnd = new Date(day)
       dayEnd.setHours(23, 59, 59, 999)
-      const count = filtered.filter((ts) => ts >= dayStart.getTime() && ts <= dayEnd.getTime()).length
+      const count = filtered.filter(
+        (ts) => ts >= dayStart.getTime() && ts <= dayEnd.getTime(),
+      ).length
       return { label: `${DAYS_FR[i]} ${day.getDate()}`, value: count }
     })
   }
@@ -71,7 +71,7 @@ export function bucketTimestamps(
 export function bucketDistinctVisitors(
   events: { occurred_at: string; visitor_key: string | null; id: string }[],
   period: AnalysePeriod,
-  window: PeriodWindow
+  window: PeriodWindow,
 ) {
   if (period === 'week') {
     return Array.from({ length: 7 }, (_, i) => {

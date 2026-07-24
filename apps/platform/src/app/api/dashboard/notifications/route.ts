@@ -17,7 +17,7 @@ export async function GET() {
 
     return NextResponse.json(
       { unreadCount, notifications },
-      { headers: { 'Cache-Control': PRIVATE_NO_STORE } }
+      { headers: { 'Cache-Control': PRIVATE_NO_STORE } },
     )
   } catch (err) {
     console.error('[api/dashboard/notifications]', err)

@@ -87,7 +87,7 @@ export async function sendEventRegistrationConfirmationEmail(ctx: EventRegistrat
     </ul>
     <p><a href="${ctx.ticketUrl}" style="display:inline-block;padding:12px 20px;background:#111;color:#fff;text-decoration:none;border-radius:8px">Voir mon billet</a></p>
     ${ctx.cancelUrl ? `<p style="font-size:13px;color:#666"><a href="${ctx.cancelUrl}">Annuler mon inscription</a></p>` : ''}
-    <p style="font-size:13px;color:#666">Présentez ce code le jour J ou ouvrez le lien ci-dessus.</p>`
+    <p style="font-size:13px;color:#666">Présentez ce code le jour J ou ouvrez le lien ci-dessus.</p>`,
   )
 
   return sendTransactionalEmail({
@@ -111,7 +111,7 @@ export async function sendEventReminderEmail(ctx: {
     `<p>Bonjour ${ctx.attendeeName},</p>
     <p>Rappel pour <strong>${ctx.eventTitle}</strong>.</p>
     <p><strong>Date :</strong> ${slot}</p>
-    <p><a href="${ctx.ticketUrl}">Voir mon billet</a></p>`
+    <p><a href="${ctx.ticketUrl}">Voir mon billet</a></p>`,
   )
 
   return sendTransactionalEmail({
@@ -137,7 +137,7 @@ export async function sendEventCancellationEmail(ctx: {
     'Inscription annulée',
     `<p>Bonjour ${ctx.attendeeName},</p>
     <p>Votre inscription à <strong>${ctx.eventTitle}</strong> a été annulée.</p>
-    ${refundLine}`
+    ${refundLine}`,
   )
 
   return sendTransactionalEmail({

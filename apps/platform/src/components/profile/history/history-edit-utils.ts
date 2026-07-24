@@ -1,5 +1,10 @@
 import type { HistoryBlock, HistoryImageItem } from '@ibee/shared'
-import { BANNER_ASPECT_MAX, clampBannerAspectRatio, HISTORY_MAX_BLOCKS, HISTORY_TEXT_MAX } from '@ibee/shared'
+import {
+  BANNER_ASPECT_MAX,
+  clampBannerAspectRatio,
+  HISTORY_MAX_BLOCKS,
+  HISTORY_TEXT_MAX,
+} from '@ibee/shared'
 
 export type DraftTextBlock = {
   id: string
@@ -87,14 +92,20 @@ export function draftBlocksFromInitial(blocks: HistoryBlock[]): DraftBlock[] {
       return { id: nextBlockId(), type: 'text', content: item.content }
     }
     if (item.type === 'list') {
-      return { 
-        id: nextBlockId(), 
-        type: 'list', 
-        items: item.items.map(value => ({ id: nextBlockId(), value })) 
+      return {
+        id: nextBlockId(),
+        type: 'list',
+        items: item.items.map((value) => ({ id: nextBlockId(), value })),
       }
     }
     const slot_count =
-      item.slot_count === 2 || item.slot_count === 3 ? item.slot_count : (item.images?.length === 2 ? 2 : item.images?.length === 3 ? 3 : 1)
+      item.slot_count === 2 || item.slot_count === 3
+        ? item.slot_count
+        : item.images?.length === 2
+          ? 2
+          : item.images?.length === 3
+            ? 3
+            : 1
     const images: (HistoryImageItem | null)[] = []
     const src = item.images ?? []
     for (let i = 0; i < slot_count; i++) {
@@ -123,11 +134,13 @@ export function serializeDraftBlocks(blocks: DraftBlock[]): HistoryBlock[] {
       }
       payload.push({ type: 'text', content: text })
     } else if (b.type === 'list') {
-      const items = b.items.map(i => i.value.trim()).filter(i => i.length > 0)
+      const items = b.items.map((i) => i.value.trim()).filter((i) => i.length > 0)
       if (items.length === 0) continue
       for (const item of items) {
         if (item.length > HISTORY_TEXT_MAX) {
-          throw new Error(`Chaque élément de liste doit faire entre 1 et ${HISTORY_TEXT_MAX} caractères.`)
+          throw new Error(
+            `Chaque élément de liste doit faire entre 1 et ${HISTORY_TEXT_MAX} caractères.`,
+          )
         }
       }
       payload.push({ type: 'list', items })

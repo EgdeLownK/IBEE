@@ -106,19 +106,17 @@ function SectionHead({
   )
 }
 
-export function AnalyseExportMenu({
-  accountCreatedAt,
-  defaultPeriod,
-  defaultOffset,
-}: Props) {
+export function AnalyseExportMenu({ accountCreatedAt, defaultPeriod, defaultOffset }: Props) {
   const popoverId = useId().replace(/:/g, '')
-  const [selectedScopes, setSelectedScopes] = useState(() => new Set<AnalyseScope>(ALL_EXPORT_SCOPES))
+  const [selectedScopes, setSelectedScopes] = useState(
+    () => new Set<AnalyseScope>(ALL_EXPORT_SCOPES),
+  )
   const [exportPeriod, setExportPeriod] = useState<AnalysePeriod>(defaultPeriod)
   const [exportOffset, setExportOffset] = useState(defaultOffset)
 
   const minOffset = useMemo(
     () => getMinPeriodOffset(exportPeriod, accountCreatedAt),
-    [exportPeriod, accountCreatedAt]
+    [exportPeriod, accountCreatedAt],
   )
   const rangeLabel = useMemo(() => {
     const window = getPeriodWindow(exportPeriod, exportOffset)
@@ -198,7 +196,9 @@ export function AnalyseExportMenu({
           </button>
           <div className="anal-export-menu__head-text">
             <h2 className="anal-export-menu__title">Exporter</h2>
-            <p className="anal-export-menu__subtitle">Téléchargez vos statistiques au format CSV.</p>
+            <p className="anal-export-menu__subtitle">
+              Téléchargez vos statistiques au format CSV.
+            </p>
           </div>
         </header>
 
@@ -264,7 +264,9 @@ export function AnalyseExportMenu({
                   icon={SCOPE_ICONS[option.id]}
                   selected={selectedScopes.has(option.id)}
                   onClick={() =>
-                    setSelectedScopes(toggleItem(selectedScopes, option.id, !selectedScopes.has(option.id)))
+                    setSelectedScopes(
+                      toggleItem(selectedScopes, option.id, !selectedScopes.has(option.id)),
+                    )
                   }
                 />
               ))}

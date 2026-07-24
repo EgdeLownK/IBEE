@@ -27,7 +27,8 @@ export function UploadAvatar({
   const [error, setError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const nameText = `${displayName.toUpperCase()}\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0`.repeat(10)
+  const nameText =
+    `${displayName.toUpperCase()}\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0`.repeat(10)
 
   function handleClick() {
     if (isLoading) return
@@ -98,11 +99,7 @@ export function UploadAvatar({
       >
         {/* Avatar ou fallback pattern */}
         {currentAvatarUrl ? (
-          <img
-            src={currentAvatarUrl}
-            alt={displayName}
-            className="h-full w-full object-cover"
-          />
+          <img src={currentAvatarUrl} alt={displayName} className="h-full w-full object-cover" />
         ) : (
           <div className="h-full w-full bg-accent-soft">
             <svg
@@ -133,9 +130,7 @@ export function UploadAvatar({
         {!isLoading && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-neutral-900/50 opacity-0 transition-opacity group-hover:opacity-100">
             <Camera className="h-5 w-5 text-neutral-0" />
-            <span className="text-xs font-medium text-neutral-0">
-              Changer la photo
-            </span>
+            <span className="text-xs font-medium text-neutral-0">Changer la photo</span>
             {currentAvatarUrl && (
               <button
                 type="button"

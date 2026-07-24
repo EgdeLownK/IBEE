@@ -46,14 +46,9 @@ function isAccountPath(pathname: string): boolean {
 }
 
 function isReservedPublicSegment(segment: string): boolean {
-  return [
-    'login',
-    'explore',
-    'notifications',
-    'profile-preview',
-    'api',
-    'dashboard',
-  ].includes(segment)
+  return ['login', 'explore', 'notifications', 'profile-preview', 'api', 'dashboard'].includes(
+    segment,
+  )
 }
 
 /** Pages publiques sans header IBEE ni menu (ex. QR entrée événement). */

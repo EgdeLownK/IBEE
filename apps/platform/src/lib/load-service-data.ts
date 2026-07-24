@@ -31,14 +31,14 @@ function isMissingBookingsTableError(error: unknown): boolean {
   if (!error || typeof error !== 'object') return false
   const message = 'message' in error ? String(error.message) : ''
   return (
-    message.includes('bookings') ||
-    message.includes('availability_')
-  ) && (message.includes('does not exist') || message.includes('schema cache'))
+    (message.includes('bookings') || message.includes('availability_')) &&
+    (message.includes('does not exist') || message.includes('schema cache'))
+  )
 }
 
 export async function loadServiceDashboardData(
   client: Client,
-  entityId: string
+  entityId: string,
 ): Promise<ServiceDashboardData> {
   const weekStart = startOfWeekMonday(new Date())
   const exceptionFrom = toIsoDate(weekStart)

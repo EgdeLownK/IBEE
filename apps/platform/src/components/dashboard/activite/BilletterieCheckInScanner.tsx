@@ -65,7 +65,7 @@ export function BilletterieCheckInScanner({ eventId, onCheckedIn, mode }: Props)
         }
       })
     },
-    [eventId, isPending, onCheckedIn, scanState.kind]
+    [eventId, isPending, onCheckedIn, scanState.kind],
   )
 
   useEffect(() => {
@@ -166,7 +166,11 @@ export function BilletterieCheckInScanner({ eventId, onCheckedIn, mode }: Props)
           autoComplete="off"
           spellCheck={false}
         />
-        <button type="submit" className="btn btn--primary" disabled={isPending || !manualCode.trim()}>
+        <button
+          type="submit"
+          className="btn btn--primary"
+          disabled={isPending || !manualCode.trim()}
+        >
           Valider
         </button>
       </div>
@@ -229,18 +233,13 @@ export function BilletterieCheckInScanner({ eventId, onCheckedIn, mode }: Props)
   )
 }
 
-function CheckInResultMessage({
-  scanState,
-  message,
-}: {
-  scanState: ScanState
-  message: string
-}) {
+function CheckInResultMessage({ scanState, message }: { scanState: ScanState; message: string }) {
   return (
     <p
       className={`billetterie-checkin__result${
         scanState.kind === 'success' &&
-        (scanState.result.status === 'checked_in' || scanState.result.status === 'already_checked_in')
+        (scanState.result.status === 'checked_in' ||
+          scanState.result.status === 'already_checked_in')
           ? ' is-success'
           : scanState.kind === 'success'
             ? ' is-warning'

@@ -1,5 +1,9 @@
 import type { Client } from '@ibee/supabase'
-import { bookingIsoDate, formatServiceMoney, type ServiceBookingView } from '@/lib/service-booking-view'
+import {
+  bookingIsoDate,
+  formatServiceMoney,
+  type ServiceBookingView,
+} from '@/lib/service-booking-view'
 
 export type ServiceClientView = {
   id: string
@@ -24,13 +28,16 @@ export function mapClientToView(client: Client): ServiceClientView {
     totalRevenueCents: client.total_revenue_cents,
     totalRevenueLabel: formatServiceMoney(
       client.total_revenue_cents > 0 ? client.total_revenue_cents : null,
-      'EUR'
+      'EUR',
     ),
     lastBookingAt: client.last_booking_at,
   }
 }
 
-export function searchServiceClients(clients: ServiceClientView[], query: string): ServiceClientView[] {
+export function searchServiceClients(
+  clients: ServiceClientView[],
+  query: string,
+): ServiceClientView[] {
   const q = query.trim().toLowerCase()
   if (!q) return clients
 
@@ -44,7 +51,7 @@ export function searchServiceClients(clients: ServiceClientView[], query: string
 
 export function findClientForBooking(
   clients: ServiceClientView[],
-  booking: { email: string }
+  booking: { email: string },
 ): ServiceClientView | null {
   const email = booking.email.trim().toLowerCase()
   if (!email) return null
@@ -54,14 +61,12 @@ export function findClientForBooking(
 export function pickBookingForClient(
   bookings: ServiceBookingView[],
   client: ServiceClientView,
-  preferredDay?: string
+  preferredDay?: string,
 ): ServiceBookingView | null {
   const email = client.email.trim().toLowerCase()
   if (!email) return null
 
-  const matches = bookings.filter(
-    (booking) => booking.email.trim().toLowerCase() === email
-  )
+  const matches = bookings.filter((booking) => booking.email.trim().toLowerCase() === email)
   if (matches.length === 0) return null
 
   if (preferredDay) {
@@ -75,7 +80,5 @@ export function pickBookingForClient(
     .sort((a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime())
   if (upcoming.length > 0) return upcoming[0]
 
-  return matches.sort(
-    (a, b) => new Date(b.startAt).getTime() - new Date(a.startAt).getTime()
-  )[0]
+  return matches.sort((a, b) => new Date(b.startAt).getTime() - new Date(a.startAt).getTime())[0]
 }

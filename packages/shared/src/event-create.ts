@@ -41,8 +41,7 @@ export type EventCreateDraft = {
   highlights: string[]
   gallery: { url: string; uploading: boolean }[]
   contentBlocks: (
-    | { type: 'text'; content: string }
-    | { type: 'image'; url: string; uploading: boolean }
+    { type: 'text'; content: string } | { type: 'image'; url: string; uploading: boolean }
   )[]
   faq: { question: string; answer: string }[]
   isPublished: boolean
@@ -79,7 +78,11 @@ export function validateEventStep(step: 1 | 2, draft: EventCreateDraft): Validat
       const endDate = new Date(draft.endAt)
       if (Number.isNaN(endDate.getTime())) {
         fail('end_at', 'La date de fin est invalide.')
-      } else if (startDate && !Number.isNaN(startDate.getTime()) && endDate.getTime() <= startDate.getTime()) {
+      } else if (
+        startDate &&
+        !Number.isNaN(startDate.getTime()) &&
+        endDate.getTime() <= startDate.getTime()
+      ) {
         fail('end_at', 'La fin doit être après le début.')
       }
     }
@@ -116,7 +119,7 @@ export function validateEventStep(step: 1 | 2, draft: EventCreateDraft): Validat
         contentBlocks: draft.contentBlocks,
         faq: draft.faq,
       },
-      fail
+      fail,
     )
   }
 

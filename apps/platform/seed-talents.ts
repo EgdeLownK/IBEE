@@ -17,7 +17,7 @@ async function seed() {
       status: 'active',
       contract_type: 'mission',
       blocks: [],
-      location_type: 'remote'
+      location_type: 'remote',
     })
     .select()
     .single()
@@ -28,14 +28,20 @@ async function seed() {
   }
   console.log('Created offer:', offer.id)
 
-  const locations = ['Nantes, France', 'Paris, France', 'Lyon, France', 'Bordeaux, France', 'Rennes, France']
+  const locations = [
+    'Nantes, France',
+    'Paris, France',
+    'Lyon, France',
+    'Bordeaux, France',
+    'Rennes, France',
+  ]
   const statuses = ['new', 'shortlisted', 'interviewing', 'hired', 'rejected']
-  
+
   const applications = Array.from({ length: 25 }).map((_, i) => ({
     offer_id: offer.id,
     first_name: `Candidat`,
     last_name: `${i + 1}`,
-    email: `candidat${i+1}@example.com`,
+    email: `candidat${i + 1}@example.com`,
     age: Math.floor(Math.random() * (60 - 17 + 1)) + 17,
     gender: Math.random() > 0.4 ? 'Femme' : 'Homme', // Bias towards female for CM role context maybe, or random
     location: locations[Math.floor(Math.random() * locations.length)],
@@ -43,9 +49,7 @@ async function seed() {
     message: 'Je suis très intéressé par cette opportunité.',
   }))
 
-  const { error: appsError } = await supabase
-    .from('entity_job_applications')
-    .insert(applications)
+  const { error: appsError } = await supabase.from('entity_job_applications').insert(applications)
 
   if (appsError) {
     console.error('Error inserting applications:', appsError)

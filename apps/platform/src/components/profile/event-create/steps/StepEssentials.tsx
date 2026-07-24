@@ -12,10 +12,7 @@ export function StepEssentials({ form, onChange }: Props) {
     return form.fieldErrors[field]
   }
 
-  const locationDetailsLabel =
-    form.locationType === 'online'
-      ? 'Lien visio'
-      : 'Adresse / lieu'
+  const locationDetailsLabel = form.locationType === 'online' ? 'Lien visio' : 'Adresse / lieu'
   const locationDetailsPlaceholder =
     form.locationType === 'online' ? 'https://meet…' : 'Ex : 12 rue des Lilas, Nantes'
 

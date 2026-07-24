@@ -12,13 +12,5 @@ export async function EventTicketQr({ value, label = 'QR code billet' }: Props) 
     errorCorrectionLevel: 'M',
   })
 
-  return (
-    <img
-      src={dataUrl}
-      alt={label}
-      width={220}
-      height={220}
-      className="event-ticket-qr"
-    />
-  )
+  return <img src={dataUrl} alt={label} width={220} height={220} className="event-ticket-qr" />
 }

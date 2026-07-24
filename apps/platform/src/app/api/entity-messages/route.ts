@@ -43,7 +43,10 @@ export async function POST(request: Request) {
   } = await supabase.auth.getUser()
 
   if (user && entity.user_id && user.id === entity.user_id) {
-    return NextResponse.json({ error: 'Vous ne pouvez pas vous écrire à vous-même' }, { status: 400 })
+    return NextResponse.json(
+      { error: 'Vous ne pouvez pas vous écrire à vous-même' },
+      { status: 400 },
+    )
   }
 
   try {

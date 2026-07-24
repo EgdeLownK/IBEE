@@ -4,10 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { createOwnerMessageReply } from '@ibee/supabase'
 import { requireDashboardContext } from '@/lib/dashboard-context'
 
-export async function sendMessageReplyAction(input: {
-  threadKey: string
-  body: string
-}) {
+export async function sendMessageReplyAction(input: { threadKey: string; body: string }) {
   const body = input.body.trim()
   if (!body || body.length > 2000) {
     return { ok: false as const, error: 'Message invalide.' }

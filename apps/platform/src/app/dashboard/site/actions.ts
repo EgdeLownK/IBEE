@@ -38,7 +38,7 @@ export async function addMenuSectionAction(type: string) {
     return { ok: true as const, type }
   } catch (err) {
     console.error('[addMenuSectionAction]', err)
-    return { ok: false as const, error: 'Impossible d\'ajouter cet onglet.' }
+    return { ok: false as const, error: "Impossible d'ajouter cet onglet." }
   }
 }
 

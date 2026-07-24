@@ -3,15 +3,38 @@
 import { useEffect, useState, useTransition } from 'react'
 import { createPortal } from 'react-dom'
 import { JobOffer, JobCompType, JobCompFreq } from '@ibee/supabase'
-import { createJobOfferAction, updateJobOfferAction } from '../../../app/dashboard/talent/talent-actions'
+import {
+  createJobOfferAction,
+  updateJobOfferAction,
+} from '../../../app/dashboard/talent/talent-actions'
 import { Input } from '@ibee/ui-react'
-import { ArrowDown, ArrowUp, Edit, Image as ImageIcon, Plus, Trash, Trash2, Type, X, ExternalLink, List, ArrowLeft, ArrowRight, Loader2 } from 'lucide-react'
-import { HISTORY_MAX_BLOCKS, HISTORY_TEXT_MAX, HistoryBlock, parseHistoryBlocks } from '@ibee/shared'
-import { 
-  DraftBlock, 
-  draftBlocksFromInitial, 
-  nextBlockId, 
-  serializeDraftBlocks 
+import {
+  ArrowDown,
+  ArrowUp,
+  Edit,
+  Image as ImageIcon,
+  Plus,
+  Trash,
+  Trash2,
+  Type,
+  X,
+  ExternalLink,
+  List,
+  ArrowLeft,
+  ArrowRight,
+  Loader2,
+} from 'lucide-react'
+import {
+  HISTORY_MAX_BLOCKS,
+  HISTORY_TEXT_MAX,
+  HistoryBlock,
+  parseHistoryBlocks,
+} from '@ibee/shared'
+import {
+  DraftBlock,
+  draftBlocksFromInitial,
+  nextBlockId,
+  serializeDraftBlocks,
 } from '../../profile/history/history-edit-utils'
 import { HistoryImageBlockEditor } from '../../profile/history/HistoryImageBlockEditor'
 
@@ -56,7 +79,7 @@ export function JobOfferDialog({ open, onOpenChange, entityId, offer }: JobOffer
       setCompAmount(offer?.compensation_amount?.toString() || '')
       setCompFreq(offer?.compensation_frequency || '')
       setApplyUrl(offer?.apply_url || '')
-      
+
       const initialBlocks = offer?.blocks ? parseHistoryBlocks(offer.blocks) : []
       setBlocks(draftBlocksFromInitial(initialBlocks))
     }
@@ -124,7 +147,10 @@ export function JobOfferDialog({ open, onOpenChange, entityId, offer }: JobOffer
       setError(`Maximum ${HISTORY_MAX_BLOCKS} blocs.`)
       return
     }
-    setBlocks((prev) => [...prev, { id: nextBlockId(), type: 'list', items: [{ id: nextBlockId(), value: '' }] }])
+    setBlocks((prev) => [
+      ...prev,
+      { id: nextBlockId(), type: 'list', items: [{ id: nextBlockId(), value: '' }] },
+    ])
   }
 
   function updateBlock(index: number, block: DraftBlock) {
@@ -143,7 +169,7 @@ export function JobOfferDialog({ open, onOpenChange, entityId, offer }: JobOffer
   const handleSubmit = async () => {
     setError(null)
     if (blocks.some((b) => b.type === 'image' && b.uploading)) {
-      setError('Patiente, une image est en cours d\'envoi.')
+      setError("Patiente, une image est en cours d'envoi.")
       return
     }
 
@@ -184,13 +210,23 @@ export function JobOfferDialog({ open, onOpenChange, entityId, offer }: JobOffer
 
   return createPortal(
     <div className="pco-root" role="presentation">
-      <button type="button" className="pco-root__backdrop" aria-label="Fermer" onClick={() => onOpenChange(false)} />
+      <button
+        type="button"
+        className="pco-root__backdrop"
+        aria-label="Fermer"
+        onClick={() => onOpenChange(false)}
+      />
       <div className="pco__panel" role="dialog" aria-modal="true" aria-labelledby="pco-title">
         <header className="pco__header">
           <h2 id="pco-title" className="pco__title">
-            {isEditing ? "Modifier l'offre" : "Nouvelle offre"}
+            {isEditing ? "Modifier l'offre" : 'Nouvelle offre'}
           </h2>
-          <button type="button" className="pco__close" aria-label="Fermer" onClick={() => onOpenChange(false)}>
+          <button
+            type="button"
+            className="pco__close"
+            aria-label="Fermer"
+            onClick={() => onOpenChange(false)}
+          >
             <X className="h-5 w-5" />
           </button>
         </header>
@@ -202,9 +238,7 @@ export function JobOfferDialog({ open, onOpenChange, entityId, offer }: JobOffer
               className={`pco__step${step === n ? ' is-active' : ''}${step > n ? ' is-done' : ''}`}
             >
               <span className="pco__step-num">{n}</span>
-              <span className="pco__step-label">
-                {n === 1 ? 'Informations' : 'Contenu'}
-              </span>
+              <span className="pco__step-label">{n === 1 ? 'Informations' : 'Contenu'}</span>
             </span>
           ))}
         </nav>
@@ -220,13 +254,22 @@ export function JobOfferDialog({ open, onOpenChange, entityId, offer }: JobOffer
             <div className="space-y-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Titre du poste *</label>
-                <Input value={title} onChange={(e) => setTitle(e.target.value)} required placeholder="Ex: Développeur Fullstack React" />
+                <Input
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  required
+                  placeholder="Ex: Développeur Fullstack React"
+                />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Type de contrat *</label>
-                  <select value={contractType} onChange={(e) => setContractType(e.target.value as any)} className="block w-full rounded-lg border border-neutral-200 bg-white px-4 py-3 text-neutral-900 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-neutral-900/20 hover:border-neutral-300">
+                  <select
+                    value={contractType}
+                    onChange={(e) => setContractType(e.target.value as any)}
+                    className="block w-full rounded-lg border border-neutral-200 bg-white px-4 py-3 text-neutral-900 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-neutral-900/20 hover:border-neutral-300"
+                  >
                     <option value="cdi">CDI</option>
                     <option value="cdd">CDD</option>
                     <option value="mission">Mission / Freelance</option>
@@ -234,7 +277,11 @@ export function JobOfferDialog({ open, onOpenChange, entityId, offer }: JobOffer
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Lieu de travail *</label>
-                  <select value={locationType} onChange={(e) => setLocationType(e.target.value as any)} className="block w-full rounded-lg border border-neutral-200 bg-white px-4 py-3 text-neutral-900 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-neutral-900/20 hover:border-neutral-300">
+                  <select
+                    value={locationType}
+                    onChange={(e) => setLocationType(e.target.value as any)}
+                    className="block w-full rounded-lg border border-neutral-200 bg-white px-4 py-3 text-neutral-900 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-neutral-900/20 hover:border-neutral-300"
+                  >
                     <option value="onsite">Sur site</option>
                     <option value="remote">100% Télétravail</option>
                     <option value="hybrid">Hybride</option>
@@ -244,7 +291,11 @@ export function JobOfferDialog({ open, onOpenChange, entityId, offer }: JobOffer
 
               <div className="space-y-2">
                 <label className="text-sm font-medium">Ville (optionnel)</label>
-                <Input value={locationText} onChange={(e) => setLocationText(e.target.value)} placeholder="Ex: Paris, France" />
+                <Input
+                  value={locationText}
+                  onChange={(e) => setLocationText(e.target.value)}
+                  placeholder="Ex: Paris, France"
+                />
               </div>
 
               <div className="border-t border-neutral-100 pt-4 mt-2">
@@ -252,7 +303,11 @@ export function JobOfferDialog({ open, onOpenChange, entityId, offer }: JobOffer
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <label className="text-xs font-medium text-neutral-500">Type</label>
-                    <select value={compType} onChange={(e) => setCompType(e.target.value as any)} className="block w-full rounded-lg border border-neutral-200 bg-white px-4 py-3 text-neutral-900 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-neutral-900/20 hover:border-neutral-300">
+                    <select
+                      value={compType}
+                      onChange={(e) => setCompType(e.target.value as any)}
+                      className="block w-full rounded-lg border border-neutral-200 bg-white px-4 py-3 text-neutral-900 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-neutral-900/20 hover:border-neutral-300"
+                    >
                       <option value="">Non spécifié</option>
                       <option value="fixed">Fixe (€)</option>
                       <option value="percentage">Pourcentage (%)</option>
@@ -261,13 +316,11 @@ export function JobOfferDialog({ open, onOpenChange, entityId, offer }: JobOffer
                   {compType && (
                     <div className="flex gap-4">
                       <div className="flex-1 space-y-2">
-                        <label className="text-xs font-medium text-neutral-500">
-                          Montant
-                        </label>
+                        <label className="text-xs font-medium text-neutral-500">Montant</label>
                         <div className="relative">
-                          <Input 
+                          <Input
                             type="number"
-                            placeholder="0.00" 
+                            placeholder="0.00"
                             value={compAmount}
                             onChange={(e) => setCompAmount(e.target.value)}
                             className="pr-8"
@@ -278,10 +331,12 @@ export function JobOfferDialog({ open, onOpenChange, entityId, offer }: JobOffer
                         </div>
                       </div>
                       <div className="flex-1 space-y-2">
-                        <label className="text-xs font-medium text-neutral-500">
-                          Fréquence
-                        </label>
-                        <select value={compFreq} onChange={(e) => setCompFreq(e.target.value as any)} className="block w-full rounded-lg border border-neutral-200 bg-white px-4 py-3 text-neutral-900 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-neutral-900/20 hover:border-neutral-300">
+                        <label className="text-xs font-medium text-neutral-500">Fréquence</label>
+                        <select
+                          value={compFreq}
+                          onChange={(e) => setCompFreq(e.target.value as any)}
+                          className="block w-full rounded-lg border border-neutral-200 bg-white px-4 py-3 text-neutral-900 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-neutral-900/20 hover:border-neutral-300"
+                        >
                           <option value="">Au choix</option>
                           <option value="weekly">Par semaine</option>
                           <option value="monthly">Par mois</option>
@@ -294,20 +349,29 @@ export function JobOfferDialog({ open, onOpenChange, entityId, offer }: JobOffer
               </div>
 
               <div className="border-t border-neutral-100 pt-4 mt-2 space-y-2">
-                <label className="text-sm font-medium">Lien ou Email pour postuler (optionnel)</label>
-                <Input value={applyUrl} onChange={(e) => setApplyUrl(e.target.value)} placeholder="Ex: https://forms.gle/... ou jobs@entreprise.com" />
+                <label className="text-sm font-medium">
+                  Lien ou Email pour postuler (optionnel)
+                </label>
+                <Input
+                  value={applyUrl}
+                  onChange={(e) => setApplyUrl(e.target.value)}
+                  placeholder="Ex: https://forms.gle/... ou jobs@entreprise.com"
+                />
               </div>
             </div>
           ) : (
             <section className="pco__stage p-6">
               <span className="pco__label">
-                Contenu détaillé de l'offre <span className="pco__hint">(max {HISTORY_MAX_BLOCKS} blocs)</span>
+                Contenu détaillé de l'offre{' '}
+                <span className="pco__hint">(max {HISTORY_MAX_BLOCKS} blocs)</span>
               </span>
               <div className="pco__blocks">
                 {blocks.map((b, i) => (
                   <div key={b.id} className="pco__block-card">
                     <div className="pco__block-head">
-                      <span className="pco__block-tag">{b.type === 'text' ? 'Texte' : b.type === 'list' ? 'Liste' : 'Image'}</span>
+                      <span className="pco__block-tag">
+                        {b.type === 'text' ? 'Texte' : b.type === 'list' ? 'Liste' : 'Image'}
+                      </span>
                       <div className="flex items-center gap-1">
                         <button
                           type="button"
@@ -356,7 +420,10 @@ export function JobOfferDialog({ open, onOpenChange, entityId, offer }: JobOffer
                               value={item.value}
                               onChange={(e) => {
                                 const newItems = [...b.items]
-                                newItems[itemIndex] = { ...newItems[itemIndex], value: e.target.value }
+                                newItems[itemIndex] = {
+                                  ...newItems[itemIndex],
+                                  value: e.target.value,
+                                }
                                 updateBlock(i, { ...b, items: newItems })
                               }}
                             />
@@ -378,7 +445,10 @@ export function JobOfferDialog({ open, onOpenChange, entityId, offer }: JobOffer
                           type="button"
                           className="text-sm font-medium text-neutral-500 hover:text-neutral-900 self-start mt-1 flex items-center gap-1"
                           onClick={() => {
-                            updateBlock(i, { ...b, items: [...b.items, { id: nextBlockId(), value: '' }] })
+                            updateBlock(i, {
+                              ...b,
+                              items: [...b.items, { id: nextBlockId(), value: '' }],
+                            })
                           }}
                         >
                           <Plus className="h-3 w-3" /> Ajouter un élément
@@ -411,7 +481,11 @@ export function JobOfferDialog({ open, onOpenChange, entityId, offer }: JobOffer
         <footer className="pco__actions">
           <div className="pco__actions-start">
             {step === 1 ? (
-              <button type="button" className="pco__btn pco__btn--ghost" onClick={() => onOpenChange(false)}>
+              <button
+                type="button"
+                className="pco__btn pco__btn--ghost"
+                onClick={() => onOpenChange(false)}
+              >
                 Annuler
               </button>
             ) : (
@@ -426,15 +500,26 @@ export function JobOfferDialog({ open, onOpenChange, entityId, offer }: JobOffer
                 Suivant <ArrowRight className="h-4 w-4" />
               </button>
             ) : (
-              <button type="button" className="pco__btn pco__btn--primary" disabled={isPending} onClick={handleSubmit}>
+              <button
+                type="button"
+                className="pco__btn pco__btn--primary"
+                disabled={isPending}
+                onClick={handleSubmit}
+              >
                 {isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                <span>{isPending ? 'Enregistrement...' : isEditing ? 'Mettre à jour l\'offre' : 'Créer l\'offre'}</span>
+                <span>
+                  {isPending
+                    ? 'Enregistrement...'
+                    : isEditing
+                      ? "Mettre à jour l'offre"
+                      : "Créer l'offre"}
+                </span>
               </button>
             )}
           </div>
         </footer>
       </div>
     </div>,
-    document.body
+    document.body,
   )
 }

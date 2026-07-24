@@ -56,8 +56,7 @@ export type ServiceCreateDraft = {
   highlights: string[]
   gallery: { url: string; uploading: boolean }[]
   contentBlocks: (
-    | { type: 'text'; content: string }
-    | { type: 'image'; url: string; uploading: boolean }
+    { type: 'text'; content: string } | { type: 'image'; url: string; uploading: boolean }
   )[]
   faq: { question: string; answer: string }[]
   isActive: boolean
@@ -125,7 +124,7 @@ export function validateServiceStep(step: 1 | 2 | 3, draft: ServiceCreateDraft):
     }
     const advance = Number(draft.maxAdvanceDays)
     if (!Number.isInteger(advance) || advance < 1 || advance > 365) {
-      fail('max_advance_days', 'La réservation à l\'avance doit être entre 1 et 365 jours.')
+      fail('max_advance_days', "La réservation à l'avance doit être entre 1 et 365 jours.")
     }
     const bufBefore = Number(draft.bufferBeforeMinutes)
     if (!Number.isInteger(bufBefore) || bufBefore < 0 || bufBefore > 480) {
@@ -153,7 +152,7 @@ export function validateServiceStep(step: 1 | 2 | 3, draft: ServiceCreateDraft):
         contentBlocks: draft.contentBlocks,
         faq: draft.faq,
       },
-      fail
+      fail,
     )
   }
 

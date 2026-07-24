@@ -23,7 +23,9 @@ export async function POST(request: Request) {
 
   const { data: registration, error } = await supabase
     .from('event_registrations')
-    .select('*, events(title, start_at, cancel_min_hours), orders(stripe_payment_intent_id, status, total_cents)')
+    .select(
+      '*, events(title, start_at, cancel_min_hours), orders(stripe_payment_intent_id, status, total_cents)',
+    )
     .eq('id', parsed.registrationId)
     .maybeSingle()
 
@@ -31,7 +33,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Inscription introuvable.' }, { status: 404 })
   }
 
-  const event = registration.events as { title: string; start_at: string; cancel_min_hours: number } | null
+  const event = registration.events as {
+    title: string
+    start_at: string
+    cancel_min_hours: number
+  } | null
   if (!event) {
     return NextResponse.json({ error: 'Événement introuvable.' }, { status: 404 })
   }
@@ -39,7 +45,7 @@ export async function POST(request: Request) {
   if (!canCancelRegistrationByPolicy(event.start_at, event.cancel_min_hours ?? 24)) {
     return NextResponse.json(
       { error: 'Le délai d’annulation est dépassé pour cet événement.' },
-      { status: 403 }
+      { status: 403 },
     )
   }
 
@@ -52,15 +58,11 @@ export async function POST(request: Request) {
       | undefined
 
     let refundCents = 0
-    if (
-      registration.order_id &&
-      order?.stripe_payment_intent_id &&
-      order.status === 'paid'
-    ) {
+    if (registration.order_id && order?.stripe_payment_intent_id && order.status === 'paid') {
       refundCents = await refundEventOrderPayment(
         supabase,
         registration.order_id,
-        order.stripe_payment_intent_id
+        order.stripe_payment_intent_id,
       )
       await supabase
         .from('event_registrations')

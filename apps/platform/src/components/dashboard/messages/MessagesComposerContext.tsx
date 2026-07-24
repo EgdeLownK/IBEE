@@ -1,13 +1,6 @@
 'use client'
 
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useMemo,
-  useState,
-  type ReactNode,
-} from 'react'
+import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react'
 
 export type MessagesComposerSlot = {
   draft: string
@@ -26,10 +19,7 @@ type ContextValue = {
 
 const MessagesComposerContext = createContext<ContextValue | null>(null)
 
-function slotsEqual(
-  a: MessagesComposerSlot | null,
-  b: MessagesComposerSlot | null
-): boolean {
+function slotsEqual(a: MessagesComposerSlot | null, b: MessagesComposerSlot | null): boolean {
   if (a === b) return true
   if (!a || !b) return false
 

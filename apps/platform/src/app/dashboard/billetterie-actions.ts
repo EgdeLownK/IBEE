@@ -44,7 +44,9 @@ export async function cancelRegistrationAction(registrationId: string) {
   try {
     const { data: existing } = await ctx.supabase
       .from('event_registrations')
-      .select('id, entity_id, status, attendee_name, attendee_email, order_id, events(title, start_at, cancel_min_hours)')
+      .select(
+        'id, entity_id, status, attendee_name, attendee_email, order_id, events(title, start_at, cancel_min_hours)',
+      )
       .eq('id', registrationId)
       .maybeSingle()
 
@@ -56,7 +58,11 @@ export async function cancelRegistrationAction(registrationId: string) {
       return { ok: true as const }
     }
 
-    const event = existing.events as { title: string; start_at: string; cancel_min_hours: number } | null
+    const event = existing.events as {
+      title: string
+      start_at: string
+      cancel_min_hours: number
+    } | null
     // Owner dashboard : annulation toujours autorisée (politique visiteur ignorée).
 
     let refundCents = 0
@@ -71,7 +77,7 @@ export async function cancelRegistrationAction(registrationId: string) {
         refundCents = await refundEventOrderPayment(
           ctx.supabase,
           existing.order_id,
-          order.stripe_payment_intent_id
+          order.stripe_payment_intent_id,
         )
       }
     }
@@ -104,10 +110,7 @@ export async function cancelRegistrationAction(registrationId: string) {
   }
 }
 
-export async function checkInRegistrationAction(input: {
-  ticketCode: string
-  eventId: string
-}) {
+export async function checkInRegistrationAction(input: { ticketCode: string; eventId: string }) {
   const ctx = await requireDashboardContext()
 
   try {
@@ -257,7 +260,7 @@ export async function createManualRegistrationAction(input: {
     }
   }
 
-  let ticketTypeId: string | null = input.ticketTypeId?.trim() || null
+  const ticketTypeId: string | null = input.ticketTypeId?.trim() || null
   if (ticketTypeId) {
     const ticketType = await getTicketTypeById(ctx.supabase, ticketTypeId)
     if (!ticketType || ticketType.event_id !== event.id) {
@@ -299,7 +302,12 @@ export async function createManualRegistrationAction(input: {
       registrationId: registration.id,
     }
   } catch (err: unknown) {
-    if (typeof err === 'object' && err !== null && 'code' in err && (err as { code?: string }).code === '23505') {
+    if (
+      typeof err === 'object' &&
+      err !== null &&
+      'code' in err &&
+      (err as { code?: string }).code === '23505'
+    ) {
       return { ok: false as const, error: 'Cet email est déjà inscrit à cet événement.' }
     }
     console.error('[createManualRegistrationAction]', err)

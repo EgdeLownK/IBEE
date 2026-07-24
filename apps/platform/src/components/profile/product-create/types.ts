@@ -13,8 +13,6 @@ export type MediaDraft = {
 
 export type VariantPair = { key: string; value: string }
 
-
-
 export type VariantDraft = {
   id: string
   pairs: VariantPair[]
@@ -34,14 +32,14 @@ export type ContentBlockDraft =
   | { id: string; type: 'text'; content: string }
   | { id: string; type: 'title'; content: string }
   | { id: string; type: 'list'; items: string[]; description?: string }
-  | { 
+  | {
       id: string
       type: 'image'
       slot_count: 1 | 2 | 3
       images: ({ url: string; aspect_ratio: number; type: 'image' | 'video' } | null)[]
       title?: string
       description?: string
-      uploading: boolean 
+      uploading: boolean
     }
 
 export type FaqDraft = { question: string; answer: string }

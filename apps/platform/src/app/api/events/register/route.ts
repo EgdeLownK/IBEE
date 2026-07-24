@@ -59,7 +59,10 @@ export async function POST(request: Request) {
   }
 
   if (name.length < 1 || name.length > 200) {
-    return NextResponse.json({ error: 'Le nom est obligatoire (200 caractères max).' }, { status: 400 })
+    return NextResponse.json(
+      { error: 'Le nom est obligatoire (200 caractères max).' },
+      { status: 400 },
+    )
   }
   if (email.length < 5 || email.length > 320 || !email.includes('@')) {
     return NextResponse.json({ error: 'Email invalide.' }, { status: 400 })
@@ -68,7 +71,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Téléphone invalide.' }, { status: 400 })
   }
   if (message && message.length > 2000) {
-    return NextResponse.json({ error: 'Le message ne peut pas dépasser 2000 caractères.' }, { status: 400 })
+    return NextResponse.json(
+      { error: 'Le message ne peut pas dépasser 2000 caractères.' },
+      { status: 400 },
+    )
   }
 
   const { data: event, error: eventError } = await supabase
@@ -79,7 +85,10 @@ export async function POST(request: Request) {
 
   if (eventError) {
     console.error('[api/events/register] fetch event', eventError)
-    return NextResponse.json({ error: 'Erreur lors de la vérification de l\'événement.' }, { status: 500 })
+    return NextResponse.json(
+      { error: "Erreur lors de la vérification de l'événement." },
+      { status: 500 },
+    )
   }
   if (!event || !event.is_published) {
     return NextResponse.json({ error: 'Événement introuvable.' }, { status: 404 })
@@ -90,7 +99,10 @@ export async function POST(request: Request) {
     publishedActivities = await listActivitiesByEvent(supabase, event.id, { publishedOnly: true })
   } catch (err) {
     console.error('[api/events/register] list activities', err)
-    return NextResponse.json({ error: 'Erreur lors de la vérification de l\'événement.' }, { status: 500 })
+    return NextResponse.json(
+      { error: "Erreur lors de la vérification de l'événement." },
+      { status: 500 },
+    )
   }
 
   const hasActivities = publishedActivities.length > 0
@@ -115,7 +127,10 @@ export async function POST(request: Request) {
         }
       } catch (err) {
         console.error('[api/events/register] activity count', err)
-        return NextResponse.json({ error: 'Erreur lors de la vérification des places.' }, { status: 500 })
+        return NextResponse.json(
+          { error: 'Erreur lors de la vérification des places.' },
+          { status: 500 },
+        )
       }
     }
     resolvedActivityId = activity.id
@@ -127,7 +142,7 @@ export async function POST(request: Request) {
     if (await isEntityEmailBanned(supabase, event.entity_id, email)) {
       return NextResponse.json(
         { error: 'Inscription impossible pour cette adresse email.' },
-        { status: 403 }
+        { status: 403 },
       )
     }
   } catch (err) {
@@ -141,7 +156,7 @@ export async function POST(request: Request) {
     ? { ok: true as const, answers: {} as Record<string, string | boolean> }
     : validateFormAnswers(
         fields,
-        (body?.formAnswers as Record<string, string | boolean> | undefined) ?? {}
+        (body?.formAnswers as Record<string, string | boolean> | undefined) ?? {},
       )
   if (!validatedAnswers.ok) {
     return NextResponse.json({ error: validatedAnswers.error }, { status: 400 })
@@ -155,7 +170,10 @@ export async function POST(request: Request) {
     }
     if (hasActivities) {
       if (!ticketType.activity_id || ticketType.activity_id !== resolvedActivityId) {
-        return NextResponse.json({ error: 'Ce billet ne correspond pas à l\'activité sélectionnée.' }, { status: 400 })
+        return NextResponse.json(
+          { error: "Ce billet ne correspond pas à l'activité sélectionnée." },
+          { status: 400 },
+        )
       }
     } else if (ticketType.activity_id) {
       return NextResponse.json({ error: 'Type de billet introuvable.' }, { status: 404 })
@@ -164,13 +182,13 @@ export async function POST(request: Request) {
     if (ticketPriceCents > 0) {
       return NextResponse.json(
         { error: 'Ce billet nécessite un paiement en ligne.', requiresPayment: true },
-        { status: 400 }
+        { status: 400 },
       )
     }
   } else if ((event.price_cents ?? 0) > 0) {
     return NextResponse.json(
       { error: 'Sélectionnez un type de billet.', requiresPayment: true },
-      { status: 400 }
+      { status: 400 },
     )
   }
 
@@ -182,7 +200,10 @@ export async function POST(request: Request) {
       }
     } catch (err) {
       console.error('[api/events/register] count', err)
-      return NextResponse.json({ error: 'Erreur lors de la vérification des places.' }, { status: 500 })
+      return NextResponse.json(
+        { error: 'Erreur lors de la vérification des places.' },
+        { status: 500 },
+      )
     }
   }
 
@@ -216,14 +237,22 @@ export async function POST(request: Request) {
       ticketCode: registration.ticket_code,
     })
   } catch (err: unknown) {
-    if (typeof err === 'object' && err !== null && 'code' in err && (err as { code?: string }).code === '23505') {
-      return NextResponse.json({
-        error: hasActivities
-          ? 'Cet email est déjà inscrit à cette activité.'
-          : 'Cet email est déjà inscrit à cet événement.',
-      }, { status: 409 })
+    if (
+      typeof err === 'object' &&
+      err !== null &&
+      'code' in err &&
+      (err as { code?: string }).code === '23505'
+    ) {
+      return NextResponse.json(
+        {
+          error: hasActivities
+            ? 'Cet email est déjà inscrit à cette activité.'
+            : 'Cet email est déjà inscrit à cet événement.',
+        },
+        { status: 409 },
+      )
     }
     console.error('[api/events/register] insert', err)
-    return NextResponse.json({ error: 'Erreur lors de l\'inscription.' }, { status: 500 })
+    return NextResponse.json({ error: "Erreur lors de l'inscription." }, { status: 500 })
   }
 }

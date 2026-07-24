@@ -173,7 +173,10 @@ export async function saveEventPromoCodeAction(input: {
   const owned = await requireOwnedEvent(input.eventId)
   if (!owned) return { ok: false as const, error: 'Événement introuvable.' }
 
-  const code = input.code.trim().toUpperCase().replace(/[^A-Z0-9-]/g, '')
+  const code = input.code
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9-]/g, '')
   if (code.length < 3) return { ok: false as const, error: 'Code trop court.' }
 
   const valueNum = Number(input.value.replace(',', '.'))

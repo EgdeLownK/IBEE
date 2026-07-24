@@ -34,13 +34,13 @@ export async function GET(req: NextRequest) {
 
     return Response.json(
       { ok: true, data },
-      { headers: { 'Cache-Control': DASHBOARD_PRIVATE_CACHE } }
+      { headers: { 'Cache-Control': DASHBOARD_PRIVATE_CACHE } },
     )
   } catch (err) {
     console.error('[GET /api/dashboard/analyse/ranking-chart]', err)
     return Response.json(
       { ok: false, error: 'Impossible de charger le graphique.' },
-      { status: 500 }
+      { status: 500 },
     )
   }
 }

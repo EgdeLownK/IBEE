@@ -144,9 +144,7 @@ function buildLabelsDocument(orders: BoutiqueOrderView[], senderName: string): s
 </html>`
 }
 
-export type PrintLabelsResult =
-  | { ok: true; orderIds: string[] }
-  | { ok: false; error: string }
+export type PrintLabelsResult = { ok: true; orderIds: string[] } | { ok: false; error: string }
 
 export const PRINT_CANCELLED_ERROR = 'Impression annulée.'
 
@@ -158,7 +156,7 @@ function writeLabelsDocument(targetWindow: Window, html: string) {
 
 export function printShippingLabels(
   orders: BoutiqueOrderView[],
-  senderName: string
+  senderName: string,
 ): Promise<PrintLabelsResult> {
   const printable = orders.filter(canPrintShippingLabel)
   if (printable.length === 0) {

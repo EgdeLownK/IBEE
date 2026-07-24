@@ -32,20 +32,18 @@ function ClientRow({
       >
         <ActiviteClientAvatar name={client.name} />
         <div className="boutique-order-card__body">
-        <div className="boutique-order-card__top">
-          <span className="boutique-order-card__ref">{client.name}</span>
-          <span className="boutique-order-card__type">{client.bookingsCount} RDV</span>
-        </div>
-        <p className="boutique-order-card__customer">{client.email}</p>
-        {client.phone ? <p className="boutique-order-card__product">{client.phone}</p> : null}
-        <div className="boutique-order-card__footer">
-          <span className="boutique-order-card__amount">
-            {client.totalRevenueLabel ?? '—'}
-          </span>
-          <span className="boutique-order-card__when">
-            {formatClientDate(client.lastBookingAt)}
-          </span>
-        </div>
+          <div className="boutique-order-card__top">
+            <span className="boutique-order-card__ref">{client.name}</span>
+            <span className="boutique-order-card__type">{client.bookingsCount} RDV</span>
+          </div>
+          <p className="boutique-order-card__customer">{client.email}</p>
+          {client.phone ? <p className="boutique-order-card__product">{client.phone}</p> : null}
+          <div className="boutique-order-card__footer">
+            <span className="boutique-order-card__amount">{client.totalRevenueLabel ?? '—'}</span>
+            <span className="boutique-order-card__when">
+              {formatClientDate(client.lastBookingAt)}
+            </span>
+          </div>
         </div>
       </button>
     </li>

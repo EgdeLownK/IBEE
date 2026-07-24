@@ -5,7 +5,7 @@ import {
   createProjectJobOffer,
   updateProjectJobOffer,
   deleteProjectJobOffer,
-  updateJobApplicationStatus
+  updateJobApplicationStatus,
 } from '@ibee/supabase'
 import { revalidatePath } from 'next/cache'
 import type { HistoryBlock } from '@ibee/shared'
@@ -24,7 +24,7 @@ export async function createJobOfferAction(
     compensation_amount?: number | null
     compensation_frequency?: 'weekly' | 'monthly' | 'mission' | null
     apply_url?: string | null
-  }
+  },
 ) {
   const supabase = await createClient()
   await createProjectJobOffer(supabase, entityId, input)
@@ -45,7 +45,7 @@ export async function updateJobOfferAction(
     compensation_amount?: number | null
     compensation_frequency?: 'weekly' | 'monthly' | 'mission' | null
     apply_url?: string | null
-  }
+  },
 ) {
   const supabase = await createClient()
 
@@ -79,7 +79,7 @@ export async function deleteJobOfferAction(entityId: string, offerId: string) {
 export async function updateApplicationStatusAction(
   applicationId: string,
   status: JobApplicationStatus,
-  offerId: string
+  offerId: string,
 ) {
   const supabase = await createClient()
   await updateJobApplicationStatus(supabase, applicationId, status)

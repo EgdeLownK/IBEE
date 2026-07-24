@@ -24,7 +24,7 @@ export async function POST(request: Request) {
   if (trimmed.length === 0 || trimmed.length > 2000) {
     return NextResponse.json(
       { error: 'Le commentaire doit contenir entre 1 et 2000 caractères.' },
-      { status: 400 }
+      { status: 400 },
     )
   }
 
@@ -39,11 +39,14 @@ export async function POST(request: Request) {
     if (pgErr?.code === '42501' || pgErr?.message?.includes('check_comment_rate_limit')) {
       return NextResponse.json(
         { error: 'Veuillez attendre une minute avant de poster un nouveau commentaire.' },
-        { status: 429 }
+        { status: 429 },
       )
     }
     console.error('[api/comments] POST', err)
-    return NextResponse.json({ error: 'Erreur lors de la publication du commentaire.' }, { status: 500 })
+    return NextResponse.json(
+      { error: 'Erreur lors de la publication du commentaire.' },
+      { status: 500 },
+    )
   }
 }
 

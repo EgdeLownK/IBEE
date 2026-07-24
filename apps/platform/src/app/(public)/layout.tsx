@@ -3,11 +3,7 @@ import { PublicShell } from '@/components/public/PublicShell'
 import { loadAccountShellData } from '@/lib/account-shell-data'
 import type { AccountShellData } from '@/lib/account-shell-data'
 
-export default async function PublicLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default async function PublicLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
   const {
     data: { user },

@@ -105,7 +105,10 @@
   font-size: 13px;
   background: transparent;
   color: var(--color-neutral-500);
-  transition: background 140ms, box-shadow 140ms, color 140ms;
+  transition:
+    background 140ms,
+    box-shadow 140ms,
+    color 140ms;
 }
 
 .revenu-range-toggle__btn.is-active {
@@ -164,7 +167,9 @@
   width: 100%;
   border-radius: 10px 10px 0 0;
   background: linear-gradient(rgb(209, 213, 219) 0%, rgb(152, 159, 171) 100%);
-  transition: background 140ms, height 200ms ease;
+  transition:
+    background 140ms,
+    height 200ms ease;
 }
 
 .revenu-bar-col.is-active .revenu-bar-fill {
@@ -345,7 +350,10 @@
   font-size: 13px;
   background: transparent;
   color: var(--color-neutral-500);
-  transition: background 140ms, box-shadow 140ms, color 140ms;
+  transition:
+    background 140ms,
+    box-shadow 140ms,
+    color 140ms;
 }
 
 .revenu-payout-mode-toggle__btn.is-active {

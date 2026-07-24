@@ -16,7 +16,8 @@ export default async function ActiviteServicePage() {
   if (!ctx) redirect('/login')
 
   const capabilities = await getActivityCapabilities(ctx.supabase, ctx.entity.id)
-  if (!isActivityModuleEnabled(capabilities, 'appointments')) redirect(resolveActivityLandingPath(capabilities))
+  if (!isActivityModuleEnabled(capabilities, 'appointments'))
+    redirect(resolveActivityLandingPath(capabilities))
 
   const data = await loadServiceDashboardData(ctx.supabase, ctx.entity.id)
 

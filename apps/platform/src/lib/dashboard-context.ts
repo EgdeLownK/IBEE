@@ -5,10 +5,7 @@ import type { User } from '@supabase/supabase-js'
 import { getEntityByUserId } from '@ibee/supabase'
 import type { Database } from '@ibee/supabase'
 import { createClient } from '@/lib/supabase/server'
-import {
-  buildAccountShellData,
-  type AccountShellData,
-} from '@/lib/account-shell-data'
+import { buildAccountShellData, type AccountShellData } from '@/lib/account-shell-data'
 import { measureDashboardLoad } from '@/lib/dashboard-perf'
 
 export type DashboardEntity = Database['public']['Tables']['entity']['Row']
@@ -43,12 +40,10 @@ export async function requireDashboardContext(): Promise<DashboardContext> {
   return ctx
 }
 
-export const getDashboardAccountShell = cache(
-  async (): Promise<AccountShellData | null> => {
-    return measureDashboardLoad('context:getDashboardAccountShell', async () => {
-      const ctx = await getDashboardContext()
-      if (!ctx) return null
-      return buildAccountShellData(ctx.user, ctx.entity)
-    })
-  }
-)
+export const getDashboardAccountShell = cache(async (): Promise<AccountShellData | null> => {
+  return measureDashboardLoad('context:getDashboardAccountShell', async () => {
+    const ctx = await getDashboardContext()
+    if (!ctx) return null
+    return buildAccountShellData(ctx.user, ctx.entity)
+  })
+})

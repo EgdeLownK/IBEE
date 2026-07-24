@@ -56,7 +56,7 @@ export default async function AnalysePage({ searchParams }: PageProps) {
         period: 'week',
         offset: params.offset,
         rankingLimit: params.rankingLimit,
-      })
+      }),
     )
   }
 
@@ -74,7 +74,7 @@ export default async function AnalysePage({ searchParams }: PageProps) {
         offset,
         rankingLimit,
       }),
-    { scope, period, offset }
+    { scope, period, offset },
   )
 
   return (

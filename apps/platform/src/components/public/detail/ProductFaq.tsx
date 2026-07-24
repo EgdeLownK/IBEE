@@ -27,7 +27,10 @@ export function ProductFaq({ faq, emptyLabel = 'Pas encore de FAQ pour ce produi
   return (
     <>
       {faqSchema && (
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+        />
       )}
 
       <section id="faq" className="sec">

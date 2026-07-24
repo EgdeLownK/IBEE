@@ -84,9 +84,9 @@ export function HomeWidgetConfigDialog({ widget, pickerData, onClose, onSaved }:
       const defaultMode = defaultCarouselSelectionMode(sourceKind)
       return {
         sourceKind,
-        categoryId:
-          parsed?.category_id ?? categoriesWithProducts(pickerData)[0]?.id ?? '',
-        selectionMode: parsed?.selection_mode ?? defaultMode ?? ('popular' as CarouselSelectionMode),
+        categoryId: parsed?.category_id ?? categoriesWithProducts(pickerData)[0]?.id ?? '',
+        selectionMode:
+          parsed?.selection_mode ?? defaultMode ?? ('popular' as CarouselSelectionMode),
       }
     }
     return null
@@ -177,10 +177,7 @@ export function HomeWidgetConfigDialog({ widget, pickerData, onClose, onSaved }:
     return rows
   }, [contentSearch, highlightKind, pickerData])
 
-  const shopCategoriesWithProducts = useMemo(
-    () => categoriesWithProducts(pickerData),
-    [pickerData]
-  )
+  const shopCategoriesWithProducts = useMemo(() => categoriesWithProducts(pickerData), [pickerData])
 
   if (!widget) return null
   const activeWidget = widget
@@ -249,7 +246,7 @@ export function HomeWidgetConfigDialog({ widget, pickerData, onClose, onSaved }:
     e.preventDefault()
     const config = buildConfig()
     if (!config) {
-      toast.error('Complète la configuration avant d\'enregistrer.')
+      toast.error("Complète la configuration avant d'enregistrer.")
       return
     }
     persistConfig(config)
@@ -282,7 +279,8 @@ export function HomeWidgetConfigDialog({ widget, pickerData, onClose, onSaved }:
     setCarouselStep(2)
   }
 
-  const configurable = activeWidget.type === 'widget_highlight' || activeWidget.type === 'widget_carousel'
+  const configurable =
+    activeWidget.type === 'widget_highlight' || activeWidget.type === 'widget_carousel'
   const selectionModes = carouselSelectionModesForSource(sourceKind)
   const isCarousel = activeWidget.type === 'widget_carousel'
   const carouselNeedsStep2 = isCarousel && carouselSourceNeedsContentStep(sourceKind)
@@ -290,7 +288,7 @@ export function HomeWidgetConfigDialog({ widget, pickerData, onClose, onSaved }:
   const carouselSelectionAvailable = carouselSelectionModeHasContent(
     sourceKind,
     selectionMode,
-    pickerData
+    pickerData,
   )
   const carouselCategoryValid =
     selectionMode !== 'category' ||
@@ -301,7 +299,7 @@ export function HomeWidgetConfigDialog({ widget, pickerData, onClose, onSaved }:
   const canSaveHighlight =
     highlightKindHasContent(highlightKind, pickerData) && highlightId.length > 0
   const anyCarouselSourceAvailable = CAROUSEL_SOURCE_KINDS.some((kind) =>
-    carouselSourceHasContent(kind, pickerData)
+    carouselSourceHasContent(kind, pickerData),
   )
 
   const dialogTitle = isCarousel
@@ -313,7 +311,12 @@ export function HomeWidgetConfigDialog({ widget, pickerData, onClose, onSaved }:
   return (
     <div className="hw-config" role="presentation">
       <button type="button" className="hw-config__backdrop" aria-label="Fermer" onClick={onClose} />
-      <div className="hw-config__panel" role="dialog" aria-modal="true" aria-labelledby="hw-config-title">
+      <div
+        className="hw-config__panel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="hw-config-title"
+      >
         <header className="hw-config__head">
           <h2 id="hw-config-title" className="hw-config__title">
             {dialogTitle}
@@ -333,7 +336,8 @@ export function HomeWidgetConfigDialog({ widget, pickerData, onClose, onSaved }:
           {activeWidget.type === 'widget_highlight' && (
             <div className="hw-config__section">
               <p className="hw-config__hint">
-                Choisis <strong>un contenu</strong> à mettre en avant (produit, service, événement ou actualité).
+                Choisis <strong>un contenu</strong> à mettre en avant (produit, service, événement
+                ou actualité).
               </p>
               <fieldset className="hw-config__fieldset">
                 {(['news'] as const).map((kind) => {
@@ -399,8 +403,12 @@ export function HomeWidgetConfigDialog({ widget, pickerData, onClose, onSaved }:
                   Aucun contenu disponible pour créer un carrousel.
                 </p>
               )}
-              <div className="hw-config__source-grid" role="radiogroup" aria-label="Type de carrousel">
-                {CAROUSEL_SOURCE_KINDS.filter(k => k === 'news').map((kind) => {
+              <div
+                className="hw-config__source-grid"
+                role="radiogroup"
+                aria-label="Type de carrousel"
+              >
+                {CAROUSEL_SOURCE_KINDS.filter((k) => k === 'news').map((kind) => {
                   const available = carouselSourceHasContent(kind, pickerData)
                   return (
                     <button
@@ -490,7 +498,11 @@ export function HomeWidgetConfigDialog({ widget, pickerData, onClose, onSaved }:
                   >
                     Retour
                   </button>
-                  <button type="submit" className="btn btn--dark" disabled={pending || !canSaveCarouselStep2}>
+                  <button
+                    type="submit"
+                    className="btn btn--dark"
+                    disabled={pending || !canSaveCarouselStep2}
+                  >
                     {pending ? 'Enregistrement…' : 'Enregistrer'}
                   </button>
                 </>
@@ -505,11 +517,7 @@ export function HomeWidgetConfigDialog({ widget, pickerData, onClose, onSaved }:
                     disabled={pending || !canSaveCarouselStep1}
                     onClick={handleCarouselContinue}
                   >
-                    {pending
-                      ? 'Enregistrement…'
-                      : carouselNeedsStep2
-                        ? 'Continuer'
-                        : 'Enregistrer'}
+                    {pending ? 'Enregistrement…' : carouselNeedsStep2 ? 'Continuer' : 'Enregistrer'}
                   </button>
                 </>
               ) : (
@@ -517,7 +525,11 @@ export function HomeWidgetConfigDialog({ widget, pickerData, onClose, onSaved }:
                   <button type="button" className="btn btn--ghost" onClick={onClose}>
                     Annuler
                   </button>
-                  <button type="submit" className="btn btn--dark" disabled={pending || !canSaveHighlight}>
+                  <button
+                    type="submit"
+                    className="btn btn--dark"
+                    disabled={pending || !canSaveHighlight}
+                  >
                     {pending ? 'Enregistrement…' : 'Enregistrer'}
                   </button>
                 </>

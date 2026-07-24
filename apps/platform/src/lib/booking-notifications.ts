@@ -1,7 +1,4 @@
-import {
-  getAppointmentTypeById,
-  markBookingConfirmationSent,
-} from '@ibee/supabase'
+import { getAppointmentTypeById, markBookingConfirmationSent } from '@ibee/supabase'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@ibee/supabase'
 import { sendBookingConfirmationEmail } from '@/lib/booking-email'
@@ -31,7 +28,7 @@ function resolveLocationLabel(locationType: string, details: string | null): str
 
 async function getEntityDisplayName(
   supabase: SupabaseClient<Database>,
-  entityId: string
+  entityId: string,
 ): Promise<string> {
   const { data } = await supabase
     .from('entity')
@@ -44,7 +41,7 @@ async function getEntityDisplayName(
 
 export async function notifyBookingCreated(
   booking: BookingRow,
-  opts: { supabase?: SupabaseClient<Database> } = {}
+  opts: { supabase?: SupabaseClient<Database> } = {},
 ) {
   const supabase = opts.supabase ?? createServiceClient()
 

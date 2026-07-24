@@ -69,7 +69,12 @@ function ActivityPlaceholderOverlay({
   return createPortal(
     <div className="pco-root" role="presentation">
       <button type="button" className="pco-root__backdrop" aria-label="Fermer" onClick={onClose} />
-      <div className="pco__panel" role="dialog" aria-modal="true" aria-labelledby="activity-placeholder-title">
+      <div
+        className="pco__panel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="activity-placeholder-title"
+      >
         <header className="pco__header">
           <div>
             <h2 id="activity-placeholder-title" className="pco__title">
@@ -91,7 +96,7 @@ function ActivityPlaceholderOverlay({
         </div>
       </div>
     </div>,
-    document.body
+    document.body,
   )
 }
 
@@ -161,7 +166,7 @@ export function ActivityOverlayProvider({ children, productCategories }: Props) 
 
   const value = useMemo(
     () => ({ openOverlay, openEventEdit, openAddParticipant }),
-    [openOverlay, openEventEdit, openAddParticipant]
+    [openOverlay, openEventEdit, openAddParticipant],
   )
 
   function refreshAfterCreate() {

@@ -68,7 +68,7 @@ function isMissingRegistrationsTableError(error: unknown): boolean {
 export async function loadBilletterieDashboardData(
   client: Client,
   entityId: string,
-  entitySlug: string
+  entitySlug: string,
 ): Promise<LoadedBilletterieDashboard> {
   try {
     const [rows, eventRows, ticketRows, bannedRows, activityRows] = await Promise.all([
@@ -86,7 +86,7 @@ export async function loadBilletterieDashboardData(
     const bannedClients = bannedRows.map(mapBannedClientToView)
     const activitiesByEventId = mergeEventRootPlaces(
       eventLines,
-      buildActivitiesByEventId(activityRows, registrations)
+      buildActivitiesByEventId(activityRows, registrations),
     )
 
     return {
@@ -104,7 +104,12 @@ export async function loadBilletterieDashboardData(
         registrations: [],
         events: [],
         eventLines: [],
-        today: { registrations7d: 0, upcomingEventsCount: 0, lowCapacityCount: 0, todayEventLive: null },
+        today: {
+          registrations7d: 0,
+          upcomingEventsCount: 0,
+          lowCapacityCount: 0,
+          todayEventLive: null,
+        },
         entitySlug,
         bannedClients: [],
         activitiesByEventId: {},
@@ -139,14 +144,14 @@ async function loadOwnerTicketTypes(client: Client, entityId: string): Promise<E
 
 function buildActivitiesByEventId(
   activities: Awaited<ReturnType<typeof listActivitiesByEntity>>,
-  registrations: BilletterieRegistrationView[]
+  registrations: BilletterieRegistrationView[],
 ): Record<string, BilletterieEventActivitySnapshot[]> {
   const confirmedByActivity = new Map<string, number>()
   for (const registration of registrations) {
     if (registration.status !== 'confirmed' || !registration.activityId) continue
     confirmedByActivity.set(
       registration.activityId,
-      (confirmedByActivity.get(registration.activityId) ?? 0) + 1
+      (confirmedByActivity.get(registration.activityId) ?? 0) + 1,
     )
   }
 
@@ -166,9 +171,7 @@ function buildActivitiesByEventId(
   }
 
   for (const eventId of Object.keys(byEvent)) {
-    byEvent[eventId].sort(
-      (a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime()
-    )
+    byEvent[eventId].sort((a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime())
   }
 
   return byEvent
@@ -176,7 +179,7 @@ function buildActivitiesByEventId(
 
 function mergeEventRootPlaces(
   eventLines: BilletterieEventLine[],
-  activitiesByEventId: Record<string, BilletterieEventActivitySnapshot[]>
+  activitiesByEventId: Record<string, BilletterieEventActivitySnapshot[]>,
 ): Record<string, BilletterieEventActivitySnapshot[]> {
   const merged = { ...activitiesByEventId }
 

@@ -1,6 +1,14 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState, useTransition, type CSSProperties, type ReactNode } from 'react'
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+  type CSSProperties,
+  type ReactNode,
+} from 'react'
 import Link from 'next/link'
 import { CalendarDays, MapPin, MoreVertical, Pencil, Star, Trash2, Users } from 'lucide-react'
 import { toast } from 'sonner'
@@ -60,7 +68,7 @@ function eventDateChip(value: string) {
 
 function eventLocationLabel(
   locationType: 'online' | 'in_person' | null | undefined,
-  locationDetails: string | null | undefined
+  locationDetails: string | null | undefined,
 ) {
   if (locationType === 'in_person') return locationDetails?.trim() || 'Sur place'
   if (locationType === 'online') return 'En ligne'
@@ -144,7 +152,11 @@ function ProductTile({
         {price && (
           <p className="m-0 mt-1 text-sm font-semibold text-neutral-900">
             {price}
-            {was && <span className="ml-1.5 text-xs font-normal text-neutral-400 line-through">{was}</span>}
+            {was && (
+              <span className="ml-1.5 text-xs font-normal text-neutral-400 line-through">
+                {was}
+              </span>
+            )}
           </p>
         )}
         {detailExcerpt && <p className="tile__detail-text">{detailExcerpt}</p>}
@@ -348,7 +360,7 @@ export function ProfileStudioSections({
       productCategories
         .filter((c) => shopProducts.some((p) => p.category_id === c.id))
         .map((c) => ({ id: c.id, label: c.name })),
-    [productCategories, shopProducts]
+    [productCategories, shopProducts],
   )
   const shopFilter = usePlaylistSectionFilter({
     items: shopProducts,
@@ -365,9 +377,9 @@ export function ProfileStudioSections({
   const sortedPlaylistEvents = useMemo(
     () =>
       [...playlistEvents].sort(
-        (a, b) => new Date(a.start_at).getTime() - new Date(b.start_at).getTime()
+        (a, b) => new Date(a.start_at).getTime() - new Date(b.start_at).getTime(),
       ),
-    [playlistEvents]
+    [playlistEvents],
   )
   const eventFilter = usePlaylistSectionFilter({
     items: sortedPlaylistEvents,
@@ -413,13 +425,19 @@ export function ProfileStudioSections({
           onCategoryChange={shopFilter.setActiveCategory}
         />
         {shopFilter.filteredItems.length === 0 ? (
-          <p className="m-0 mt-4 text-sm text-neutral-500">Aucun produit ne correspond à votre recherche.</p>
+          <p className="m-0 mt-4 text-sm text-neutral-500">
+            Aucun produit ne correspond à votre recherche.
+          </p>
         ) : (
           <div className="grid-tiles playlist-section__grid">
             {shopFilter.filteredItems.map((p) => (
               <ProductTile
                 key={p.id}
-                href={p.slug ? `${detailBase}/shop/${p.slug}?preview=${dashboardBaseUrl ? 'dashboard' : '1'}` : null}
+                href={
+                  p.slug
+                    ? `${detailBase}/shop/${p.slug}?preview=${dashboardBaseUrl ? 'dashboard' : '1'}`
+                    : null
+                }
                 editHref={dashboardBaseUrl ? `${dashboardBaseUrl}/products/${p.id}` : undefined}
                 title={p.title}
                 detailExcerpt={p.detailExcerpt}
@@ -456,13 +474,19 @@ export function ProfileStudioSections({
           onCategoryChange={serviceFilter.setActiveCategory}
         />
         {serviceFilter.filteredItems.length === 0 ? (
-          <p className="m-0 mt-4 text-sm text-neutral-500">Aucun service ne correspond à votre recherche.</p>
+          <p className="m-0 mt-4 text-sm text-neutral-500">
+            Aucun service ne correspond à votre recherche.
+          </p>
         ) : (
           <div className="grid-tiles playlist-section__grid">
             {serviceFilter.filteredItems.map((s) => (
               <ProductTile
                 key={s.id}
-                href={s.slug ? `${detailBase}/services/${s.slug}?preview=${dashboardBaseUrl ? 'dashboard' : '1'}` : null}
+                href={
+                  s.slug
+                    ? `${detailBase}/services/${s.slug}?preview=${dashboardBaseUrl ? 'dashboard' : '1'}`
+                    : null
+                }
                 editHref={dashboardBaseUrl ? `${dashboardBaseUrl}/services/${s.id}` : undefined}
                 title={s.title}
                 detailExcerpt={s.detailExcerpt}
@@ -499,14 +523,22 @@ export function ProfileStudioSections({
           onCategoryChange={eventFilter.setActiveCategory}
         />
         {eventFilter.filteredItems.length === 0 ? (
-          <p className="m-0 mt-4 text-sm text-neutral-500">Aucun événement ne correspond à votre recherche.</p>
+          <p className="m-0 mt-4 text-sm text-neutral-500">
+            Aucun événement ne correspond à votre recherche.
+          </p>
         ) : (
           <div className="event-list">
             {eventFilter.filteredItems.map((ev) => (
               <EventListRow
                 key={ev.id}
-                href={ev.slug ? `${detailBase}/events/${ev.slug}?preview=${dashboardBaseUrl ? 'dashboard' : '1'}` : null}
-                editHref={!readOnly && dashboardBaseUrl ? `${dashboardBaseUrl}/events/${ev.id}` : undefined}
+                href={
+                  ev.slug
+                    ? `${detailBase}/events/${ev.slug}?preview=${dashboardBaseUrl ? 'dashboard' : '1'}`
+                    : null
+                }
+                editHref={
+                  !readOnly && dashboardBaseUrl ? `${dashboardBaseUrl}/events/${ev.id}` : undefined
+                }
                 onDelete={
                   !readOnly && dashboardBaseUrl
                     ? () => handleDeleteEvent({ id: ev.id, title: ev.title })
@@ -559,7 +591,7 @@ export function ProfileStudioSections({
               onUpdated={(updated) => onPublicationUpdated?.(updated)}
               onDeleted={(id) => onPublicationDeleted?.(id)}
             />
-          )
+          ),
         )}
       </div>
     )
@@ -587,7 +619,9 @@ export function ProfileStudioSections({
             if (block.type === 'text') {
               return (
                 <article key={i} className="widget widget--filled">
-                  <p className="m-0 text-sm leading-relaxed text-neutral-600 whitespace-pre-wrap">{block.content}</p>
+                  <p className="m-0 text-sm leading-relaxed text-neutral-600 whitespace-pre-wrap">
+                    {block.content}
+                  </p>
                 </article>
               )
             }
@@ -596,7 +630,9 @@ export function ProfileStudioSections({
                 <article key={i} className="widget widget--filled">
                   <ul className="m-0 text-sm leading-relaxed text-neutral-600 list-disc pl-5 space-y-1">
                     {block.items.map((item, j) => (
-                      <li key={j} className="pl-1">{item}</li>
+                      <li key={j} className="pl-1">
+                        {item}
+                      </li>
                     ))}
                   </ul>
                 </article>

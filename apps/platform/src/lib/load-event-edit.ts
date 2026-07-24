@@ -26,8 +26,8 @@ export async function loadEventEditData(client: Client, entityId: string, eventI
     (code) =>
       code.applies_to === 'all_events' ||
       (code.discount_code_events ?? []).some(
-        (row: { event_id: string }) => row.event_id === eventId
-      )
+        (row: { event_id: string }) => row.event_id === eventId,
+      ),
   )
 
   return {

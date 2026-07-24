@@ -50,7 +50,10 @@ export default async function ServiceDetailRoute({ params, searchParams }: PageP
   return (
     <>
       <ServiceSchemaJsonLd data={data} />
-      <ServiceDetailPage data={data} embedMode={preview === 'dashboard' ? 'dashboard' : preview === '1'} />
+      <ServiceDetailPage
+        data={data}
+        embedMode={preview === 'dashboard' ? 'dashboard' : preview === '1'}
+      />
       <TrackPageView
         events={[
           {

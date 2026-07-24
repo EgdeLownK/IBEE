@@ -20,11 +20,7 @@ import {
   type TeamPageData,
   type TeamRoleDefinition,
 } from '@/lib/team-data'
-import {
-  TeamEditMemberRoleDialog,
-  TeamInviteDialog,
-  TeamRoleConfigDialog,
-} from './TeamDialogs'
+import { TeamEditMemberRoleDialog, TeamInviteDialog, TeamRoleConfigDialog } from './TeamDialogs'
 
 type Props = {
   data: TeamPageData
@@ -35,7 +31,9 @@ export function TeamDashboard({ data }: Props) {
   const projectLabel = activeProject.name
   const [isPending, startTransition] = useTransition()
 
-  const [roles, setRoles] = useState<TeamRoleDefinition[]>(data.roles.map((role) => cloneRole(role)))
+  const [roles, setRoles] = useState<TeamRoleDefinition[]>(
+    data.roles.map((role) => cloneRole(role)),
+  )
   const [members, setMembers] = useState<TeamMember[]>(data.members)
   const [pending, setPending] = useState(data.pending)
   const [actionError, setActionError] = useState<string | null>(null)
@@ -83,7 +81,7 @@ export function TeamDashboard({ data }: Props) {
           return
         }
         setMembers((prev) =>
-          prev.map((member) => (member.id === memberId ? { ...member, roleId } : member))
+          prev.map((member) => (member.id === memberId ? { ...member, roleId } : member)),
         )
       })
     })

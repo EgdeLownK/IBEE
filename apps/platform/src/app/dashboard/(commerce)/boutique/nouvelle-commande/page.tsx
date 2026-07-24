@@ -8,7 +8,8 @@ export default async function NouvelleCommandePage() {
   if (!ctx) redirect('/login')
 
   const capabilities = await getActivityCapabilities(ctx.supabase, ctx.entity.id)
-  if (!isActivityModuleEnabled(capabilities, 'shop')) redirect(resolveActivityLandingPath(capabilities))
+  if (!isActivityModuleEnabled(capabilities, 'shop'))
+    redirect(resolveActivityLandingPath(capabilities))
 
   redirect('/dashboard/boutique?overlay=order')
 }
