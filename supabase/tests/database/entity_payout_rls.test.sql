@@ -23,13 +23,13 @@ insert into public.entity_payout_schedules (id, entity_id, recurrence, next_run_
   ('11100000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-00000000000a', 'monthly', now() + interval '1 month'),
   ('22200000-0000-0000-0000-000000000002', 'b0000000-0000-0000-0000-00000000000b', 'monthly', now() + interval '1 month');
 
-insert into public.entity_payout_allocations (id, schedule_id, entity_id, recipient_type, amount_type, amount_value) values
-  ('33300000-0000-0000-0000-000000000003', '11100000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-00000000000a', 'owner', 'percent', 100),
-  ('44400000-0000-0000-0000-000000000004', '22200000-0000-0000-0000-000000000002', 'b0000000-0000-0000-0000-00000000000b', 'owner', 'percent', 100);
+insert into public.entity_payout_allocations (id, schedule_id, entity_id, recipient_type, amount_type, amount_value, next_run_at) values
+  ('33300000-0000-0000-0000-000000000003', '11100000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-00000000000a', 'owner', 'percent', 100, now() + interval '1 month'),
+  ('44400000-0000-0000-0000-000000000004', '22200000-0000-0000-0000-000000000002', 'b0000000-0000-0000-0000-00000000000b', 'owner', 'percent', 100, now() + interval '1 month');
 
-insert into public.entity_payout_transfers (id, entity_id, schedule_id, recipient_type, recipient_name, recipient_email, period_start, period_end, amount_cents) values
-  ('55500000-0000-0000-0000-000000000005', 'a0000000-0000-0000-0000-00000000000a', '11100000-0000-0000-0000-000000000001', 'owner', 'Owner A', 'owner-a@test.local', now() - interval '1 month', now(), 10000),
-  ('66600000-0000-0000-0000-000000000006', 'b0000000-0000-0000-0000-00000000000b', '22200000-0000-0000-0000-000000000002', 'owner', 'Owner B', 'owner-b@test.local', now() - interval '1 month', now(), 20000);
+insert into public.entity_payout_transfers (id, entity_id, schedule_id, recipient_type, recipient_name, recipient_email, period_start, period_end, amount_cents, scheduled_at) values
+  ('55500000-0000-0000-0000-000000000005', 'a0000000-0000-0000-0000-00000000000a', '11100000-0000-0000-0000-000000000001', 'owner', 'Owner A', 'owner-a@test.local', now() - interval '1 month', now(), 10000, now()),
+  ('66600000-0000-0000-0000-000000000006', 'b0000000-0000-0000-0000-00000000000b', '22200000-0000-0000-0000-000000000002', 'owner', 'Owner B', 'owner-b@test.local', now() - interval '1 month', now(), 20000, now());
 
 -- ============================================================
 -- entity_payout_schedules — couverture complète
@@ -136,7 +136,7 @@ select results_eq(
 );
 
 select throws_ok(
-  $$insert into public.entity_payout_allocations (schedule_id, entity_id, recipient_type, amount_type, amount_value) values ('22200000-0000-0000-0000-000000000002', 'a0000000-0000-0000-0000-00000000000a', 'owner', 'percent', 100)$$,
+  $$insert into public.entity_payout_allocations (schedule_id, entity_id, recipient_type, amount_type, amount_value, next_run_at) values ('22200000-0000-0000-0000-000000000002', 'a0000000-0000-0000-0000-00000000000a', 'owner', 'percent', 100, now())$$,
   '42501',
   'new row violates row-level security policy for table "entity_payout_allocations"',
   'allocations — autre user (B) : ne peut pas créer d''allocation au nom de l''entity A'
@@ -155,7 +155,7 @@ select results_eq(
 );
 
 select throws_ok(
-  $$insert into public.entity_payout_transfers (entity_id, recipient_type, recipient_name, recipient_email, period_start, period_end, amount_cents) values ('a0000000-0000-0000-0000-00000000000a', 'owner', 'Hack', 'hack@test.local', now(), now(), 1)$$,
+  $$insert into public.entity_payout_transfers (entity_id, recipient_type, recipient_name, recipient_email, period_start, period_end, amount_cents, scheduled_at) values ('a0000000-0000-0000-0000-00000000000a', 'owner', 'Hack', 'hack@test.local', now(), now(), 1, now())$$,
   '42501',
   'new row violates row-level security policy for table "entity_payout_transfers"',
   'transfers — anonyme : ne peut pas créer de virement'
