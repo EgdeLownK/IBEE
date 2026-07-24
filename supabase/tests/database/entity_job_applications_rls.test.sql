@@ -50,7 +50,7 @@ select results_eq(
 );
 
 select lives_ok(
-  $$insert into public.entity_job_applications (offer_id, first_name, last_name, email) values ('f0000000-0000-0000-0000-00000000000a', 'Anon', 'App', 'anon@test.local')$$,
+  $$insert into public.entity_job_applications (id, offer_id, first_name, last_name, email) values ('99900000-0000-0000-0000-000000000009', 'f0000000-0000-0000-0000-00000000000a', 'Anon', 'App', 'anon@test.local')$$,
   'anonyme : peut candidater sur une offre active (candidature publique)'
 );
 
@@ -91,8 +91,8 @@ set local request.jwt.claim.sub = 'c0000000-0000-0000-0000-000000000003';
 
 select results_eq(
   $$select id from public.entity_job_applications order by id$$,
-  ARRAY['11100000-0000-0000-0000-000000000001'::uuid, '22200000-0000-0000-0000-000000000002'::uuid],
-  'équipe (A) : voit toutes les candidatures des offres de son entity'
+  ARRAY['11100000-0000-0000-0000-000000000001'::uuid, '22200000-0000-0000-0000-000000000002'::uuid, '99900000-0000-0000-0000-000000000009'::uuid],
+  'équipe (A) : voit toutes les candidatures des offres de son entity (y compris celle de l''anonyme)'
 );
 
 select lives_ok(

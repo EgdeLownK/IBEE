@@ -5,6 +5,14 @@
 -- Couverture complète (SELECT/INSERT/UPDATE/DELETE) sur `schedules` ; les 2
 -- autres tables suivent exactement le même pattern, couverture ciblée
 -- (SELECT + une écriture) pour confirmer que le scoping tient aussi là.
+--
+-- Note d'implémentation : `request.jwt.claim.sub` reste actif tant qu'il
+-- n'est pas explicitement réinitialisé (changer `role` seul ne le vide pas) —
+-- chaque retour à `anon` après un passage authentifié doit faire un `reset`
+-- explicite, sinon auth.uid() continue de résoudre l'identité précédente.
+-- Le DELETE du schedule (étape "cleanup") est placé tout à la fin du fichier :
+-- `entity_payout_allocations.schedule_id` a un ON DELETE CASCADE dessus, le
+-- supprimer plus tôt aurait fait disparaître l'allocation testée juste après.
 begin;
 create extension if not exists pgtap with schema extensions;
 
@@ -32,11 +40,12 @@ insert into public.entity_payout_transfers (id, entity_id, schedule_id, recipien
   ('66600000-0000-0000-0000-000000000006', 'b0000000-0000-0000-0000-00000000000b', '22200000-0000-0000-0000-000000000002', 'owner', 'Owner B', 'owner-b@test.local', now() - interval '1 month', now(), 20000, now());
 
 -- ============================================================
--- entity_payout_schedules — couverture complète
+-- entity_payout_schedules — couverture complète (sauf delete, en fin de fichier)
 -- ============================================================
 
 -- Cas anonyme.
 set local role anon;
+reset request.jwt.claim.sub;
 
 select results_eq(
   $$select count(*) from public.entity_payout_schedules$$,
@@ -87,19 +96,12 @@ select results_eq(
   'schedules — autre user (B) : ne peut pas supprimer le planning de A (0 ligne affectée)'
 );
 
--- Cleanup owner (A).
-set local request.jwt.claim.sub = 'a0000000-0000-0000-0000-00000000000a';
-
-select lives_ok(
-  $$delete from public.entity_payout_schedules where id = '11100000-0000-0000-0000-000000000001'$$,
-  'schedules — owner (A) : peut supprimer le planning de sa propre entity'
-);
-
 -- ============================================================
 -- entity_payout_allocations — même pattern, couverture ciblée
 -- ============================================================
 
 set local role anon;
+reset request.jwt.claim.sub;
 
 select results_eq(
   $$select count(*) from public.entity_payout_allocations$$,
@@ -147,6 +149,7 @@ select throws_ok(
 -- ============================================================
 
 set local role anon;
+reset request.jwt.claim.sub;
 
 select results_eq(
   $$select count(*) from public.entity_payout_transfers$$,
@@ -193,6 +196,19 @@ select results_eq(
   $$delete from public.entity_payout_transfers where id = '55500000-0000-0000-0000-000000000005' returning id$$,
   ARRAY[]::uuid[],
   'transfers — autre user (B) : ne peut pas supprimer le virement de A (0 ligne affectée)'
+);
+
+-- ============================================================
+-- Cleanup final : owner (A) supprime son propre schedule (dernier, pour ne
+-- pas déclencher le cascade sur l'allocation avant que celle-ci soit testée).
+-- ============================================================
+
+set local role authenticated;
+set local request.jwt.claim.sub = 'a0000000-0000-0000-0000-00000000000a';
+
+select lives_ok(
+  $$delete from public.entity_payout_schedules where id = '11100000-0000-0000-0000-000000000001'$$,
+  'schedules — owner (A) : peut supprimer le planning de sa propre entity'
 );
 
 select * from finish();
