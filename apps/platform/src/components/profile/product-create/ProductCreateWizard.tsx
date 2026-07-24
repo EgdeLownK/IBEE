@@ -11,7 +11,12 @@ import { StepEssentials } from './steps/StepEssentials'
 import { StepFaq } from './steps/StepFaq'
 import { StepTypeSelect } from './steps/StepTypeSelect'
 import { StepTypeSpecific } from './steps/StepTypeSpecific'
-import type { CreatedShopProduct, ProductCategoryOption, ProductCreateFormState, ProductType } from './types'
+import type {
+  CreatedShopProduct,
+  ProductCategoryOption,
+  ProductCreateFormState,
+  ProductType,
+} from './types'
 import {
   buildPayload,
   createInitialFormState,
@@ -88,13 +93,21 @@ export function ProductCreateWizard({
       return
     }
     if (form.step < 4) {
-      patchForm({ step: (form.step + 1) as ProductCreateFormState['step'], fieldErrors: {}, globalError: '' })
+      patchForm({
+        step: (form.step + 1) as ProductCreateFormState['step'],
+        fieldErrors: {},
+        globalError: '',
+      })
     }
   }
 
   function goPrev() {
     if (form.step <= 1) return
-    patchForm({ step: (form.step - 1) as ProductCreateFormState['step'], fieldErrors: {}, globalError: '' })
+    patchForm({
+      step: (form.step - 1) as ProductCreateFormState['step'],
+      fieldErrors: {},
+      globalError: '',
+    })
   }
 
   function handleSubmit(e: React.FormEvent) {
@@ -141,11 +154,7 @@ export function ProductCreateWizard({
         type: p.type as CreatedShopProduct['type'],
         physical_stock_quantity: p.physical_stock_quantity,
       })
-      toast.success(
-        form.publishMode === 'schedule'
-          ? 'Produit programmé'
-          : 'Produit publié'
-      )
+      toast.success(form.publishMode === 'schedule' ? 'Produit programmé' : 'Produit publié')
       // On success, we always just close the wizard completely,
       // without returning to the AddContentDialog.
       onClose()
@@ -178,7 +187,7 @@ export function ProductCreateWizard({
               >
                 <span className="pco__step-num">{n}</span>
                 <span className="pco__step-label">
-                  {n === 1 ? "Présentation" : n === 2 ? step2 : n === 3 ? 'Description' : 'FAQ'}
+                  {n === 1 ? 'Présentation' : n === 2 ? step2 : n === 3 ? 'Description' : 'FAQ'}
                 </span>
               </span>
             ))}
@@ -188,7 +197,12 @@ export function ProductCreateWizard({
         <form className="pco__form" onSubmit={handleSubmit} noValidate>
           {Object.entries(form.fieldErrors).filter(([_, v]) => v !== '').length > 0 ? (
             <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 mx-4 mt-4 rounded-md text-sm font-medium">
-              Attention, des champs sont invalides ou manquants : {Object.entries(form.fieldErrors).filter(([_, v]) => v !== '').map(([k]) => k).join(', ')}. Vérifiez tous les onglets.
+              Attention, des champs sont invalides ou manquants :{' '}
+              {Object.entries(form.fieldErrors)
+                .filter(([_, v]) => v !== '')
+                .map(([k]) => k)
+                .join(', ')}
+              . Vérifiez tous les onglets.
             </div>
           ) : null}
 
@@ -214,9 +228,7 @@ export function ProductCreateWizard({
             {form.step === 3 ? (
               <StepDescription form={form} updateForm={updateForm} onChange={patchForm} />
             ) : null}
-            {form.step === 4 ? (
-              <StepFaq form={form} onChange={patchForm} />
-            ) : null}
+            {form.step === 4 ? <StepFaq form={form} onChange={patchForm} /> : null}
           </div>
 
           <footer className="pco__actions">
@@ -247,8 +259,8 @@ export function ProductCreateWizard({
                       onChange={(e) => patchForm({ scheduleDate: e.target.value })}
                       className="pco__input text-sm py-1 px-2 h-8 min-h-0 w-auto"
                     />
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       className="pco__btn pco__btn--ghost !h-8 !px-2"
                       onClick={() => patchForm({ publishMode: 'publish', scheduleDate: '' })}
                     >
@@ -258,8 +270,8 @@ export function ProductCreateWizard({
                       type="button"
                       className="pco__btn pco__btn--primary !h-8 !px-3"
                       onClick={(e) => {
-                         if (!form.scheduleDate) return
-                         handleSubmit(e as any)
+                        if (!form.scheduleDate) return
+                        handleSubmit(e as any)
                       }}
                       disabled={pending || !form.scheduleDate}
                     >
@@ -269,14 +281,19 @@ export function ProductCreateWizard({
                   </div>
                 ) : (
                   <>
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       className="pco__btn pco__btn--secondary"
                       onClick={() => patchForm({ publishMode: 'schedule' })}
                     >
                       Programmer
                     </button>
-                    <button type="submit" className="pco__btn pco__btn--primary" disabled={pending} onClick={() => patchForm({ publishMode: 'publish' })}>
+                    <button
+                      type="submit"
+                      className="pco__btn pco__btn--primary"
+                      disabled={pending}
+                      onClick={() => patchForm({ publishMode: 'publish' })}
+                    >
                       {pending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                       <span>{pending ? 'Création...' : 'Créer le produit'}</span>
                     </button>
@@ -288,6 +305,6 @@ export function ProductCreateWizard({
         </form>
       </div>
     </div>,
-    document.body
+    document.body,
   )
 }

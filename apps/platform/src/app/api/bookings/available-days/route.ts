@@ -33,7 +33,7 @@ export async function GET(request: Request) {
           .then((slots) => {
             if (slots.length > 0) availableDays.push(dateStr)
           })
-          .catch(() => {})
+          .catch(() => {}),
       )
     }
 
@@ -41,7 +41,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json(
       { days: availableDays.sort() },
-      { headers: { 'Cache-Control': 'public, max-age=300' } }
+      { headers: { 'Cache-Control': 'public, max-age=300' } },
     )
   } catch (err) {
     console.error('[api/bookings/available-days]', err)

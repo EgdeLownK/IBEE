@@ -17,12 +17,17 @@ export function ServiceDetailPage({ data: initialData, embedMode = false }: Prop
   const data = embedMode
     ? mapServiceDataForEmbed(initialData, embedMode === 'dashboard' ? 'dashboard' : 'preview')
     : initialData
-  const subtitle = [`${data.service.duration_minutes} min`, data.locLabel].filter(Boolean).join(' · ')
+  const subtitle = [`${data.service.duration_minutes} min`, data.locLabel]
+    .filter(Boolean)
+    .join(' · ')
 
   return (
     <main className="profile-page">
       <ProfileShell>
-        <DetailTopBar backHref={data.backHref} title={`Voir le profil de ${data.entity.display_name}`} />
+        <DetailTopBar
+          backHref={data.backHref}
+          title={`Voir le profil de ${data.entity.display_name}`}
+        />
 
         <DetailEntityStrip
           displayName={data.entity.display_name}
@@ -51,7 +56,10 @@ export function ServiceDetailPage({ data: initialData, embedMode = false }: Prop
         />
 
         <div className="product-related pb-2">
-          <RelatedContent title={`Autres contenus de ${data.entity.display_name}`} items={data.profileRelated} />
+          <RelatedContent
+            title={`Autres contenus de ${data.entity.display_name}`}
+            items={data.profileRelated}
+          />
           <RelatedContent title="À découvrir aussi" items={data.similarRelated} />
         </div>
 

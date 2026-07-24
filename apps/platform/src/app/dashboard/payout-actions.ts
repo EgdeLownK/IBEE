@@ -16,9 +16,7 @@ import {
   type PayoutRecurrence,
 } from '@ibee/supabase'
 
-type ActionResult<T = undefined> =
-  | { ok: true; data: T }
-  | { ok: false; error: string }
+type ActionResult<T = undefined> = { ok: true; data: T } | { ok: false; error: string }
 
 async function requireOwnerEntity() {
   const supabase = await createClient()
@@ -42,7 +40,7 @@ function parseAllocations(
     startDate?: string
     endDate?: string | null
     recurrence?: 'weekly' | 'monthly' | 'quarterly'
-  }>
+  }>,
 ): PayoutAllocationInput[] {
   return raw
     .filter((row) => row.amountValue > 0)
@@ -129,15 +127,10 @@ export async function createOneTimePayoutAction(input: {
   if (validationError) return { ok: false, error: validationError }
 
   try {
-    const transfers = await createOneTimePayoutTransfers(
-      ctx.supabase,
-      ctx.entity.id,
-      allocations,
-      {
-        name: ctx.entity.display_name,
-        email: ctx.user.email ?? '',
-      }
-    )
+    const transfers = await createOneTimePayoutTransfers(ctx.supabase, ctx.entity.id, allocations, {
+      name: ctx.entity.display_name,
+      email: ctx.user.email ?? '',
+    })
     revalidatePath('/dashboard/revenus')
     return { ok: true, data: { transferIds: transfers.map((transfer) => transfer.id) } }
   } catch (err) {
@@ -196,9 +189,7 @@ export async function exportPayoutTransfersAction(): Promise<
   }
 }
 
-export async function completePayoutTransfersAction(
-  transferIds: string[]
-): Promise<ActionResult> {
+export async function completePayoutTransfersAction(transferIds: string[]): Promise<ActionResult> {
   const ctx = await requireOwnerEntity()
   if (!ctx.ok) return ctx
 

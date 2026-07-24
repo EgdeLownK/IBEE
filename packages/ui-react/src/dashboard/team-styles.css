@@ -477,7 +477,9 @@
   font-weight: 500;
   color: var(--color-neutral-600);
   cursor: pointer;
-  transition: background 120ms, border-color 120ms;
+  transition:
+    background 120ms,
+    border-color 120ms;
 }
 
 .team-role-config-add-btn:hover {

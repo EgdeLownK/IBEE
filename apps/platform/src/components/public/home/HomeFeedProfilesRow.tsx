@@ -18,7 +18,14 @@ export function HomeFeedProfilesRow({ items }: Props) {
         {items.map((item) => (
           <Link key={item.slug} href={`/${item.slug}`} className="home-feed-profile-card">
             <span className="home-feed-profile-card__avatar" aria-hidden="true">
-              <Image src={item.avatarUrl} alt="" width={64} height={64} className="h-full w-full object-cover" loading="lazy" />
+              <Image
+                src={item.avatarUrl}
+                alt=""
+                width={64}
+                height={64}
+                className="h-full w-full object-cover"
+                loading="lazy"
+              />
             </span>
             <span className="home-feed-profile-card__name truncate">{item.displayName}</span>
             {item.role ? (

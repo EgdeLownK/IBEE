@@ -20,12 +20,7 @@ interface Props {
   onCancel: () => void
 }
 
-export function BannerImageCropDialog({
-  open,
-  imageUrl,
-  onComplete,
-  onCancel,
-}: Props) {
+export function BannerImageCropDialog({ open, imageUrl, onComplete, onCancel }: Props) {
   const [crop, setCrop] = useState({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1)
   const [aspect, setAspect] = useState(16 / 9)
@@ -79,7 +74,7 @@ export function BannerImageCropDialog({
         <h3 id="hist-banner-crop-title" className="hw-banner-crop__title">
           Recadrer l&apos;image
         </h3>
-        
+
         {/* Aspect Ratio Selector */}
         <div className="flex gap-4 px-6 pt-4 pb-2 justify-center">
           <button
@@ -102,7 +97,10 @@ export function BannerImageCropDialog({
           Zoomez et déplacez l&apos;image pour ajuster le cadre.
         </p>
 
-        <div className="relative w-full bg-neutral-900" style={{ height: '50vh', minHeight: '300px' }}>
+        <div
+          className="relative w-full bg-neutral-900"
+          style={{ height: '50vh', minHeight: '300px' }}
+        >
           {imageUrl && (
             <Cropper
               image={imageUrl}
@@ -115,7 +113,7 @@ export function BannerImageCropDialog({
             />
           )}
         </div>
-        
+
         {/* Zoom Slider */}
         <div className="px-6 py-4 flex items-center gap-4">
           <span className="text-sm text-neutral-500">Zoom</span>
@@ -134,17 +132,17 @@ export function BannerImageCropDialog({
         </div>
 
         <footer className="hw-banner-crop__foot mt-0">
-          <button 
-            type="button" 
-            className="hist-edit__btn hist-edit__btn--ghost" 
+          <button
+            type="button"
+            className="hist-edit__btn hist-edit__btn--ghost"
             onClick={onCancel}
             disabled={isProcessing}
           >
             Annuler
           </button>
-          <button 
-            type="button" 
-            className="hist-edit__btn hist-edit__btn--primary" 
+          <button
+            type="button"
+            className="hist-edit__btn hist-edit__btn--primary"
             onClick={handleConfirm}
             disabled={isProcessing || !croppedAreaPixels}
           >
@@ -153,6 +151,6 @@ export function BannerImageCropDialog({
         </footer>
       </div>
     </div>,
-    document.body
+    document.body,
   )
 }

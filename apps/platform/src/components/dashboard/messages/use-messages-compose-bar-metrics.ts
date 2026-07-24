@@ -21,11 +21,11 @@ function syncComposeBarMetrics() {
   document.documentElement.setAttribute('data-messages-compose-bar', 'true')
   document.documentElement.style.setProperty(
     '--messages-compose-bar-max-width',
-    `${Math.round(rect.width)}px`
+    `${Math.round(rect.width)}px`,
   )
   document.documentElement.style.setProperty(
     '--messages-compose-bar-center-x',
-    `${Math.round(rect.left + rect.width / 2)}px`
+    `${Math.round(rect.left + rect.width / 2)}px`,
   )
 }
 

@@ -98,8 +98,7 @@ export function EventAddParticipantOverlay({ eventId, open, onClose }: Props) {
       return !ticket.activityId || ticket.activityId === activityId
     }) ?? []
 
-  const showBilletterieSection =
-    (formData?.places.length ?? 0) > 0 || visibleTicketTypes.length > 0
+  const showBilletterieSection = (formData?.places.length ?? 0) > 0 || visibleTicketTypes.length > 0
 
   function resetFormFields() {
     setName('')
@@ -190,8 +189,8 @@ export function EventAddParticipantOverlay({ eventId, open, onClose }: Props) {
                 </div>
                 <h3 className="event-manual-reg__success-title">Participant inscrit</h3>
                 <p className="event-manual-reg__success-text">
-                  L’inscription est enregistrée sans paiement en ligne. Communiquez ce code au participant
-                  pour le check-in.
+                  L’inscription est enregistrée sans paiement en ligne. Communiquez ce code au
+                  participant pour le check-in.
                 </p>
                 {lastTicketCode ? (
                   <div className="event-manual-reg__ticket">
@@ -203,7 +202,11 @@ export function EventAddParticipantOverlay({ eventId, open, onClose }: Props) {
             </div>
             <footer className="pco__actions">
               <div className="pco__actions-start">
-                <button type="button" className="pco__btn pco__btn--ghost" onClick={resetFormFields}>
+                <button
+                  type="button"
+                  className="pco__btn pco__btn--ghost"
+                  onClick={resetFormFields}
+                >
                   Ajouter un autre
                 </button>
               </div>
@@ -297,7 +300,10 @@ export function EventAddParticipantOverlay({ eventId, open, onClose }: Props) {
                 </section>
 
                 {showBilletterieSection ? (
-                  <section className="event-manual-reg__section" aria-labelledby="manual-reg-ticket">
+                  <section
+                    className="event-manual-reg__section"
+                    aria-labelledby="manual-reg-ticket"
+                  >
                     <h3 id="manual-reg-ticket" className="event-manual-reg__section-title">
                       <Ticket className="event-manual-reg__section-icon" aria-hidden="true" />
                       Billetterie
@@ -388,6 +394,6 @@ export function EventAddParticipantOverlay({ eventId, open, onClose }: Props) {
         )}
       </div>
     </div>,
-    document.body
+    document.body,
   )
 }

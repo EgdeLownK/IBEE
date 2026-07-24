@@ -7,11 +7,14 @@
     "lint": "turbo run lint",
     "type-check": "turbo run type-check",
     "test": "turbo run test",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "deadcode": "knip",
     "gen-types": "node scripts/gen-types.mjs"
   },
   "devDependencies": {
     "knip": "^6.4.1",
+    "prettier": "^3.4.2",
     "supabase": "^2.88.1",
     "turbo": "latest",
     "typescript": "^5.8.0"

@@ -83,7 +83,7 @@ export function formatWeekRangeLabel(weekStart: Date): string {
 }
 
 export function mapScheduleRows(
-  rows: Array<{ id: string; day_of_week: number; start_time: string; end_time: string }>
+  rows: Array<{ id: string; day_of_week: number; start_time: string; end_time: string }>,
 ): AvailabilityScheduleRow[] {
   return rows.map((row) => ({
     id: row.id,
@@ -101,7 +101,7 @@ export function mapExceptionRows(
     start_time: string | null
     end_time: string | null
     reason: string | null
-  }>
+  }>,
 ): AvailabilityExceptionRow[] {
   return rows.map((row) => ({
     id: row.id,
@@ -143,7 +143,7 @@ export function weeklyHoursToSchedules(days: WeeklyHoursDay[]) {
 
 export function groupBookingsByDay(
   bookings: ServiceBookingView[],
-  weekStart: Date
+  weekStart: Date,
 ): Map<string, ServiceBookingView[]> {
   const days = getWeekDays(weekStart)
   const map = new Map<string, ServiceBookingView[]>()
@@ -166,12 +166,14 @@ export function groupBookingsByDay(
 }
 
 export function formatBookingTime(iso: string): string {
-  return new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' }).format(new Date(iso))
+  return new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' }).format(
+    new Date(iso),
+  )
 }
 
 export function getExceptionForDate(
   exceptions: AvailabilityExceptionRow[],
-  isoDate: string
+  isoDate: string,
 ): AvailabilityExceptionRow | undefined {
   return exceptions.find((item) => item.date === isoDate)
 }

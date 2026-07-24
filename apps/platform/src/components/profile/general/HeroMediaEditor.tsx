@@ -187,7 +187,11 @@ export function HeroMediaEditor({
           >
             {avatar ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={avatar} alt={displayName} className="h-full w-full rounded-full object-cover" />
+              <img
+                src={avatar}
+                alt={displayName}
+                className="h-full w-full rounded-full object-cover"
+              />
             ) : (
               <span className="font-display text-3xl font-medium text-neutral-500">{initials}</span>
             )}

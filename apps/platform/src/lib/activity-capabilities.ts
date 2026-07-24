@@ -11,7 +11,7 @@ const MODULE_SECTION_KEYS: ActivityModuleKey[] = ['shop', 'appointments', 'event
 
 export async function getActivityCapabilities(
   client: Client,
-  entityId: string
+  entityId: string,
 ): Promise<ActivityCapabilitiesView> {
   const [states, eventsRes] = await Promise.all([
     listMenuSectionStates(client, entityId),
@@ -40,7 +40,7 @@ export function hasAnyActivityModule(capabilities: ActivityCapabilitiesView): bo
 
 export function isActivityModuleEnabled(
   capabilities: ActivityCapabilitiesView,
-  key: ActivityModuleKey
+  key: ActivityModuleKey,
 ): boolean {
   return capabilities[key]
 }

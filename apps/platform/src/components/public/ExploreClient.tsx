@@ -50,7 +50,7 @@ export function ExploreClient() {
 
     try {
       const res = await fetch(
-        `/api/search?q=${encodeURIComponent(searchQuery)}&offset=${append ? fromOffset : 0}`
+        `/api/search?q=${encodeURIComponent(searchQuery)}&offset=${append ? fromOffset : 0}`,
       )
       const data = (await res.json()) as { results: SearchResult[]; hasMore: boolean }
 
@@ -124,7 +124,9 @@ export function ExploreClient() {
           {state === 'initial' ? (
             <div className="flex flex-1 flex-col items-center justify-center px-6 py-12 text-center">
               <Compass className="mb-3 h-10 w-10 text-neutral-300" aria-hidden="true" />
-              <p className="text-sm text-neutral-500">Tape un nom, un métier ou une ville pour explorer.</p>
+              <p className="text-sm text-neutral-500">
+                Tape un nom, un métier ou une ville pour explorer.
+              </p>
             </div>
           ) : null}
 
@@ -172,7 +174,9 @@ export function ExploreClient() {
                       )}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-neutral-900">{r.display_name}</p>
+                      <p className="truncate text-sm font-medium text-neutral-900">
+                        {r.display_name}
+                      </p>
                       <p className="text-xs text-neutral-500">@{r.slug}</p>
                       {r.role ? <span className="text-xs text-neutral-600">{r.role}</span> : null}
                     </div>

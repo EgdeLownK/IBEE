@@ -41,7 +41,7 @@ export type ContactInfoPayload = {
 
 export async function saveContactInfoAction(payload: ContactInfoPayload) {
   if (payload.contact_email_public && !payload.contact_email?.trim()) {
-    return { ok: false as const, error: 'Renseigne une adresse email ou désactive l\'email.' }
+    return { ok: false as const, error: "Renseigne une adresse email ou désactive l'email." }
   }
   if (payload.contact_phone_public && !payload.contact_phone?.trim()) {
     return { ok: false as const, error: 'Renseigne un numéro ou désactive le téléphone.' }
@@ -87,7 +87,10 @@ export async function saveContactInfoAction(payload: ContactInfoPayload) {
   } catch (err) {
     console.error('[saveContactInfoAction]', err)
     const message =
-      err && typeof err === 'object' && 'message' in err && typeof (err as { message: unknown }).message === 'string'
+      err &&
+      typeof err === 'object' &&
+      'message' in err &&
+      typeof (err as { message: unknown }).message === 'string'
         ? (err as { message: string }).message
         : 'Enregistrement impossible.'
     return { ok: false as const, error: message }

@@ -20,23 +20,23 @@ const MAX_IMAGE_BYTES = 10 * 1024 * 1024
 const MAX_VIDEO_BYTES = 200 * 1024 * 1024
 
 function deriveTitle(content: string): string {
-  const line = content.split('\n').map((l) => l.trim()).find(Boolean) ?? ''
+  const line =
+    content
+      .split('\n')
+      .map((l) => l.trim())
+      .find(Boolean) ?? ''
   if (line.length > 0) return line.slice(0, 120)
   return 'Publication'
 }
 
 function appendPollToContent(
   content: string,
-  poll: { question: string; options: string[] } | null
+  poll: { question: string; options: string[] } | null,
 ): string {
   if (!poll || !poll.question.trim()) return content
   const opts = poll.options.map((o) => o.trim()).filter(Boolean)
   if (opts.length < 2) return content
-  const block =
-    '\n\n📊 ' +
-    poll.question.trim() +
-    '\n' +
-    opts.map((o) => '• ' + o).join('\n')
+  const block = '\n\n📊 ' + poll.question.trim() + '\n' + opts.map((o) => '• ' + o).join('\n')
   return (content.trim() + block).trim()
 }
 
@@ -56,7 +56,7 @@ export async function uploadPublicationMediaAction(formData: FormData) {
   }
 
   if (mediaType === 'image' && file.size > MAX_IMAGE_BYTES) {
-    return { ok: false as const, error: 'L\'image ne doit pas dépasser 10 Mo.' }
+    return { ok: false as const, error: "L'image ne doit pas dépasser 10 Mo." }
   }
   if (mediaType === 'video' && file.size > MAX_VIDEO_BYTES) {
     return { ok: false as const, error: 'La vidéo ne doit pas dépasser 200 Mo.' }
@@ -81,14 +81,14 @@ export async function uploadPublicationMediaAction(formData: FormData) {
 
     if (uploadError) {
       console.error('[uploadPublicationMediaAction]', uploadError)
-      return { ok: false as const, error: 'Erreur lors de l\'envoi du fichier.' }
+      return { ok: false as const, error: "Erreur lors de l'envoi du fichier." }
     }
 
     const { data } = supabase.storage.from('publication-media').getPublicUrl(path)
     return { ok: true as const, url: data.publicUrl, type: mediaType }
   } catch (err) {
     console.error('[uploadPublicationMediaAction]', err)
-    return { ok: false as const, error: 'Erreur lors de l\'envoi du fichier.' }
+    return { ok: false as const, error: "Erreur lors de l'envoi du fichier." }
   }
 }
 
@@ -118,7 +118,10 @@ export async function createPublicationAction(input: CreatePublicationInput) {
   const content = appendPollToContent(rawContent, poll)
 
   if (!content && media.length === 0) {
-    return { ok: false as const, error: 'Ajoute du texte, un média ou un sondage avant de publier.' }
+    return {
+      ok: false as const,
+      error: 'Ajoute du texte, un média ou un sondage avant de publier.',
+    }
   }
   if (content.length > 10000) {
     return { ok: false as const, error: 'Le texte ne peut pas dépasser 10 000 caractères.' }
@@ -139,7 +142,7 @@ export async function createPublicationAction(input: CreatePublicationInput) {
       supabase,
       entity.id,
       { title, content: content || null, status: 'published' },
-      media
+      media,
     )
 
     void purgeEntityCache(entity.slug, siteUrl())

@@ -68,7 +68,7 @@ export function EventParticipationCta({
 
   const availableActivities = useMemo(
     () => activities.filter((a) => a.statusAvailable && a.ticketTypes.length > 0),
-    [activities]
+    [activities],
   )
 
   const needsPlacePicker = hasActivities && availableActivities.length > 1
@@ -97,14 +97,20 @@ export function EventParticipationCta({
   if (registered) {
     if (messageEnabled) {
       return (
-        <Link href={messageHref} className="detail-entity-strip__cta detail-entity-strip__cta--dark">
+        <Link
+          href={messageHref}
+          className="detail-entity-strip__cta detail-entity-strip__cta--dark"
+        >
           <MessageCircle className="h-4 w-4" aria-hidden="true" />
           Message
         </Link>
       )
     }
     return (
-      <span className="detail-entity-strip__cta detail-entity-strip__cta--done" aria-disabled="true">
+      <span
+        className="detail-entity-strip__cta detail-entity-strip__cta--done"
+        aria-disabled="true"
+      >
         Inscrit
       </span>
     )
@@ -181,7 +187,7 @@ export function EventParticipationCta({
       }
 
       if (!res.ok) {
-        setError(data.error || 'Erreur lors de l\'inscription.')
+        setError(data.error || "Erreur lors de l'inscription.")
         setSubmitting(false)
         return
       }
@@ -271,7 +277,9 @@ export function EventParticipationCta({
             </header>
 
             <div className="event-place-panel__body">
-              <p className="event-place-panel__hint">Sélectionnez la session à laquelle vous souhaitez participer.</p>
+              <p className="event-place-panel__hint">
+                Sélectionnez la session à laquelle vous souhaitez participer.
+              </p>
               <div className="event-place-panel__list">
                 {availableActivities.map((activity) => (
                   <label

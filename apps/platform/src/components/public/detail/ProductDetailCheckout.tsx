@@ -38,7 +38,10 @@ export function ProductDetailCheckout({ data: initialData, embedMode = false }: 
     <main className="profile-page">
       <div className="flex justify-center items-start gap-8 mx-auto w-full max-w-[1152px] xl:px-8 lg:px-4">
         <ProfileShell>
-          <DetailTopBar backHref={data.backHref} title={`Voir le profil de ${data.entity.display_name}`} />
+          <DetailTopBar
+            backHref={data.backHref}
+            title={`Voir le profil de ${data.entity.display_name}`}
+          />
 
           <ProductDetail
             buyBoxSlot={
@@ -47,7 +50,7 @@ export function ProductDetailCheckout({ data: initialData, embedMode = false }: 
                 productSlug={data.product.slug}
                 variantId={checkout.variantId}
                 disabled={!checkout.canBuy}
-                label={checkout.isScheduled ? "Bientôt disponible" : "Acheter"}
+                label={checkout.isScheduled ? 'Bientôt disponible' : 'Acheter'}
               />
             }
             product={data.product}
@@ -65,7 +68,10 @@ export function ProductDetailCheckout({ data: initialData, embedMode = false }: 
           />
 
           <div className="product-related pb-2">
-            <RelatedContent title={`Autres contenus de ${data.entity.display_name}`} items={data.profileRelated} />
+            <RelatedContent
+              title={`Autres contenus de ${data.entity.display_name}`}
+              items={data.profileRelated}
+            />
             <RelatedContent title="À découvrir aussi" items={data.similarRelated} />
           </div>
 

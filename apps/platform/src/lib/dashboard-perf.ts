@@ -1,12 +1,7 @@
 import 'server-only'
 
 export type DashboardPerfBudgetKey =
-  | 'shell'
-  | 'analyse'
-  | 'analyse-action'
-  | 'site-shell'
-  | 'site-playlists'
-  | 'equipe'
+  'shell' | 'analyse' | 'analyse-action' | 'site-shell' | 'site-playlists' | 'equipe'
 
 /** Budgets cibles en prod (ms) — voir docs/plans/2026-06-10-dashboard-performance-globale.md */
 export const DASHBOARD_PERF_BUDGETS_MS: Record<DashboardPerfBudgetKey, number> = {
@@ -39,7 +34,7 @@ function budgetFor(label: string): number | undefined {
 export function logDashboardPerf(
   label: string,
   durationMs: number,
-  meta?: Record<string, string | number | boolean | null | undefined>
+  meta?: Record<string, string | number | boolean | null | undefined>,
 ) {
   if (!isDashboardPerfDebug()) return
 
@@ -48,10 +43,7 @@ export function logDashboardPerf(
   const overBudget = budget != null && rounded > budget
   const prefix = overBudget ? '[dashboard:perf:OVER]' : '[dashboard:perf]'
   const budgetHint = budget != null ? ` (budget ${budget} ms)` : ''
-  const metaSuffix =
-    meta && Object.keys(meta).length > 0
-      ? ` ${JSON.stringify(meta)}`
-      : ''
+  const metaSuffix = meta && Object.keys(meta).length > 0 ? ` ${JSON.stringify(meta)}` : ''
 
   console.info(`${prefix} ${label} ${rounded} ms${budgetHint}${metaSuffix}`)
 }
@@ -59,7 +51,7 @@ export function logDashboardPerf(
 export async function measureDashboardLoad<T>(
   label: string,
   fn: () => Promise<T>,
-  meta?: Record<string, string | number | boolean | null | undefined>
+  meta?: Record<string, string | number | boolean | null | undefined>,
 ): Promise<T> {
   if (!isDashboardPerfDebug()) return fn()
 

@@ -30,7 +30,8 @@ function mapPromoError(detail: string): string {
   if (detail.includes('promo_invalid')) return 'Code promo invalide.'
   if (detail.includes('promo_expired')) return 'Ce code promo a expiré.'
   if (detail.includes('promo_not_started')) return 'Ce code promo n’est pas encore actif.'
-  if (detail.includes('promo_not_applicable')) return 'Ce code promo ne s’applique pas à cet événement.'
+  if (detail.includes('promo_not_applicable'))
+    return 'Ce code promo ne s’applique pas à cet événement.'
   if (detail.includes('promo_min_purchase')) return 'Montant minimum non atteint pour ce code.'
   if (detail.includes('promo_max_uses')) return 'Ce code promo n’est plus disponible.'
   return 'Code promo invalide.'
@@ -41,7 +42,7 @@ export async function POST(request: Request) {
     if (!process.env.STRIPE_SECRET_KEY) {
       return NextResponse.json(
         { error: 'Le paiement en ligne n’est pas encore configuré.' },
-        { status: 503 }
+        { status: 503 },
       )
     }
 
@@ -88,7 +89,7 @@ export async function POST(request: Request) {
     if (priceCents <= 0) {
       return NextResponse.json(
         { error: 'Ce billet ne nécessite pas de paiement en ligne.' },
-        { status: 400 }
+        { status: 400 },
       )
     }
 
@@ -164,9 +165,10 @@ export async function POST(request: Request) {
   } catch (err: unknown) {
     console.error('[api/checkout/create-event-session]', err)
     const message = err instanceof Error ? err.message : ''
-    const detail = typeof err === 'object' && err !== null && 'details' in err
-      ? String((err as { details?: string }).details)
-      : message
+    const detail =
+      typeof err === 'object' && err !== null && 'details' in err
+        ? String((err as { details?: string }).details)
+        : message
 
     if (detail.includes('promo_')) {
       return NextResponse.json({ error: mapPromoError(detail) }, { status: 400 })
@@ -178,7 +180,7 @@ export async function POST(request: Request) {
       message.includes('event_full')
     return NextResponse.json(
       { error: isFull ? 'Plus de places disponibles pour ce billet.' : 'Erreur lors du paiement.' },
-      { status: isFull ? 409 : 400 }
+      { status: isFull ? 409 : 400 },
     )
   }
 }

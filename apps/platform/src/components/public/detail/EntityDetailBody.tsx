@@ -58,7 +58,10 @@ export function EntityDetailBody({
   hasNews = false,
   profileBaseHref,
 }: Props) {
-  const { trackRef, canPrev, canNext, scrollPrev, scrollNext } = useHorizontalCarousel(12, 'edb__slide')
+  const { trackRef, canPrev, canNext, scrollPrev, scrollNext } = useHorizontalCarousel(
+    12,
+    'edb__slide',
+  )
 
   return (
     <div className="edb">
@@ -111,9 +114,22 @@ export function EntityDetailBody({
             media.map((m, i) => (
               <div key={i} className="edb__slide carousel-slide">
                 {m.mediaType === 'video' ? (
-                  <video src={m.url} controls preload="metadata" playsInline className="h-full w-full bg-black object-cover" />
+                  <video
+                    src={m.url}
+                    controls
+                    preload="metadata"
+                    playsInline
+                    className="h-full w-full bg-black object-cover"
+                  />
                 ) : (
-                  <Image src={m.url} alt={m.alt ?? title} className="h-full w-full object-cover" width={800} height={600} loading="lazy" />
+                  <Image
+                    src={m.url}
+                    alt={m.alt ?? title}
+                    className="h-full w-full object-cover"
+                    width={800}
+                    height={600}
+                    loading="lazy"
+                  />
                 )}
               </div>
             ))

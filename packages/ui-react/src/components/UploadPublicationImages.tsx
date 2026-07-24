@@ -42,12 +42,13 @@ async function convertToWebP(file: File): Promise<{ blob: Blob; width: number; h
       const ctx = canvas.getContext('2d')!
       ctx.drawImage(img, 0, 0, width, height)
       canvas.toBlob(
-        (blob) => blob ? resolve({ blob, width, height }) : reject(new Error('Conversion WebP échouée')),
+        (blob) =>
+          blob ? resolve({ blob, width, height }) : reject(new Error('Conversion WebP échouée')),
         'image/webp',
-        0.85
+        0.85,
       )
     }
-    img.onerror = () => reject(new Error('Impossible de charger l\'image'))
+    img.onerror = () => reject(new Error("Impossible de charger l'image"))
     img.src = URL.createObjectURL(file)
   })
 }
@@ -89,10 +90,14 @@ export function UploadPublicationImages({
         const { blob: webpBlob, width, height } = await convertToWebP(item.file)
         const webpFile = new File([webpBlob], `${item.id}.webp`, { type: 'image/webp' })
         const url = await onUpload(webpFile)
-        current = current.map((img) => img.id === item.id ? { ...img, uploading: false, uploadedUrl: url, width, height } : img)
+        current = current.map((img) =>
+          img.id === item.id ? { ...img, uploading: false, uploadedUrl: url, width, height } : img,
+        )
         onImagesChange([...current])
       } catch {
-        current = current.map((img) => img.id === item.id ? { ...img, uploading: false, error: 'Échec de l\'upload' } : img)
+        current = current.map((img) =>
+          img.id === item.id ? { ...img, uploading: false, error: "Échec de l'upload" } : img,
+        )
         onImagesChange([...current])
       }
     }
@@ -154,7 +159,9 @@ export function UploadPublicationImages({
               {/* Error state */}
               {img.error && (
                 <div className="absolute inset-0 flex items-center justify-center bg-error/10">
-                  <span className="rounded-full bg-error px-2 py-0.5 text-[10px] font-medium text-white">Erreur</span>
+                  <span className="rounded-full bg-error px-2 py-0.5 text-[10px] font-medium text-white">
+                    Erreur
+                  </span>
                 </div>
               )}
 
@@ -207,7 +214,10 @@ export function UploadPublicationImages({
       {/* Drop zone */}
       {canAdd && (
         <div
-          onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
+          onDragOver={(e) => {
+            e.preventDefault()
+            setDragOver(true)
+          }}
           onDragLeave={() => setDragOver(false)}
           onDrop={handleDrop}
           onClick={() => inputRef.current?.click()}
@@ -217,14 +227,20 @@ export function UploadPublicationImages({
               : 'border-neutral-200 hover:border-neutral-400 hover:bg-neutral-50'
           }`}
         >
-          <div className={`flex h-12 w-12 items-center justify-center rounded-full transition-colors duration-150 ${
-            dragOver ? 'bg-accent/10 text-accent' : 'bg-neutral-100 text-neutral-400 group-hover:bg-neutral-200 group-hover:text-neutral-600'
-          }`}>
+          <div
+            className={`flex h-12 w-12 items-center justify-center rounded-full transition-colors duration-150 ${
+              dragOver
+                ? 'bg-accent/10 text-accent'
+                : 'bg-neutral-100 text-neutral-400 group-hover:bg-neutral-200 group-hover:text-neutral-600'
+            }`}
+          >
             <ImagePlus className="h-6 w-6" />
           </div>
           <div className="text-center">
-            <p className={`text-sm font-medium transition-colors ${dragOver ? 'text-accent' : 'text-neutral-600'}`}>
-              {images.length === 0 ? 'Ajouter des images' : 'Ajouter d\'autres images'}
+            <p
+              className={`text-sm font-medium transition-colors ${dragOver ? 'text-accent' : 'text-neutral-600'}`}
+            >
+              {images.length === 0 ? 'Ajouter des images' : "Ajouter d'autres images"}
             </p>
             <p className="mt-1 text-xs text-neutral-400">
               JPEG, PNG ou WebP · max {maxSizeMb} Mo · {images.length}/{maxImages}

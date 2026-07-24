@@ -2,7 +2,9 @@ import { createHmac, timingSafeEqual } from 'node:crypto'
 
 function getSecret(): string {
   const secret =
-    process.env.BOOKING_EMAIL_SECRET ?? process.env.CRON_SECRET ?? process.env.SUPABASE_SERVICE_ROLE_KEY
+    process.env.BOOKING_EMAIL_SECRET ??
+    process.env.CRON_SECRET ??
+    process.env.SUPABASE_SERVICE_ROLE_KEY
   if (!secret) {
     throw new Error('Secret manquant pour signer les liens d’annulation.')
   }
@@ -18,7 +20,9 @@ export function createBookingCancelToken(bookingId: string, expiresAtMs: number)
   return `${Buffer.from(payload, 'utf8').toString('base64url')}.${signPayload(payload)}`
 }
 
-export function verifyBookingCancelToken(token: string): { bookingId: string; expiresAtMs: number } | null {
+export function verifyBookingCancelToken(
+  token: string,
+): { bookingId: string; expiresAtMs: number } | null {
   const [encoded, signature] = token.split('.')
   if (!encoded || !signature) return null
 

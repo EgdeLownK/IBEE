@@ -143,7 +143,9 @@ export function StepEssentials({ form, onChange }: Props) {
             value={form.promoPrice}
             onChange={(e) => onChange({ promoPrice: e.target.value })}
           />
-          {err('promo_price_cents') ? <p className="pco__error">{err('promo_price_cents')}</p> : null}
+          {err('promo_price_cents') ? (
+            <p className="pco__error">{err('promo_price_cents')}</p>
+          ) : null}
         </div>
       ) : null}
     </section>

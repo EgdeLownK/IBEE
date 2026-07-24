@@ -111,7 +111,12 @@ export function ProfileHeroEditor({ entity, onAddContent, onEntityChange }: Prop
             Modifier
           </span>
         </button>
-        <button type="button" className="iconbtn profile-share" aria-label="Partager le profil" disabled>
+        <button
+          type="button"
+          className="iconbtn profile-share"
+          aria-label="Partager le profil"
+          disabled
+        >
           <Share className="h-[17px] w-[17px]" aria-hidden="true" />
         </button>
       </div>
@@ -127,7 +132,11 @@ export function ProfileHeroEditor({ entity, onAddContent, onEntityChange }: Prop
           >
             {entity.avatar_url ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={entity.avatar_url} alt={entity.display_name} className="h-full w-full object-cover" />
+              <img
+                src={entity.avatar_url}
+                alt={entity.display_name}
+                className="h-full w-full object-cover"
+              />
             ) : (
               <span className="font-display text-[30px] font-semibold text-accent">{initials}</span>
             )}
@@ -146,7 +155,9 @@ export function ProfileHeroEditor({ entity, onAddContent, onEntityChange }: Prop
             <h1 className="m-0 truncate font-display text-[22px] font-semibold leading-tight text-neutral-900">
               {entity.display_name}
             </h1>
-            {entity.role && <p className="mb-0 mt-0.5 text-[13.5px] text-neutral-500">{entity.role}</p>}
+            {entity.role && (
+              <p className="mb-0 mt-0.5 text-[13.5px] text-neutral-500">{entity.role}</p>
+            )}
           </div>
         </div>
 
@@ -156,10 +167,17 @@ export function ProfileHeroEditor({ entity, onAddContent, onEntityChange }: Prop
           </p>
         )}
 
-        {entity.bio && <p className="mb-0 mt-3 text-[13.5px] leading-normal text-neutral-600">{entity.bio}</p>}
+        {entity.bio && (
+          <p className="mb-0 mt-3 text-[13.5px] leading-normal text-neutral-600">{entity.bio}</p>
+        )}
 
         <div className="mb-1 mt-5 flex items-center gap-2.5">
-          <button type="button" className="btn btn--dark flex-1 text-center justify-center" disabled={!onAddContent} onClick={onAddContent}>
+          <button
+            type="button"
+            className="btn btn--dark flex-1 text-center justify-center"
+            disabled={!onAddContent}
+            onClick={onAddContent}
+          >
             <Plus className="h-4 w-4" aria-hidden="true" />
             Ajouter contenu
           </button>

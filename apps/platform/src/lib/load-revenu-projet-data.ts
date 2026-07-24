@@ -19,7 +19,7 @@ export type RevenuProjetData = {
 export async function loadRevenuProjetData(
   client: Client,
   entityId: string,
-  owner: { name: string; email: string }
+  owner: { name: string; email: string },
 ): Promise<RevenuProjetData> {
   const [revenue, payouts] = await Promise.all([
     getProjectRevenueSnapshot(client, entityId),

@@ -43,7 +43,7 @@ export async function requireOwnerEntity(entityId?: string): Promise<OwnerSessio
 
 export async function getOwnedEntityFile(
   session: Extract<OwnerSession, { ok: true }>,
-  fileId: string
+  fileId: string,
 ) {
   const file = await getEntityFileById(session.supabase, fileId)
   if (!file) return null

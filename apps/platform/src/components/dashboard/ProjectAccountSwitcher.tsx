@@ -100,9 +100,7 @@ export function ProjectAccountSwitcher({ variant = 'header', onAccountChange }: 
             <span className="app-menu__account-dot" style={{ background: project.color }} />
             <span className="min-w-0 flex-1 text-left">
               <span className="app-menu__account-name">{project.name}</span>
-              {project.role ? (
-                <span className="app-menu__account-meta">{project.role}</span>
-              ) : null}
+              {project.role ? <span className="app-menu__account-meta">{project.role}</span> : null}
             </span>
           </button>
         ))}

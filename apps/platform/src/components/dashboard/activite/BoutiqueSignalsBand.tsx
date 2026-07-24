@@ -10,10 +10,7 @@ import {
   Truck,
   type LucideIcon,
 } from 'lucide-react'
-import {
-  BOUTIQUE_ORDER_FILTERS,
-  type BoutiqueOrderFilter,
-} from '@/lib/boutique-order-view'
+import { BOUTIQUE_ORDER_FILTERS, type BoutiqueOrderFilter } from '@/lib/boutique-order-view'
 
 const BOUTIQUE_FILTER_ICONS: Record<BoutiqueOrderFilter, LucideIcon> = {
   'to-treat': Clock,

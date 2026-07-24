@@ -78,7 +78,7 @@ export async function sendBookingConfirmationEmail(ctx: BookingEmailContext) {
       <li><strong>Lieu :</strong> ${ctx.locationLabel}</li>
       <li><strong>Avec :</strong> ${ctx.entityName}</li>
     </ul>
-    <p><a href="${cancelUrl}">Annuler ce rendez-vous</a></p>`
+    <p><a href="${cancelUrl}">Annuler ce rendez-vous</a></p>`,
   )
 
   return sendTransactionalEmail({
@@ -105,7 +105,7 @@ export async function sendBookingReminderEmail(ctx: BookingEmailContext) {
       <li><strong>Lieu :</strong> ${ctx.locationLabel}</li>
       <li><strong>Avec :</strong> ${ctx.entityName}</li>
     </ul>
-    <p><a href="${cancelUrl}">Annuler ce rendez-vous</a></p>`
+    <p><a href="${cancelUrl}">Annuler ce rendez-vous</a></p>`,
   )
 
   return sendTransactionalEmail({

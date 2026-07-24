@@ -19,7 +19,9 @@ export function EventTicketPage({ data }: Props) {
             <p className="m-0 text-center text-xs font-semibold uppercase tracking-wide text-neutral-500">
               Billet événement
             </p>
-            <h1 className="mt-2 text-center text-2xl font-semibold text-neutral-900">{data.event.title}</h1>
+            <h1 className="mt-2 text-center text-2xl font-semibold text-neutral-900">
+              {data.event.title}
+            </h1>
             <p className="mt-1 text-center text-sm text-neutral-500">{data.entity.display_name}</p>
 
             <div
@@ -28,7 +30,9 @@ export function EventTicketPage({ data }: Props) {
               }`}
             >
               {isCancelled ? (
-                <p className="m-0 text-center text-sm font-medium text-error">Ce billet a été annulé.</p>
+                <p className="m-0 text-center text-sm font-medium text-error">
+                  Ce billet a été annulé.
+                </p>
               ) : (
                 <>
                   <div className="flex flex-col items-center gap-4">
@@ -44,7 +48,9 @@ export function EventTicketPage({ data }: Props) {
                   <dl className="mt-6 space-y-3 text-sm">
                     <div className="flex gap-2">
                       <dt className="shrink-0 text-neutral-500">Participant</dt>
-                      <dd className="m-0 font-medium text-neutral-900">{data.registration.attendeeName}</dd>
+                      <dd className="m-0 font-medium text-neutral-900">
+                        {data.registration.attendeeName}
+                      </dd>
                     </div>
                     {data.registration.ticketTypeTitle ? (
                       <div className="flex items-center gap-2 text-neutral-700">
@@ -53,7 +59,10 @@ export function EventTicketPage({ data }: Props) {
                       </div>
                     ) : null}
                     <div className="flex items-center gap-2 text-neutral-700">
-                      <CalendarDays className="h-4 w-4 shrink-0 text-neutral-400" aria-hidden="true" />
+                      <CalendarDays
+                        className="h-4 w-4 shrink-0 text-neutral-400"
+                        aria-hidden="true"
+                      />
                       {data.slotLabel}
                     </div>
                     <div className="flex items-center gap-2 text-neutral-700">

@@ -39,9 +39,7 @@ export function BoutiqueDashboard({ data, senderName }: Props) {
           <h1 className="boutique-dash__title">{getActivityModuleLabel('shop')}</h1>
           <p className="boutique-dash__subtitle">
             {dateLine}
-            {kpis.toTreatCount > 0
-              ? ` · ${kpis.toTreatCount} à traiter`
-              : ' · rien en attente'}
+            {kpis.toTreatCount > 0 ? ` · ${kpis.toTreatCount} à traiter` : ' · rien en attente'}
           </p>
         </div>
         <div className="boutique-dash__head-actions">

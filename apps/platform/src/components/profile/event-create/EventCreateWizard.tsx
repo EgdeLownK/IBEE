@@ -139,7 +139,12 @@ export function EventCreateWizard({
 
   return createPortal(
     <div className="pco-root" role="presentation">
-      <button type="button" className="pco-root__backdrop" aria-label="Fermer" onClick={handleClose} />
+      <button
+        type="button"
+        className="pco-root__backdrop"
+        aria-label="Fermer"
+        onClick={handleClose}
+      />
       <div className="pco__panel" role="dialog" aria-modal="true" aria-labelledby="ev-wizard-title">
         <header className="pco__header">
           <h2 id="ev-wizard-title" className="pco__title">
@@ -206,6 +211,6 @@ export function EventCreateWizard({
         </form>
       </div>
     </div>,
-    document.body
+    document.body,
   )
 }

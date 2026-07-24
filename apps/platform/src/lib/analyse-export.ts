@@ -47,9 +47,7 @@ export function parseExportSections(value: string | null): AnalyseExportSection[
   const raw = parseCsvList(value)
   if (raw.length === 0) return [...ALL_EXPORT_SECTIONS]
   const allowed = new Set(ALL_EXPORT_SECTIONS)
-  return raw.filter((id): id is AnalyseExportSection =>
-    allowed.has(id as AnalyseExportSection)
-  )
+  return raw.filter((id): id is AnalyseExportSection => allowed.has(id as AnalyseExportSection))
 }
 
 export function buildAnalyseExportQuery(input: {
@@ -78,7 +76,7 @@ export function buildAnalyseExportQuery(input: {
 
 export function buildAnalyseCsv(
   rows: Array<{ scopeLabel: string; data: AnalyseScopePayload }>,
-  sections: AnalyseExportSection[]
+  sections: AnalyseExportSection[],
 ) {
   const lines: string[] = []
   const include = new Set(sections)
@@ -124,9 +122,7 @@ export function buildAnalyseCsv(
       lines.push(`Classement — ${csvEscape(data.ranking.title)}`)
       lines.push('Rang,Libellé,Part,Total')
       data.ranking.items.forEach((item, rank) => {
-        lines.push(
-          `${rank + 1},${csvEscape(item.k)},${csvEscape(item.v)},${csvEscape(item.n)}`
-        )
+        lines.push(`${rank + 1},${csvEscape(item.k)},${csvEscape(item.v)},${csvEscape(item.n)}`)
       })
     }
   })

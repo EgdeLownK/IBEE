@@ -95,14 +95,14 @@ export const TEAM_PERMISSION_GROUPS: TeamPermissionGroup[] = [
       {
         key: 'revenue',
         label: 'Revenus projet',
-        description: 'Consulter le chiffre d\'affaires du projet',
+        description: "Consulter le chiffre d'affaires du projet",
       },
     ],
   },
 ]
 
-export const TEAM_PERMISSION_KEYS: TeamPermissionKey[] = TEAM_PERMISSION_GROUPS.flatMap(
-  (group) => group.items.map((item) => item.key)
+export const TEAM_PERMISSION_KEYS: TeamPermissionKey[] = TEAM_PERMISSION_GROUPS.flatMap((group) =>
+  group.items.map((item) => item.key),
 )
 
 export function createEmptyPermissions(): TeamPermissions {
@@ -135,7 +135,7 @@ export function countEnabledPermissions(permissions: TeamPermissions) {
 
 export function formatPermissionSummary(permissions: TeamPermissions, maxLabels = 3) {
   const labels = TEAM_PERMISSION_GROUPS.flatMap((group) =>
-    group.items.filter((item) => permissions[item.key]).map((item) => item.label)
+    group.items.filter((item) => permissions[item.key]).map((item) => item.label),
   )
   if (labels.length === 0) return 'Aucun accès'
   if (labels.length <= maxLabels) return labels.join(' · ')
@@ -286,11 +286,7 @@ export function hasEnabledPermission(permissions: TeamPermissions) {
   return countEnabledPermissions(permissions) > 0
 }
 
-export function isRoleInUse(
-  roleId: string,
-  members: TeamMember[],
-  pending: PendingInvite[]
-) {
+export function isRoleInUse(roleId: string, members: TeamMember[], pending: PendingInvite[]) {
   return (
     members.some((member) => member.roleId === roleId) ||
     pending.some((invite) => invite.roleId === roleId)

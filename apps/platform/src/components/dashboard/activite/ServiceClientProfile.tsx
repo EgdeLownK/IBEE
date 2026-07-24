@@ -4,10 +4,7 @@ import { useEffect, useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Mail, Phone, X } from 'lucide-react'
 import { updateClientNotesAction } from '@/app/dashboard/service-actions'
-import {
-  formatBookingSlot,
-  type ServiceBookingView,
-} from '@/lib/service-booking-view'
+import { formatBookingSlot, type ServiceBookingView } from '@/lib/service-booking-view'
 import type { ServiceClientView } from '@/lib/service-client-view'
 import { BookingStatusBadge } from './service-booking-ui'
 import { ActiviteClientAvatar } from './ActiviteClientAvatar'

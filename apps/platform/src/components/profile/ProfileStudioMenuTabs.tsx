@@ -24,11 +24,7 @@ export function ProfileStudioMenuTabs({
   activeType,
   onTabChange,
 }: Props) {
-  const visibleTabs = getVisibleProfileTabs(
-    'studio',
-    menuSections,
-    tabContent
-  )
+  const visibleTabs = getVisibleProfileTabs('studio', menuSections, tabContent)
 
   return (
     <nav aria-label="Navigation du profil" className="profile-tabs-wrap">

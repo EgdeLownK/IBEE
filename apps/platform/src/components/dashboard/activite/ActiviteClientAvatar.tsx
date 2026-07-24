@@ -15,10 +15,7 @@ type Props = {
 
 export function ActiviteClientAvatar({ name, className = '' }: Props) {
   return (
-    <div
-      className={`activite-client-avatar${className ? ` ${className}` : ''}`}
-      aria-hidden="true"
-    >
+    <div className={`activite-client-avatar${className ? ` ${className}` : ''}`} aria-hidden="true">
       <span>{clientInitials(name)}</span>
     </div>
   )

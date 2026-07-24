@@ -13,7 +13,7 @@ export function usePrintOrderLabels(senderName: string) {
   function printOrders(
     orders: BoutiqueOrderView[],
     onError: (message: string) => void,
-    onSuccess?: () => void
+    onSuccess?: () => void,
   ) {
     setPrintPending(true)
 

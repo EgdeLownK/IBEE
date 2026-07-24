@@ -17,7 +17,8 @@ export function EventConfirmedPage({ data }: Props) {
           </div>
 
           <h1 className="mt-6 text-2xl font-semibold text-neutral-900">
-            Paiement confirmé{data.registration.attendeeName ? `, ${data.registration.attendeeName}` : ''} !
+            Paiement confirmé
+            {data.registration.attendeeName ? `, ${data.registration.attendeeName}` : ''} !
           </h1>
           <p className="mt-2 text-sm text-neutral-500">
             Votre billet pour {data.event.title} est prêt.

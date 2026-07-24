@@ -38,7 +38,7 @@ export type BookingConfirmedData = {
 
 export async function loadBookingConfirmed(
   slug: string,
-  serviceSlug: string
+  serviceSlug: string,
 ): Promise<BookingConfirmedData | null> {
   const supabase = await createClient()
   const entity = await getEntityBySlug(supabase, slug)

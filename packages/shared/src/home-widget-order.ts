@@ -48,9 +48,9 @@ export function isVisibleHomeWidget(type: string): boolean {
   return !HIDDEN_HOME_WIDGET_TYPES.has(type)
 }
 
-export function sortHomeWidgetsByFixedOrder<T extends { type: string; config?: unknown; position: number }>(
-  widgets: T[]
-): T[] {
+export function sortHomeWidgetsByFixedOrder<
+  T extends { type: string; config?: unknown; position: number },
+>(widgets: T[]): T[] {
   return [...widgets]
     .filter((w) => isVisibleHomeWidget(w.type))
     .sort((a, b) => {

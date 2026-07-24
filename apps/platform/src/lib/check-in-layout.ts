@@ -8,6 +8,10 @@ export function buildStaffCheckInUrl(eventId: string, origin: string): string {
   return url.toString()
 }
 
-export function buildParticipantEntreeUrl(entitySlug: string, eventSlug: string, origin: string): string {
+export function buildParticipantEntreeUrl(
+  entitySlug: string,
+  eventSlug: string,
+  origin: string,
+): string {
   return new URL(`/${entitySlug}/events/${eventSlug}/entree`, origin).toString()
 }

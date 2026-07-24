@@ -16,7 +16,11 @@ import { useHorizontalCarousel } from '@/hooks/useHorizontalCarousel'
 import type { DetailContentBlock } from '@/lib/entity-content-blocks'
 import { formatDetailPrice } from '@/lib/detail-format'
 import { isProductScheduled, msUntilScheduled } from '@/lib/product-schedule'
-import type { PublicProductData, PublishedProduct, PublishedProductVariant } from '@/lib/load-public-product'
+import type {
+  PublicProductData,
+  PublishedProduct,
+  PublishedProductVariant,
+} from '@/lib/load-public-product'
 import { EntityMoreDetails } from './EntityMoreDetails'
 import { NewsWidget } from './NewsWidget'
 import { embedProfileHref } from '@/lib/embed-public-urls'
@@ -67,7 +71,7 @@ function starRow(n: number) {
 
 function buildDetailCategories(product: PublishedProduct, customDetails: CustomDetail[]) {
   const categories: { title: string; rows: { label: string; value: string }[] }[] = []
-  
+
   const nativeRows: { label: string; value: string }[] = []
   if (product.type === 'digital') {
     if (product.digital_file_format) {
@@ -87,19 +91,22 @@ function buildDetailCategories(product: PublishedProduct, customDetails: CustomD
     }
     if (product.digital_pages_or_duration != null) {
       nativeRows.push({
-        label: product.digital_file_format === 'mp4' || product.digital_file_format === 'mp3' ? 'Durée' : 'Pages',
+        label:
+          product.digital_file_format === 'mp4' || product.digital_file_format === 'mp3'
+            ? 'Durée'
+            : 'Pages',
         value: String(product.digital_pages_or_duration),
       })
     }
   }
-  
+
   if (nativeRows.length > 0) {
     categories.push({ title: 'Général', rows: nativeRows })
   }
-  
+
   const grouped = new Map<string, { label: string; value: string }[]>()
   const uncategorized: { label: string; value: string }[] = []
-  
+
   for (const d of customDetails) {
     if (d.family) {
       const g = grouped.get(d.family) ?? []
@@ -109,22 +116,22 @@ function buildDetailCategories(product: PublishedProduct, customDetails: CustomD
       uncategorized.push({ label: d.label, value: d.value })
     }
   }
-  
+
   if (uncategorized.length > 0) {
     categories.push({ title: 'Caractéristiques', rows: uncategorized })
   }
-  
+
   for (const [title, rows] of grouped.entries()) {
     categories.push({ title, rows })
   }
-  
+
   return categories
 }
 
 function computeStock(
   product: PublishedProduct,
   variants: PublishedProductVariant[],
-  selectedVariantId: string | null
+  selectedVariantId: string | null,
 ) {
   const activeVariants = (variants ?? []).filter((v) => v.is_active)
   if (selectedVariantId) {
@@ -157,19 +164,17 @@ export function ProductDetail({
   onCheckoutStateChange,
 }: Props) {
   const variants = ((product.product_variants ?? []) as PublishedProductVariant[]).filter(
-    (v) => v.is_active
+    (v) => v.is_active,
   )
   const allMedia = [...(product.product_media ?? [])].sort(
-    (a, b) => (a.display_order ?? 0) - (b.display_order ?? 0)
+    (a, b) => (a.display_order ?? 0) - (b.display_order ?? 0),
   )
   const images = allMedia.filter((m) => !m.media_type || m.media_type === 'image')
   const video = allMedia.find((m) => m.media_type === 'video') ?? null
   const galleryMedia = [...images, ...(video ? [video] : [])]
 
   const attrKeys = Array.from(
-    new Set(
-      variants.flatMap((v) => Object.keys((v.attributes ?? {}) as Record<string, string>))
-    )
+    new Set(variants.flatMap((v) => Object.keys((v.attributes ?? {}) as Record<string, string>))),
   )
   const attrOptions: Record<string, string[]> = {}
   for (const key of attrKeys) {
@@ -177,8 +182,8 @@ export function ProductDetail({
       new Set(
         variants
           .map((v) => String((v.attributes as Record<string, unknown> | null)?.[key] ?? ''))
-          .filter(Boolean)
-      )
+          .filter(Boolean),
+      ),
     )
   }
 
@@ -193,14 +198,19 @@ export function ProductDetail({
     }
     return {}
   })
-  const { trackRef, canPrev, canNext, scrollPrev, scrollNext } = useHorizontalCarousel(12, 'product-detail__slide')
+  const { trackRef, canPrev, canNext, scrollPrev, scrollNext } = useHorizontalCarousel(
+    12,
+    'product-detail__slide',
+  )
 
   const selectedVariant = useMemo(() => {
     const keys = Object.keys(selectedAttrs)
     if (keys.length !== attrKeys.length || attrKeys.length === 0) return null
     return (
       variants.find((v) =>
-        keys.every((k) => String((v.attributes as Record<string, unknown> | null)?.[k]) === selectedAttrs[k])
+        keys.every(
+          (k) => String((v.attributes as Record<string, unknown> | null)?.[k]) === selectedAttrs[k],
+        ),
       ) ?? null
     )
   }, [selectedAttrs, attrKeys, variants])
@@ -224,7 +234,7 @@ export function ProductDetail({
   // l'état est initialisé une fois au mount, puis corrigé par un timer si la date
   // de publication passe pendant que la page reste ouverte (voir product-schedule.ts).
   const [isScheduled, setIsScheduled] = useState(() =>
-    isProductScheduled(product.published_at, Date.now())
+    isProductScheduled(product.published_at, Date.now()),
   )
   const canBuy = inStock && (!needsVariant || selectedVariant != null) && !isScheduled
 
@@ -267,7 +277,9 @@ export function ProductDetail({
     <div className="product-detail__buybox flex flex-col gap-6">
       <div className="product-detail__stats">
         <a href="#avis" className="product-detail__stat product-detail__stat--link">
-          <span className="product-detail__stat-label">{reviewCount > 0 ? `${reviewCount} avis` : 'Avis'}</span>
+          <span className="product-detail__stat-label">
+            {reviewCount > 0 ? `${reviewCount} avis` : 'Avis'}
+          </span>
           <span className="product-detail__stat-value">
             {reviewCount > 0 ? reviewAverage.toFixed(1).replace('.', ',') : '—'}
           </span>
@@ -311,10 +323,14 @@ export function ProductDetail({
                     const hypAttrs = { ...selectedAttrs, [key]: value }
                     const hypVariant = variants.find((v) =>
                       Object.keys(hypAttrs).every(
-                        (k) => String((v.attributes as Record<string, unknown> | null)?.[k]) === hypAttrs[k]
-                      )
+                        (k) =>
+                          String((v.attributes as Record<string, unknown> | null)?.[k]) ===
+                          hypAttrs[k],
+                      ),
                     )
-                    const isAvailable = hypVariant ? computeStock(product, variants, hypVariant.id) : false
+                    const isAvailable = hypVariant
+                      ? computeStock(product, variants, hypVariant.id)
+                      : false
 
                     return (
                       <button
@@ -365,7 +381,13 @@ export function ProductDetail({
               galleryMedia.map((m, i) => (
                 <div key={m.id ?? i} className="product-detail__slide carousel-slide">
                   {m.media_type === 'video' ? (
-                    <video src={m.url} controls preload="metadata" playsInline className="h-full w-full bg-black object-cover" />
+                    <video
+                      src={m.url}
+                      controls
+                      preload="metadata"
+                      playsInline
+                      className="h-full w-full bg-black object-cover"
+                    />
                   ) : (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -379,7 +401,10 @@ export function ProductDetail({
               ))
             ) : (
               <div className="product-detail__slide carousel-slide">
-                <div className="ph flex h-full w-full items-center justify-center" aria-hidden="true">
+                <div
+                  className="ph flex h-full w-full items-center justify-center"
+                  aria-hidden="true"
+                >
                   <ShoppingBag className="h-14 w-14 text-neutral-400" aria-hidden="true" />
                 </div>
               </div>
@@ -410,13 +435,15 @@ export function ProductDetail({
         </div>
 
         <div className="product-detail__header mt-8 px-[22px]">
-          <h1 className="text-[28px] font-bold text-neutral-900 font-display leading-tight">{product.title}</h1>
-          {categoryName && <p className="text-[15px] text-neutral-500 mt-2 font-sans">{categoryName}</p>}
+          <h1 className="text-[28px] font-bold text-neutral-900 font-display leading-tight">
+            {product.title}
+          </h1>
+          {categoryName && (
+            <p className="text-[15px] text-neutral-500 mt-2 font-sans">{categoryName}</p>
+          )}
         </div>
 
-        <div className="lg:hidden mt-6 px-[22px]">
-          {buyBoxContent}
-        </div>
+        <div className="lg:hidden mt-6 px-[22px]">{buyBoxContent}</div>
 
         {detailCategories.length > 0 && (
           <div className="product-detail__buybox-card">
@@ -424,7 +451,11 @@ export function ProductDetail({
               <h3 className="product-detail__info-title">Information</h3>
               <div className="product-detail__info-menus">
                 {detailCategories.map((cat, catIndex) => (
-                  <details key={catIndex} className="product-detail__tech-menu" open={catIndex === 0}>
+                  <details
+                    key={catIndex}
+                    className="product-detail__tech-menu"
+                    open={catIndex === 0}
+                  >
                     <summary>
                       <span>{cat.title}</span>
                       <span className="product-detail__tech-chevron" aria-hidden="true">

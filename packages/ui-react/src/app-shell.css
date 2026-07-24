@@ -232,7 +232,9 @@
   background: var(--color-panel-2);
   cursor: pointer;
   border: 2px solid transparent;
-  transition: border-color 160ms ease, transform 80ms ease;
+  transition:
+    border-color 160ms ease,
+    transform 80ms ease;
   overflow: hidden;
   padding: 0;
 }

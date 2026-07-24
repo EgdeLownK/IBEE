@@ -50,7 +50,7 @@ export function ManualRegContactPanel({ eventId, entitySlug, eventSlug, onContac
       setScanMessage('Contact importé.')
       setScanError('')
     },
-    [onContactFilled]
+    [onContactFilled],
   )
 
   const handleScanRaw = useCallback(
@@ -68,7 +68,7 @@ export function ManualRegContactPanel({ eventId, entitySlug, eventSlug, onContac
       setScanError('')
       applyContact(contact)
     },
-    [applyContact]
+    [applyContact],
   )
 
   useEffect(() => {
@@ -165,7 +165,7 @@ export function ManualRegContactPanel({ eventId, entitySlug, eventSlug, onContac
         result.entitySlug,
         result.eventSlug,
         result.token,
-        window.location.origin
+        window.location.origin,
       )
 
       void QRCode.toDataURL(url, {
@@ -215,7 +215,11 @@ export function ManualRegContactPanel({ eventId, entitySlug, eventSlug, onContac
 
   return (
     <div className="event-manual-reg__qr-tools">
-      <div className="event-manual-reg__qr-tabs" role="tablist" aria-label="Remplir le contact par QR">
+      <div
+        className="event-manual-reg__qr-tabs"
+        role="tablist"
+        aria-label="Remplir le contact par QR"
+      >
         <button
           type="button"
           role="tab"
@@ -266,7 +270,9 @@ export function ManualRegContactPanel({ eventId, entitySlug, eventSlug, onContac
                 : 'Scan caméra non supporté sur ce navigateur.'}
             </p>
           )}
-          {scanMessage ? <p className="event-manual-reg__qr-feedback is-success">{scanMessage}</p> : null}
+          {scanMessage ? (
+            <p className="event-manual-reg__qr-feedback is-success">{scanMessage}</p>
+          ) : null}
           {scanError ? <p className="event-manual-reg__qr-feedback is-error">{scanError}</p> : null}
         </div>
       ) : null}

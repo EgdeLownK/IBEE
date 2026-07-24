@@ -30,11 +30,5 @@ export default async function BookingConfirmedRoute({ params, searchParams }: Pa
   const data = await loadBookingConfirmed(slug, serviceSlug)
   if (!data) notFound()
 
-  return (
-    <BookingConfirmedPage
-      data={data}
-      bookerName={name ?? ''}
-      dateRecap={date ?? ''}
-    />
-  )
+  return <BookingConfirmedPage data={data} bookerName={name ?? ''} dateRecap={date ?? ''} />
 }

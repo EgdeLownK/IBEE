@@ -12,8 +12,7 @@ export function PublicationCardText({ content }: Props) {
   const [expanded, setExpanded] = useState(false)
   const trimmed = content.trim()
   const isLong = trimmed.length > MAX_LENGTH
-  const displayed =
-    expanded || !isLong ? trimmed : `${trimmed.slice(0, MAX_LENGTH).trimEnd()}…`
+  const displayed = expanded || !isLong ? trimmed : `${trimmed.slice(0, MAX_LENGTH).trimEnd()}…`
 
   return (
     <div className="pub-card__text-wrap">

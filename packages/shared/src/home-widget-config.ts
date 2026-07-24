@@ -11,12 +11,10 @@ export type ShopWidgetConfig =
   | { mode: 'collection'; category_id: string; limit?: number }
 
 export type ServiceWidgetConfig =
-  | { mode: 'service'; appointment_type_id: string }
-  | { mode: 'collection'; limit?: number }
+  { mode: 'service'; appointment_type_id: string } | { mode: 'collection'; limit?: number }
 
 export type EventWidgetConfig =
-  | { mode: 'featured'; event_id: string }
-  | { mode: 'list'; limit?: number }
+  { mode: 'featured'; event_id: string } | { mode: 'list'; limit?: number }
 
 /** Contenu référençable dans un widget Mise en avant. */
 export const HIGHLIGHT_CONTENT_KINDS = ['product', 'service', 'event', 'news'] as const
@@ -77,12 +75,7 @@ export function parseHighlightConfig(raw: unknown): HighlightWidgetConfig | null
   if (o.mode !== 'single' || !isRecord(o.item)) return null
   const kind = o.item.kind
   const id = o.item.id
-  if (
-    kind !== 'product' &&
-    kind !== 'service' &&
-    kind !== 'event' &&
-    kind !== 'news'
-  ) {
+  if (kind !== 'product' && kind !== 'service' && kind !== 'event' && kind !== 'news') {
     return null
   }
   if (!nonEmptyId(id)) return null
@@ -270,9 +263,12 @@ export function parseAnnouncementConfig(raw: unknown): AnnouncementWidgetConfig 
   if (!images?.length && !title && !description && !hasSlotCount) return null
 
   const slot_count =
-    slotRaw === 2 || slotRaw === 3 ? slotRaw
-      : slotRaw === 1 ? 1
-        : images?.length === 2 || images?.length === 3 ? (images.length as 2 | 3)
+    slotRaw === 2 || slotRaw === 3
+      ? slotRaw
+      : slotRaw === 1
+        ? 1
+        : images?.length === 2 || images?.length === 3
+          ? (images.length as 2 | 3)
           : 1
 
   return {
@@ -350,14 +346,22 @@ export function isWidgetConfigured(type: string, config: unknown): boolean {
       return parseHighlightConfig(config) !== null
     case 'widget_carousel':
       return parseCarouselConfig(config) !== null
-    case 'widget_shop': return parseShopConfig(config) !== null
-    case 'widget_service': return parseServiceConfig(config) !== null
-    case 'widget_event': return parseEventConfig(config) !== null
-    case 'widget_news': return parseNewsConfig(config) !== null
-    case 'widget_bio': return parseBioConfig(config) !== null
-    case 'widget_announcement': return parseAnnouncementConfig(config) !== null
-    case 'widget_faq': return parseFaqConfig(config) !== null
-    default: return false
+    case 'widget_shop':
+      return parseShopConfig(config) !== null
+    case 'widget_service':
+      return parseServiceConfig(config) !== null
+    case 'widget_event':
+      return parseEventConfig(config) !== null
+    case 'widget_news':
+      return parseNewsConfig(config) !== null
+    case 'widget_bio':
+      return parseBioConfig(config) !== null
+    case 'widget_announcement':
+      return parseAnnouncementConfig(config) !== null
+    case 'widget_faq':
+      return parseFaqConfig(config) !== null
+    default:
+      return false
   }
 }
 
@@ -396,7 +400,7 @@ export function isHomeWidgetFeaturedSingle(widgetType: string, config: unknown):
 export function homeWidgetCarouselSectionLink(
   widgetType: string,
   config: unknown,
-  baseUrl: string
+  baseUrl: string,
 ): HomeWidgetCarouselSectionLink | null {
   const normalized = normalizeWidgetConfig(config)
   if (widgetType === 'widget_carousel') {
@@ -416,7 +420,10 @@ export function homeWidgetCarouselSectionLink(
     case 'widget_service': {
       const cfg = parseServiceConfig(normalized)
       if (!cfg || cfg.mode === 'service') return null
-      return { label: HOME_WIDGET_CAROUSEL_OPEN_LABELS.widget_service!, href: `${baseUrl}#appointments` }
+      return {
+        label: HOME_WIDGET_CAROUSEL_OPEN_LABELS.widget_service!,
+        href: `${baseUrl}#appointments`,
+      }
     }
     case 'widget_event': {
       const cfg = parseEventConfig(normalized)

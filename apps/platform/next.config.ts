@@ -1,8 +1,8 @@
-import type { NextConfig } from "next";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
+import type { NextConfig } from 'next'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
-const monorepoRoot = path.join(path.dirname(fileURLToPath(import.meta.url)), "../..");
+const monorepoRoot = path.join(path.dirname(fileURLToPath(import.meta.url)), '../..')
 
 const nextConfig: NextConfig = {
   // Monorepo pnpm : inclure les packages workspace dans le trace de prod (Vercel).
@@ -46,6 +46,6 @@ const nextConfig: NextConfig = {
       },
     ]
   },
-};
+}
 
-export default nextConfig;
+export default nextConfig

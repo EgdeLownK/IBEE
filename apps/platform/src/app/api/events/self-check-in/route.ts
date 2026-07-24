@@ -25,7 +25,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Code billet introuvable.' }, { status: 404 })
     }
     if (result.status === 'not_open') {
-      return NextResponse.json({ error: 'Les entrées ne sont pas encore ouvertes pour cet événement.' }, { status: 403 })
+      return NextResponse.json(
+        { error: 'Les entrées ne sont pas encore ouvertes pour cet événement.' },
+        { status: 403 },
+      )
     }
     if (result.status === 'cancelled') {
       return NextResponse.json({ error: 'Ce billet a été annulé.' }, { status: 409 })

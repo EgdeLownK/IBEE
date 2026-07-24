@@ -1,12 +1,7 @@
 'use client'
 
 import { useState, useRef, useCallback } from 'react'
-import ReactCrop, {
-  centerCrop,
-  makeAspectCrop,
-  type Crop,
-  type PixelCrop,
-} from 'react-image-crop'
+import ReactCrop, { centerCrop, makeAspectCrop, type Crop, type PixelCrop } from 'react-image-crop'
 import 'react-image-crop/dist/ReactCrop.css'
 
 type AvatarCropperModalProps = {
@@ -19,26 +14,19 @@ function centerAspectCrop(mediaWidth: number, mediaHeight: number): Crop {
   return centerCrop(
     makeAspectCrop({ unit: '%', width: 80 }, 1, mediaWidth, mediaHeight),
     mediaWidth,
-    mediaHeight
+    mediaHeight,
   )
 }
 
-export function AvatarCropperModal({
-  imageSrc,
-  onConfirm,
-  onCancel,
-}: AvatarCropperModalProps) {
+export function AvatarCropperModal({ imageSrc, onConfirm, onCancel }: AvatarCropperModalProps) {
   const [crop, setCrop] = useState<Crop>()
   const [completedCrop, setCompletedCrop] = useState<PixelCrop>()
   const imgRef = useRef<HTMLImageElement>(null)
 
-  const onImageLoad = useCallback(
-    (e: React.SyntheticEvent<HTMLImageElement>) => {
-      const img = e.currentTarget
-      setCrop(centerAspectCrop(img.width, img.height))
-    },
-    []
-  )
+  const onImageLoad = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
+    const img = e.currentTarget
+    setCrop(centerAspectCrop(img.width, img.height))
+  }, [])
 
   function handleConfirm() {
     if (!completedCrop || !imgRef.current) return
@@ -66,7 +54,7 @@ export function AvatarCropperModal({
       0,
       0,
       size,
-      size
+      size,
     )
 
     canvas.toBlob(
@@ -74,7 +62,7 @@ export function AvatarCropperModal({
         if (blob) onConfirm(blob)
       },
       'image/webp',
-      0.85
+      0.85,
     )
   }
 
@@ -82,21 +70,14 @@ export function AvatarCropperModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-900/50 backdrop-blur-sm">
       <div className="w-full max-w-[600px] rounded-xl bg-neutral-0 p-6 shadow-lg">
         <div className="mb-4">
-          <h3 className="text-lg font-semibold text-neutral-900">
-            Recadrer votre photo
-          </h3>
+          <h3 className="text-lg font-semibold text-neutral-900">Recadrer votre photo</h3>
           <p className="mt-1 text-sm text-neutral-500">
             Ajustez le cadre pour qu&#39;il mette en valeur votre visage.
           </p>
         </div>
 
         <div className="flex max-h-[400px] items-center justify-center overflow-hidden rounded-lg bg-neutral-100">
-          <ReactCrop
-            crop={crop}
-            onChange={setCrop}
-            onComplete={setCompletedCrop}
-            aspect={1}
-          >
+          <ReactCrop crop={crop} onChange={setCrop} onComplete={setCompletedCrop} aspect={1}>
             <img
               ref={imgRef}
               src={imageSrc}

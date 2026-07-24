@@ -19,7 +19,7 @@ type RegistrationNotifyInput = {
 
 async function getEntityDisplayName(
   supabase: SupabaseClient<Database>,
-  entityId: string
+  entityId: string,
 ): Promise<{ name: string; slug: string }> {
   const { data } = await supabase
     .from('entity')
@@ -32,7 +32,7 @@ async function getEntityDisplayName(
 
 export async function notifyEventRegistrationCreated(
   registration: RegistrationNotifyInput,
-  opts: { supabase?: SupabaseClient<Database> } = {}
+  opts: { supabase?: SupabaseClient<Database> } = {},
 ) {
   if (!registration.ticket_code) return
 
@@ -41,7 +41,9 @@ export async function notifyEventRegistrationCreated(
   try {
     const { data: event } = await supabase
       .from('events')
-      .select('title, slug, start_at, end_at, location_type, location_details, currency, cancel_min_hours')
+      .select(
+        'title, slug, start_at, end_at, location_type, location_details, currency, cancel_min_hours',
+      )
       .eq('id', registration.event_id)
       .maybeSingle()
 
@@ -59,7 +61,7 @@ export async function notifyEventRegistrationCreated(
     const cancelUrl = buildEventCancelUrl(
       registration.id,
       event.start_at,
-      event.cancel_min_hours ?? 24
+      event.cancel_min_hours ?? 24,
     )
 
     const locBase = eventLocationLabel(event.location_type)

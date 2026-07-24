@@ -12,7 +12,10 @@ import {
   widgetHasDisplayContent,
 } from '@ibee/shared'
 import { homeWidgetLabel } from '@ibee/ui-react/profile'
-import { createHomeWidgetAction, deleteHomeWidgetAction } from '@/app/dashboard/site/home-widgets-actions'
+import {
+  createHomeWidgetAction,
+  deleteHomeWidgetAction,
+} from '@/app/dashboard/site/home-widgets-actions'
 import type { ProfileStudioData } from '@/lib/profile-studio-data'
 import { WidgetCard } from './WidgetCard'
 import { WidgetAdminMenu } from './WidgetAdminMenu'
@@ -20,7 +23,13 @@ import { WidgetBodyDisplay } from './WidgetBodyDisplay'
 import { HomeWidgetConfigDialog } from './HomeWidgetConfigDialog'
 import { FaqEditDialog } from './FaqEditDialog'
 import { BioConfigDialog } from './BioConfigDialog'
-import type { HomeWidget, PickerEvent, PickerProduct, PickerService, WidgetPickerData } from './types'
+import type {
+  HomeWidget,
+  PickerEvent,
+  PickerProduct,
+  PickerService,
+  WidgetPickerData,
+} from './types'
 
 const WIDGET_DEFS = [
   { type: 'widget_highlight', label: 'Mise en avant' },
@@ -31,13 +40,12 @@ const WIDGET_DEFS = [
 
 function mapStudioWidgets(raw: ProfileStudioData['homeWidgets']): HomeWidget[] {
   return sortHomeWidgetsByFixedOrder(
-    [...raw]
-      .map((w) => ({
-        id: w.id,
-        type: w.type,
-        position: w.position,
-        config: (w.config ?? {}) as Record<string, unknown>,
-      }))
+    [...raw].map((w) => ({
+      id: w.id,
+      type: w.type,
+      position: w.position,
+      config: (w.config ?? {}) as Record<string, unknown>,
+    })),
   )
 }
 
@@ -57,7 +65,7 @@ function widgetEditMode(type: string): 'config' | 'faq' | 'none' {
 
 function productPickerTags(
   p: ProfileStudioData['shopProducts'][number],
-  categories: ProfileStudioData['productCategories']
+  categories: ProfileStudioData['productCategories'],
 ): string[] {
   const tags: string[] = []
   tags.push(p.type === 'digital' ? 'Numérique' : 'Physique')
@@ -67,8 +75,8 @@ function productPickerTags(
     try {
       tags.push(
         new Intl.NumberFormat('fr-FR', { style: 'currency', currency: p.currency ?? 'EUR' }).format(
-          p.price_cents / 100
-        )
+          p.price_cents / 100,
+        ),
       )
     } catch {
       tags.push(`${(p.price_cents / 100).toFixed(2)} €`)
@@ -107,38 +115,32 @@ export function HomeWidgetsPanel({ data, onOpenAddContent }: Props) {
 
   const panelData = useMemo(
     () => ({ ...data, faqItems, contactInfo }),
-    [data, faqItems, contactInfo]
+    [data, faqItems, contactInfo],
   )
 
   const existingSingleInstanceTypes = useMemo(
     () => new Set(widgets.filter((w) => isSingleInstanceHomeWidget(w.type)).map((w) => w.type)),
-    [widgets]
+    [widgets],
   )
 
   const pickerData: WidgetPickerData = useMemo(
     () => ({
-      products: data.shopProducts.map(
-        (p): PickerProduct => ({
-          id: p.id,
-          title: p.title,
-          tags: productPickerTags(p, data.productCategories),
-          category_id: p.category_id,
-        })
-      ),
+      products: data.shopProducts.map((p): PickerProduct => ({
+        id: p.id,
+        title: p.title,
+        tags: productPickerTags(p, data.productCategories),
+        category_id: p.category_id,
+      })),
       categories: data.productCategories.map((c) => ({ id: c.id, name: c.name })),
-      services: data.playlistServices.map(
-        (s): PickerService => ({
-          id: s.id,
-          title: s.title,
-          tags: servicePickerTags(s),
-        })
-      ),
-      events: data.playlistEvents.map(
-        (e): PickerEvent => ({
-          id: e.id,
-          title: e.title,
-        })
-      ),
+      services: data.playlistServices.map((s): PickerService => ({
+        id: s.id,
+        title: s.title,
+        tags: servicePickerTags(s),
+      })),
+      events: data.playlistEvents.map((e): PickerEvent => ({
+        id: e.id,
+        title: e.title,
+      })),
       publications: data.publications
         .filter((p) => p.published_at)
         .map((p) => ({
@@ -147,12 +149,13 @@ export function HomeWidgetsPanel({ data, onOpenAddContent }: Props) {
           tags: [relativePublicationTag(p.published_at!)],
         })),
     }),
-    [data]
+    [data],
   )
 
   const configWidget =
-    widgets.find((w) => w.id === configWidgetId && w.type !== 'widget_bio' && w.type !== 'widget_faq') ??
-    null
+    widgets.find(
+      (w) => w.id === configWidgetId && w.type !== 'widget_bio' && w.type !== 'widget_faq',
+    ) ?? null
 
   const displayCtx = {
     products: panelData.shopProducts,
@@ -214,7 +217,7 @@ export function HomeWidgetsPanel({ data, onOpenAddContent }: Props) {
   }
 
   function handleDelete(id: string) {
-    if (!confirm('Supprimer ce widget de l\'accueil ?')) return
+    if (!confirm("Supprimer ce widget de l'accueil ?")) return
     const prev = widgets
     const next = sortHomeWidgetsByFixedOrder(widgets.filter((x) => x.id !== id))
     setWidgets(next)
@@ -232,7 +235,7 @@ export function HomeWidgetsPanel({ data, onOpenAddContent }: Props) {
   function handleConfigSaved(widgetId: string, config: Record<string, unknown>) {
     justSavedWidgetIds.current.add(widgetId)
     setWidgets((prev) =>
-      sortHomeWidgetsByFixedOrder(prev.map((w) => (w.id === widgetId ? { ...w, config } : w)))
+      sortHomeWidgetsByFixedOrder(prev.map((w) => (w.id === widgetId ? { ...w, config } : w))),
     )
     setNewWidgetId((prev) => (prev === widgetId ? null : prev))
   }
@@ -280,7 +283,7 @@ export function HomeWidgetsPanel({ data, onOpenAddContent }: Props) {
                         type="button"
                         className="hw-menu__item"
                         disabled={already || pending}
-                        title={already ? 'Ce widget est déjà sur l\'accueil' : undefined}
+                        title={already ? "Ce widget est déjà sur l'accueil" : undefined}
                         onClick={() => handleAdd(w.type)}
                       >
                         <Plus className="h-4 w-4 text-neutral-500" />

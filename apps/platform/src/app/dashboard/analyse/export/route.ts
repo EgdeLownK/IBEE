@@ -32,7 +32,7 @@ export async function GET(request: Request) {
         scopeLabel: scopeLabels.get(scope) ?? scope,
         data,
       }
-    })
+    }),
   )
 
   const csv = buildAnalyseCsv(payloads, sections)

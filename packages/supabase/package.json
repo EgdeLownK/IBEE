@@ -11,6 +11,7 @@
   },
   "scripts": {
     "type-check": "tsc --noEmit",
+    "lint": "eslint",
     "test": "vitest run",
     "gen-types": "node ../../scripts/gen-types.mjs"
   },
@@ -20,7 +21,9 @@
   },
   "devDependencies": {
     "@types/node": "^20.19.39",
+    "eslint": "^9",
     "typescript": "^5.8.0",
+    "typescript-eslint": "^8.18.0",
     "vitest": "^4.1.4"
   }
 }

@@ -8,10 +8,7 @@ import {
 
 type AppointmentTypeRow = Database['public']['Tables']['appointment_types']['Row']
 
-const LOCATION_LABELS: Record<
-  Database['public']['Enums']['appointment_location_type'],
-  string
-> = {
+const LOCATION_LABELS: Record<Database['public']['Enums']['appointment_location_type'], string> = {
   in_person: 'Sur place',
   video: 'Visio',
   phone: 'Téléphone',
@@ -67,7 +64,7 @@ export function mapServiceCatalogLine(row: AppointmentTypeRow): ServiceCatalogLi
 
 export function buildServiceRecentActivity(
   bookings: ServiceBookingView[],
-  limit = ACTIVITY_LIMIT
+  limit = ACTIVITY_LIMIT,
 ): ServiceActivityItem[] {
   return [...bookings]
     .sort((a, b) => {

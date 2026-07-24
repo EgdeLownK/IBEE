@@ -39,12 +39,8 @@ export function DetailEntityStrip({
 
   return (
     <header className="detail-entity-strip" aria-label={`Profil de ${displayName}`}>
-
-
       <div className="detail-entity-strip__avatar px-[22px] pb-0">
         <div className="detail-entity-strip__group">
-
-
           <div className="detail-entity-strip__id">
             <h1 className="detail-entity-strip__title">{title}</h1>
             {subtitle && <p className="detail-entity-strip__subtitle">{subtitle}</p>}

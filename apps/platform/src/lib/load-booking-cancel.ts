@@ -34,7 +34,9 @@ function formatSlot(startAt: string, endAt: string): string {
   return `${label} · ${timeFmt.format(start)} — ${timeFmt.format(end)}`
 }
 
-export async function loadBookingCancel(token: string | undefined): Promise<BookingCancelLoadResult> {
+export async function loadBookingCancel(
+  token: string | undefined,
+): Promise<BookingCancelLoadResult> {
   if (!token?.trim()) return { kind: 'invalid' }
 
   const parsed = verifyBookingCancelToken(token)
@@ -58,9 +60,7 @@ export async function loadBookingCancel(token: string | undefined): Promise<Book
 
   if (!policyAllowed) {
     const hoursLabel =
-      cancelMinHours >= 24
-        ? `${Math.round(cancelMinHours / 24)} jour(s)`
-        : `${cancelMinHours} h`
+      cancelMinHours >= 24 ? `${Math.round(cancelMinHours / 24)} jour(s)` : `${cancelMinHours} h`
     return {
       kind: 'unavailable',
       reason: `Délai d’annulation dépassé — annulation possible jusqu’à ${hoursLabel} avant le rendez-vous.`,

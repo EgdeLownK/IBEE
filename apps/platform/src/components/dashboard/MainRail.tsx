@@ -15,11 +15,7 @@ function setDrawerOpen(open: boolean) {
 export function MainRail({ children, ariaLabel }: Props) {
   return (
     <>
-      <div
-        className="main-rail-backdrop"
-        onClick={() => setDrawerOpen(false)}
-        aria-hidden="true"
-      />
+      <div className="main-rail-backdrop" onClick={() => setDrawerOpen(false)} aria-hidden="true" />
       <aside data-main-rail className="main-rail" aria-label={ariaLabel}>
         <div className="main-rail__head">
           <button

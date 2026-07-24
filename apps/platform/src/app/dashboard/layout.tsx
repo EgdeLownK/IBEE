@@ -2,11 +2,7 @@ import { redirect } from 'next/navigation'
 import { AppShell } from '@/components/dashboard/AppShell'
 import { getDashboardAccountShell } from '@/lib/dashboard-context'
 
-export default async function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const accountData = await getDashboardAccountShell()
   if (!accountData) redirect('/login')
 

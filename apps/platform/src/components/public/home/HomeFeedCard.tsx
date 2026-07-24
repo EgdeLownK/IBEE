@@ -63,7 +63,14 @@ export function HomeFeedCard({ post, isDesktop = false, isSelected = false, onSe
       </header>
 
       <div className="home-feed-card__media">
-        <Image src={post.imageUrl} alt="" width={600} height={400} className="h-full w-full object-cover" loading="lazy" />
+        <Image
+          src={post.imageUrl}
+          alt=""
+          width={600}
+          height={400}
+          className="h-full w-full object-cover"
+          loading="lazy"
+        />
       </div>
 
       <div className="home-feed-card__body">

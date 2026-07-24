@@ -17,7 +17,10 @@ export type MessagesDashboardData = {
 function isMissingMessagesTable(error: unknown): boolean {
   if (!error || typeof error !== 'object') return false
   const message = 'message' in error ? String(error.message) : ''
-  return message.includes('entity_messages') && (message.includes('does not exist') || message.includes('schema cache'))
+  return (
+    message.includes('entity_messages') &&
+    (message.includes('does not exist') || message.includes('schema cache'))
+  )
 }
 
 export async function loadMessagesDashboardData(): Promise<MessagesDashboardData> {
@@ -30,7 +33,7 @@ export async function loadMessagesDashboardData(): Promise<MessagesDashboardData
     ])
 
     const clientEmails = new Set(
-      clients.map((c) => c.email?.trim().toLowerCase()).filter((e): e is string => Boolean(e))
+      clients.map((c) => c.email?.trim().toLowerCase()).filter((e): e is string => Boolean(e)),
     )
 
     return {

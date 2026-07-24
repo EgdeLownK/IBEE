@@ -43,7 +43,7 @@ export function DashboardNavigationProvider({ children }: { children: ReactNode 
       setLinkPending: setLinkPendingStable,
       startNavigation,
     }),
-    [linkPending, manualPending, setLinkPendingStable, startNavigation]
+    [linkPending, manualPending, setLinkPendingStable, startNavigation],
   )
 
   return (

@@ -1,6 +1,11 @@
 'use client'
 
-import { widgetEmptyContent, widgetHasDisplayContent, parseCarouselConfig, CAROUSEL_SELECTION_LABELS } from '@ibee/shared'
+import {
+  widgetEmptyContent,
+  widgetHasDisplayContent,
+  parseCarouselConfig,
+  CAROUSEL_SELECTION_LABELS,
+} from '@ibee/shared'
 import type { HomeWidget } from './types'
 import type { ProfileStudioData } from '@/lib/profile-studio-data'
 
@@ -8,7 +13,13 @@ interface Props {
   widget: HomeWidget
   data: Pick<
     ProfileStudioData,
-    'shopProducts' | 'playlistServices' | 'playlistEvents' | 'publications' | 'faqItems' | 'contactInfo' | 'productCategories'
+    | 'shopProducts'
+    | 'playlistServices'
+    | 'playlistEvents'
+    | 'publications'
+    | 'faqItems'
+    | 'contactInfo'
+    | 'productCategories'
   >
   onConfigure: (widgetId: string) => void
   onOpenFaq?: () => void
@@ -18,13 +29,22 @@ interface Props {
 function formatPrice(cents: number | null | undefined, currency?: string | null) {
   if (cents == null) return null
   try {
-    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: currency ?? 'EUR' }).format(cents / 100)
+    return new Intl.NumberFormat('fr-FR', {
+      style: 'currency',
+      currency: currency ?? 'EUR',
+    }).format(cents / 100)
   } catch {
     return `${(cents / 100).toFixed(2)} €`
   }
 }
 
-export function WidgetBodyPreview({ widget, data, onConfigure, onOpenFaq, onOpenAddContent }: Props) {
+export function WidgetBodyPreview({
+  widget,
+  data,
+  onConfigure,
+  onOpenFaq,
+  onOpenAddContent,
+}: Props) {
   const ctx = {
     products: data.shopProducts,
     appointmentTypes: data.playlistServices,
@@ -54,7 +74,9 @@ export function WidgetBodyPreview({ widget, data, onConfigure, onOpenFaq, onOpen
                 )}
                 <div>
                   <p className="widget-preview__title">{p.title}</p>
-                  <p className="widget-preview__meta">Produit · {formatPrice(p.sale_price_cents ?? p.price_cents, p.currency)}</p>
+                  <p className="widget-preview__meta">
+                    Produit · {formatPrice(p.sale_price_cents ?? p.price_cents, p.currency)}
+                  </p>
                 </div>
               </div>
             )
@@ -130,7 +152,8 @@ export function WidgetBodyPreview({ widget, data, onConfigure, onOpenFaq, onOpen
       if (parsed.source_kind === 'news') {
         return (
           <p className="widget-preview__meta">
-            Dernières actualités — {data.publications.length} actu{data.publications.length > 1 ? 's' : ''}
+            Dernières actualités — {data.publications.length} actu
+            {data.publications.length > 1 ? 's' : ''}
           </p>
         )
       }
@@ -150,7 +173,9 @@ export function WidgetBodyPreview({ widget, data, onConfigure, onOpenFaq, onOpen
               <div>
                 <p className="widget-preview__title">{p.title}</p>
                 {p.detailExcerpt && <p className="widget-preview__excerpt">{p.detailExcerpt}</p>}
-                <p className="widget-preview__meta">{formatPrice(p.sale_price_cents ?? p.price_cents, p.currency)}</p>
+                <p className="widget-preview__meta">
+                  {formatPrice(p.sale_price_cents ?? p.price_cents, p.currency)}
+                </p>
               </div>
             </div>
           )
@@ -161,7 +186,8 @@ export function WidgetBodyPreview({ widget, data, onConfigure, onOpenFaq, onOpen
         const count = data.shopProducts.filter((p) => p.category_id === cfg.category_id).length
         return (
           <p className="widget-preview__meta">
-            Carrousel catégorie {cat ? `« ${cat.name} »` : ''} — {count} produit{count > 1 ? 's' : ''}
+            Carrousel catégorie {cat ? `« ${cat.name} »` : ''} — {count} produit
+            {count > 1 ? 's' : ''}
           </p>
         )
       }
@@ -181,7 +207,8 @@ export function WidgetBodyPreview({ widget, data, onConfigure, onOpenFaq, onOpen
               <div>
                 <p className="widget-preview__title">{s.title}</p>
                 <p className="widget-preview__meta">
-                  {s.duration_minutes} min · {formatPrice(s.promo_price_cents ?? s.price_cents, s.currency)}
+                  {s.duration_minutes} min ·{' '}
+                  {formatPrice(s.promo_price_cents ?? s.price_cents, s.currency)}
                 </p>
               </div>
             </div>
@@ -217,7 +244,8 @@ export function WidgetBodyPreview({ widget, data, onConfigure, onOpenFaq, onOpen
     case 'widget_news':
       return (
         <p className="widget-preview__meta">
-          Dernières publications — {data.publications.length} actu{data.publications.length > 1 ? 's' : ''}
+          Dernières publications — {data.publications.length} actu
+          {data.publications.length > 1 ? 's' : ''}
         </p>
       )
     case 'widget_faq':

@@ -36,7 +36,7 @@ export function StepFaq({ form, onChange }: Props) {
         <label className="pco__label">
           Questions Fréquentes (FAQ) <span className="pco__hint">(max 10)</span>
         </label>
-        
+
         <div className="flex flex-col gap-4 mt-2">
           {form.faq.map((item, index) => (
             <div key={index} className="bg-neutral-50 p-4 rounded-md border border-neutral-200">
@@ -71,21 +71,16 @@ export function StepFaq({ form, onChange }: Props) {
               </div>
             </div>
           ))}
-          
+
           {form.faq.length < 10 && (
-            <button
-              type="button"
-              className="pco__add-btn"
-              onClick={addFaq}
-            >
+            <button type="button" className="pco__add-btn" onClick={addFaq}>
               <Plus className="h-4 w-4" /> Ajouter une question
             </button>
           )}
         </div>
-        
+
         {err('faq') && <p className="pco__error mt-2">{err('faq')}</p>}
       </div>
-
     </section>
   )
 }

@@ -55,8 +55,10 @@ export async function loadPublicProfileBySlug(slug: string) {
 
   const eventRegistrationCounts = await Promise.all(
     upcomingEvents.map((ev) =>
-      ev.capacity != null ? countEventRegistrations(supabase, ev.id).catch(() => 0) : Promise.resolve(0)
-    )
+      ev.capacity != null
+        ? countEventRegistrations(supabase, ev.id).catch(() => 0)
+        : Promise.resolve(0),
+    ),
   )
 
   const events = upcomingEvents.map((ev, i) => ({
@@ -66,12 +68,14 @@ export async function loadPublicProfileBySlug(slug: string) {
 
   const [productReviewStats, serviceReviewStats] = await Promise.all([
     Promise.all(
-      products.map((p) => getReviewAggregates(supabase, p.id).catch(() => ({ count: 0, average: 0 })))
+      products.map((p) =>
+        getReviewAggregates(supabase, p.id).catch(() => ({ count: 0, average: 0 })),
+      ),
     ),
     Promise.all(
       appointmentTypes.map((s) =>
-        getServiceReviewAggregates(supabase, s.id).catch(() => ({ count: 0, average: 0 }))
-      )
+        getServiceReviewAggregates(supabase, s.id).catch(() => ({ count: 0, average: 0 })),
+      ),
     ),
   ])
 

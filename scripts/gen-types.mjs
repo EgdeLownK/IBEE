@@ -12,18 +12,14 @@ const supabaseBin = path.join(
   rootDir,
   'node_modules',
   'supabase',
-  process.platform === 'win32' ? 'bin/supabase.exe' : 'bin/supabase'
+  process.platform === 'win32' ? 'bin/supabase.exe' : 'bin/supabase',
 )
 
-const result = spawnSync(
-  supabaseBin,
-  ['gen', 'types', 'typescript', '--project-id', projectId],
-  {
-    cwd: rootDir,
-    encoding: 'utf8',
-    maxBuffer: 20 * 1024 * 1024,
-  }
-)
+const result = spawnSync(supabaseBin, ['gen', 'types', 'typescript', '--project-id', projectId], {
+  cwd: rootDir,
+  encoding: 'utf8',
+  maxBuffer: 20 * 1024 * 1024,
+})
 
 if (result.error) {
   console.error('[gen-types] Impossible de lancer le CLI Supabase:', result.error.message)

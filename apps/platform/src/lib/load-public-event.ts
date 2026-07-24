@@ -63,9 +63,9 @@ export async function loadPublicEvent(slug: string, eventSlug: string) {
   }
 
   const ticketTypesRaw = await listTicketTypesByEvent(supabase, event.id).catch(() => [])
-  const activitiesRaw = await listActivitiesByEvent(supabase, event.id, { publishedOnly: true }).catch(
-    () => []
-  )
+  const activitiesRaw = await listActivitiesByEvent(supabase, event.id, {
+    publishedOnly: true,
+  }).catch(() => [])
 
   const ticketTypesAll = ticketTypesRaw
     .filter((t) => isEventTicketOnSale(t))
@@ -90,8 +90,7 @@ export async function loadPublicEvent(slug: string, eventSlug: string) {
       } catch {
         holds = 0
       }
-      const remaining =
-        activity.capacity != null ? Math.max(0, activity.capacity - holds) : null
+      const remaining = activity.capacity != null ? Math.max(0, activity.capacity - holds) : null
       const isFull = remaining !== null && remaining <= 0
       const isPast = isEventActivityPast(activity)
 
@@ -109,7 +108,7 @@ export async function loadPublicEvent(slug: string, eventSlug: string) {
         slotLabel: formatEventCardTime(activity.start_at, activity.end_at),
         ticketTypes: ticketTypesAll.filter((ticket) => ticket.activityId === activity.id),
       }
-    })
+    }),
   )
 
   const hasActivities = activities.length > 0
@@ -122,14 +121,16 @@ export async function loadPublicEvent(slug: string, eventSlug: string) {
   const maxTicketPrice = onSalePrices.length > 0 ? Math.max(...onSalePrices) : null
 
   const registrationFields: EventRegistrationField[] = parseEventRegistrationFields(
-    event.registration_fields
+    event.registration_fields,
   )
   const cancellationPolicyLabel = formatCancellationPolicyLabel(event.cancel_min_hours ?? 24)
 
   const remaining = event.capacity != null ? Math.max(0, event.capacity - registrationsCount) : null
   const activityCapacities = activities.map((activity) => activity.capacity)
   const allActivitiesHaveCapacity =
-    hasActivities && activityCapacities.length > 0 && activityCapacities.every((capacity) => capacity != null)
+    hasActivities &&
+    activityCapacities.length > 0 &&
+    activityCapacities.every((capacity) => capacity != null)
   const totalCapacity = hasActivities
     ? allActivitiesHaveCapacity
       ? activityCapacities.reduce((sum, capacity) => sum + (capacity ?? 0), 0)
@@ -161,9 +162,13 @@ export async function loadPublicEvent(slug: string, eventSlug: string) {
   const monthChip = new Intl.DateTimeFormat('fr-FR', { month: 'short' })
     .format(start)
     .replace('.', '')
-  const timeLabel = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' }).format(start)
+  const timeLabel = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' }).format(
+    start,
+  )
   const endTimeLabel = event.end_at
-    ? new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' }).format(new Date(event.end_at))
+    ? new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' }).format(
+        new Date(event.end_at),
+      )
     : null
 
   const locLabel = eventLocationLabel(event.location_type)
@@ -174,18 +179,19 @@ export async function loadPublicEvent(slug: string, eventSlug: string) {
         ? formatDetailPrice(minTicketPrice, event.currency)
         : formatDetailPrice(event.price_cents, event.currency)
 
-  const placesStat = totalCapacity !== null
-    ? {
-        value:
-          totalRemaining !== null && totalRemaining <= 0
-            ? 'Complet'
-            : `${totalRemaining ?? '—'} / ${totalCapacity}`,
-        state: (statusAvailable ? 'success' : 'error') as 'success' | 'error',
-      }
-    : {
-        value: isPast ? 'Terminé' : 'Ouvert',
-        state: (statusAvailable ? 'success' : 'error') as 'success' | 'error',
-      }
+  const placesStat =
+    totalCapacity !== null
+      ? {
+          value:
+            totalRemaining !== null && totalRemaining <= 0
+              ? 'Complet'
+              : `${totalRemaining ?? '—'} / ${totalCapacity}`,
+          state: (statusAvailable ? 'success' : 'error') as 'success' | 'error',
+        }
+      : {
+          value: isPast ? 'Terminé' : 'Ouvert',
+          state: (statusAvailable ? 'success' : 'error') as 'success' | 'error',
+        }
 
   const stats = [
     { label: 'Date', value: `${dayChip} ${monthChip}`, valueSmall: true },
@@ -259,7 +265,9 @@ export async function loadPublicEvent(slug: string, eventSlug: string) {
 
   const description =
     event.description ??
-    (textContent ? textContent.slice(0, 160) + (textContent.length > 160 ? '...' : '') : `${event.title} — Événement par ${entity.display_name}`)
+    (textContent
+      ? textContent.slice(0, 160) + (textContent.length > 160 ? '...' : '')
+      : `${event.title} — Événement par ${entity.display_name}`)
 
   let bookerName = ''
   let bookerEmail = ''
@@ -292,7 +300,7 @@ export async function loadPublicEvent(slug: string, eventSlug: string) {
       statusAvailable: a.statusAvailable,
       ticketTypes: a.ticketTypes.map((t) => ({ id: t.id, priceCents: t.priceCents })),
     })),
-    ticketTypes.map((t) => ({ id: t.id, priceCents: t.priceCents }))
+    ticketTypes.map((t) => ({ id: t.id, priceCents: t.priceCents })),
   )
 
   return {

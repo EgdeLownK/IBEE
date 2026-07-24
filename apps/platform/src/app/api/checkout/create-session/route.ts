@@ -21,7 +21,7 @@ export async function POST(request: Request) {
     if (!process.env.STRIPE_SECRET_KEY) {
       return NextResponse.json(
         { error: 'Le paiement en ligne n’est pas encore configuré.' },
-        { status: 503 }
+        { status: 503 },
       )
     }
 
@@ -49,7 +49,10 @@ export async function POST(request: Request) {
 
     if (variants.length > 0) {
       if (!variantId) {
-        return NextResponse.json({ error: 'Choisissez une variante avant d’acheter.' }, { status: 400 })
+        return NextResponse.json(
+          { error: 'Choisissez une variante avant d’acheter.' },
+          { status: 400 },
+        )
       }
       const variant = variants.find((v) => v.id === variantId)
       if (!variant) {
@@ -59,9 +62,7 @@ export async function POST(request: Request) {
       variantId = null
     }
 
-    const selectedVariant = variantId
-      ? variants.find((v) => v.id === variantId) ?? null
-      : null
+    const selectedVariant = variantId ? (variants.find((v) => v.id === variantId) ?? null) : null
 
     const unitPriceCents = resolveUnitPriceCents(product, selectedVariant)
 
@@ -123,7 +124,7 @@ export async function POST(request: Request) {
     const isStock = typeof message === 'string' && message.includes('stock_insufficient')
     return NextResponse.json(
       { error: isStock ? 'Stock insuffisant pour ce produit.' : 'Erreur lors du checkout.' },
-      { status: isStock ? 409 : 400 }
+      { status: isStock ? 409 : 400 },
     )
   }
 }

@@ -37,7 +37,12 @@ export function CommentCard({
       >
         {authorAvatarUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={authorAvatarUrl} alt={authorDisplayName} className="h-full w-full object-cover" loading="lazy" />
+          <img
+            src={authorAvatarUrl}
+            alt={authorDisplayName}
+            className="h-full w-full object-cover"
+            loading="lazy"
+          />
         ) : (
           <span className="text-xs font-semibold text-accent">{initial}</span>
         )}
@@ -54,7 +59,9 @@ export function CommentCard({
             {timeAgo}
           </time>
         </div>
-        <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-relaxed text-neutral-600">{content}</p>
+        <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-relaxed text-neutral-600">
+          {content}
+        </p>
         {canDelete && onDelete && (
           <button
             type="button"

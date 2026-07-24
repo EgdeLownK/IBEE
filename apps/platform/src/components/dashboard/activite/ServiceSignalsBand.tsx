@@ -43,12 +43,14 @@ export function ServiceSignalsBand({
         <p className="boutique-signals__revenue">
           {today.todayCount > 0 ? (
             <>
-              <span className="boutique-signals__revenue-amount">{today.todayCount}</span>
-              {' '}aujourd&apos;hui
+              <span className="boutique-signals__revenue-amount">{today.todayCount}</span>{' '}
+              aujourd&apos;hui
               {today.upcomingCount > 0 ? ` · ${today.upcomingCount} à venir` : ''}
             </>
           ) : (
-            <span className="boutique-signals__revenue--muted">Aucun rendez-vous aujourd&apos;hui</span>
+            <span className="boutique-signals__revenue--muted">
+              Aucun rendez-vous aujourd&apos;hui
+            </span>
           )}
         </p>
       </div>

@@ -37,7 +37,7 @@ export function formToDraft(form: EventCreateFormState): EventCreateDraft {
     contentBlocks: form.contentBlocks.map((b) =>
       b.type === 'text'
         ? { type: 'text' as const, content: b.content }
-        : { type: 'image' as const, url: b.url, uploading: b.uploading }
+        : { type: 'image' as const, url: b.url, uploading: b.uploading },
     ),
     faq: form.faq,
     isPublished: form.isPublished,

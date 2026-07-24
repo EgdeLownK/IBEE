@@ -43,8 +43,7 @@ export type TrackEventsBody = {
   events: TrackEventPayload[]
 }
 
-const UUID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
 export function isAnalyticsEventType(value: string): value is AnalyticsEventType {
   return (ANALYTICS_EVENT_TYPES as readonly string[]).includes(value)
@@ -108,8 +107,7 @@ export function validateTrackEventPayload(input: unknown): {
       entity_id: entityId,
       event_type: eventType,
       visitor_key: typeof visitorKey === 'string' ? visitorKey : null,
-      section_type:
-        typeof sectionType === 'string' ? (sectionType as AnalyticsSectionType) : null,
+      section_type: typeof sectionType === 'string' ? (sectionType as AnalyticsSectionType) : null,
       resource_id: typeof resourceId === 'string' ? resourceId : null,
       metadata,
     },

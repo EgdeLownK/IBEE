@@ -84,7 +84,7 @@ const LOW_CAPACITY_THRESHOLD = 5
 
 function formatRegistrationFormAnswers(
   fieldsRaw: unknown,
-  answersRaw: unknown
+  answersRaw: unknown,
 ): Array<{ label: string; value: string }> {
   const fields = parseEventRegistrationFields(fieldsRaw)
   const fieldById = new Map(fields.map((field) => [field.id, field]))
@@ -156,7 +156,7 @@ export function isEventInNext7Days(startAtIso: string): boolean {
 /** Premier inscrit confirmé pour cet email sur le profil (avant cette inscription). */
 export function isFirstTimeParticipant(
   registration: BilletterieRegistrationView,
-  allRegistrations: BilletterieRegistrationView[]
+  allRegistrations: BilletterieRegistrationView[],
 ): boolean {
   if (registration.status !== 'confirmed') return false
 
@@ -169,19 +169,17 @@ export function isFirstTimeParticipant(
       other.id !== registration.id &&
       other.status === 'confirmed' &&
       other.attendeeEmail.trim().toLowerCase() === email &&
-      new Date(other.createdAt).getTime() < createdAt
+      new Date(other.createdAt).getTime() < createdAt,
   )
 }
 
 export function mapRegistrationToView(
   row: EventRegistrationWithEvent,
-  entitySlug: string
+  entitySlug: string,
 ): BilletterieRegistrationView {
   const event = row.events
   const ticketType = row.event_ticket_types as
-    | { title: string; price_cents: number; currency: string }
-    | null
-    | undefined
+    { title: string; price_cents: number; currency: string } | null | undefined
   const activity = row.event_activities as
     | { id: string; title: string; slug: string; start_at: string; end_at: string | null }
     | null
@@ -216,17 +214,14 @@ export function mapRegistrationToView(
     promoCode: row.orders?.discount_codes?.code ?? null,
     discountCents: row.orders?.discount_cents ?? null,
     refundCents: row.refund_cents ?? 0,
-    formAnswers: formatRegistrationFormAnswers(
-      event?.registration_fields,
-      row.form_answers
-    ),
+    formAnswers: formatRegistrationFormAnswers(event?.registration_fields, row.form_answers),
     checkedInAt: row.checked_in_at ?? null,
   }
 }
 
 export function matchesBilletterieFilter(
   reg: BilletterieRegistrationView,
-  filter: BilletterieRegistrationFilter
+  filter: BilletterieRegistrationFilter,
 ): boolean {
   switch (filter) {
     case 'all':
@@ -244,7 +239,7 @@ export function matchesBilletterieFilter(
 
 export function searchBilletterieRegistrations(
   registrations: BilletterieRegistrationView[],
-  query: string
+  query: string,
 ): BilletterieRegistrationView[] {
   const q = query.trim().toLowerCase()
   if (!q) return registrations
@@ -271,7 +266,7 @@ export function searchBilletterieRegistrations(
 
 export function sortBilletterieRegistrations(
   registrations: BilletterieRegistrationView[],
-  filter: BilletterieRegistrationFilter
+  filter: BilletterieRegistrationFilter,
 ): BilletterieRegistrationView[] {
   return [...registrations].sort((a, b) => {
     if (filter === 'upcoming' || filter === 'all') {
@@ -284,7 +279,7 @@ export function sortBilletterieRegistrations(
 export function filterBilletterieRegistrations(
   registrations: BilletterieRegistrationView[],
   filter: BilletterieRegistrationFilter,
-  searchQuery = ''
+  searchQuery = '',
 ): BilletterieRegistrationView[] {
   const searched = searchBilletterieRegistrations(registrations, searchQuery)
   const filtered = searched.filter((reg) => matchesBilletterieFilter(reg, filter))
@@ -293,13 +288,13 @@ export function filterBilletterieRegistrations(
 
 export function countBilletterieByFilter(
   registrations: BilletterieRegistrationView[],
-  filter: BilletterieRegistrationFilter
+  filter: BilletterieRegistrationFilter,
 ): number {
   return registrations.filter((reg) => matchesBilletterieFilter(reg, filter)).length
 }
 
 export function buildBilletterieEventSnapshots(
-  registrations: BilletterieRegistrationView[]
+  registrations: BilletterieRegistrationView[],
 ): BilletterieEventSnapshot[] {
   const byEvent = new Map<string, BilletterieEventSnapshot>()
 
@@ -325,26 +320,24 @@ export function buildBilletterieEventSnapshots(
   }
 
   return Array.from(byEvent.values()).sort(
-    (a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime()
+    (a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime(),
   )
 }
 
 export function buildBilletterieTodaySnapshot(
   registrations: BilletterieRegistrationView[],
-  events: BilletterieEventSnapshot[]
+  events: BilletterieEventSnapshot[],
 ): BilletterieTodaySnapshot {
   const since7d = Date.now() - UPCOMING_DAYS_MS
   const registrations7d = registrations.filter(
-    (r) => r.status === 'confirmed' && new Date(r.createdAt).getTime() >= since7d
+    (r) => r.status === 'confirmed' && new Date(r.createdAt).getTime() >= since7d,
   ).length
 
   const upcomingEventsCount = events.filter((e) => isEventInNext7Days(e.startAt)).length
 
   const lowCapacityCount = events.filter(
     (e) =>
-      isEventUpcoming(e.startAt) &&
-      e.spotsLeft != null &&
-      e.spotsLeft <= LOW_CAPACITY_THRESHOLD
+      isEventUpcoming(e.startAt) && e.spotsLeft != null && e.spotsLeft <= LOW_CAPACITY_THRESHOLD,
   ).length
 
   return { registrations7d, upcomingEventsCount, lowCapacityCount, todayEventLive: null }
@@ -393,7 +386,7 @@ export function registrationsToCsv(rows: BilletterieRegistrationView[]): string 
       r.message ?? '',
     ]
       .map((cell) => `"${String(cell).replace(/"/g, '""')}"`)
-      .join(',')
+      .join(','),
   )
   return [header.join(','), ...lines].join('\n')
 }

@@ -60,7 +60,10 @@ export default async function ProductDetailRoute({ params, searchParams }: PageP
   return (
     <>
       <ProductSchemaJsonLd data={data} />
-      <ProductDetailCheckout data={data} embedMode={preview === 'dashboard' ? 'dashboard' : preview === '1'} />
+      <ProductDetailCheckout
+        data={data}
+        embedMode={preview === 'dashboard' ? 'dashboard' : preview === '1'}
+      />
       <TrackPageView
         events={[
           {

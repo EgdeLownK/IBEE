@@ -88,13 +88,15 @@ export function formToDraft(form: ProductCreateFormState): ProductCreateDraft {
         }
         basePairs.push({ key: 'État', value: conditionLabels[v.condition] || 'Occasion' })
       }
-      
-      return [{
-        pairs: basePairs,
-        sku: v.sku,
-        price: v.price,
-        stock: v.stock,
-      }]
+
+      return [
+        {
+          pairs: basePairs,
+          sku: v.sku,
+          price: v.price,
+          stock: v.stock,
+        },
+      ]
     }),
     digitalFileId: form.digitalFileId,
     digitalFileUploading: form.digitalFileUploading,
@@ -141,7 +143,7 @@ export function step2Label(type: ProductCreateFormState['type']): string {
   return type === 'digital' ? 'Fichier & détails' : 'Prix & logistique'
 }
 
-export const STEP_LABELS = ["Présentation", '', 'Description'] as const
+export const STEP_LABELS = ['Présentation', '', 'Description'] as const
 
 export function mediaHasVideo(media: ProductCreateFormState['media']): boolean {
   return media.some((m) => m.type === 'video')

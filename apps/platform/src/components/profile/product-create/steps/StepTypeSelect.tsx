@@ -13,22 +13,14 @@ export function StepTypeSelect({ form, onSelectType }: Props) {
     <section className="pco__stage">
       <p className="pco__stage-intro">Quel type de produit veux-tu créer ?</p>
       <div className="pco__type-grid">
-        <button
-          type="button"
-          className="pco__type-card"
-          onClick={() => onSelectType('physical')}
-        >
+        <button type="button" className="pco__type-card" onClick={() => onSelectType('physical')}>
           <span className="pco__type-icon" aria-hidden="true">
             <Package className="h-6 w-6" />
           </span>
           <span className="pco__type-name">Produit physique</span>
           <span className="pco__type-desc">Stock, retrait ou livraison, variantes</span>
         </button>
-        <button
-          type="button"
-          className="pco__type-card"
-          onClick={() => onSelectType('digital')}
-        >
+        <button type="button" className="pco__type-card" onClick={() => onSelectType('digital')}>
           <span className="pco__type-icon" aria-hidden="true">
             <Download className="h-6 w-6" />
           </span>

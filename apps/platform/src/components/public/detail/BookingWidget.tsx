@@ -77,7 +77,7 @@ export function BookingWidget({
       setSlotsError(false)
       try {
         const res = await fetch(
-          `/api/bookings/slots?entityId=${entity.id}&typeId=${service.id}&date=${date}`
+          `/api/bookings/slots?entityId=${entity.id}&typeId=${service.id}&date=${date}`,
         )
         const data = await res.json()
         setSlots(data.slots ?? [])
@@ -88,14 +88,14 @@ export function BookingWidget({
         setSlotsLoading(false)
       }
     },
-    [entity.id, service.id]
+    [entity.id, service.id],
   )
 
   const loadAvailableDays = useCallback(async () => {
     const monthStr = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}`
     try {
       const res = await fetch(
-        `/api/bookings/available-days?entityId=${entity.id}&typeId=${service.id}&month=${monthStr}`
+        `/api/bookings/available-days?entityId=${entity.id}&typeId=${service.id}&month=${monthStr}`,
       )
       const data = await res.json()
       const daysMap: Record<string, boolean> = {}
@@ -246,7 +246,11 @@ export function BookingWidget({
         </div>
       </section>
 
-      <section id="booking-panel" className="sec booking-panel scroll-mt-20" style={{ marginTop: 22 }}>
+      <section
+        id="booking-panel"
+        className="sec booking-panel scroll-mt-20"
+        style={{ marginTop: 22 }}
+      >
         {step === 'calendar' ? (
           <div id="step-calendar">
             <div className="mb-4 flex items-center justify-between">
@@ -263,7 +267,9 @@ export function BookingWidget({
                 <button
                   type="button"
                   className="rounded-lg p-1.5 text-neutral-400 transition hover:bg-neutral-100 hover:text-neutral-900"
-                  onClick={() => setCurrentMonth((m) => new Date(m.getFullYear(), m.getMonth() - 1, 1))}
+                  onClick={() =>
+                    setCurrentMonth((m) => new Date(m.getFullYear(), m.getMonth() - 1, 1))
+                  }
                   aria-label="Mois précédent"
                 >
                   ←
@@ -274,7 +280,9 @@ export function BookingWidget({
                 <button
                   type="button"
                   className="rounded-lg p-1.5 text-neutral-400 transition hover:bg-neutral-100 hover:text-neutral-900"
-                  onClick={() => setCurrentMonth((m) => new Date(m.getFullYear(), m.getMonth() + 1, 1))}
+                  onClick={() =>
+                    setCurrentMonth((m) => new Date(m.getFullYear(), m.getMonth() + 1, 1))
+                  }
                   aria-label="Mois suivant"
                 >
                   →
@@ -330,7 +338,9 @@ export function BookingWidget({
             </div>
 
             <div className="mt-5">
-              <p className="mb-2 text-xs font-medium uppercase tracking-wider text-neutral-500">Créneaux</p>
+              <p className="mb-2 text-xs font-medium uppercase tracking-wider text-neutral-500">
+                Créneaux
+              </p>
               <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
                 {slotsLoading ? (
                   <p className="col-span-full text-sm text-neutral-400">Chargement...</p>
@@ -400,7 +410,9 @@ export function BookingWidget({
               </div>
 
               {cancellationPolicyLabel ? (
-                <p className="text-xs leading-relaxed text-neutral-500">{cancellationPolicyLabel}</p>
+                <p className="text-xs leading-relaxed text-neutral-500">
+                  {cancellationPolicyLabel}
+                </p>
               ) : null}
 
               <div className="space-y-3">

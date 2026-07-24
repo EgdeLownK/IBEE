@@ -142,8 +142,6 @@
   display: block;
 }
 
-
-
 .wfeat__placeholder {
   position: relative;
   width: 100%;
@@ -171,7 +169,10 @@
   backdrop-filter: blur(12px) saturate(1.5);
   color: var(--color-neutral-700);
   cursor: pointer;
-  transition: background 140ms ease, color 140ms ease, opacity 140ms ease;
+  transition:
+    background 140ms ease,
+    color 140ms ease,
+    opacity 140ms ease;
 }
 
 .wfeat__media-nav:hover:not(:disabled) {
@@ -500,7 +501,9 @@
   background: var(--color-panel);
   text-decoration: none;
   color: inherit;
-  transition: transform 160ms ease, box-shadow 160ms ease;
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease;
 }
 
 a.nwidget__card:hover {

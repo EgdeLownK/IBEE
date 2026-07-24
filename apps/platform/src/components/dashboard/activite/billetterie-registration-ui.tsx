@@ -163,7 +163,12 @@ export function BannedClientDetail({
         </div>
         {onClose ? (
           <div className="order-detail__header-actions">
-            <button type="button" className="order-detail__close" onClick={onClose} aria-label="Fermer">
+            <button
+              type="button"
+              className="order-detail__close"
+              onClick={onClose}
+              aria-label="Fermer"
+            >
               <X className="h-5 w-5" />
             </button>
           </div>
@@ -235,7 +240,12 @@ export function RegistrationDetail({
         </div>
         {onClose ? (
           <div className="order-detail__header-actions">
-            <button type="button" className="order-detail__close" onClick={onClose} aria-label="Fermer">
+            <button
+              type="button"
+              className="order-detail__close"
+              onClick={onClose}
+              aria-label="Fermer"
+            >
               <X className="h-5 w-5" />
             </button>
           </div>

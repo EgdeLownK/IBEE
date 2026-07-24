@@ -20,7 +20,11 @@ import {
   confirmOrderLabelsPrintedAction,
   updateBoutiqueOrderAction,
 } from '@/app/dashboard/boutique-actions'
-import { canPrintShippingLabel, PRINT_CANCELLED_ERROR, printShippingLabels } from '@/lib/boutique-order-label'
+import {
+  canPrintShippingLabel,
+  PRINT_CANCELLED_ERROR,
+  printShippingLabels,
+} from '@/lib/boutique-order-label'
 import {
   formatBoutiqueMoney,
   formatBoutiqueRelativeTime,
@@ -75,7 +79,7 @@ const STATUS_CONFIG: Record<
     icon: <ArrowDownUp className="h-3.5 w-3.5" />,
   },
   en_essai: {
-    label: 'Période d\'essai',
+    label: "Période d'essai",
     color: 'status--confirmed',
     icon: <Clock className="h-3.5 w-3.5" />,
   },
@@ -99,13 +103,7 @@ const FILTER_STATUSES: BoutiqueDisplayStatus[] = [
   'retour_demande',
 ]
 
-export function StatusBadge({
-  status,
-  label,
-}: {
-  status: BoutiqueDisplayStatus
-  label?: string
-}) {
+export function StatusBadge({ status, label }: { status: BoutiqueDisplayStatus; label?: string }) {
   const cfg = STATUS_CONFIG[status]
   return (
     <span
@@ -147,7 +145,9 @@ export function OrderRow({
       <div className="order-row__meta">
         <span className="order-row__date">{meta ?? date}</span>
         <StatusBadge status={order.displayStatus} />
-        <span className="order-row__total">{formatBoutiqueMoney(order.totalCents, order.currency)}</span>
+        <span className="order-row__total">
+          {formatBoutiqueMoney(order.totalCents, order.currency)}
+        </span>
         <ChevronRight className="order-row__chevron h-4 w-4 text-neutral-400" aria-hidden="true" />
       </div>
     </button>
@@ -287,20 +287,20 @@ export function OrderTimeline({ order }: { order: BoutiqueOrderView }) {
 function StatusSelectMenu({
   order,
   pending,
-  onChange
+  onChange,
 }: {
   order: BoutiqueOrderView
   pending: boolean
   onChange: (status: OrderFulfillmentStatus) => void
 }) {
   const [open, setOpen] = useState(false)
-  
+
   const cfg = STATUS_CONFIG[order.displayStatus]
 
   return (
     <div className="relative">
-      <button 
-        type="button" 
+      <button
+        type="button"
         onClick={() => setOpen(!open)}
         disabled={pending}
         className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-neutral-200 bg-white hover:bg-neutral-50 shadow-sm transition-all disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent text-sm font-medium text-neutral-900"
@@ -308,7 +308,9 @@ function StatusSelectMenu({
       >
         <span className="text-neutral-500">{cfg.icon}</span>
         <span>{cfg.label}</span>
-        <ChevronRight className={`ml-1 h-4 w-4 text-neutral-400 transition-transform duration-200 ${open ? 'rotate-90' : 'rotate-0'}`} />
+        <ChevronRight
+          className={`ml-1 h-4 w-4 text-neutral-400 transition-transform duration-200 ${open ? 'rotate-90' : 'rotate-0'}`}
+        />
       </button>
 
       {open && (
@@ -395,8 +397,6 @@ export function OrderDetail({
     })
   }
 
-
-
   function handlePrintLabel() {
     setError(null)
     setPrintPending(true)
@@ -452,7 +452,6 @@ export function OrderDetail({
           </div>
         </div>
         <div className="order-detail__header-actions">
-
           {showPrintButton && printable ? (
             <button
               type="button"
@@ -465,7 +464,12 @@ export function OrderDetail({
               Étiquette
             </button>
           ) : null}
-          <button type="button" onClick={onClose} className="order-detail__close" aria-label="Fermer">
+          <button
+            type="button"
+            onClick={onClose}
+            className="order-detail__close"
+            aria-label="Fermer"
+          >
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -479,7 +483,9 @@ export function OrderDetail({
             <p className="order-detail__value order-detail__value--muted">{order.email}</p>
           ) : null}
           {order.shippingAddress ? (
-            <p className="order-detail__value order-detail__value--muted">{order.shippingAddress}</p>
+            <p className="order-detail__value order-detail__value--muted">
+              {order.shippingAddress}
+            </p>
           ) : null}
         </section>
 
@@ -606,32 +612,32 @@ export function BoutiqueHistoriquePanel({
 
   const listHeader = (
     <div className="commandes-toolbar">
-        <div className="commandes-search">
-          <Search className="commandes-search__icon h-4 w-4" aria-hidden="true" />
-          <input
-            type="search"
-            placeholder="Rechercher une commande..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="commandes-search__input"
-          />
-        </div>
-        <div className="commandes-filters">
-          <SlidersHorizontal className="h-4 w-4 text-neutral-500" aria-hidden="true" />
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value as BoutiqueDisplayStatus | 'tous')}
-            className="commandes-filter-select"
-          >
-            <option value="tous">Tous les statuts</option>
-            {FILTER_STATUSES.map((s) => (
-              <option key={s} value={s}>
-                {STATUS_CONFIG[s].label}
-              </option>
-            ))}
-          </select>
-        </div>
+      <div className="commandes-search">
+        <Search className="commandes-search__icon h-4 w-4" aria-hidden="true" />
+        <input
+          type="search"
+          placeholder="Rechercher une commande..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="commandes-search__input"
+        />
       </div>
+      <div className="commandes-filters">
+        <SlidersHorizontal className="h-4 w-4 text-neutral-500" aria-hidden="true" />
+        <select
+          value={filterStatus}
+          onChange={(e) => setFilterStatus(e.target.value as BoutiqueDisplayStatus | 'tous')}
+          className="commandes-filter-select"
+        >
+          <option value="tous">Tous les statuts</option>
+          {FILTER_STATUSES.map((s) => (
+            <option key={s} value={s}>
+              {STATUS_CONFIG[s].label}
+            </option>
+          ))}
+        </select>
+      </div>
+    </div>
   )
 
   return (

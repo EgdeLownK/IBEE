@@ -30,7 +30,7 @@ export function parseEventRegistrationFields(raw: unknown): EventRegistrationFie
 
 export function validateFormAnswers(
   fields: EventRegistrationField[],
-  answers: Record<string, string | boolean>
+  answers: Record<string, string | boolean>,
 ): { ok: true; answers: Record<string, string | boolean> } | { ok: false; error: string } {
   const normalized: Record<string, string | boolean> = {}
 

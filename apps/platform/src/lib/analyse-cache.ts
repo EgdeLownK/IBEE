@@ -18,7 +18,7 @@ export function analyseScopeCacheKey(input: {
 export function hydrateAnalyseCacheMap(
   initialCache: Record<string, AnalyseScopePayload> | undefined,
   initialData: AnalyseScopePayload,
-  initialRankingLimit: number
+  initialRankingLimit: number,
 ) {
   const map = new Map<string, AnalyseScopePayload>()
 
@@ -35,7 +35,7 @@ export function hydrateAnalyseCacheMap(
       offset: initialData.offset,
       rankingLimit: initialRankingLimit,
     }),
-    initialData
+    initialData,
   )
 
   return map
@@ -64,12 +64,17 @@ export function buildAnalyseWarmupTasks(
     scope: AnalyseScope
     period: AnalysePeriod
     rankingLimit: number
-  }
+  },
 ): AnalyseWarmupTask[] {
   const tasks: AnalyseWarmupTask[] = []
   const seen = new Set<string>()
 
-  const add = (scope: AnalyseScope, period: AnalysePeriod, offset: number, rankingLimit: number) => {
+  const add = (
+    scope: AnalyseScope,
+    period: AnalysePeriod,
+    offset: number,
+    rankingLimit: number,
+  ) => {
     const key = analyseScopeCacheKey({ scope, period, offset, rankingLimit })
     if (seen.has(key)) return
     seen.add(key)
@@ -97,7 +102,7 @@ export function buildAnalyseOffsetWarmupTasks(
     scope: AnalyseScope
     period: AnalysePeriod
     rankingLimit: number
-  }
+  },
 ): AnalyseWarmupTask[] {
   const minOffset = getMinPeriodOffset(focal.period, accountCreatedAt)
   return offsetPrefetchRange(minOffset).map((offset) => ({

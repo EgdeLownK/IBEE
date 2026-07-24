@@ -16,7 +16,7 @@ type AfterEntityMutationOptions = RevalidatePathsOptions & {
 /** Studio + pages publiques après mutation entity. */
 export function revalidateAfterEntityMutation(
   entitySlug: string,
-  options?: AfterEntityMutationOptions
+  options?: AfterEntityMutationOptions,
 ) {
   const { studioExtras, ...publicOptions } = options ?? {}
   revalidatePublicPaths(entitySlug, publicOptions)

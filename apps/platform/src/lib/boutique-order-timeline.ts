@@ -1,5 +1,9 @@
 import type { OrderEventRecord } from '@ibee/supabase'
-import type { BoutiqueOrderEventView, BoutiqueOrderView, OrderFulfillmentStatus } from '@/lib/boutique-order-view'
+import type {
+  BoutiqueOrderEventView,
+  BoutiqueOrderView,
+  OrderFulfillmentStatus,
+} from '@/lib/boutique-order-view'
 
 export type { BoutiqueOrderEventView }
 
@@ -65,11 +69,7 @@ function buildSyntheticEvents(order: BoutiqueOrderView): BoutiqueOrderEventView[
   }
 
   const fulfillmentLabel = FULFILLMENT_EVENT_LABELS[order.fulfillmentStatus]
-  if (
-    fulfillmentLabel &&
-    order.paymentStatus === 'paid' &&
-    order.fulfillmentStatus !== 'pending'
-  ) {
+  if (fulfillmentLabel && order.paymentStatus === 'paid' && order.fulfillmentStatus !== 'pending') {
     events.push({
       id: `synthetic:fulfillment:${order.id}:${order.fulfillmentStatus}`,
       title: fulfillmentLabel,
@@ -84,7 +84,7 @@ function buildSyntheticEvents(order: BoutiqueOrderView): BoutiqueOrderEventView[
 
 export function buildOrderTimeline(
   order: BoutiqueOrderView,
-  dbEvents: OrderEventRecord[]
+  dbEvents: OrderEventRecord[],
 ): BoutiqueOrderEventView[] {
   const synthetic = buildSyntheticEvents(order)
   const logged = dbEvents.map(mapDbEvent)

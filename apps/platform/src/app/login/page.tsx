@@ -24,29 +24,29 @@ export default function LoginPage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-background p-4">
       <div className="w-full max-w-md rounded-xl bg-neutral-0 p-8 shadow-md">
-        <h1 className="text-center text-2xl font-semibold tracking-tight text-neutral-900">
-          IBEE
-        </h1>
+        <h1 className="text-center text-2xl font-semibold tracking-tight text-neutral-900">IBEE</h1>
 
         <div className="mt-6 flex rounded-lg bg-neutral-100 p-1">
           <button
             type="button"
-            onClick={() => { setMode('login'); setError(null) }}
+            onClick={() => {
+              setMode('login')
+              setError(null)
+            }}
             className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition ${
-              mode === 'login'
-                ? 'bg-neutral-0 text-neutral-900 shadow-sm'
-                : 'text-neutral-600'
+              mode === 'login' ? 'bg-neutral-0 text-neutral-900 shadow-sm' : 'text-neutral-600'
             }`}
           >
             Se connecter
           </button>
           <button
             type="button"
-            onClick={() => { setMode('signup'); setError(null) }}
+            onClick={() => {
+              setMode('signup')
+              setError(null)
+            }}
             className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition ${
-              mode === 'signup'
-                ? 'bg-neutral-0 text-neutral-900 shadow-sm'
-                : 'text-neutral-600'
+              mode === 'signup' ? 'bg-neutral-0 text-neutral-900 shadow-sm' : 'text-neutral-600'
             }`}
           >
             S&apos;inscrire
@@ -81,9 +81,7 @@ export default function LoginPage() {
             />
           </div>
 
-          {error && (
-            <p className="text-sm text-error">{error}</p>
-          )}
+          {error && <p className="text-sm text-error">{error}</p>}
 
           <button
             type="submit"

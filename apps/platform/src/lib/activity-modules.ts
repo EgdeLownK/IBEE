@@ -12,11 +12,12 @@ export type ActivityModuleDefinition = {
 }
 
 const SHOP_PATHS = ['/dashboard/boutique', '/dashboard/commandes']
-const SERVICE_PATHS = [
-  '/dashboard/service',
-  '/dashboard/rendez-vous',
+const SERVICE_PATHS = ['/dashboard/service', '/dashboard/rendez-vous']
+const EVENT_PATHS = [
+  '/dashboard/billetterie',
+  '/dashboard/participants',
+  '/dashboard/billetterie/check-in',
 ]
-const EVENT_PATHS = ['/dashboard/billetterie', '/dashboard/participants', '/dashboard/billetterie/check-in']
 
 function matchesPrefix(pathname: string, prefixes: string[]): boolean {
   return prefixes.some((prefix) => pathname.startsWith(prefix))
@@ -50,7 +51,9 @@ export function getActivityModuleLabel(key: ActivityModuleKey): string {
   return PROFILE_TAB_LABELS[key]
 }
 
-export function resolveActiveActivityModules(capabilities: ActivityCapabilitiesView): ActivityModuleDefinition[] {
+export function resolveActiveActivityModules(
+  capabilities: ActivityCapabilitiesView,
+): ActivityModuleDefinition[] {
   return ACTIVITY_MODULE_DEFINITIONS.filter((module) => capabilities[module.key])
 }
 
@@ -62,7 +65,7 @@ export type ActivityCapabilitiesView = {
 
 export function getActiveModuleFromPath(
   pathname: string,
-  capabilities: ActivityCapabilitiesView
+  capabilities: ActivityCapabilitiesView,
 ): ActivityModuleDefinition | null {
   return (
     resolveActiveActivityModules(capabilities).find((module) => module.matchPath(pathname)) ?? null

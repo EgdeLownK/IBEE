@@ -56,9 +56,7 @@ export default async function PublicProfileRoute({ params, searchParams }: PageP
         faqItems={data.faqActive ? data.faqItems : []}
       />
       <PublicProfilePage data={data} />
-      <TrackPageView
-        events={[{ entity_id: data.entity.id, event_type: 'profile_view' }]}
-      />
+      <TrackPageView events={[{ entity_id: data.entity.id, event_type: 'profile_view' }]} />
     </>
   )
 }

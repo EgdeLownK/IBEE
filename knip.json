@@ -1,17 +1,9 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
-  "ignore": [
-    "SecondBrain/**",
-    "*-preview.jsx",
-    "supabase/**"
-  ],
+  "ignore": ["SecondBrain/**", "*-preview.jsx", "supabase/**"],
   "workspaces": {
     "apps/platform": {
-      "entry": [
-        "src/app/**/page.tsx",
-        "src/app/**/layout.tsx",
-        "next.config.{ts,js,mjs}"
-      ],
+      "entry": ["src/app/**/page.tsx", "src/app/**/layout.tsx", "next.config.{ts,js,mjs}"],
       "project": "src/**/*.{ts,tsx}"
     },
     "packages/*": {

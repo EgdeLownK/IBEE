@@ -13,9 +13,7 @@ export default async function CommerceLayout({ children }: { children: React.Rea
   return (
     <Suspense fallback={null}>
       <ActivityOverlayProvider productCategories={overlayData.productCategories}>
-        <div className="activity-layout">
-          {children}
-        </div>
+        <div className="activity-layout">{children}</div>
       </ActivityOverlayProvider>
     </Suspense>
   )

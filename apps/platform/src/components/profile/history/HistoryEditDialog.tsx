@@ -113,7 +113,10 @@ export function HistoryEditDialog({
       setError(`Maximum ${HISTORY_MAX_BLOCKS} blocs.`)
       return
     }
-    setBlocks((prev) => [...prev, { id: nextBlockId(), type: 'list', items: [{ id: nextBlockId(), value: '' }] }])
+    setBlocks((prev) => [
+      ...prev,
+      { id: nextBlockId(), type: 'list', items: [{ id: nextBlockId(), value: '' }] },
+    ])
   }
 
   function updateBlock(index: number, block: DraftBlock) {
@@ -125,7 +128,7 @@ export function HistoryEditDialog({
     setError('')
 
     if (blocks.some((b) => b.type === 'image' && b.uploading)) {
-      setError('Patiente, une image est en cours d\'envoi.')
+      setError("Patiente, une image est en cours d'envoi.")
       return
     }
 
@@ -160,7 +163,12 @@ export function HistoryEditDialog({
 
   return createPortal(
     <div className="hist-edit" role="presentation">
-      <button type="button" className="hist-edit__backdrop" aria-label="Fermer" onClick={handleClose} />
+      <button
+        type="button"
+        className="hist-edit__backdrop"
+        aria-label="Fermer"
+        onClick={handleClose}
+      />
       <div
         className="hist-edit__panel"
         role="dialog"
@@ -173,9 +181,16 @@ export function HistoryEditDialog({
             <h2 id="hist-edit-title" className="hist-edit__title">
               Composer ton récit
             </h2>
-            <p className="hist-edit__hint">Alterne texte et visuels. Utilise les flèches pour réordonner.</p>
+            <p className="hist-edit__hint">
+              Alterne texte et visuels. Utilise les flèches pour réordonner.
+            </p>
           </div>
-          <button type="button" className="hist-edit__close" aria-label="Fermer" onClick={handleClose}>
+          <button
+            type="button"
+            className="hist-edit__close"
+            aria-label="Fermer"
+            onClick={handleClose}
+          >
             <X className="h-5 w-5" />
           </button>
         </header>
@@ -195,13 +210,20 @@ export function HistoryEditDialog({
                 </div>
               ) : (
                 blocks.map((block, i) => (
-                  <article key={block.id} className={`hist-edit__card hist-edit__card--${block.type}`}>
+                  <article
+                    key={block.id}
+                    className={`hist-edit__card hist-edit__card--${block.type}`}
+                  >
                     <div className="hist-edit__card-main">
                       <header className="hist-edit__card-head">
                         <div className="hist-edit__meta">
                           <span className="hist-edit__index">{i + 1}</span>
                           <span className={`hist-edit__tag hist-edit__tag--${block.type}`}>
-                            {block.type === 'text' ? 'Paragraphe' : block.type === 'image' ? 'Visuel' : 'Liste'}
+                            {block.type === 'text'
+                              ? 'Paragraphe'
+                              : block.type === 'image'
+                                ? 'Visuel'
+                                : 'Liste'}
                           </span>
                         </div>
                         <div className="hist-edit__ctrls">
@@ -265,7 +287,10 @@ export function HistoryEditDialog({
                                   value={item.value}
                                   onChange={(e) => {
                                     const newItems = [...block.items]
-                                    newItems[itemIndex] = { ...newItems[itemIndex], value: e.target.value }
+                                    newItems[itemIndex] = {
+                                      ...newItems[itemIndex],
+                                      value: e.target.value,
+                                    }
                                     updateBlock(i, { ...block, items: newItems })
                                   }}
                                 />
@@ -273,7 +298,9 @@ export function HistoryEditDialog({
                                   type="button"
                                   className="mt-1 p-1.5 text-neutral-400 hover:text-red-600 transition-colors"
                                   onClick={() => {
-                                    const newItems = block.items.filter((_, idx) => idx !== itemIndex)
+                                    const newItems = block.items.filter(
+                                      (_, idx) => idx !== itemIndex,
+                                    )
                                     updateBlock(i, { ...block, items: newItems })
                                   }}
                                   aria-label="Supprimer cet élément"
@@ -286,7 +313,10 @@ export function HistoryEditDialog({
                               type="button"
                               className="text-sm text-neutral-500 hover:text-neutral-900 font-medium inline-flex items-center gap-1 mt-2"
                               onClick={() => {
-                                updateBlock(i, { ...block, items: [...block.items, { id: nextBlockId(), value: '' }] })
+                                updateBlock(i, {
+                                  ...block,
+                                  items: [...block.items, { id: nextBlockId(), value: '' }],
+                                })
                               }}
                             >
                               <Plus className="h-4 w-4" /> Ajouter une puce
@@ -351,16 +381,24 @@ export function HistoryEditDialog({
           {error && <p className="hist-edit__error">{error}</p>}
 
           <footer className="hist-edit__foot">
-            <button type="button" className="hist-edit__btn hist-edit__btn--ghost" onClick={handleClose}>
+            <button
+              type="button"
+              className="hist-edit__btn hist-edit__btn--ghost"
+              onClick={handleClose}
+            >
               {cancelLabel}
             </button>
-            <button type="submit" className="hist-edit__btn hist-edit__btn--primary" disabled={pending}>
+            <button
+              type="submit"
+              className="hist-edit__btn hist-edit__btn--primary"
+              disabled={pending}
+            >
               {pending ? 'Enregistrement…' : 'Enregistrer'}
             </button>
           </footer>
         </form>
       </div>
     </div>,
-    document.body
+    document.body,
   )
 }

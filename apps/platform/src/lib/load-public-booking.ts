@@ -57,10 +57,7 @@ export async function loadPublicBooking(slug: string, serviceSlug: string) {
     priceText: formatDetailPrice(service.price_cents, service.currency),
     chargeCents,
     needsPayment,
-    chargeLabel:
-      chargeCents > 0
-        ? formatDetailPrice(chargeCents, service.currency)
-        : null,
+    chargeLabel: chargeCents > 0 ? formatDetailPrice(chargeCents, service.currency) : null,
     cancellationPolicyLabel: formatCancellationPolicyLabel(service.cancel_min_hours),
     locationLabel: locationLabel(service.location_type),
     profileHref: `/${entity.slug}`,

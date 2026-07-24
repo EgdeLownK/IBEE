@@ -32,7 +32,7 @@ export type EventTicketData = {
 export async function loadEventTicket(
   slug: string,
   eventSlug: string,
-  ticketCode: string | null
+  ticketCode: string | null,
 ): Promise<EventTicketData | null> {
   if (!ticketCode?.trim()) return null
 
@@ -43,31 +43,25 @@ export async function loadEventTicket(
   const registration = await getRegistrationByTicketCode(supabase, ticketCode.trim())
   if (!registration) return null
 
-  const event = registration.events as
-    | {
-        id: string
-        title: string
-        slug: string
-        start_at: string
-        end_at: string | null
-        location_type: 'online' | 'in_person'
-        location_details: string | null
-      }
-    | null
+  const event = registration.events as {
+    id: string
+    title: string
+    slug: string
+    start_at: string
+    end_at: string | null
+    location_type: 'online' | 'in_person'
+    location_details: string | null
+  } | null
 
   if (!event || event.slug !== eventSlug || registration.entity_id !== entity.id) return null
 
   const ticketType = registration.event_ticket_types as
-    | { title: string; price_cents: number; currency: string }
-    | null
-    | undefined
+    { title: string; price_cents: number; currency: string } | null | undefined
 
   const priceCents = registration.price_cents ?? ticketType?.price_cents ?? null
 
   const locBase = eventLocationLabel(event.location_type)
-  const locationLabel = event.location_details
-    ? `${locBase} · ${event.location_details}`
-    : locBase
+  const locationLabel = event.location_details ? `${locBase} · ${event.location_details}` : locBase
 
   return {
     entity: {

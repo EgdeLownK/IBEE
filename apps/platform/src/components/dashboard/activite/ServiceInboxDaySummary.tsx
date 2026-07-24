@@ -1,10 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
-import {
-  buildServiceDaySummary,
-  type ServiceBookingView,
-} from '@/lib/service-booking-view'
+import { buildServiceDaySummary, type ServiceBookingView } from '@/lib/service-booking-view'
 
 type Props = {
   bookings: ServiceBookingView[]

@@ -1,8 +1,4 @@
-import {
-  PROFILE_ACTIVITY_TAB_TYPES,
-  PROFILE_TAB_ORDER,
-  type ProfileTabType,
-} from './profile-tabs'
+import { PROFILE_ACTIVITY_TAB_TYPES, PROFILE_TAB_ORDER, type ProfileTabType } from './profile-tabs'
 
 export type ProfileTabContent = {
   publicationsCount: number
@@ -14,10 +10,7 @@ export type ProfileTabContent = {
 
 const ACTIVITY_TAB_SET = new Set<string>(PROFILE_ACTIVITY_TAB_TYPES)
 
-export function hasProfileTabContent(
-  tab: ProfileTabType,
-  content: ProfileTabContent
-): boolean {
+export function hasProfileTabContent(tab: ProfileTabType, content: ProfileTabContent): boolean {
   switch (tab) {
     case 'home':
       return true
@@ -41,9 +34,7 @@ function isActivityTab(tab: string): tab is ProfileTabType {
 }
 
 /** Shop / Service / Event dans l'ordre d'ajout (position entity_menu_sections). */
-function orderedActivityTabsFromMenu(
-  menuSections: readonly { type: string }[]
-): ProfileTabType[] {
+function orderedActivityTabsFromMenu(menuSections: readonly { type: string }[]): ProfileTabType[] {
   const seen = new Set<string>()
   const ordered: ProfileTabType[] = []
   for (const section of menuSections) {
@@ -58,14 +49,14 @@ function orderedActivityTabsFromMenu(
 function activityTabsWithStudioFallback(
   menuSections: readonly { type: string }[],
   mode: 'public' | 'studio',
-  content: ProfileTabContent
+  content: ProfileTabContent,
 ): ProfileTabType[] {
   const fromMenu = orderedActivityTabsFromMenu(menuSections)
   if (mode === 'public') return fromMenu
 
   const fromMenuSet = new Set(fromMenu)
   const extras = PROFILE_ACTIVITY_TAB_TYPES.filter(
-    (tab) => !fromMenuSet.has(tab) && hasProfileTabContent(tab, content)
+    (tab) => !fromMenuSet.has(tab) && hasProfileTabContent(tab, content),
   )
   return [...fromMenu, ...extras]
 }
@@ -79,7 +70,7 @@ function activityTabsWithStudioFallback(
 export function getVisibleProfileTabs(
   mode: 'public' | 'studio',
   menuSections: Iterable<{ type: string }>,
-  content: ProfileTabContent
+  content: ProfileTabContent,
 ): ProfileTabType[] {
   const menuList = [...menuSections]
   const menuSet = new Set(menuList.map((s) => s.type))

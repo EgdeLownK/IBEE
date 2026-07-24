@@ -21,7 +21,7 @@ export function entityDetailExcerpt(entity: {
       }
       if (block.type === 'list' && Array.isArray(block.items) && block.items.length > 0) {
         return truncateText(
-          block.items.filter((item): item is string => typeof item === 'string').join(' · ')
+          block.items.filter((item): item is string => typeof item === 'string').join(' · '),
         )
       }
     }
@@ -36,7 +36,11 @@ export function entityDetailExcerpt(entity: {
     const desc = entity.description.trim()
     try {
       const parsed = JSON.parse(desc)
-      if (Array.isArray(parsed) && parsed[0]?.type === 'text' && typeof parsed[0].content === 'string') {
+      if (
+        Array.isArray(parsed) &&
+        parsed[0]?.type === 'text' &&
+        typeof parsed[0].content === 'string'
+      ) {
         return truncateText(parsed[0].content)
       }
     } catch {

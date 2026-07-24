@@ -55,7 +55,11 @@ function formatDayNumeric(date: Date): string {
   return `${day}/${month}`
 }
 
-export function getPeriodWindow(period: AnalysePeriod, offset: number, now = new Date()): PeriodWindow {
+export function getPeriodWindow(
+  period: AnalysePeriod,
+  offset: number,
+  now = new Date(),
+): PeriodWindow {
   if (period === 'week') {
     const start = startOfWeekMonday(now)
     start.setDate(start.getDate() + offset * 7)
@@ -74,7 +78,7 @@ export function getPeriodWindow(period: AnalysePeriod, offset: number, now = new
 export function getMinPeriodOffset(
   period: AnalysePeriod,
   accountCreatedAt: string,
-  now = new Date()
+  now = new Date(),
 ): number {
   const created = new Date(accountCreatedAt)
 

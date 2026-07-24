@@ -44,7 +44,12 @@ export function ProfileHeroView({
             <span className="profile-banner__label">BANNER IMAGE 800×172</span>
           </div>
         </div>
-        <button type="button" className="iconbtn profile-share" aria-label="Partager le profil" disabled={readOnly}>
+        <button
+          type="button"
+          className="iconbtn profile-share"
+          aria-label="Partager le profil"
+          disabled={readOnly}
+        >
           <Share className="h-[17px] w-[17px]" aria-hidden="true" />
         </button>
       </div>
@@ -53,7 +58,6 @@ export function ProfileHeroView({
         <div className="mt-4 flex items-center gap-4">
           <div className="profile-avatar">
             {avatarUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
               <img src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
             ) : (
               <span className="font-display text-[30px] font-semibold text-accent">{initials}</span>

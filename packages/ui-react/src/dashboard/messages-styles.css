@@ -432,7 +432,6 @@
   color: var(--color-neutral-500);
 }
 
-
 .messages-chat__body {
   flex: 1;
   min-height: 0;
@@ -459,7 +458,7 @@
 
 .messages-chat__day::before,
 .messages-chat__day::after {
-  content: "";
+  content: '';
   flex: 1;
   height: 1px;
   background: var(--color-border-soft);
@@ -572,7 +571,7 @@
 }
 
 .messages-context--sheet::before {
-  content: "";
+  content: '';
   display: block;
   width: 36px;
   height: 4px;
@@ -607,8 +606,8 @@
     display: block;
   }
 
-  .messages-page[data-view="list"] .messages-sidebar,
-  .messages-page[data-view="chat"] .messages-chat {
+  .messages-page[data-view='list'] .messages-sidebar,
+  .messages-page[data-view='chat'] .messages-chat {
     display: flex;
     flex-direction: column;
   }

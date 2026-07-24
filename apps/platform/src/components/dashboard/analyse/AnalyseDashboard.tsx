@@ -12,10 +12,7 @@ import {
   ShoppingBag,
   TrendingUp,
 } from 'lucide-react'
-import {
-  fetchAnalyseRankingChart,
-  fetchAnalyseScope,
-} from '@/lib/analyse-client'
+import { fetchAnalyseRankingChart, fetchAnalyseScope } from '@/lib/analyse-client'
 import {
   ANALYSE_PERIODS,
   analyseScopeCacheKey,
@@ -74,7 +71,7 @@ function rankingEmptyCopy(scope: Scope): { title: string; hint: string } {
     case 'shop':
       return {
         title: 'Aucun produit consulté',
-        hint: 'Les produits les plus vus s\'afficheront ici lorsque des visiteurs parcourront votre boutique.',
+        hint: "Les produits les plus vus s'afficheront ici lorsque des visiteurs parcourront votre boutique.",
       }
     case 'service':
       return {
@@ -84,7 +81,7 @@ function rankingEmptyCopy(scope: Scope): { title: string; hint: string } {
     case 'event':
       return {
         title: 'Aucun événement consulté',
-        hint: 'Les événements les plus vus s\'afficheront ici lorsque des visiteurs consulteront votre billetterie.',
+        hint: "Les événements les plus vus s'afficheront ici lorsque des visiteurs consulteront votre billetterie.",
       }
     case 'news':
       return {
@@ -94,7 +91,7 @@ function rankingEmptyCopy(scope: Scope): { title: string; hint: string } {
     default:
       return {
         title: 'Aucune donnée pour cette période',
-        hint: 'Revenez consulter cette vue lorsque de l\'activité sera enregistrée.',
+        hint: "Revenez consulter cette vue lorsque de l'activité sera enregistrée.",
       }
   }
 }
@@ -145,14 +142,10 @@ export function AnalyseDashboard({
   const [rankingLimit, setRankingLimit] = useState(initialRankingLimit)
   const [error, setError] = useState<string | null>(null)
   const [extraCharts, setExtraCharts] = useState<Record<string, AnalyseBarPoint[]>>({})
-  const inflightRef = useRef(
-    new Map<string, ReturnType<typeof fetchAnalyseScope>>()
-  )
+  const inflightRef = useRef(new Map<string, ReturnType<typeof fetchAnalyseScope>>())
   const loadGenerationRef = useRef(0)
   const warmupStartedRef = useRef(false)
-  const [chartSeries, setChartSeries] = useState<ChartSeries>(() =>
-    defaultChartSeries(initialData)
-  )
+  const [chartSeries, setChartSeries] = useState<ChartSeries>(() => defaultChartSeries(initialData))
   const [selectedBar, setSelectedBar] = useState<number | null>(null)
 
   const scope = data.scope
@@ -177,16 +170,11 @@ export function AnalyseDashboard({
         setRankingLimit(nextRankingLimit)
       }
     },
-    []
+    [],
   )
 
   const fetchScope = useCallback(
-    (payload: {
-      scope: Scope
-      period: AnalysePeriod
-      offset: number
-      rankingLimit: number
-    }) => {
+    (payload: { scope: Scope; period: AnalysePeriod; offset: number; rankingLimit: number }) => {
       const cache = cacheRef.current!
       const key = analyseScopeCacheKey(payload)
       const cached = cache.get(key)
@@ -205,7 +193,7 @@ export function AnalyseDashboard({
       inflightRef.current.set(key, promise)
       return promise
     },
-    [entityId]
+    [entityId],
   )
 
   useEffect(() => {
@@ -235,9 +223,7 @@ export function AnalyseDashboard({
       }
     }
 
-    void Promise.all(
-      Array.from({ length: Math.min(concurrency, tasks.length) }, () => worker())
-    )
+    void Promise.all(Array.from({ length: Math.min(concurrency, tasks.length) }, () => worker()))
 
     return () => {
       cancelled = true
@@ -246,7 +232,7 @@ export function AnalyseDashboard({
 
   const minOffset = useMemo(
     () => getMinPeriodOffset(period, accountCreatedAt),
-    [period, accountCreatedAt]
+    [period, accountCreatedAt],
   )
 
   const activeSeriesKey = seriesKey(chartSeries)
@@ -257,8 +243,8 @@ export function AnalyseDashboard({
     []
   const activeLabel =
     chartSeries.source === 'kpi'
-      ? data.kpis.find((k) => k.id === chartSeries.id)?.k ?? data.metric
-      : data.ranking.items.find((r) => r.id === chartSeries.id)?.k ?? data.metric
+      ? (data.kpis.find((k) => k.id === chartSeries.id)?.k ?? data.metric)
+      : (data.ranking.items.find((r) => r.id === chartSeries.id)?.k ?? data.metric)
 
   const maxBar = useMemo(() => Math.max(...chartBars.map((b) => b.value), 1), [chartBars])
   const columnCount = useMemo(() => {
@@ -442,176 +428,176 @@ export function AnalyseDashboard({
       </div>
 
       <div className="anal-content">
-          <div className="anal-kpis" role="listbox" aria-label="Indicateurs">
-            {data.kpis.map((kpi) => {
-              const isOn = chartSeries.source === 'kpi' && chartSeries.id === kpi.id
+        <div className="anal-kpis" role="listbox" aria-label="Indicateurs">
+          {data.kpis.map((kpi) => {
+            const isOn = chartSeries.source === 'kpi' && chartSeries.id === kpi.id
+            return (
+              <button
+                key={kpi.id}
+                type="button"
+                role="option"
+                aria-selected={isOn}
+                className={`anal-kpi${isOn ? ' is-on' : ''}`}
+                onClick={() => selectKpi(kpi.id)}
+              >
+                <div className="anal-kpi__label">{kpi.k}</div>
+                <div className="anal-kpi__value">{kpi.v}</div>
+                <div className={`anal-kpi__delta${kpi.up ? ' is-up' : ' is-down'}`}>
+                  {kpi.d}
+                  <span className="anal-kpi__compare">vs. {periodCompareLabel(period)}</span>
+                </div>
+              </button>
+            )
+          })}
+        </div>
+
+        <div className="anal-chart">
+          <div className="anal-chart__top">
+            <p className="anal-chart__metric">{activeLabel}</p>
+            <div className="anal-period" role="tablist" aria-label="Période">
+              {ANALYSE_PERIOD_TABS.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  role="tab"
+                  data-period={p.id}
+                  aria-selected={period === p.id}
+                  className={`anal-period__btn${period === p.id ? ' is-on' : ''}`}
+                  onMouseEnter={() => prefetchPeriod(p.id)}
+                  onFocus={() => prefetchPeriod(p.id)}
+                  onClick={() => handlePeriodChange(p.id)}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="anal-chart__nav">
+            <button
+              type="button"
+              className="anal-chart__nav-btn"
+              aria-label="Période précédente"
+              disabled={!canGoBack}
+              onMouseEnter={() => prefetchOffset(-1)}
+              onFocus={() => prefetchOffset(-1)}
+              onClick={() => {
+                setSelectedBar(null)
+                loadScope({ offset: periodOffset - 1 })
+              }}
+            >
+              <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+            </button>
+            <div className="anal-chart__range">
+              <CalendarDays className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              <span>{data.rangeLabel}</span>
+            </div>
+            <button
+              type="button"
+              className="anal-chart__nav-btn"
+              aria-label="Période suivante"
+              disabled={!canGoForward}
+              onMouseEnter={() => prefetchOffset(1)}
+              onFocus={() => prefetchOffset(1)}
+              onClick={() => {
+                setSelectedBar(null)
+                loadScope({ offset: periodOffset + 1 })
+              }}
+            >
+              <ChevronRight className="h-4 w-4" aria-hidden="true" />
+            </button>
+          </div>
+
+          <div
+            className={`anal-chart__bars${period === 'year' ? ' anal-chart__bars--year' : ''}`}
+            style={{ gridTemplateColumns: `repeat(${chartBars.length || columnCount}, 1fr)` }}
+            role="group"
+            aria-label={`Graphique ${activeLabel} — ${data.rangeLabel}`}
+          >
+            {chartBars.map((bar, i) => {
+              const height = Math.round((bar.value / maxBar) * 100)
+              const isOn = selectedBar === i
               return (
                 <button
-                  key={kpi.id}
+                  key={`${bar.label}-${i}`}
                   type="button"
-                  role="option"
-                  aria-selected={isOn}
-                  className={`anal-kpi${isOn ? ' is-on' : ''}`}
-                  onClick={() => selectKpi(kpi.id)}
+                  className={`anal-bar${isOn ? ' is-on' : ''}`}
+                  aria-pressed={isOn}
+                  onClick={() => setSelectedBar(selectedBar === i ? null : i)}
                 >
-                  <div className="anal-kpi__label">{kpi.k}</div>
-                  <div className="anal-kpi__value">{kpi.v}</div>
-                  <div className={`anal-kpi__delta${kpi.up ? ' is-up' : ' is-down'}`}>
-                    {kpi.d}
-                    <span className="anal-kpi__compare">vs. {periodCompareLabel(period)}</span>
-                  </div>
+                  <span className="anal-bar__value">{bar.value.toLocaleString('fr-FR')}</span>
+                  <span className="anal-bar__track">
+                    <span className="anal-bar__fill" style={{ height: `${height}%` }} />
+                  </span>
+                  <span className="anal-bar__day">{bar.label}</span>
                 </button>
               )
             })}
           </div>
 
-          <div className="anal-chart">
-            <div className="anal-chart__top">
-              <p className="anal-chart__metric">{activeLabel}</p>
-              <div className="anal-period" role="tablist" aria-label="Période">
-                {ANALYSE_PERIOD_TABS.map((p) => (
-                  <button
-                    key={p.id}
-                    type="button"
-                    role="tab"
-                    data-period={p.id}
-                    aria-selected={period === p.id}
-                    className={`anal-period__btn${period === p.id ? ' is-on' : ''}`}
-                    onMouseEnter={() => prefetchPeriod(p.id)}
-                    onFocus={() => prefetchPeriod(p.id)}
-                    onClick={() => handlePeriodChange(p.id)}
-                  >
-                    {p.label}
-                  </button>
-                ))}
-              </div>
-            </div>
+          <p className="anal-chart__hint">Vous pouvez sélectionner une barre du graphique.</p>
 
-            <div className="anal-chart__nav">
-              <button
-                type="button"
-                className="anal-chart__nav-btn"
-                aria-label="Période précédente"
-                disabled={!canGoBack}
-                onMouseEnter={() => prefetchOffset(-1)}
-                onFocus={() => prefetchOffset(-1)}
-                onClick={() => {
-                  setSelectedBar(null)
-                  loadScope({ offset: periodOffset - 1 })
-                }}
-              >
-                <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+          {data.stats ? (
+            <div className="anal-chart__stats">
+              {data.stats.map((stat) => (
+                <div key={stat.l} className="anal-stat">
+                  <div className="anal-stat__label">{stat.l}</div>
+                  <div className="anal-stat__value">{stat.v}</div>
+                </div>
+              ))}
+            </div>
+          ) : null}
+        </div>
+
+        <div className="anal-bottom">
+          <div className="anal-card">
+            <div className="anal-card__head">
+              <div className="anal-card__title">{data.ranking.title}</div>
+            </div>
+            {data.ranking.items.length === 0 ? (
+              <div className="anal-ranking-empty">
+                <span className="anal-ranking-empty__icon" aria-hidden="true">
+                  <TrendingUp className="h-5 w-5" />
+                </span>
+                <p className="anal-ranking-empty__title">{rankingEmpty.title}</p>
+                <p className="anal-ranking-empty__hint">{rankingEmpty.hint}</p>
+              </div>
+            ) : (
+              <div className="anal-top" role="listbox" aria-label={data.ranking.title}>
+                {data.ranking.items.map((item, i) => {
+                  const isOn = chartSeries.source === 'ranking' && chartSeries.id === item.id
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      role="option"
+                      aria-selected={isOn}
+                      className={`anal-top__row${isOn ? ' is-on' : ''}`}
+                      onClick={() => selectRanking(item.id)}
+                    >
+                      <span className="anal-top__rank">{i + 1}</span>
+                      <div className="anal-top__col">
+                        <div className="anal-top__name">{item.k}</div>
+                        <div className="anal-top__bar">
+                          <div className="anal-top__fill" style={{ width: item.v }} />
+                        </div>
+                      </div>
+                      <div className="anal-top__nums">
+                        <div className="anal-top__pct">{item.v}</div>
+                        <div className="anal-top__count">{item.n}</div>
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+            {data.ranking.hasMore ? (
+              <button type="button" className="anal-card__more" onClick={handleShowMore}>
+                Afficher plus
               </button>
-              <div className="anal-chart__range">
-                <CalendarDays className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                <span>{data.rangeLabel}</span>
-              </div>
-              <button
-                type="button"
-                className="anal-chart__nav-btn"
-                aria-label="Période suivante"
-                disabled={!canGoForward}
-                onMouseEnter={() => prefetchOffset(1)}
-                onFocus={() => prefetchOffset(1)}
-                onClick={() => {
-                  setSelectedBar(null)
-                  loadScope({ offset: periodOffset + 1 })
-                }}
-              >
-                <ChevronRight className="h-4 w-4" aria-hidden="true" />
-              </button>
-            </div>
-
-            <div
-              className={`anal-chart__bars${period === 'year' ? ' anal-chart__bars--year' : ''}`}
-              style={{ gridTemplateColumns: `repeat(${chartBars.length || columnCount}, 1fr)` }}
-              role="group"
-              aria-label={`Graphique ${activeLabel} — ${data.rangeLabel}`}
-            >
-              {chartBars.map((bar, i) => {
-                const height = Math.round((bar.value / maxBar) * 100)
-                const isOn = selectedBar === i
-                return (
-                  <button
-                    key={`${bar.label}-${i}`}
-                    type="button"
-                    className={`anal-bar${isOn ? ' is-on' : ''}`}
-                    aria-pressed={isOn}
-                    onClick={() => setSelectedBar(selectedBar === i ? null : i)}
-                  >
-                    <span className="anal-bar__value">{bar.value.toLocaleString('fr-FR')}</span>
-                    <span className="anal-bar__track">
-                      <span className="anal-bar__fill" style={{ height: `${height}%` }} />
-                    </span>
-                    <span className="anal-bar__day">{bar.label}</span>
-                  </button>
-                )
-              })}
-            </div>
-
-            <p className="anal-chart__hint">Vous pouvez sélectionner une barre du graphique.</p>
-
-            {data.stats ? (
-              <div className="anal-chart__stats">
-                {data.stats.map((stat) => (
-                  <div key={stat.l} className="anal-stat">
-                    <div className="anal-stat__label">{stat.l}</div>
-                    <div className="anal-stat__value">{stat.v}</div>
-                  </div>
-                ))}
-              </div>
             ) : null}
           </div>
-
-          <div className="anal-bottom">
-            <div className="anal-card">
-              <div className="anal-card__head">
-                <div className="anal-card__title">{data.ranking.title}</div>
-              </div>
-              {data.ranking.items.length === 0 ? (
-                <div className="anal-ranking-empty">
-                  <span className="anal-ranking-empty__icon" aria-hidden="true">
-                    <TrendingUp className="h-5 w-5" />
-                  </span>
-                  <p className="anal-ranking-empty__title">{rankingEmpty.title}</p>
-                  <p className="anal-ranking-empty__hint">{rankingEmpty.hint}</p>
-                </div>
-              ) : (
-                <div className="anal-top" role="listbox" aria-label={data.ranking.title}>
-                  {data.ranking.items.map((item, i) => {
-                    const isOn = chartSeries.source === 'ranking' && chartSeries.id === item.id
-                    return (
-                      <button
-                        key={item.id}
-                        type="button"
-                        role="option"
-                        aria-selected={isOn}
-                        className={`anal-top__row${isOn ? ' is-on' : ''}`}
-                        onClick={() => selectRanking(item.id)}
-                      >
-                        <span className="anal-top__rank">{i + 1}</span>
-                        <div className="anal-top__col">
-                          <div className="anal-top__name">{item.k}</div>
-                          <div className="anal-top__bar">
-                            <div className="anal-top__fill" style={{ width: item.v }} />
-                          </div>
-                        </div>
-                        <div className="anal-top__nums">
-                          <div className="anal-top__pct">{item.v}</div>
-                          <div className="anal-top__count">{item.n}</div>
-                        </div>
-                      </button>
-                    )
-                  })}
-                </div>
-              )}
-              {data.ranking.hasMore ? (
-                <button type="button" className="anal-card__more" onClick={handleShowMore}>
-                  Afficher plus
-                </button>
-              ) : null}
-            </div>
-          </div>
+        </div>
       </div>
     </main>
   )

@@ -24,13 +24,9 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
   ({ error, variant = 'default', className, ...props }, ref) => {
     const variantClass = error ? errorClasses : variantClasses[variant]
     return (
-      <input
-        ref={ref}
-        className={`${baseClasses} ${variantClass} ${className ?? ''}`}
-        {...props}
-      />
+      <input ref={ref} className={`${baseClasses} ${variantClass} ${className ?? ''}`} {...props} />
     )
-  }
+  },
 )
 
 Input.displayName = 'Input'

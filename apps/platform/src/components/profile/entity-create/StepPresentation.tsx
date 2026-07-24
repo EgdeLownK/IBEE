@@ -77,16 +77,17 @@ export function StepPresentation({
     fd.append('file', file)
     try {
       const result = await uploadProductMediaAction(fd)
-      updateGallery((prev) =>
-        prev
-          .map((g) => {
-            if (g.id !== id) return g
-            if (result.ok) return { ...g, url: result.url, uploading: false }
-            URL.revokeObjectURL(previewUrl)
-            toast.error(result.error)
-            return null
-          })
-          .filter(Boolean) as GalleryImageItem[]
+      updateGallery(
+        (prev) =>
+          prev
+            .map((g) => {
+              if (g.id !== id) return g
+              if (result.ok) return { ...g, url: result.url, uploading: false }
+              URL.revokeObjectURL(previewUrl)
+              toast.error(result.error)
+              return null
+            })
+            .filter(Boolean) as GalleryImageItem[],
       )
     } catch {
       URL.revokeObjectURL(previewUrl)
@@ -144,10 +145,7 @@ export function StepPresentation({
       updateBlocks((prev) => {
         if (prev.length >= 20) return prev
         accepted = true
-        return [
-          ...prev,
-          { id: blockId, type: 'image', url: '', previewUrl, uploading: true },
-        ]
+        return [...prev, { id: blockId, type: 'image', url: '', previewUrl, uploading: true }]
       })
     })
 
@@ -160,16 +158,17 @@ export function StepPresentation({
     fd.append('file', file)
     try {
       const result = await uploadProductMediaAction(fd)
-      updateBlocks((prev) =>
-        prev
-          .map((b) => {
-            if (b.id !== blockId || b.type !== 'image') return b
-            if (result.ok) return { ...b, url: result.url, uploading: false }
-            URL.revokeObjectURL(previewUrl)
-            toast.error(result.error)
-            return null
-          })
-          .filter(Boolean) as ContentBlockItem[]
+      updateBlocks(
+        (prev) =>
+          prev
+            .map((b) => {
+              if (b.id !== blockId || b.type !== 'image') return b
+              if (result.ok) return { ...b, url: result.url, uploading: false }
+              URL.revokeObjectURL(previewUrl)
+              toast.error(result.error)
+              return null
+            })
+            .filter(Boolean) as ContentBlockItem[],
       )
     } catch {
       URL.revokeObjectURL(previewUrl)
@@ -212,7 +211,9 @@ export function StepPresentation({
                 type="button"
                 className="pco__icon-btn"
                 aria-label="Supprimer"
-                onClick={() => onChange({ highlights: fields.highlights.filter((_, j) => j !== i) })}
+                onClick={() =>
+                  onChange({ highlights: fields.highlights.filter((_, j) => j !== i) })
+                }
               >
                 <Trash2 className="h-4 w-4" />
               </button>
@@ -229,7 +230,8 @@ export function StepPresentation({
 
       <div className="pco__field">
         <span className="pco__label">
-          Galerie <span className="pco__hint">(jusqu&apos;à 6 images, la première = couverture)</span>
+          Galerie{' '}
+          <span className="pco__hint">(jusqu&apos;à 6 images, la première = couverture)</span>
         </span>
         {fields.galleryImages.length > 0 ? (
           <div className="pco__media-grid">
@@ -242,7 +244,9 @@ export function StepPresentation({
                     <Loader2 className="h-4 w-4 animate-spin" />
                   </span>
                 ) : null}
-                {i === 0 && !g.uploading ? <span className="pco__media-cover">Couverture</span> : null}
+                {i === 0 && !g.uploading ? (
+                  <span className="pco__media-cover">Couverture</span>
+                ) : null}
                 {!g.uploading ? (
                   <div className="pco__media-controls">
                     <button
@@ -327,7 +331,7 @@ export function StepPresentation({
                 value={b.content}
                 onChange={(e) => {
                   const contentBlocks = fields.contentBlocks.map((x) =>
-                    x.id === b.id && x.type === 'text' ? { ...x, content: e.target.value } : x
+                    x.id === b.id && x.type === 'text' ? { ...x, content: e.target.value } : x,
                   )
                   onChange({ contentBlocks })
                 }}
