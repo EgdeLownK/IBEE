@@ -58,11 +58,13 @@ enabled = true
 schema_paths = []
 
 [db.seed]
-# If enabled, seeds the database after migrations during a db reset.
-enabled = true
-# Specifies an ordered list of seed files to load during db reset.
-# Supports glob patterns relative to supabase directory: "./seeds/*.sql"
-sql_paths = ["./seed.sql"]
+# Désactivé : référençait "./seed.sql" (jamais existé — les seeds réels vivent dans
+# supabase/seeds/*.sql et s'appliquent manuellement via SQL Editor, voir
+# .claude/rules/database.md). Un `db reset`/`supabase start` avec ce chemin mort
+# aurait échoué — bloquant, découvert en mettant en place les tests pgTAP CI
+# (aucun seed n'est nécessaire aux tests RLS, qui posent leurs propres fixtures).
+enabled = false
+sql_paths = []
 
 [db.network_restrictions]
 # Enable management of network restrictions.
