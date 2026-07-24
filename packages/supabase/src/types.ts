@@ -4053,6 +4053,10 @@ export type Database = {
         Returns: number
       }
       rollup_entity_analytics_incremental: { Args: never; Returns: Json }
+      self_check_in_event_registration: {
+        Args: { p_event_id: string; p_ticket_code: string }
+        Returns: Json
+      }
       slugify: { Args: { input: string }; Returns: string }
       submit_manual_reg_contact_session: {
         Args: {
