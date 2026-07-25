@@ -108,3 +108,4 @@ Profile.pdf
 
 .vercel
 .env*
+supabase/.branches/
