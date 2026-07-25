@@ -3,6 +3,7 @@ paths:
   - "**/eslint.config.mjs"
   - "**/eslint-suppressions.json"
   - ".github/workflows/ci.yml"
+  - ".prettierignore"
 ---
 # Règles lint (eslint-suppressions.json)
 
@@ -30,6 +31,13 @@ fichier unique à la racine du monorepo :
 Le plafond `--max-warnings` couvre un angle mort du fichier de suppressions :
 celui-ci ne gèle que les erreurs (severity 2), jamais les warnings (severity 1),
 qui ne font déjà pas échouer `eslint` par défaut.
+
+Les 4 `eslint-suppressions.json` sont exclus de Prettier via `**/eslint-suppressions.json`
+dans `.prettierignore` : ce sont des fichiers JSON écrits dans le format propre
+d'ESLint, non conforme aux règles Prettier du dépôt. Ne jamais les reformater
+avec `prettier --write` — `--prune-suppressions` les réécrit dans le format
+ESLint après chaque lot de correction, ce qui romprait le formatage Prettier à
+chaque fois et ferait échouer `pnpm format:check` de façon récurrente.
 
 ## Procédure OBLIGATOIRE après tout lot de correction lint
 
@@ -64,7 +72,7 @@ Dans le dossier du package concerné :
 
 ## Si la CI lint est rouge
 
-Diagnostiquer la cause avant d'agir — trois causes possibles, chacune avec son
+Diagnostiquer la cause avant d'agir — quatre causes possibles, chacune avec son
 propre signal :
 
 - **Violation nouvelle non gelée** : sortie ESLint détaillée avec fichier, ligne
@@ -73,8 +81,13 @@ propre signal :
   `--prune-suppressions` (étape 1 de la procédure).
 - **Plafond de warnings dépassé** (message "ESLint found too many warnings
   (maximum: N)") → un warning de plus est apparu ; le corriger.
+- **`pnpm format:check` échoue sur un `eslint-suppressions.json`** → signe que
+  `.prettierignore` a perdu la ligne `**/eslint-suppressions.json` (ou qu'un
+  nouveau package a été ajouté sans que son fichier de suppressions soit
+  couvert par ce même motif) → restaurer/vérifier cette ligne, jamais lancer
+  `prettier --write` dessus.
 
-Dans les trois cas, élargir les suppressions ou relever un plafond n'est jamais
+Dans tous les cas, élargir les suppressions ou relever un plafond n'est jamais
 la réponse par défaut à une CI rouge — ce garde-fou existe précisément pour
 empêcher qu'un rouge soit "réparé" en élargissant ce qui est toléré plutôt qu'en
 corrigeant ce qui est signalé.

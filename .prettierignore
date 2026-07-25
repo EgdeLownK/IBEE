@@ -10,6 +10,14 @@ next-env.d.ts
 # Auto-généré, ne jamais formater manuellement — regénéré par `pnpm gen-types`
 packages/supabase/src/types.ts
 
+# Auto-généré par `eslint --suppress-all` / `--prune-suppressions` (garde-fou
+# lint, voir .claude/rules/lint.md), dans le format JSON propre d'ESLint —
+# non conforme aux règles Prettier. Ne jamais reformater avec `prettier
+# --write` : `--prune-suppressions` réécrit ces fichiers dans le format ESLint
+# après chaque lot de correction lint, ce qui romprait le formatage Prettier à
+# chaque fois et ferait échouer `pnpm format:check` de façon récurrente.
+**/eslint-suppressions.json
+
 # SQL, markdown, brain — hors scope du formatage JS/TS
 supabase/
 .ibee-brain/
