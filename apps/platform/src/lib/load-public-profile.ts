@@ -15,6 +15,7 @@ import {
   getReviewAggregates,
   getServiceReviewAggregates,
   isFollowing as checkIsFollowing,
+  listActiveJobOffersByEntity,
   listProductCategories,
   listPublishedProductsByEntity,
   listUpcomingEvents,
@@ -40,6 +41,7 @@ export async function loadPublicProfileBySlug(slug: string) {
     products,
     productCategories,
     upcomingEvents,
+    activeJobOffers,
   ] = await Promise.all([
     getEntityMenuSections(supabase, entity.id),
     getEntityHomeWidgets(supabase, entity.id),
@@ -51,6 +53,7 @@ export async function loadPublicProfileBySlug(slug: string) {
     listPublishedProductsByEntity(supabase, entity.id, { limit: 60 }),
     listProductCategories(supabase, entity.id),
     listUpcomingEvents(supabase, entity.id),
+    listActiveJobOffersByEntity(supabase, entity.id).catch(() => []),
   ])
 
   const eventRegistrationCounts = await Promise.all(
@@ -163,6 +166,18 @@ export async function loadPublicProfileBySlug(slug: string) {
     opening_hours: defaultOpeningHours(),
   }
 
+  const jobOffers = activeJobOffers.map((offer) => ({
+    id: offer.id,
+    title: offer.title,
+    contract_type: offer.contract_type,
+    location_type: offer.location_type,
+    location_text: offer.location_text,
+    compensation_type: offer.compensation_type,
+    compensation_amount: offer.compensation_amount,
+    compensation_frequency: offer.compensation_frequency,
+    created_at: offer.created_at,
+  }))
+
   const siteUrl = process.env.NEXT_PUBLIC_WEB_URL ?? 'http://localhost:3000'
 
   return {
@@ -191,6 +206,7 @@ export async function loadPublicProfileBySlug(slug: string) {
     productCategories: productCategories.map((c) => ({ id: c.id, name: c.name })),
     playlistServices,
     playlistEvents,
+    jobOffers,
     isAuthenticated: false, // Default for SSG
     isFollowing: false, // Default for SSG
     isOwner: false, // Default for SSG

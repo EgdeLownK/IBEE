@@ -120,3 +120,62 @@ export async function updateJobApplicationStatus(
 
   if (error) throw error
 }
+
+export type CreateJobApplicationInput = {
+  offer_id: string
+  first_name: string
+  last_name: string
+  email: string
+  message?: string | null
+  resume_url?: string | null
+  applicant_user_id?: string | null
+  phone?: string | null
+  location?: string | null
+}
+
+export async function createJobApplication(
+  client: Client,
+  input: CreateJobApplicationInput
+): Promise<JobApplication> {
+  const { data, error } = await client
+    .from('entity_job_applications')
+    .insert(input)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+type ApplicationWithOffer = JobApplication & {
+  entity_job_offers: { title: string; entity_id: string } | null
+}
+
+export async function listMyApplications(
+  client: Client,
+  userId: string
+): Promise<ApplicationWithOffer[]> {
+  const { data, error } = await client
+    .from('entity_job_applications')
+    .select('*, entity_job_offers(title, entity_id)')
+    .eq('applicant_user_id', userId)
+    .order('created_at', { ascending: false })
+
+  if (error) throw error
+  return (data ?? []) as unknown as ApplicationWithOffer[]
+}
+
+export async function listActiveJobOffersByEntity(
+  client: Client,
+  entityId: string
+): Promise<JobOffer[]> {
+  const { data, error } = await client
+    .from('entity_job_offers')
+    .select('*')
+    .eq('entity_id', entityId)
+    .eq('status', 'active')
+    .order('created_at', { ascending: false })
+
+  if (error) throw error
+  return data
+}

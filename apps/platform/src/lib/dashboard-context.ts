@@ -2,7 +2,7 @@ import 'server-only'
 
 import { cache } from 'react'
 import type { User } from '@supabase/supabase-js'
-import { getEntityByUserId } from '@ibee/supabase'
+import { getEntityByUserId, listAccessibleEntities } from '@ibee/supabase'
 import type { Database } from '@ibee/supabase'
 import { createClient } from '@/lib/supabase/server'
 import { buildAccountShellData, type AccountShellData } from '@/lib/account-shell-data'
@@ -44,6 +44,14 @@ export const getDashboardAccountShell = cache(async (): Promise<AccountShellData
   return measureDashboardLoad('context:getDashboardAccountShell', async () => {
     const ctx = await getDashboardContext()
     if (!ctx) return null
-    return buildAccountShellData(ctx.user, ctx.entity)
+
+    const accessible = ctx.user.email
+      ? await listAccessibleEntities(ctx.supabase, ctx.user.id, ctx.user.email).catch(() => ({
+          owned: [ctx.entity],
+          member: [],
+        }))
+      : { owned: [ctx.entity], member: [] }
+
+    return buildAccountShellData(ctx.user, ctx.entity, accessible)
   })
 })

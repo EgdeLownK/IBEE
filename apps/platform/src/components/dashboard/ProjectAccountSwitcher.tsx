@@ -1,9 +1,10 @@
 'use client'
 
 import { useId, useState, type CSSProperties, type ToggleEvent } from 'react'
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown, Plus } from 'lucide-react'
 import { useAccountContext } from './AccountContext'
 import { closeAppDrawer } from './MainRail'
+import { CreateEntityDialog } from '@/components/account/CreateEntityDialog'
 
 type Props = {
   variant?: 'header' | 'sidebar'
@@ -13,6 +14,7 @@ type Props = {
 export function ProjectAccountSwitcher({ variant = 'header', onAccountChange }: Props) {
   const menuId = useId().replace(/:/g, '')
   const [menuOpen, setMenuOpen] = useState(false)
+  const [createOpen, setCreateOpen] = useState(false)
   const {
     personalAccount,
     projectAccounts,
@@ -104,7 +106,21 @@ export function ProjectAccountSwitcher({ variant = 'header', onAccountChange }: 
             </span>
           </button>
         ))}
+        <hr className="my-1 border-neutral-100" />
+        <button
+          type="button"
+          className="app-menu__item"
+          onClick={() => {
+            document.getElementById(menuId)?.hidePopover()
+            setCreateOpen(true)
+          }}
+        >
+          <Plus className="h-4 w-4 shrink-0" aria-hidden="true" />
+          <span>Créer une entreprise</span>
+        </button>
       </div>
+
+      <CreateEntityDialog open={createOpen} onClose={() => setCreateOpen(false)} />
     </>
   )
 }

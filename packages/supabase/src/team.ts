@@ -39,6 +39,7 @@ const DEFAULT_ROLE_SEEDS: Omit<TeamRoleSaveInput, 'id'>[] = [
       connecteur: true,
       team: true,
       revenue: true,
+      talent: true,
     },
     locked: true,
     inviteable: false,
@@ -60,9 +61,31 @@ const DEFAULT_ROLE_SEEDS: Omit<TeamRoleSaveInput, 'id'>[] = [
       connecteur: true,
       team: true,
       revenue: true,
+      talent: true,
     },
     inviteable: true,
     position: 1,
+  },
+  {
+    role_key: 'recruiter',
+    label: 'Recruteur·se',
+    bg: 'rgba(59, 130, 246, 0.12)',
+    fg: 'rgb(59, 130, 246)',
+    permissions: {
+      profile_studio: false,
+      analyse: false,
+      news: false,
+      shop: false,
+      services: false,
+      events: false,
+      messages: true,
+      connecteur: false,
+      team: false,
+      revenue: false,
+      talent: true,
+    },
+    inviteable: true,
+    position: 2,
   },
   {
     role_key: 'member',
@@ -80,9 +103,10 @@ const DEFAULT_ROLE_SEEDS: Omit<TeamRoleSaveInput, 'id'>[] = [
       connecteur: false,
       team: false,
       revenue: false,
+      talent: false,
     },
     inviteable: true,
-    position: 2,
+    position: 3,
   },
 ]
 
@@ -383,4 +407,44 @@ export async function teamEmailAlreadyUsed(
 
 export function getOwnerRole(roles: TeamRoleRecord[]) {
   return roles.find((role) => role.role_key === 'owner' && role.locked)
+}
+
+export type AccessibleEntity = {
+  id: string
+  display_name: string
+  slug: string
+  avatar_url: string | null
+  role: string | null
+}
+
+export async function listAccessibleEntities(
+  client: Client,
+  userId: string,
+  email: string
+): Promise<{ owned: AccessibleEntity[]; member: AccessibleEntity[] }> {
+  // Entités dont l'user est owner
+  const { data: owned, error: ownedError } = await client
+    .from('entity')
+    .select('id, display_name, slug, avatar_url, role')
+    .eq('user_id', userId)
+
+  if (ownedError) throw ownedError
+
+  // Entités dont l'user est membre (par email)
+  const { data: memberRows, error: memberError } = await client
+    .from('entity_team_members')
+    .select('entity_id, entity(id, display_name, slug, avatar_url, role)')
+    .ilike('email', email)
+
+  if (memberError) throw memberError
+
+  const ownedIds = new Set((owned ?? []).map((e) => e.id))
+  const memberEntities = (memberRows ?? [])
+    .map((row) => row.entity as unknown as AccessibleEntity | null)
+    .filter((e): e is AccessibleEntity => e !== null && !ownedIds.has(e.id))
+
+  return {
+    owned: owned ?? [],
+    member: memberEntities,
+  }
 }

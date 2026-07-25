@@ -142,8 +142,9 @@ export {
   touchTeamInvitation,
   teamEmailAlreadyUsed,
   getOwnerRole,
+  listAccessibleEntities,
 } from './team'
-export type { TeamRoleRecord, TeamRoleSaveInput } from './team'
+export type { TeamRoleRecord, TeamRoleSaveInput, AccessibleEntity } from './team'
 export type { Database } from './types'
 
 // Products
@@ -313,5 +314,10 @@ export const IBEE_SYSTEM_SLUG = '__ibee__'
 export { createServerClient } from './auth/server'
 export { createBrowserClient } from './auth/browser'
 export { getSupabaseEnv } from './auth/env'
+
+export { getUserProfile, upsertUserProfile } from './user-profiles'
+export type { UserProfile } from './user-profiles'
+
+export { listFavoritesByUser, addFavorite, removeFavorite } from './favorites'
 
 export * from './project-talent'
