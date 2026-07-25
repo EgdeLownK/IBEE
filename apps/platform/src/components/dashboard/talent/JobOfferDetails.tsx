@@ -147,7 +147,7 @@ export function JobOfferDetails({
           <div>
             <h1 className="font-display text-2xl font-semibold text-neutral-900">{offer.title}</h1>
             <p className="text-sm text-neutral-500 mt-1">
-              Gérez les détails de l'offre et les candidatures reçues.
+              Gérez les détails de l&apos;offre et les candidatures reçues.
             </p>
           </div>
         </div>
@@ -176,7 +176,7 @@ export function JobOfferDetails({
             className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors bg-white border border-neutral-200 hover:bg-neutral-100 text-neutral-900 h-10 px-4 shadow-sm"
           >
             <Edit className="w-4 h-4 mr-2" />
-            Modifier l'offre
+            Modifier l&apos;offre
           </button>
           <button
             onClick={async () => {
@@ -192,7 +192,7 @@ export function JobOfferDetails({
             className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors bg-white border border-red-200 hover:bg-red-50 text-red-700 h-10 px-4 shadow-sm"
           >
             <Trash className="w-4 h-4 mr-2" />
-            Supprimer l'offre
+            Supprimer l&apos;offre
           </button>
         </div>
       </div>
@@ -200,7 +200,7 @@ export function JobOfferDetails({
       {showArchives && (
         <div className="bg-neutral-900 text-white p-4 rounded-xl shadow-sm text-sm font-medium flex items-center justify-center gap-2">
           <Archive className="w-4 h-4 text-neutral-400" />
-          Vous consultez actuellement l'historique des candidatures des campagnes précédentes.
+          Vous consultez actuellement l&apos;historique des candidatures des campagnes précédentes.
         </div>
       )}
 

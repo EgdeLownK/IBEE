@@ -78,7 +78,7 @@ export function TalentDashboard({ entityId, offers }: { entityId: string; offers
         <div>
           <h1 className="font-display text-2xl font-semibold text-neutral-900">Talent</h1>
           <p className="text-sm text-neutral-500 mt-1">
-            Gérez vos offres d'emploi et recrutements.
+            Gérez vos offres d&apos;emploi et recrutements.
           </p>
         </div>
         <button
@@ -111,7 +111,7 @@ export function TalentDashboard({ entityId, offers }: { entityId: string; offers
               <p>Aucune offre ne correspond à votre recherche.</p>
             ) : (
               <>
-                <p>Aucune offre d'emploi pour le moment.</p>
+                <p>Aucune offre d&apos;emploi pour le moment.</p>
                 <button
                   className="mt-4 inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-950 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-neutral-200 bg-white hover:bg-neutral-100 hover:text-neutral-900 h-10 px-4 py-2"
                   onClick={handleCreate}

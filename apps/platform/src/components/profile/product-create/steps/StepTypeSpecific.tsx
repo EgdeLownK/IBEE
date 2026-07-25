@@ -42,8 +42,8 @@ export function StepTypeSpecific({ form, onChange }: Props) {
       {form.type === 'digital' ? (
         <>
           <p className="pco__hint-block">
-            Le téléversement de fichiers pour les produits digitaux n'est pas disponible pour le
-            moment.
+            Le téléversement de fichiers pour les produits digitaux n&apos;est pas disponible pour
+            le moment.
           </p>
           {err('digital_file_id') ? <p className="pco__error">{err('digital_file_id')}</p> : null}
 
@@ -241,7 +241,7 @@ export function StepTypeSpecific({ form, onChange }: Props) {
                 className="text-sm font-medium text-neutral-500 hover:text-neutral-900 flex items-center gap-1"
                 onClick={addDetailCategory}
               >
-                <Plus className="h-3 w-3" /> Ajouter un groupe d'informations
+                <Plus className="h-3 w-3" /> Ajouter un groupe d&apos;informations
               </button>
             </div>
             <div className="pco__attr-pairs mt-3 flex flex-col gap-6">

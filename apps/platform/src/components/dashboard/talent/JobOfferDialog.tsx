@@ -362,7 +362,7 @@ export function JobOfferDialog({ open, onOpenChange, entityId, offer }: JobOffer
           ) : (
             <section className="pco__stage p-6">
               <span className="pco__label">
-                Contenu détaillé de l'offre{' '}
+                Contenu détaillé de l&apos;offre{' '}
                 <span className="pco__hint">(max {HISTORY_MAX_BLOCKS} blocs)</span>
               </span>
               <div className="pco__blocks">
