@@ -225,13 +225,11 @@ export async function getAvailableSlots(
   const dayStart = `${date}T00:00:00Z`
   const dayEnd = `${date}T23:59:59Z`
 
-  const { data: existingBookings } = await client
-    .from('bookings')
-    .select('start_at, end_at')
-    .eq('entity_id', entityId)
-    .in('status', ['pending', 'confirmed'])
-    .gte('start_at', dayStart)
-    .lte('start_at', dayEnd)
+  const { data: existingBookings } = await client.rpc('get_booked_time_ranges', {
+    p_entity_id: entityId,
+    p_from: dayStart,
+    p_to: dayEnd,
+  })
 
   const bookedSlots = (existingBookings ?? []) as { start_at: string; end_at: string }[]
 
