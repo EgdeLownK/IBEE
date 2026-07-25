@@ -12,7 +12,7 @@ export type ApplyFormInput = {
 }
 
 export async function createJobApplicationAction(
-  input: ApplyFormInput
+  input: ApplyFormInput,
 ): Promise<{ error?: string }> {
   const supabase = await createClient()
   const {

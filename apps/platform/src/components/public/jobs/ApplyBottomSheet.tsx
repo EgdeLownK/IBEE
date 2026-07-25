@@ -98,11 +98,7 @@ export function ApplyBottomSheet({
             <p className="text-xs text-neutral-500">{entityName}</p>
             <h2 className="text-base font-semibold text-neutral-900">{offerTitle}</h2>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-2 rounded-full hover:bg-neutral-100"
-          >
+          <button type="button" onClick={onClose} className="p-2 rounded-full hover:bg-neutral-100">
             <X className="h-4 w-4 text-neutral-600" />
           </button>
         </div>
@@ -131,7 +127,7 @@ export function ApplyBottomSheet({
               type="button"
               onClick={() =>
                 router.push(
-                  `/login?next=${encodeURIComponent(typeof window !== 'undefined' ? window.location.pathname : '/')}`
+                  `/login?next=${encodeURIComponent(typeof window !== 'undefined' ? window.location.pathname : '/')}`,
                 )
               }
               className="w-full rounded-xl bg-neutral-900 py-3.5 text-sm font-semibold text-white mb-3"
@@ -150,9 +146,7 @@ export function ApplyBottomSheet({
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-xs font-medium text-neutral-600 block mb-1">
-                  Prénom *
-                </label>
+                <label className="text-xs font-medium text-neutral-600 block mb-1">Prénom *</label>
                 <input
                   type="text"
                   value={firstName}
@@ -217,6 +211,6 @@ export function ApplyBottomSheet({
         )}
       </div>
     </div>,
-    document.body
+    document.body,
   )
 }

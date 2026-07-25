@@ -81,9 +81,7 @@ export function PublicJobOffersList({
                       ? LOCATION_LABELS.remote
                       : offer.location_text || LOCATION_LABELS[offer.location_type] || 'Sur site'}
                   </span>
-                  {comp ? (
-                    <span className="text-xs text-neutral-500">{comp}</span>
-                  ) : null}
+                  {comp ? <span className="text-xs text-neutral-500">{comp}</span> : null}
                 </div>
               </div>
               <span className="shrink-0 inline-flex items-center rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">

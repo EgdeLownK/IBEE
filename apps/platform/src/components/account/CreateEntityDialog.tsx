@@ -114,6 +114,6 @@ export function CreateEntityDialog({ open, onClose }: Props) {
         </form>
       </div>
     </div>,
-    document.body
+    document.body,
   )
 }

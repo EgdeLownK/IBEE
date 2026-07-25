@@ -38,7 +38,7 @@ export function PublicProfileTabsController({ data, embedMode = false }: Props) 
       data.playlistEvents,
       data.historyBlocks,
       data.jobOffers,
-    ]
+    ],
   )
 
   const visibleTypes = useMemo(() => {

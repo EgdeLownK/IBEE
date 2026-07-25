@@ -40,19 +40,18 @@ export async function requireDashboardContext(): Promise<DashboardContext> {
   return ctx
 }
 
-export const getDashboardAccountShell = cache(
-  async (): Promise<AccountShellData | null> => {
-    return measureDashboardLoad('context:getDashboardAccountShell', async () => {
-      const ctx = await getDashboardContext()
-      if (!ctx) return null
+export const getDashboardAccountShell = cache(async (): Promise<AccountShellData | null> => {
+  return measureDashboardLoad('context:getDashboardAccountShell', async () => {
+    const ctx = await getDashboardContext()
+    if (!ctx) return null
 
-      const accessible = ctx.user.email
-        ? await listAccessibleEntities(ctx.supabase, ctx.user.id, ctx.user.email).catch(
-            () => ({ owned: [ctx.entity], member: [] })
-          )
-        : { owned: [ctx.entity], member: [] }
+    const accessible = ctx.user.email
+      ? await listAccessibleEntities(ctx.supabase, ctx.user.id, ctx.user.email).catch(() => ({
+          owned: [ctx.entity],
+          member: [],
+        }))
+      : { owned: [ctx.entity], member: [] }
 
-      return buildAccountShellData(ctx.user, ctx.entity, accessible)
-    })
-  }
-)
+    return buildAccountShellData(ctx.user, ctx.entity, accessible)
+  })
+})

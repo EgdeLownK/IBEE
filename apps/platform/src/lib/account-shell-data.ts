@@ -30,7 +30,7 @@ type EntityRow = Database['public']['Tables']['entity']['Row']
 export function buildAccountShellData(
   user: User,
   entity: EntityRow | null,
-  accessible: { owned: AccessibleEntity[]; member: AccessibleEntity[] }
+  accessible: { owned: AccessibleEntity[]; member: AccessibleEntity[] },
 ): AccountShellData {
   const emailLocal = user.email?.split('@')[0] ?? 'utilisateur'
   const personalName =
@@ -47,11 +47,9 @@ export function buildAccountShellData(
     color,
   })
 
-  const ownedProjects = accessible.owned.map((e) =>
-    toProjectAccount(e, 'var(--color-accent)')
-  )
+  const ownedProjects = accessible.owned.map((e) => toProjectAccount(e, 'var(--color-accent)'))
   const memberProjects = accessible.member.map((e) =>
-    toProjectAccount(e, 'var(--color-neutral-500)')
+    toProjectAccount(e, 'var(--color-neutral-500)'),
   )
   const projectAccounts = [...ownedProjects, ...memberProjects]
   const primaryProjectId = entity?.id ?? accessible.owned[0]?.id ?? ''
