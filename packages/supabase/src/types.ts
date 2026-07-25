@@ -3897,6 +3897,13 @@ export type Database = {
         }
         Returns: Json
       }
+      get_booked_time_ranges: {
+        Args: { p_entity_id: string; p_from: string; p_to: string }
+        Returns: {
+          end_at: string
+          start_at: string
+        }[]
+      }
       get_event_checkin_live_stats: {
         Args: { p_entity_id: string; p_event_id: string }
         Returns: Json
