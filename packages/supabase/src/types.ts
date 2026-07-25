@@ -3926,7 +3926,6 @@ export type Database = {
           view_count: number
         }[]
       }
-      get_user_entity_ids: { Args: never; Returns: string[] }
       group_analytics_by_resource: {
         Args: {
           p_entity_id: string
@@ -3974,10 +3973,6 @@ export type Database = {
           event_count: number
           section_type: Database["public"]["Enums"]["menu_section_type"]
         }[]
-      }
-      insert_slug_history: {
-        Args: { p_entity_id: string; p_old_slug: string }
-        Returns: undefined
       }
       is_event_activity_past: {
         Args: {
