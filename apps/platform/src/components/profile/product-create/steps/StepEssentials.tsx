@@ -373,7 +373,7 @@ export function StepEssentials({ form, categories, updateForm, onChange }: Props
   return (
     <section className="pco__stage">
       <div className="pco__field border-b border-neutral-200 pb-6 mb-6">
-        <span className="pco__label mb-3">Type d'article</span>
+        <span className="pco__label mb-3">Type d&apos;article</span>
         <div className="flex bg-neutral-100 p-1 rounded-lg mb-4">
           <button
             type="button"
@@ -711,7 +711,8 @@ export function StepEssentials({ form, categories, updateForm, onChange }: Props
           <div className="flex flex-col gap-4">
             {form.variants.length === 0 ? (
               <div className="text-center p-8 bg-neutral-50 rounded-lg border border-neutral-200 border-dashed text-neutral-500 text-sm">
-                Aucune variante pour le moment. Cliquez sur "Ajouter une variante" pour commencer.
+                Aucune variante pour le moment. Cliquez sur &quot;Ajouter une variante&quot; pour
+                commencer.
               </div>
             ) : (
               form.variants.map((v, i) => (
