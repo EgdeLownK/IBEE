@@ -14,7 +14,11 @@ import { useEffect, useMemo, useState } from 'react'
 import { useHorizontalCarousel } from '@/hooks/useHorizontalCarousel'
 import type { DetailContentBlock } from '@/lib/entity-content-blocks'
 import { formatDetailPrice } from '@/lib/detail-format'
-import type { PublicProductData, PublishedProduct, PublishedProductVariant } from '@/lib/load-public-product'
+import type {
+  PublicProductData,
+  PublishedProduct,
+  PublishedProductVariant,
+} from '@/lib/load-public-product'
 import { EntityMoreDetails } from './EntityMoreDetails'
 import { NewsWidget } from './NewsWidget'
 import { embedProfileHref } from '@/lib/embed-public-urls'
@@ -78,7 +82,10 @@ function buildDetailRows(product: PublishedProduct, customDetails: CustomDetail[
     }
     if (product.digital_pages_or_duration != null) {
       rows.push({
-        label: product.digital_file_format === 'mp4' || product.digital_file_format === 'mp3' ? 'Durée' : 'Pages',
+        label:
+          product.digital_file_format === 'mp4' || product.digital_file_format === 'mp3'
+            ? 'Durée'
+            : 'Pages',
         value: String(product.digital_pages_or_duration),
       })
     }
@@ -92,7 +99,7 @@ function buildDetailRows(product: PublishedProduct, customDetails: CustomDetail[
 function computeStock(
   product: PublishedProduct,
   variants: PublishedProductVariant[],
-  selectedVariantId: string | null
+  selectedVariantId: string | null,
 ) {
   const activeVariants = (variants ?? []).filter((v) => v.is_active)
   if (selectedVariantId) {
@@ -122,19 +129,17 @@ export function ProductDetail({
   onCheckoutStateChange,
 }: Props) {
   const variants = ((product.product_variants ?? []) as PublishedProductVariant[]).filter(
-    (v) => v.is_active
+    (v) => v.is_active,
   )
   const allMedia = [...(product.product_media ?? [])].sort(
-    (a, b) => (a.display_order ?? 0) - (b.display_order ?? 0)
+    (a, b) => (a.display_order ?? 0) - (b.display_order ?? 0),
   )
   const images = allMedia.filter((m) => !m.media_type || m.media_type === 'image')
   const video = allMedia.find((m) => m.media_type === 'video') ?? null
   const galleryMedia = [...images, ...(video ? [video] : [])]
 
   const attrKeys = Array.from(
-    new Set(
-      variants.flatMap((v) => Object.keys((v.attributes ?? {}) as Record<string, string>))
-    )
+    new Set(variants.flatMap((v) => Object.keys((v.attributes ?? {}) as Record<string, string>))),
   )
   const attrOptions: Record<string, string[]> = {}
   for (const key of attrKeys) {
@@ -142,20 +147,25 @@ export function ProductDetail({
       new Set(
         variants
           .map((v) => String((v.attributes as Record<string, unknown> | null)?.[key] ?? ''))
-          .filter(Boolean)
-      )
+          .filter(Boolean),
+      ),
     )
   }
 
   const [selectedAttrs, setSelectedAttrs] = useState<Record<string, string>>({})
-  const { trackRef, canPrev, canNext, scrollPrev, scrollNext } = useHorizontalCarousel(12, 'product-detail__slide')
+  const { trackRef, canPrev, canNext, scrollPrev, scrollNext } = useHorizontalCarousel(
+    12,
+    'product-detail__slide',
+  )
 
   const selectedVariant = useMemo(() => {
     const keys = Object.keys(selectedAttrs)
     if (keys.length !== attrKeys.length || attrKeys.length === 0) return null
     return (
       variants.find((v) =>
-        keys.every((k) => String((v.attributes as Record<string, unknown> | null)?.[k]) === selectedAttrs[k])
+        keys.every(
+          (k) => String((v.attributes as Record<string, unknown> | null)?.[k]) === selectedAttrs[k],
+        ),
       ) ?? null
     )
   }, [selectedAttrs, attrKeys, variants])
@@ -183,13 +193,7 @@ export function ProductDetail({
       variantId: selectedVariant?.id ?? null,
       canBuy,
     })
-  }, [
-    canBuy,
-    displayPriceCents,
-    onCheckoutStateChange,
-    product.currency,
-    selectedVariant?.id,
-  ])
+  }, [canBuy, displayPriceCents, onCheckoutStateChange, product.currency, selectedVariant?.id])
 
   const deliveryTags =
     product.type === 'physical'
@@ -204,7 +208,9 @@ export function ProductDetail({
     <div className="product-detail">
       <div className="product-detail__stats">
         <a href="#avis" className="product-detail__stat product-detail__stat--link">
-          <span className="product-detail__stat-label">{reviewCount > 0 ? `${reviewCount} avis` : 'Avis'}</span>
+          <span className="product-detail__stat-label">
+            {reviewCount > 0 ? `${reviewCount} avis` : 'Avis'}
+          </span>
           <span className="product-detail__stat-value">
             {reviewCount > 0 ? reviewAverage.toFixed(1).replace('.', ',') : '—'}
           </span>
@@ -257,7 +263,13 @@ export function ProductDetail({
             galleryMedia.map((m, i) => (
               <div key={m.id ?? i} className="product-detail__slide carousel-slide">
                 {m.media_type === 'video' ? (
-                  <video src={m.url} controls preload="metadata" playsInline className="h-full w-full bg-black object-cover" />
+                  <video
+                    src={m.url}
+                    controls
+                    preload="metadata"
+                    playsInline
+                    className="h-full w-full bg-black object-cover"
+                  />
                 ) : (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img

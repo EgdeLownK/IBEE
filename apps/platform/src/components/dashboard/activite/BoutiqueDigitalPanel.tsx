@@ -2,10 +2,7 @@
 
 import Link from 'next/link'
 import { Download, FileDigit } from 'lucide-react'
-import {
-  formatBoutiqueMoney,
-  type BoutiqueDigitalProductLine,
-} from '@/lib/boutique-order-view'
+import { formatBoutiqueMoney, type BoutiqueDigitalProductLine } from '@/lib/boutique-order-view'
 import { useActivityOverlay } from './ActivityOverlayProvider'
 
 type Props = {

@@ -26,9 +26,7 @@ export function usePlaylistSectionFilter<T extends { id: string }>({
       const matchesSearch =
         !normalizedQuery || getSearchText(item).toLowerCase().includes(normalizedQuery)
       const matchesCategory =
-        !showCategories ||
-        activeCategory === 'all' ||
-        getCategoryId(item) === activeCategory
+        !showCategories || activeCategory === 'all' || getCategoryId(item) === activeCategory
       return matchesSearch && matchesCategory
     })
   }, [items, normalizedQuery, showCategories, activeCategory, getCategoryId, getSearchText])

@@ -70,7 +70,7 @@ export function buildAccountShellData(
 
 /** Compat public layout — préférer getDashboardAccountShell() côté dashboard. */
 export async function loadAccountShellData(
-  supabase: SupabaseClient<Database>
+  supabase: SupabaseClient<Database>,
 ): Promise<AccountShellData | null> {
   const {
     data: { user },

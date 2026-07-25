@@ -8,10 +8,7 @@ import type {
   PayoutRecurrence,
   PayoutScheduleRecord,
 } from '@ibee/supabase'
-import {
-  defaultPayoutStartDateInput,
-  formatPayoutStartDateInput,
-} from '@ibee/supabase'
+import { defaultPayoutStartDateInput, formatPayoutStartDateInput } from '@ibee/supabase'
 
 export type PayoutDialogMode = 'recurring' | 'one_time'
 
@@ -71,13 +68,12 @@ function recipientKey(recipient: Pick<PayoutRecipient, 'recipientType' | 'member
 function buildDrafts(
   recipients: PayoutRecipient[],
   schedule: PayoutScheduleRecord | null,
-  mode: PayoutDialogMode
+  mode: PayoutDialogMode,
 ): PayoutAllocationDraft[] {
   const byKey = new Map<string, PayoutAllocationInput>()
   if (mode === 'recurring') {
     for (const allocation of schedule?.allocations ?? []) {
-      const key =
-        allocation.recipientType === 'owner' ? 'owner' : (allocation.memberId ?? 'member')
+      const key = allocation.recipientType === 'owner' ? 'owner' : (allocation.memberId ?? 'member')
       byKey.set(key, allocation)
     }
   }
@@ -137,19 +133,18 @@ export function PayoutRulesDialog({
 }: Props) {
   const [isActive, setIsActive] = useState(schedule?.isActive ?? true)
   const [drafts, setDrafts] = useState<PayoutAllocationDraft[]>(() =>
-    buildDrafts(recipients, schedule, mode)
+    buildDrafts(recipients, schedule, mode),
   )
   const [error, setError] = useState('')
   const [editingDraft, setEditingDraft] = useState<PayoutAllocationDraft | null>(null)
-  
+
   const [oneTimeStep, setOneTimeStep] = useState<'select' | 'amounts'>('select')
   const [selectedRecipientKeys, setSelectedRecipientKeys] = useState<Set<string>>(new Set())
 
   const editingRecipient = useMemo(() => {
     if (!editingDraft) return null
     return recipients.find(
-      (r) =>
-        r.recipientType === editingDraft.recipientType && r.memberId === editingDraft.memberId
+      (r) => r.recipientType === editingDraft.recipientType && r.memberId === editingDraft.memberId,
     )
   }, [editingDraft, recipients])
 
@@ -179,7 +174,9 @@ export function PayoutRulesDialog({
   const hasAnyAmount = useMemo(() => {
     return drafts.some((draft) => {
       if (mode === 'one_time') {
-        const r = recipients.find((x) => x.recipientType === draft.recipientType && x.memberId === draft.memberId)
+        const r = recipients.find(
+          (x) => x.recipientType === draft.recipientType && x.memberId === draft.memberId,
+        )
         if (!r || !selectedRecipientKeys.has(recipientKey(r))) return false
       }
       return Number(draft.amountValue.replace(',', '.')) > 0
@@ -190,15 +187,17 @@ export function PayoutRulesDialog({
 
   async function handleSubmit() {
     setError('')
-    
+
     let finalDrafts = drafts
     if (mode === 'one_time') {
-      finalDrafts = drafts.filter(draft => {
-        const r = recipients.find(x => x.recipientType === draft.recipientType && x.memberId === draft.memberId)
+      finalDrafts = drafts.filter((draft) => {
+        const r = recipients.find(
+          (x) => x.recipientType === draft.recipientType && x.memberId === draft.memberId,
+        )
         return r && selectedRecipientKeys.has(recipientKey(r))
       })
     }
-    
+
     const allocations = parseDraftAllocations(finalDrafts)
 
     if (allocations.length === 0) {
@@ -262,11 +261,19 @@ export function PayoutRulesDialog({
               <h3 style={{ marginBottom: '24px', fontSize: '18px', fontWeight: 600 }}>
                 Modifier le virement pour {editingRecipient.name}
               </h3>
-              
+
               <div className="revenu-payout-form__row">
                 <label className="revenu-payout-form__label">Type de montant</label>
                 {mode === 'one_time' ? (
-                  <div className="revenu-payout-form__select" style={{ backgroundColor: '#f9fafb', color: '#6b7280', display: 'flex', alignItems: 'center' }}>
+                  <div
+                    className="revenu-payout-form__select"
+                    style={{
+                      backgroundColor: '#f9fafb',
+                      color: '#6b7280',
+                      display: 'flex',
+                      alignItems: 'center',
+                    }}
+                  >
                     Montant fixe (€)
                   </div>
                 ) : (
@@ -322,20 +329,30 @@ export function PayoutRulesDialog({
                   </div>
                   <div />
                   <div>
-                    <label className="block text-sm font-medium text-gray-900">Date de départ</label>
+                    <label className="block text-sm font-medium text-gray-900">
+                      Date de départ
+                    </label>
                     <input
                       type="date"
                       value={editingDraft.startDate}
-                      onChange={(e) => setEditingDraft((d) => ({ ...d!, startDate: e.target.value }))}
+                      onChange={(e) =>
+                        setEditingDraft((d) => ({ ...d!, startDate: e.target.value }))
+                      }
                       className="revenu-payout-form__select"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-900">Date de fin (optionnel)</label>
+                    <label className="block text-sm font-medium text-gray-900">
+                      Date de fin (optionnel)
+                    </label>
                     <input
                       type="date"
                       value={editingDraft.endDate || ''}
-                      onChange={(e) => setEditingDraft((d) => (d ? { ...d, endDate: e.target.value || null } : null))}
+                      onChange={(e) =>
+                        setEditingDraft((d) =>
+                          d ? { ...d, endDate: e.target.value || null } : null,
+                        )
+                      }
                       className="revenu-payout-form__select"
                     />
                   </div>
@@ -344,7 +361,11 @@ export function PayoutRulesDialog({
             </div>
           ) : (
             <>
-              <div className="revenu-payout-mode-toggle" role="tablist" aria-label="Type de virement">
+              <div
+                className="revenu-payout-mode-toggle"
+                role="tablist"
+                aria-label="Type de virement"
+              >
                 <button
                   type="button"
                   role="tab"
@@ -372,116 +393,154 @@ export function PayoutRulesDialog({
               </p>
 
               <div className="revenu-payout-members">
-                {mode === 'one_time' ? (
-                  oneTimeStep === 'select' ? (
-                    recipients.map((recipient) => {
-                      const key = recipientKey(recipient)
-                      const isSelected = selectedRecipientKeys.has(key)
-                      return (
-                        <div key={key} className="revenu-payout-members__row" style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '16px', alignItems: 'center' }}>
-                          <input 
-                            type="checkbox" 
-                            checked={isSelected}
-                            style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: '#1a1a1a' }}
-                            onChange={(e) => {
-                              const next = new Set(selectedRecipientKeys)
-                              if (e.target.checked) next.add(key)
-                              else next.delete(key)
-                              setSelectedRecipientKeys(next)
+                {mode === 'one_time'
+                  ? oneTimeStep === 'select'
+                    ? recipients.map((recipient) => {
+                        const key = recipientKey(recipient)
+                        const isSelected = selectedRecipientKeys.has(key)
+                        return (
+                          <div
+                            key={key}
+                            className="revenu-payout-members__row"
+                            style={{
+                              display: 'grid',
+                              gridTemplateColumns: 'auto 1fr',
+                              gap: '16px',
+                              alignItems: 'center',
                             }}
-                          />
-                          <div className="revenu-payout-members__name" onClick={() => {
-                            const next = new Set(selectedRecipientKeys)
-                            if (!isSelected) next.add(key)
-                            else next.delete(key)
-                            setSelectedRecipientKeys(next)
-                          }} style={{ cursor: 'pointer' }}>
-                            <strong>{recipient.name}</strong>
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              style={{
+                                width: '18px',
+                                height: '18px',
+                                cursor: 'pointer',
+                                accentColor: '#1a1a1a',
+                              }}
+                              onChange={(e) => {
+                                const next = new Set(selectedRecipientKeys)
+                                if (e.target.checked) next.add(key)
+                                else next.delete(key)
+                                setSelectedRecipientKeys(next)
+                              }}
+                            />
+                            <div
+                              className="revenu-payout-members__name"
+                              onClick={() => {
+                                const next = new Set(selectedRecipientKeys)
+                                if (!isSelected) next.add(key)
+                                else next.delete(key)
+                                setSelectedRecipientKeys(next)
+                              }}
+                              style={{ cursor: 'pointer' }}
+                            >
+                              <strong>{recipient.name}</strong>
+                            </div>
                           </div>
-                        </div>
-                      )
-                    })
-                  ) : (
-                    drafts.map((draft, idx) => {
+                        )
+                      })
+                    : drafts.map((draft, idx) => {
+                        const recipient = recipients.find(
+                          (row) =>
+                            row.recipientType === draft.recipientType &&
+                            row.memberId === draft.memberId,
+                        )
+                        if (!recipient) return null
+                        const key = recipientKey(recipient)
+                        if (!selectedRecipientKeys.has(key)) return null
+
+                        return (
+                          <div
+                            key={key}
+                            className="revenu-payout-members__row"
+                            style={{
+                              display: 'grid',
+                              gridTemplateColumns: '1fr 150px',
+                              gap: '16px',
+                              alignItems: 'center',
+                            }}
+                          >
+                            <div className="revenu-payout-members__name">
+                              <strong>{recipient.name}</strong>
+                            </div>
+                            <div>
+                              <input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                className="revenu-payout-form__select"
+                                placeholder="Montant (€)"
+                                value={draft.amountValue}
+                                onChange={(e) => {
+                                  const newDrafts = [...drafts]
+                                  newDrafts[idx] = { ...draft, amountValue: e.target.value }
+                                  setDrafts(newDrafts)
+                                }}
+                              />
+                            </div>
+                          </div>
+                        )
+                      })
+                  : drafts.map((draft) => {
                       const recipient = recipients.find(
                         (row) =>
-                          row.recipientType === draft.recipientType && row.memberId === draft.memberId
+                          row.recipientType === draft.recipientType &&
+                          row.memberId === draft.memberId,
                       )
                       if (!recipient) return null
-                      const key = recipientKey(recipient)
-                      if (!selectedRecipientKeys.has(key)) return null
+
+                      const hasDates = !!draft.startDate
 
                       return (
-                        <div key={key} className="revenu-payout-members__row" style={{ display: 'grid', gridTemplateColumns: '1fr 150px', gap: '16px', alignItems: 'center' }}>
+                        <div
+                          key={recipientKey(recipient)}
+                          className="revenu-payout-members__row"
+                          style={{
+                            display: 'grid',
+                            gridTemplateColumns: '1fr auto 32px',
+                            gap: '16px',
+                            alignItems: 'center',
+                          }}
+                        >
                           <div className="revenu-payout-members__name">
                             <strong>{recipient.name}</strong>
                           </div>
-                          <div>
-                            <input
-                              type="number"
-                              min="0"
-                              step="0.01"
-                              className="revenu-payout-form__select"
-                              placeholder="Montant (€)"
-                              value={draft.amountValue}
-                              onChange={(e) => {
-                                const newDrafts = [...drafts]
-                                newDrafts[idx] = { ...draft, amountValue: e.target.value }
-                                setDrafts(newDrafts)
-                              }}
-                            />
+
+                          <div style={{ textAlign: 'right' }}>
+                            {draft.amountValue ? (
+                              <>
+                                <span style={{ fontWeight: 600 }}>
+                                  {draft.amountValue} {draft.amountType === 'fixed' ? '€' : '%'}
+                                </span>
+                                <div
+                                  style={{ fontSize: '11px', color: 'var(--color-text-dimmed)' }}
+                                >
+                                  {draft.recurrence === 'weekly'
+                                    ? 'Hebdomadaire'
+                                    : draft.recurrence === 'monthly'
+                                      ? 'Mensuel'
+                                      : 'Trimestriel'}
+                                  {hasDates && ` - ${draft.startDate}`}
+                                </div>
+                              </>
+                            ) : (
+                              <span style={{ color: 'var(--color-text-dimmed)', fontSize: '12px' }}>
+                                Non configuré
+                              </span>
+                            )}
                           </div>
+
+                          <button
+                            type="button"
+                            className="team-btn-icon"
+                            onClick={() => setEditingDraft(draft)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </button>
                         </div>
                       )
-                    })
-                  )
-                ) : (
-                  drafts.map((draft) => {
-                    const recipient = recipients.find(
-                      (row) =>
-                        row.recipientType === draft.recipientType && row.memberId === draft.memberId
-                    )
-                    if (!recipient) return null
-
-                    const hasDates = !!draft.startDate
-
-                    return (
-                      <div
-                        key={recipientKey(recipient)}
-                        className="revenu-payout-members__row"
-                        style={{ display: 'grid', gridTemplateColumns: '1fr auto 32px', gap: '16px', alignItems: 'center' }}
-                      >
-                        <div className="revenu-payout-members__name">
-                          <strong>{recipient.name}</strong>
-                        </div>
-                        
-                        <div style={{ textAlign: 'right' }}>
-                          {draft.amountValue ? (
-                            <>
-                              <span style={{ fontWeight: 600 }}>
-                                {draft.amountValue} {draft.amountType === 'fixed' ? '€' : '%'}
-                              </span>
-                              <div style={{ fontSize: '11px', color: 'var(--color-text-dimmed)' }}>
-                                {draft.recurrence === 'weekly' ? 'Hebdomadaire' : draft.recurrence === 'monthly' ? 'Mensuel' : 'Trimestriel'}
-                                {hasDates && ` - ${draft.startDate}`}
-                              </div>
-                            </>
-                          ) : (
-                            <span style={{ color: 'var(--color-text-dimmed)', fontSize: '12px' }}>Non configuré</span>
-                          )}
-                        </div>
-                        
-                        <button
-                          type="button"
-                          className="team-btn-icon"
-                          onClick={() => setEditingDraft(draft)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </button>
-                      </div>
-                    )
-                  })
-                )}
+                    })}
               </div>
             </>
           )}
@@ -509,8 +568,8 @@ export function PayoutRulesDialog({
                         d.recipientType === editingDraft.recipientType &&
                         d.memberId === editingDraft.memberId
                           ? editingDraft
-                          : d
-                      )
+                          : d,
+                      ),
                     )
                     setEditingDraft(null)
                   }}
@@ -549,16 +608,20 @@ export function PayoutRulesDialog({
                     }
                   }}
                   disabled={
-                    saving || 
+                    saving ||
                     (mode === 'recurring' && !hasAnyAmount) ||
-                    (mode === 'one_time' && oneTimeStep === 'select' && selectedRecipientKeys.size === 0) ||
+                    (mode === 'one_time' &&
+                      oneTimeStep === 'select' &&
+                      selectedRecipientKeys.size === 0) ||
                     (mode === 'one_time' && oneTimeStep === 'amounts' && !hasAnyAmount)
                   }
                 >
                   {saving
                     ? 'Enregistrement…'
                     : mode === 'one_time'
-                      ? (oneTimeStep === 'select' ? 'Créer le virement' : 'Confirmer le virement')
+                      ? oneTimeStep === 'select'
+                        ? 'Créer le virement'
+                        : 'Confirmer le virement'
                       : 'Enregistrer'}
                 </button>
               </>

@@ -93,8 +93,7 @@ export function isHomeFeedPostBeforeCursor(post: HomeFeedPost, cursor: HomeFeedC
 
 /** Chemin embed (iframe) pour l’aperçu desktop du feed accueil. */
 export function getHomeFeedDetailPreviewPath(post: HomeFeedPost): string {
-  const section =
-    post.kind === 'product' ? 'shop' : post.kind === 'event' ? 'events' : 'services'
+  const section = post.kind === 'product' ? 'shop' : post.kind === 'event' ? 'events' : 'services'
   const segments = post.href.split('/').filter(Boolean)
   const itemSlug = segments[segments.length - 1]
   return `/feed-detail/${post.entity.slug}/${section}/${itemSlug}`

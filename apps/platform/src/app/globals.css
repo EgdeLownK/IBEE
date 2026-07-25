@@ -1,18 +1,18 @@
-@import "tailwindcss";
-@import "../../../../packages/ui-react/src/tokens.css";
-@import "../../../../packages/ui-react/src/app-shell.css";
-@import "../../../../packages/ui-react/src/navpill.css" layer(components);
-@import "../../../../packages/ui-react/src/profile/profile-styles.css";
-@import "../../../../packages/ui-react/src/profile/home-widgets.css";
-@import "../../../../packages/ui-react/src/profile/history-edit-styles.css";
-@import "../../../../packages/ui-react/src/profile/product-create-styles.css";
-@import "../../../../packages/ui-react/src/profile/profile-general-styles.css";
-@import "../../../../packages/ui-react/src/dashboard/analyse-styles.css";
-@import "../../../../packages/ui-react/src/dashboard/revenu-styles.css";
-@import "../../../../packages/ui-react/src/dashboard/team-styles.css";
-@import "../../../../packages/ui-react/src/dashboard/activite-styles.css";
-@import "../../../../packages/ui-react/src/dashboard/messages-styles.css";
-@import "../../../../packages/ui-react/src/home-feed.css";
+@import 'tailwindcss';
+@import '../../../../packages/ui-react/src/tokens.css';
+@import '../../../../packages/ui-react/src/app-shell.css';
+@import '../../../../packages/ui-react/src/navpill.css' layer(components);
+@import '../../../../packages/ui-react/src/profile/profile-styles.css';
+@import '../../../../packages/ui-react/src/profile/home-widgets.css';
+@import '../../../../packages/ui-react/src/profile/history-edit-styles.css';
+@import '../../../../packages/ui-react/src/profile/product-create-styles.css';
+@import '../../../../packages/ui-react/src/profile/profile-general-styles.css';
+@import '../../../../packages/ui-react/src/dashboard/analyse-styles.css';
+@import '../../../../packages/ui-react/src/dashboard/revenu-styles.css';
+@import '../../../../packages/ui-react/src/dashboard/team-styles.css';
+@import '../../../../packages/ui-react/src/dashboard/activite-styles.css';
+@import '../../../../packages/ui-react/src/dashboard/messages-styles.css';
+@import '../../../../packages/ui-react/src/home-feed.css';
 
 @source "../**/*.{ts,tsx}";
 @source "../../../../packages/ui-react/src/**/*.{ts,tsx}";
@@ -29,8 +29,8 @@
 
 /* Polices Next.js (layout.tsx) — surcharge les fallbacks de tokens.css */
 @theme {
-  --font-sans: var(--font-roboto), "Inter", system-ui, sans-serif;
-  --font-display: var(--font-poppins), var(--font-roboto), "Inter", sans-serif;
+  --font-sans: var(--font-roboto), 'Inter', system-ui, sans-serif;
+  --font-display: var(--font-poppins), var(--font-roboto), 'Inter', sans-serif;
 }
 
 @keyframes dash-skeleton-pulse {

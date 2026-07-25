@@ -405,7 +405,6 @@ export async function selfCheckInEventRegistration(
   input: { eventId: string; ticketCode: string }
 ): Promise<EventCheckInResult> {
   const { data, error } = await client.rpc(
-    // @ts-expect-error RPC self_check_in_event_registration — regen types après migration
     'self_check_in_event_registration',
     {
       p_event_id: input.eventId,

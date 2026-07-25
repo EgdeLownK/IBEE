@@ -45,7 +45,7 @@ export default async function PublicMessageRoute({ params }: PageProps) {
   }
 
   let senderName = ''
-  let senderEmail = user?.email ?? ''
+  const senderEmail = user?.email ?? ''
   if (user) {
     const senderEntity = await getEntityByUserId(supabase, user.id)
     senderName = senderEntity?.display_name ?? ''

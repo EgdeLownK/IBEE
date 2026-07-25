@@ -28,8 +28,18 @@ type ActivityHubResponse = {
 
 const SIGNAL_ITEMS = [
   { key: 'orders' as const, capability: 'shop' as const, label: 'Achats', icon: ShoppingBag },
-  { key: 'bookings' as const, capability: 'appointments' as const, label: 'Rendez-vous', icon: CalendarClock },
-  { key: 'registrations' as const, capability: 'events' as const, label: 'Réservations', icon: Ticket },
+  {
+    key: 'bookings' as const,
+    capability: 'appointments' as const,
+    label: 'Rendez-vous',
+    icon: CalendarClock,
+  },
+  {
+    key: 'registrations' as const,
+    capability: 'events' as const,
+    label: 'Réservations',
+    icon: Ticket,
+  },
 ]
 
 function formatBadge(count: number) {
@@ -76,7 +86,7 @@ export function HomeActivitySidebar() {
           ...prev,
           unreadCount: Math.max(0, prev.unreadCount - 1),
           notifications: prev.notifications.map((n) =>
-            n.id === notificationId ? { ...n, read_at: new Date().toISOString() } : n
+            n.id === notificationId ? { ...n, read_at: new Date().toISOString() } : n,
           ),
         }
       })
@@ -104,7 +114,7 @@ export function HomeActivitySidebar() {
         <div className="home-activity-sidebar__section">
           <div className="home-activity-sidebar__signals">
             {SIGNAL_ITEMS.filter(
-              (item) => !data?.capabilities || data.capabilities[item.capability]
+              (item) => !data?.capabilities || data.capabilities[item.capability],
             ).map(({ key, label, icon: Icon }) => {
               const signal = data?.signals[key]
               const badge = formatBadge(signal?.count ?? 0)

@@ -83,7 +83,7 @@ export function PublicationFeedCard({
   const initial = entityDisplayName.charAt(0).toUpperCase()
   const dateSource = publication.published_at ?? publication.created_at
   const media = [...(publication.publication_media ?? [])].sort(
-    (a, b) => (a.position ?? 0) - (b.position ?? 0)
+    (a, b) => (a.position ?? 0) - (b.position ?? 0),
   )
   const permalink = isPublicPublication(publication)
     ? `/${entitySlug}/news/${publication.slug}`
@@ -281,13 +281,18 @@ export function PublicationFeedCard({
                 >
                   Annuler
                 </button>
-                <button type="button" className="btn btn--dark" disabled={busy} onClick={handleSave}>
+                <button
+                  type="button"
+                  className="btn btn--dark"
+                  disabled={busy}
+                  onClick={handleSave}
+                >
                   Enregistrer
                 </button>
               </div>
             </div>
           </div>,
-          document.body
+          document.body,
         )}
     </>
   )

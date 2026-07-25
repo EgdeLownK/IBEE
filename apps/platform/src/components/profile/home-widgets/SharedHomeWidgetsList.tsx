@@ -109,14 +109,12 @@ export function SharedHomeWidgetsList({
   if (widgets.length === 0) {
     return (
       <div className="profile-section">
-        <p className="m-0 text-sm text-neutral-500">Aucun contenu sur l&apos;accueil pour le moment.</p>
+        <p className="m-0 text-sm text-neutral-500">
+          Aucun contenu sur l&apos;accueil pour le moment.
+        </p>
         {isOwner && onAddWidgetClick && (
           <div className="home-widgets__add">
-            <button
-              type="button"
-              className="home-widgets__add-btn"
-              onClick={onAddWidgetClick}
-            >
+            <button type="button" className="home-widgets__add-btn" onClick={onAddWidgetClick}>
               <Plus className="h-4 w-4" />
               <span>Ajouter un widget</span>
             </button>
@@ -179,11 +177,7 @@ export function SharedHomeWidgetsList({
 
       {isOwner && onAddWidgetClick && (
         <div className="home-widgets__add">
-          <button
-            type="button"
-            className="home-widgets__add-btn"
-            onClick={onAddWidgetClick}
-          >
+          <button type="button" className="home-widgets__add-btn" onClick={onAddWidgetClick}>
             <Plus className="h-4 w-4" />
             <span>Ajouter un widget</span>
           </button>

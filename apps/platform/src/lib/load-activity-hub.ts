@@ -5,7 +5,7 @@ import type { ActivityCapabilitiesView } from '@/lib/activity-modules'
 
 export function filterActivitySignals(
   signals: ActivityHubSignals,
-  capabilities: ActivityCapabilitiesView
+  capabilities: ActivityCapabilitiesView,
 ): Partial<ActivityHubSignals> {
   const filtered: Partial<ActivityHubSignals> = {}
   if (capabilities.shop) filtered.orders = signals.orders

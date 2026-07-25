@@ -13,9 +13,7 @@ type Props = {
 function ContextBody({ thread }: { thread: MessageThread | null }) {
   if (!thread) {
     return (
-      <p className="messages-context__empty">
-        Sélectionne une conversation pour voir le document.
-      </p>
+      <p className="messages-context__empty">Sélectionne une conversation pour voir le document.</p>
     )
   }
 
@@ -49,12 +47,7 @@ function ContextBody({ thread }: { thread: MessageThread | null }) {
   )
 }
 
-export function MessagesContextPanel({
-  thread,
-  compact = false,
-  open = false,
-  onClose,
-}: Props) {
+export function MessagesContextPanel({ thread, compact = false, open = false, onClose }: Props) {
   const head = (
     <header className="messages-context__head">
       <h2 className="messages-context__title">
@@ -76,10 +69,7 @@ export function MessagesContextPanel({
 
   if (compact) {
     return (
-      <div
-        className={`messages-context-overlay${open ? ' is-open' : ''}`}
-        aria-hidden={!open}
-      >
+      <div className={`messages-context-overlay${open ? ' is-open' : ''}`} aria-hidden={!open}>
         <button
           type="button"
           className="messages-context-overlay__backdrop"

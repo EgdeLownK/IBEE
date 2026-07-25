@@ -52,15 +52,18 @@ export function EventRegistrationWidget({
   initialEmail = '',
 }: Props) {
   const availableActivities = useMemo(
-    () => activities.filter((activity) => activity.statusAvailable && activity.ticketTypes.length > 0),
-    [activities]
+    () =>
+      activities.filter((activity) => activity.statusAvailable && activity.ticketTypes.length > 0),
+    [activities],
   )
 
   const [selectedActivityId, setSelectedActivityId] = useState(availableActivities[0]?.id ?? '')
 
   const visibleTicketTypes = useMemo(() => {
     if (!hasActivities) return ticketTypes
-    return availableActivities.find((activity) => activity.id === selectedActivityId)?.ticketTypes ?? []
+    return (
+      availableActivities.find((activity) => activity.id === selectedActivityId)?.ticketTypes ?? []
+    )
   }, [availableActivities, hasActivities, selectedActivityId, ticketTypes])
 
   const defaultTicketId = useMemo(() => {
@@ -159,7 +162,7 @@ export function EventRegistrationWidget({
       })
       const data = await res.json()
       if (!res.ok) {
-        setError(data.error || 'Erreur lors de l\'inscription.')
+        setError(data.error || "Erreur lors de l'inscription.")
         setSubmitting(false)
         return
       }
@@ -208,7 +211,9 @@ export function EventRegistrationWidget({
 
   return (
     <section id="inscription" className="event-register px-[22px] pb-6">
-      <h2 className="m-0 mb-4 font-display text-[17px] font-semibold text-neutral-900">S&apos;inscrire</h2>
+      <h2 className="m-0 mb-4 font-display text-[17px] font-semibold text-neutral-900">
+        S&apos;inscrire
+      </h2>
       <form
         onSubmit={handleSubmit}
         className="booking-panel space-y-3 rounded-2xl border border-border bg-surface p-[18px] md:p-[22px]"
@@ -221,7 +226,9 @@ export function EventRegistrationWidget({
                 <label
                   key={activity.id}
                   className={`flex cursor-pointer items-center justify-between gap-3 rounded-xl border px-3 py-2.5 ${
-                    selectedActivityId === activity.id ? 'border-accent bg-accent/5' : 'border-border'
+                    selectedActivityId === activity.id
+                      ? 'border-accent bg-accent/5'
+                      : 'border-border'
                   }`}
                 >
                   <span className="flex items-center gap-2">
@@ -233,13 +240,17 @@ export function EventRegistrationWidget({
                       onChange={() => setSelectedActivityId(activity.id)}
                     />
                     <span>
-                      <span className="block text-sm font-medium text-neutral-900">{activity.title}</span>
+                      <span className="block text-sm font-medium text-neutral-900">
+                        {activity.title}
+                      </span>
                       <span className="block text-xs text-neutral-500">{activity.slotLabel}</span>
                     </span>
                   </span>
                   {activity.remaining != null ? (
                     <span className="text-xs text-neutral-500">
-                      {activity.remaining > 0 ? `${activity.remaining} place${activity.remaining > 1 ? 's' : ''}` : 'Complet'}
+                      {activity.remaining > 0
+                        ? `${activity.remaining} place${activity.remaining > 1 ? 's' : ''}`
+                        : 'Complet'}
                     </span>
                   ) : null}
                 </label>
@@ -269,7 +280,9 @@ export function EventRegistrationWidget({
                     />
                     <span className="text-sm font-medium text-neutral-900">{ticket.title}</span>
                   </span>
-                  <span className="text-sm font-semibold text-neutral-800">{ticket.priceLabel}</span>
+                  <span className="text-sm font-semibold text-neutral-800">
+                    {ticket.priceLabel}
+                  </span>
                 </label>
               ))}
             </div>

@@ -33,9 +33,7 @@ function CancelCard({
         : 'border-neutral-200'
 
   return (
-    <div
-      className={`mx-auto w-full max-w-lg rounded-2xl border ${border} bg-white p-8 shadow-sm`}
-    >
+    <div className={`mx-auto w-full max-w-lg rounded-2xl border ${border} bg-white p-8 shadow-sm`}>
       <h1 className="text-xl font-semibold text-neutral-900">{title}</h1>
       {copy ? <p className="mt-3 text-sm leading-relaxed text-neutral-600">{copy}</p> : null}
       {children}

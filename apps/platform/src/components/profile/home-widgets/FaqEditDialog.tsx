@@ -100,7 +100,12 @@ export function FaqEditDialog({ open, initialItems, onClose, onSaved }: Props) {
   return (
     <div className="faq-edit" role="presentation">
       <button type="button" className="faq-edit__backdrop" aria-label="Fermer" onClick={onClose} />
-      <div className="faq-edit__panel" role="dialog" aria-modal="true" aria-labelledby="faq-edit-title">
+      <div
+        className="faq-edit__panel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="faq-edit-title"
+      >
         <header className="faq-edit__head">
           <div>
             <p className="faq-edit__eyebrow">Menu F.A.Q</p>
@@ -108,7 +113,8 @@ export function FaqEditDialog({ open, initialItems, onClose, onSaved }: Props) {
               Questions fréquentes
             </h2>
             <p className="faq-edit__hint">
-              Chaque question s&apos;affiche en menu dépliant sur l&apos;accueil et dans le menu F.A.Q.
+              Chaque question s&apos;affiche en menu dépliant sur l&apos;accueil et dans le menu
+              F.A.Q.
             </p>
           </div>
           <button type="button" className="faq-edit__close" aria-label="Fermer" onClick={onClose}>
@@ -134,7 +140,7 @@ export function FaqEditDialog({ open, initialItems, onClose, onSaved }: Props) {
                         onClick={(e) => e.stopPropagation()}
                         onChange={(e) =>
                           setItems((prev) =>
-                            prev.map((x, j) => (j === i ? { ...x, question: e.target.value } : x))
+                            prev.map((x, j) => (j === i ? { ...x, question: e.target.value } : x)),
                           )
                         }
                       />
@@ -175,7 +181,10 @@ export function FaqEditDialog({ open, initialItems, onClose, onSaved }: Props) {
                           <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
-                      <ChevronDown className="faq-edit__chevron h-4 w-4 shrink-0 text-neutral-400" aria-hidden="true" />
+                      <ChevronDown
+                        className="faq-edit__chevron h-4 w-4 shrink-0 text-neutral-400"
+                        aria-hidden="true"
+                      />
                     </summary>
                     <div className="faq-edit__body">
                       <textarea
@@ -186,7 +195,7 @@ export function FaqEditDialog({ open, initialItems, onClose, onSaved }: Props) {
                         value={item.answer}
                         onChange={(e) =>
                           setItems((prev) =>
-                            prev.map((x, j) => (j === i ? { ...x, answer: e.target.value } : x))
+                            prev.map((x, j) => (j === i ? { ...x, answer: e.target.value } : x)),
                           )
                         }
                       />
@@ -221,7 +230,11 @@ export function FaqEditDialog({ open, initialItems, onClose, onSaved }: Props) {
             <button type="button" className="faq-edit__btn faq-edit__btn--ghost" onClick={onClose}>
               Annuler
             </button>
-            <button type="submit" className="faq-edit__btn faq-edit__btn--primary" disabled={pending}>
+            <button
+              type="submit"
+              className="faq-edit__btn faq-edit__btn--primary"
+              disabled={pending}
+            >
               {pending ? 'Enregistrement…' : 'Enregistrer'}
             </button>
           </footer>

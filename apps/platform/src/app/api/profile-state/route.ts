@@ -16,7 +16,9 @@ export async function GET(req: Request) {
     }
 
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
 
     if (!user) {
       return NextResponse.json({
@@ -26,9 +28,7 @@ export async function GET(req: Request) {
       })
     }
 
-    const [isFollowing] = await Promise.all([
-      checkIsFollowing(supabase, user.id, entityId),
-    ])
+    const [isFollowing] = await Promise.all([checkIsFollowing(supabase, user.id, entityId)])
 
     const isOwner = !!(ownerId && user.id === ownerId)
 

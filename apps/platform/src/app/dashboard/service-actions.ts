@@ -103,7 +103,7 @@ export async function updateClientNotesAction(clientId: string, notes: string | 
 }
 
 export async function saveWeeklyAvailabilityAction(
-  schedules: Array<{ day_of_week: number; start_time: string; end_time: string }>
+  schedules: Array<{ day_of_week: number; start_time: string; end_time: string }>,
 ) {
   const ctx = await requireDashboardContext()
 
@@ -123,10 +123,7 @@ export async function saveWeeklyAvailabilityAction(
   }
 }
 
-export async function blockAvailabilityDateAction(input: {
-  date: string
-  reason?: string | null
-}) {
+export async function blockAvailabilityDateAction(input: { date: string; reason?: string | null }) {
   const ctx = await requireDashboardContext()
 
   try {

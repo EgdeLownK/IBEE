@@ -50,7 +50,7 @@ export function AccountContextProvider({ data, children }: Props) {
       },
       isPersonalMode: mode === 'personal',
     }),
-    [mode, activeProject, data.personalAccount, data.projectAccounts]
+    [mode, activeProject, data.personalAccount, data.projectAccounts],
   )
 
   return <AccountContext.Provider value={value}>{children}</AccountContext.Provider>

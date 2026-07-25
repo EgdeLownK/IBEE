@@ -42,7 +42,9 @@ export function AddressAutocomplete({ id, value, onChange, placeholder, classNam
     const timeoutId = setTimeout(async () => {
       setIsLoading(true)
       try {
-        const res = await fetch(`https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(query)}&limit=5`)
+        const res = await fetch(
+          `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(query)}&limit=5`,
+        )
         if (res.ok) {
           const data = await res.json()
           if (data && data.features) {
@@ -50,7 +52,7 @@ export function AddressAutocomplete({ id, value, onChange, placeholder, classNam
               data.features.map((f: any) => ({
                 label: f.properties.label,
                 context: f.properties.context,
-              }))
+              })),
             )
             setIsOpen(true)
           }
@@ -98,7 +100,9 @@ export function AddressAutocomplete({ id, value, onChange, placeholder, classNam
               }}
             >
               <span className="block truncate font-medium">{item.label}</span>
-              {item.context && <span className="block truncate text-xs text-neutral-500">{item.context}</span>}
+              {item.context && (
+                <span className="block truncate text-xs text-neutral-500">{item.context}</span>
+              )}
             </li>
           ))}
         </ul>

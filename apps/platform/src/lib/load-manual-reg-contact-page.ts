@@ -9,7 +9,7 @@ export type ManualRegContactPageData = {
 }
 
 export async function loadManualRegContactPage(
-  token: string
+  token: string,
 ): Promise<ManualRegContactPageData | null> {
   const trimmed = token.trim()
   if (!trimmed) return null

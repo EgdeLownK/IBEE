@@ -1,11 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import {
-  answerQuestion,
-  askQuestion,
-  deleteMyAnswer,
-  deleteMyQuestion,
-} from '@ibee/supabase'
+import { answerQuestion, askQuestion, deleteMyAnswer, deleteMyQuestion } from '@ibee/supabase'
 
 export async function POST(request: Request) {
   const supabase = await createClient()
@@ -36,7 +31,7 @@ export async function POST(request: Request) {
       if (text.length < 10 || text.length > 500) {
         return NextResponse.json(
           { error: 'La question doit contenir entre 10 et 500 caractères.' },
-          { status: 400 }
+          { status: 400 },
         )
       }
       const question = await askQuestion(supabase, {
@@ -56,7 +51,7 @@ export async function POST(request: Request) {
       if (text.length < 5) {
         return NextResponse.json(
           { error: 'La réponse doit contenir au moins 5 caractères.' },
-          { status: 400 }
+          { status: 400 },
         )
       }
       const answer = await answerQuestion(supabase, {

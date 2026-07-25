@@ -19,19 +19,11 @@ export default async function BilletterieCheckInPage({ searchParams }: Props) {
   if (!ctx) redirect('/login')
 
   const capabilities = await getActivityCapabilities(ctx.supabase, ctx.entity.id)
-  if (!isActivityModuleEnabled(capabilities, 'events')) redirect(resolveActivityLandingPath(capabilities))
+  if (!isActivityModuleEnabled(capabilities, 'events'))
+    redirect(resolveActivityLandingPath(capabilities))
 
   const params = await searchParams
-  const data = await loadBilletterieCheckInData(
-    ctx.supabase,
-    ctx.entity.id,
-    params.eventId ?? null
-  )
+  const data = await loadBilletterieCheckInData(ctx.supabase, ctx.entity.id, params.eventId ?? null)
 
-  return (
-    <BilletterieCheckInDashboard
-      data={data}
-      preferScanMode={params.scan === '1'}
-    />
-  )
+  return <BilletterieCheckInDashboard data={data} preferScanMode={params.scan === '1'} />
 }

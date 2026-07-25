@@ -14,7 +14,15 @@ function configCta(widgetId: string): Pick<WidgetEmptyContent, 'ctaAction' | 'ct
 
 export function widgetEmptyContent(
   widgetType: string,
-  scenario: 'unconfigured' | 'missing_ref' | 'empty_pool' | 'empty_category' | 'no_images' | 'no_faq' | 'no_news' | 'no_bio',
+  scenario:
+    | 'unconfigured'
+    | 'missing_ref'
+    | 'empty_pool'
+    | 'empty_category'
+    | 'no_images'
+    | 'no_faq'
+    | 'no_news'
+    | 'no_bio',
   opts: { widgetId?: string; categoryName?: string } = {},
 ): WidgetEmptyContent {
   const { widgetId = '', categoryName } = opts
@@ -33,21 +41,21 @@ export function widgetEmptyContent(
         case 'widget_service':
           return {
             visitorMessage: 'Services bientôt disponibles.',
-            ownerMessage: 'Choisis un service à mettre en avant sur l\'accueil.',
+            ownerMessage: "Choisis un service à mettre en avant sur l'accueil.",
             ctaLabel: 'Choisir le contenu',
             ...configCta(widgetId),
           }
         case 'widget_event':
           return {
             visitorMessage: 'Événements bientôt annoncés.',
-            ownerMessage: 'Choisis un événement à mettre en avant sur l\'accueil.',
+            ownerMessage: "Choisis un événement à mettre en avant sur l'accueil.",
             ctaLabel: 'Choisir le contenu',
             ...configCta(widgetId),
           }
         case 'widget_announcement':
           return {
             visitorMessage: 'Bannière bientôt disponible.',
-            ownerMessage: 'Ajoute des images pour créer ta bannière d\'accueil.',
+            ownerMessage: "Ajoute des images pour créer ta bannière d'accueil.",
             ctaLabel: 'Ajouter des images',
             ...configCta(widgetId),
           }
@@ -153,7 +161,7 @@ export function widgetEmptyContent(
           }
         case 'widget_service':
           return {
-            visitorMessage: 'Aucun service réservable pour l\'instant.',
+            visitorMessage: "Aucun service réservable pour l'instant.",
             ownerMessage: 'Propose ton premier service réservable.',
             ctaLabel: 'Ajouter un service',
             ctaAction: 'data-open-service-overlay',
@@ -177,7 +185,7 @@ export function widgetEmptyContent(
     case 'no_images':
       return {
         visitorMessage: 'Bannière bientôt disponible.',
-        ownerMessage: 'Ajoute des images pour créer ta bannière d\'accueil.',
+        ownerMessage: "Ajoute des images pour créer ta bannière d'accueil.",
         ctaLabel: 'Ajouter des images',
         ...configCta(widgetId),
       }
@@ -192,7 +200,7 @@ export function widgetEmptyContent(
 
     case 'no_news':
       return {
-        visitorMessage: 'Pas encore d\'actus par ici.',
+        visitorMessage: "Pas encore d'actus par ici.",
         ownerMessage: 'Partage tes actus avec ta communauté.',
         ctaLabel: 'Ajouter une publication',
         ctaAction: 'data-open-publication-overlay',

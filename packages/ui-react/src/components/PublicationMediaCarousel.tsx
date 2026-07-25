@@ -20,7 +20,7 @@ type Props = {
 function getCropStyle(
   width: number | null | undefined,
   height: number | null | undefined,
-  fullWidth: boolean
+  fullWidth: boolean,
 ): React.CSSProperties {
   if (!width || !height) {
     return fullWidth
@@ -45,9 +45,19 @@ function getCropStyle(
     return { aspectRatio: '16/9', objectFit: 'cover' }
   }
   if (ratio >= 1) {
-    return { aspectRatio: `${width}/${height}`, objectFit: 'contain', maxHeight: 400, background: 'var(--color-neutral-100)' }
+    return {
+      aspectRatio: `${width}/${height}`,
+      objectFit: 'contain',
+      maxHeight: 400,
+      background: 'var(--color-neutral-100)',
+    }
   }
-  return { aspectRatio: '1/1', objectFit: 'contain', maxHeight: 400, background: 'var(--color-neutral-100)' }
+  return {
+    aspectRatio: '1/1',
+    objectFit: 'contain',
+    maxHeight: 400,
+    background: 'var(--color-neutral-100)',
+  }
 }
 
 export function PublicationMediaCarousel({ media, fullWidth = false }: Props) {
@@ -55,14 +65,21 @@ export function PublicationMediaCarousel({ media, fullWidth = false }: Props) {
   const trackRef = useRef<HTMLDivElement>(null)
   const scrollTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const goTo = useCallback((index: number) => {
-    if (index < 0 || index >= media.length) return
-    setCurrent(index)
-    const track = trackRef.current
-    if (track && track.children[index]) {
-      (track.children[index] as HTMLElement).scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' })
-    }
-  }, [media.length])
+  const goTo = useCallback(
+    (index: number) => {
+      if (index < 0 || index >= media.length) return
+      setCurrent(index)
+      const track = trackRef.current
+      if (track && track.children[index]) {
+        ;(track.children[index] as HTMLElement).scrollIntoView({
+          behavior: 'smooth',
+          block: 'nearest',
+          inline: 'start',
+        })
+      }
+    },
+    [media.length],
+  )
 
   useEffect(() => {
     const track = trackRef.current
@@ -86,13 +103,21 @@ export function PublicationMediaCarousel({ media, fullWidth = false }: Props) {
   }, [media.length])
 
   function handleKeyDown(e: React.KeyboardEvent) {
-    if (e.key === 'ArrowLeft') { e.preventDefault(); goTo(current - 1) }
-    if (e.key === 'ArrowRight') { e.preventDefault(); goTo(current + 1) }
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault()
+      goTo(current - 1)
+    }
+    if (e.key === 'ArrowRight') {
+      e.preventDefault()
+      goTo(current + 1)
+    }
   }
 
   if (media.length === 0) return null
 
-  const rootClass = fullWidth ? 'pub-media-carousel--full group relative' : 'overflow-hidden group relative'
+  const rootClass = fullWidth
+    ? 'pub-media-carousel--full group relative'
+    : 'overflow-hidden group relative'
 
   function renderSlide(m: CarouselMedia, i: number) {
     if (m.type === 'video') {
@@ -124,7 +149,11 @@ export function PublicationMediaCarousel({ media, fullWidth = false }: Props) {
   }
 
   if (media.length === 1) {
-    return <div className={fullWidth ? 'pub-media-carousel--full' : 'overflow-hidden'}>{renderSlide(media[0], 0)}</div>
+    return (
+      <div className={fullWidth ? 'pub-media-carousel--full' : 'overflow-hidden'}>
+        {renderSlide(media[0], 0)}
+      </div>
+    )
   }
 
   return (
@@ -133,7 +162,13 @@ export function PublicationMediaCarousel({ media, fullWidth = false }: Props) {
       <div
         ref={trackRef}
         className="flex snap-x snap-mandatory overflow-x-auto"
-        style={{ scrollbarWidth: 'none', scrollBehavior: 'smooth', scrollSnapType: 'x mandatory' } as React.CSSProperties}
+        style={
+          {
+            scrollbarWidth: 'none',
+            scrollBehavior: 'smooth',
+            scrollSnapType: 'x mandatory',
+          } as React.CSSProperties
+        }
         role="group"
         tabIndex={0}
         aria-roledescription="carousel"
@@ -154,7 +189,10 @@ export function PublicationMediaCarousel({ media, fullWidth = false }: Props) {
       </div>
 
       {/* Counter */}
-      <div className="absolute top-3 right-3 rounded-full bg-neutral-900/60 px-2.5 py-1 text-xs font-medium text-white" aria-hidden="true">
+      <div
+        className="absolute top-3 right-3 rounded-full bg-neutral-900/60 px-2.5 py-1 text-xs font-medium text-white"
+        aria-hidden="true"
+      >
         {current + 1}/{media.length}
       </div>
 
@@ -162,7 +200,10 @@ export function PublicationMediaCarousel({ media, fullWidth = false }: Props) {
       {current > 0 && (
         <button
           type="button"
-          onClick={(e) => { e.stopPropagation(); goTo(current - 1) }}
+          onClick={(e) => {
+            e.stopPropagation()
+            goTo(current - 1)
+          }}
           className="absolute left-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-neutral-0/90 text-neutral-600 shadow-sm opacity-0 transition-opacity group-hover:opacity-100"
           aria-label="Image précédente"
         >
@@ -172,7 +213,10 @@ export function PublicationMediaCarousel({ media, fullWidth = false }: Props) {
       {current < media.length - 1 && (
         <button
           type="button"
-          onClick={(e) => { e.stopPropagation(); goTo(current + 1) }}
+          onClick={(e) => {
+            e.stopPropagation()
+            goTo(current + 1)
+          }}
           className="absolute right-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-neutral-0/90 text-neutral-600 shadow-sm opacity-0 transition-opacity group-hover:opacity-100"
           aria-label="Image suivante"
         >
@@ -186,7 +230,10 @@ export function PublicationMediaCarousel({ media, fullWidth = false }: Props) {
           <button
             key={i}
             type="button"
-            onClick={(e) => { e.stopPropagation(); goTo(i) }}
+            onClick={(e) => {
+              e.stopPropagation()
+              goTo(i)
+            }}
             className={`h-1.5 w-1.5 rounded-full transition-colors ${i === current ? 'bg-neutral-0' : 'bg-neutral-0/50'}`}
             aria-label={`Aller à l'image ${i + 1}`}
           />

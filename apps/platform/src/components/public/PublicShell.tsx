@@ -20,23 +20,26 @@ function PublicShellInner({ children, webUrl }: Omit<Props, 'accountData'>) {
   const { isPersonalMode, activeProject } = useAccountContext()
   const zone = getNavZone(pathname, isPersonalMode)
   const webProfileUrl = '/dashboard/site'
-  const webProfileActive =
-    pathname === webProfileUrl || pathname.startsWith(`${webProfileUrl}/`)
+  const webProfileActive = pathname === webProfileUrl || pathname.startsWith(`${webProfileUrl}/`)
   const showSidebar = shouldShowSidebar(zone, true)
   const contentClassName =
-    pathname === '/'
-      ? 'app-layout__content app-layout__content--home-feed'
-      : 'app-layout__content'
+    pathname === '/' ? 'app-layout__content app-layout__content--home-feed' : 'app-layout__content'
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-4 focus:bg-background focus:text-accent">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-4 focus:bg-background focus:text-accent"
+      >
         Passer au contenu principal
       </a>
       <GlobalHeader webUrl={webUrl} webProfileUrl={webProfileUrl} />
       <div className="app-layout__body flex min-h-0 flex-1">
         {showSidebar ? <ZoneSidebar /> : null}
-        <main id="main-content" className="app-layout__main relative flex min-h-0 min-w-0 flex-1 flex-col">
+        <main
+          id="main-content"
+          className="app-layout__main relative flex min-h-0 min-w-0 flex-1 flex-col"
+        >
           <div className={contentClassName}>{children}</div>
           <FloatingNavPill
             webProfileUrl={webProfileUrl}
@@ -78,12 +81,18 @@ export function PublicShell({ children, accountData, webUrl }: Props) {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-4 focus:bg-background focus:text-accent">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-4 focus:bg-background focus:text-accent"
+      >
         Passer au contenu principal
       </a>
       <GlobalHeader webUrl={webUrl} isAuthenticated={false} loginUrl="/login" />
       <div className="app-layout__body flex min-h-0 flex-1">
-        <main id="main-content" className="app-layout__main relative flex min-h-0 min-w-0 flex-1 flex-col">
+        <main
+          id="main-content"
+          className="app-layout__main relative flex min-h-0 min-w-0 flex-1 flex-col"
+        >
           <div
             className={
               pathname === '/'

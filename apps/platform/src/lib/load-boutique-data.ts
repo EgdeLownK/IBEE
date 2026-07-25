@@ -47,9 +47,7 @@ function stockCategoryName(product: StockProductRow): string | null {
 }
 
 function stockProductImageUrl(product: StockProductRow): string | null {
-  const media = [...(product.product_media ?? [])].sort(
-    (a, b) => a.display_order - b.display_order
-  )
+  const media = [...(product.product_media ?? [])].sort((a, b) => a.display_order - b.display_order)
   const cover = media.find((item) => item.media_type === 'image') ?? media[0]
   return cover?.url ?? null
 }
@@ -65,13 +63,16 @@ function stockTotalQty(current: number, sold: number): number {
 function isMissingTableError(error: unknown, table: string): boolean {
   if (!error || typeof error !== 'object') return false
   const message = 'message' in error ? String(error.message) : ''
-  return message.includes(table) && (message.includes('does not exist') || message.includes('schema cache'))
+  return (
+    message.includes(table) &&
+    (message.includes('does not exist') || message.includes('schema cache'))
+  )
 }
 
 async function loadStockSoldQuantities(
   client: Client,
   entityId: string,
-  productIds: string[]
+  productIds: string[],
 ): Promise<Map<string, number>> {
   if (productIds.length === 0) return new Map()
 
@@ -96,8 +97,7 @@ async function loadStockSoldQuantities(
   return sold
 }
 
-const STOCK_CATEGORY =
-  'category, entity_product_categories(name)'
+const STOCK_CATEGORY = 'category, entity_product_categories(name)'
 
 const STOCK_MEDIA = 'product_media(url, media_type, display_order)'
 
@@ -108,7 +108,7 @@ const STOCK_SELECT_LEGACY = `id, title, type, ${STOCK_CATEGORY}, physical_stock_
 function pushPhysicalStockLines(
   product: StockProductRow,
   items: BoutiqueStockLine[],
-  soldByKey: Map<string, number>
+  soldByKey: Map<string, number>,
 ) {
   const categoryName = stockCategoryName(product)
   const imageUrl = stockProductImageUrl(product)
@@ -174,7 +174,7 @@ function pushPhysicalStockLines(
 function pushDigitalStockLine(
   product: StockProductRow,
   items: BoutiqueStockLine[],
-  soldByKey: Map<string, number>
+  soldByKey: Map<string, number>,
 ) {
   const categoryName = stockCategoryName(product)
   const imageUrl = stockProductImageUrl(product)
@@ -239,7 +239,7 @@ async function loadStockInventory(client: Client, entityId: string): Promise<Bou
   const soldByKey = await loadStockSoldQuantities(
     client,
     entityId,
-    productRows.map((product) => product.id)
+    productRows.map((product) => product.id),
   )
 
   const items: BoutiqueStockLine[] = []
@@ -261,14 +261,14 @@ async function loadStockInventory(client: Client, entityId: string): Promise<Bou
 
 async function loadProductCatalog(
   client: Client,
-  entityId: string
+  entityId: string,
 ): Promise<BoutiqueProductLine[]> {
   const [{ data: products, error: productsError }, { data: lines, error: linesError }] =
     await Promise.all([
       client
         .from('products')
         .select(
-          'id, title, slug, type, price_cents, currency, physical_condition, product_media(url, media_type, display_order)'
+          'id, title, slug, type, price_cents, currency, physical_condition, product_media(url, media_type, display_order)',
         )
         .eq('entity_id', entityId)
         .eq('status', 'published')
@@ -298,10 +298,9 @@ async function loadProductCatalog(
   return (products ?? []).map((product) => {
     const productStats = stats.get(product.id)
     const media = [...(product.product_media ?? [])].sort(
-      (a, b) => a.display_order - b.display_order
+      (a, b) => a.display_order - b.display_order,
     )
-    const cover =
-      media.find((item) => item.media_type === 'image') ?? media[0] ?? null
+    const cover = media.find((item) => item.media_type === 'image') ?? media[0] ?? null
 
     return {
       id: product.id,
@@ -320,7 +319,7 @@ async function loadProductCatalog(
 
 export async function loadBoutiqueDashboardData(
   client: Client,
-  entityId: string
+  entityId: string,
 ): Promise<BoutiqueDashboardData> {
   try {
     const [ordersRaw, stockItems, products] = await Promise.all([
@@ -345,10 +344,10 @@ export async function loadBoutiqueDashboardData(
     }
 
     const imageByProductId = new Map(
-      products.map((product) => [product.id, product.imageUrl] as const)
+      products.map((product) => [product.id, product.imageUrl] as const),
     )
     const conditionByProductId = new Map(
-      products.map((product) => [product.id, product.physicalCondition] as const)
+      products.map((product) => [product.id, product.physicalCondition] as const),
     )
 
     const orders = ordersRaw.map((order) => {

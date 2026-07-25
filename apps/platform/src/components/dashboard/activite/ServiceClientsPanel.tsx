@@ -44,34 +44,24 @@ function ClientCard({
     >
       <ActiviteClientAvatar name={client.name} />
       <div className="boutique-order-card__body">
-      <div className="boutique-order-card__top">
-        <span className="boutique-order-card__ref">{client.name}</span>
-        <span className="boutique-order-card__type">
-          {client.bookingsCount} RDV
-        </span>
-      </div>
-      <p className="boutique-order-card__customer">{client.email}</p>
-      {client.phone ? (
-        <p className="boutique-order-card__product">{client.phone}</p>
-      ) : null}
-      <div className="boutique-order-card__footer">
-        <span className="boutique-order-card__amount">
-          {client.totalRevenueLabel ?? '—'}
-        </span>
-        <span className="boutique-order-card__time">
-          {formatClientDate(client.lastBookingAt)}
-        </span>
-      </div>
+        <div className="boutique-order-card__top">
+          <span className="boutique-order-card__ref">{client.name}</span>
+          <span className="boutique-order-card__type">{client.bookingsCount} RDV</span>
+        </div>
+        <p className="boutique-order-card__customer">{client.email}</p>
+        {client.phone ? <p className="boutique-order-card__product">{client.phone}</p> : null}
+        <div className="boutique-order-card__footer">
+          <span className="boutique-order-card__amount">{client.totalRevenueLabel ?? '—'}</span>
+          <span className="boutique-order-card__time">
+            {formatClientDate(client.lastBookingAt)}
+          </span>
+        </div>
       </div>
     </button>
   )
 }
 
-function ClientBookingHistory({
-  bookings,
-}: {
-  bookings: ServiceBookingView[]
-}) {
+function ClientBookingHistory({ bookings }: { bookings: ServiceBookingView[] }) {
   if (bookings.length === 0) {
     return <p className="service-clients__history-empty">Aucun rendez-vous lié.</p>
   }
@@ -103,7 +93,7 @@ export function ServiceClientsPanel({ data }: Props) {
 
   const visibleClients = useMemo(
     () => searchServiceClients(data.clients, searchQuery),
-    [data.clients, searchQuery]
+    [data.clients, searchQuery],
   )
 
   useEffect(() => {
@@ -187,15 +177,18 @@ export function ServiceClientsPanel({ data }: Props) {
         {selectedClient ? (
           <div className="service-clients__detail">
             <header className="service-clients__detail-head service-clients__detail-head--media">
-              <ActiviteClientAvatar name={selectedClient.name} className="activite-client-avatar--detail" />
+              <ActiviteClientAvatar
+                name={selectedClient.name}
+                className="activite-client-avatar--detail"
+              />
               <div>
-              <h3 className="service-clients__detail-name">{selectedClient.name}</h3>
-              <p className="service-clients__detail-meta">
-                {selectedClient.bookingsCount} rendez-vous
-                {selectedClient.totalRevenueLabel
-                  ? ` · ${selectedClient.totalRevenueLabel} cumulés`
-                  : ''}
-              </p>
+                <h3 className="service-clients__detail-name">{selectedClient.name}</h3>
+                <p className="service-clients__detail-meta">
+                  {selectedClient.bookingsCount} rendez-vous
+                  {selectedClient.totalRevenueLabel
+                    ? ` · ${selectedClient.totalRevenueLabel} cumulés`
+                    : ''}
+                </p>
               </div>
             </header>
 

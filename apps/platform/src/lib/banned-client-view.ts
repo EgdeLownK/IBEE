@@ -20,7 +20,7 @@ export function mapBannedClientToView(client: Client): BannedClientView {
 
 export function searchBannedClients(
   clients: BannedClientView[],
-  query: string
+  query: string,
 ): BannedClientView[] {
   const q = query.trim().toLowerCase()
   if (!q) return clients
@@ -29,21 +29,18 @@ export function searchBannedClients(
     (client) =>
       client.name.toLowerCase().includes(q) ||
       client.email.toLowerCase().includes(q) ||
-      (client.phone?.toLowerCase().includes(q) ?? false)
+      (client.phone?.toLowerCase().includes(q) ?? false),
   )
 }
 
-export function isEmailBanned(
-  bannedClients: BannedClientView[],
-  email: string
-): boolean {
+export function isEmailBanned(bannedClients: BannedClientView[], email: string): boolean {
   const normalized = email.trim().toLowerCase()
   return bannedClients.some((client) => client.email.toLowerCase() === normalized)
 }
 
 export function findBannedClientByEmail(
   bannedClients: BannedClientView[],
-  email: string
+  email: string,
 ): BannedClientView | null {
   const normalized = email.trim().toLowerCase()
   return bannedClients.find((client) => client.email.toLowerCase() === normalized) ?? null

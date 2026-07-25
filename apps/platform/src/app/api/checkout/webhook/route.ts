@@ -49,8 +49,7 @@ export async function POST(request: Request) {
   }
 
   const checkoutKind = session.metadata?.checkout_kind
-  const isBooking =
-    checkoutKind === 'booking' || Boolean(session.metadata?.booking_id)
+  const isBooking = checkoutKind === 'booking' || Boolean(session.metadata?.booking_id)
   const isEvent = checkoutKind === 'event' || Boolean(session.metadata?.event_id)
 
   try {
@@ -62,7 +61,7 @@ export async function POST(request: Request) {
         paymentIntentId:
           typeof session.payment_intent === 'string'
             ? session.payment_intent
-            : session.payment_intent?.id ?? null,
+            : (session.payment_intent?.id ?? null),
       })
 
       const booking = await getBookingById(supabase, bookingId)
@@ -98,7 +97,7 @@ export async function POST(request: Request) {
         paymentIntentId:
           typeof session.payment_intent === 'string'
             ? session.payment_intent
-            : session.payment_intent?.id ?? null,
+            : (session.payment_intent?.id ?? null),
       })
 
       const registration = await getRegistrationByOrderId(supabase, orderId)
@@ -134,7 +133,7 @@ export async function POST(request: Request) {
       paymentIntentId:
         typeof session.payment_intent === 'string'
           ? session.payment_intent
-          : session.payment_intent?.id ?? null,
+          : (session.payment_intent?.id ?? null),
       buyerEmail: session.customer_details?.email ?? session.customer_email ?? null,
       buyerName: session.customer_details?.name ?? null,
     })

@@ -21,7 +21,10 @@ export async function POST(request: Request) {
   } = await supabase.auth.getUser()
 
   if (!user) {
-    return NextResponse.json({ error: 'Vous devez être connecté pour laisser un avis.' }, { status: 401 })
+    return NextResponse.json(
+      { error: 'Vous devez être connecté pour laisser un avis.' },
+      { status: 401 },
+    )
   }
 
   let body: Record<string, unknown>
@@ -53,7 +56,10 @@ export async function POST(request: Request) {
   } catch (err: unknown) {
     const pgErr = err as { code?: string }
     if (pgErr?.code === '23505') {
-      return NextResponse.json({ error: 'Vous avez déjà laissé un avis sur ce produit.' }, { status: 409 })
+      return NextResponse.json(
+        { error: 'Vous avez déjà laissé un avis sur ce produit.' },
+        { status: 409 },
+      )
     }
     console.error('[api/product-reviews] POST', err)
     return NextResponse.json({ error: 'Erreur lors de l’envoi de l’avis.' }, { status: 500 })

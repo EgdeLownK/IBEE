@@ -2,10 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { isAnalyticsSectionType } from '@ibee/shared'
-import {
-  getVisibleProfileTabs,
-  profileTabContentFromLists,
-} from '@ibee/ui-react/profile'
+import { getVisibleProfileTabs, profileTabContentFromLists } from '@ibee/ui-react/profile'
 import { ProfileStudioSections } from '@/components/profile/ProfileStudioSections'
 import type { PublicProfileData } from '@/lib/load-public-profile'
 import { embedDetailBase, embedProfileHref } from '@/lib/embed-public-urls'
@@ -45,11 +42,7 @@ export function PublicProfileTabsController({ data, embedMode = false }: Props) 
   )
 
   const visibleTypes = useMemo(() => {
-    const types = getVisibleProfileTabs(
-      'public',
-      data.menuSections,
-      tabContent
-    )
+    const types = getVisibleProfileTabs('public', data.menuSections, tabContent)
     return new Set<string>(types)
   }, [data.menuSections, tabContent])
 

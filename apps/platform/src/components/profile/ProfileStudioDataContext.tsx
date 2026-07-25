@@ -1,10 +1,14 @@
 'use client'
 
-import { createContext, useContext, useLayoutEffect, useMemo, useState, type ReactNode } from 'react'
-import type {
-  ProfileStudioPlaylistsData,
-  ProfileStudioShellData,
-} from '@/lib/profile-studio-data'
+import {
+  createContext,
+  useContext,
+  useLayoutEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react'
+import type { ProfileStudioPlaylistsData, ProfileStudioShellData } from '@/lib/profile-studio-data'
 
 type ProfileStudioDataContextValue = {
   shell: ProfileStudioShellData
@@ -22,10 +26,7 @@ export function ProfileStudioDataProvider({
   children: ReactNode
 }) {
   const [playlists, setPlaylists] = useState<ProfileStudioPlaylistsData | null>(null)
-  const value = useMemo(
-    () => ({ shell, playlists, setPlaylists }),
-    [shell, playlists]
-  )
+  const value = useMemo(() => ({ shell, playlists, setPlaylists }), [shell, playlists])
 
   return (
     <ProfileStudioDataContext.Provider value={value}>{children}</ProfileStudioDataContext.Provider>

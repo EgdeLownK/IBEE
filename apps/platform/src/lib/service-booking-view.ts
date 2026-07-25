@@ -2,10 +2,7 @@ import type { BookingWithType } from '@ibee/supabase'
 import type { Database } from '@ibee/supabase'
 import type { ServiceClientView } from '@/lib/service-client-view'
 import type { ServiceCatalogLine } from '@/lib/service-catalog-view'
-import type {
-  AvailabilityExceptionRow,
-  AvailabilityScheduleRow,
-} from '@/lib/service-planning-view'
+import type { AvailabilityExceptionRow, AvailabilityScheduleRow } from '@/lib/service-planning-view'
 
 export type BookingStatus = Database['public']['Enums']['booking_status']
 export type AppointmentLocationType = Database['public']['Enums']['appointment_location_type']
@@ -36,13 +33,7 @@ export type ServiceBookingView = {
 }
 
 export type ServiceBookingFilter =
-  | 'all'
-  | 'pending'
-  | 'today'
-  | 'upcoming'
-  | 'recent'
-  | 'cancelled'
-  | 'no_show'
+  'all' | 'pending' | 'today' | 'upcoming' | 'recent' | 'cancelled' | 'no_show'
 
 export const SERVICE_BOOKING_FILTERS: ReadonlyArray<{
   id: ServiceBookingFilter
@@ -102,7 +93,7 @@ export function mapBookingToView(row: BookingRow): ServiceBookingView {
     locationType: service?.location_type ?? 'video',
     locationLabel: resolveLocationLabel(
       service?.location_type ?? 'video',
-      service?.location_details ?? null
+      service?.location_details ?? null,
     ),
     serviceColor: service?.color ?? null,
     serviceImageUrl,
@@ -185,7 +176,7 @@ export function isBookingRecent(iso: string): boolean {
 
 function resolveLocationLabel(
   locationType: AppointmentLocationType,
-  locationDetails: string | null
+  locationDetails: string | null,
 ): string {
   if (locationDetails?.trim()) return locationDetails.trim()
   return LOCATION_LABELS[locationType]
@@ -193,7 +184,7 @@ function resolveLocationLabel(
 
 export function matchesServiceBookingFilter(
   booking: ServiceBookingView,
-  filter: ServiceBookingFilter
+  filter: ServiceBookingFilter,
 ): boolean {
   switch (filter) {
     case 'all':
@@ -220,7 +211,7 @@ export function matchesServiceBookingFilter(
 
 export function searchServiceBookings(
   bookings: ServiceBookingView[],
-  query: string
+  query: string,
 ): ServiceBookingView[] {
   const q = query.trim().toLowerCase()
   if (!q) return bookings
@@ -242,7 +233,7 @@ export function searchServiceBookings(
 
 export function sortServiceBookings(
   bookings: ServiceBookingView[],
-  filter: ServiceBookingFilter
+  filter: ServiceBookingFilter,
 ): ServiceBookingView[] {
   return [...bookings].sort((a, b) => {
     if (filter === 'all' || filter === 'pending') {
@@ -258,7 +249,7 @@ export function sortServiceBookings(
 export function filterServiceBookings(
   bookings: ServiceBookingView[],
   filter: ServiceBookingFilter,
-  searchQuery = ''
+  searchQuery = '',
 ): ServiceBookingView[] {
   const searched = searchServiceBookings(bookings, searchQuery)
   const filtered = searched.filter((booking) => matchesServiceBookingFilter(booking, filter))
@@ -267,7 +258,7 @@ export function filterServiceBookings(
 
 export function countServiceBookingsByFilter(
   bookings: ServiceBookingView[],
-  filter: ServiceBookingFilter
+  filter: ServiceBookingFilter,
 ): number {
   return bookings.filter((booking) => matchesServiceBookingFilter(booking, filter)).length
 }
@@ -276,12 +267,10 @@ export function buildServiceTodaySnapshot(bookings: ServiceBookingView[]): Servi
   return {
     pendingCount: bookings.filter((b) => b.status === 'pending').length,
     todayCount: bookings.filter(
-      (b) =>
-        isBookingToday(b.startAt) && (b.status === 'pending' || b.status === 'confirmed')
+      (b) => isBookingToday(b.startAt) && (b.status === 'pending' || b.status === 'confirmed'),
     ).length,
-    upcomingCount: bookings.filter(
-      (b) => b.status === 'confirmed' && isBookingUpcoming(b.startAt)
-    ).length,
+    upcomingCount: bookings.filter((b) => b.status === 'confirmed' && isBookingUpcoming(b.startAt))
+      .length,
   }
 }
 
@@ -295,7 +284,7 @@ export function bookingIsoDate(iso: string): string {
 
 export function bookingsOnDate(
   bookings: ServiceBookingView[],
-  isoDate: string
+  isoDate: string,
 ): ServiceBookingView[] {
   return [...bookings]
     .filter((booking) => bookingIsoDate(booking.startAt) === isoDate)
@@ -307,9 +296,7 @@ export type ServiceBookingHourGroup = {
   bookings: ServiceBookingView[]
 }
 
-export function groupBookingsByHour(
-  bookings: ServiceBookingView[]
-): ServiceBookingHourGroup[] {
+export function groupBookingsByHour(bookings: ServiceBookingView[]): ServiceBookingHourGroup[] {
   const groups = new Map<string, ServiceBookingView[]>()
 
   for (const booking of bookings) {

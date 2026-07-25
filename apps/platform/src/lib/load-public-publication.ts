@@ -17,7 +17,7 @@ export async function loadPublicPublication(slug: string, publicationSlug: strin
 
   const isOwner = !!(user && entity.user_id && user.id === entity.user_id)
 
-  let publication = await getPublicationByEntityAndSlug(supabase, entity.id, publicationSlug)
+  const publication = await getPublicationByEntityAndSlug(supabase, entity.id, publicationSlug)
   if (!publication) return null
 
   const isPublished =

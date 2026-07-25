@@ -36,7 +36,7 @@ export type EventConfirmedData = {
 export async function loadEventConfirmed(
   slug: string,
   eventSlug: string,
-  sessionId: string | null
+  sessionId: string | null,
 ): Promise<EventConfirmedData | null> {
   if (!sessionId) return null
 
@@ -52,9 +52,7 @@ export async function loadEventConfirmed(
   if (!registration || registration.event_id !== event.id) return null
 
   const ticketType = registration.event_ticket_types as
-    | { title: string; price_cents: number; currency: string }
-    | null
-    | undefined
+    { title: string; price_cents: number; currency: string } | null | undefined
 
   const priceCents = registration.price_cents ?? ticketType?.price_cents ?? null
 
@@ -62,9 +60,7 @@ export async function loadEventConfirmed(
   const ticketHref = `/${slug}/events/${eventSlug}/billet?code=${encodeURIComponent(ticketCode)}`
 
   const locBase = eventLocationLabel(event.location_type)
-  const locationLabel = event.location_details
-    ? `${locBase} · ${event.location_details}`
-    : locBase
+  const locationLabel = event.location_details ? `${locBase} · ${event.location_details}` : locBase
 
   return {
     entity: {

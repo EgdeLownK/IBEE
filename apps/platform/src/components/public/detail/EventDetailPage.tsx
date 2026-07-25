@@ -22,7 +22,10 @@ export function EventDetailPage({ data: initialData, embedMode = false }: Props)
   return (
     <main className="profile-page">
       <ProfileShell>
-        <DetailTopBar backHref={data.backHref} title={`Voir le profil de ${data.entity.display_name}`} />
+        <DetailTopBar
+          backHref={data.backHref}
+          title={`Voir le profil de ${data.entity.display_name}`}
+        />
 
         <DetailEntityStrip
           displayName={data.entity.display_name}
@@ -80,7 +83,9 @@ export function EventDetailPage({ data: initialData, embedMode = false }: Props)
                       </div>
                       {activity.remaining != null ? (
                         <span className="event-program-list__places">
-                          {activity.isFull ? 'Complet' : `${activity.remaining} place${activity.remaining > 1 ? 's' : ''}`}
+                          {activity.isFull
+                            ? 'Complet'
+                            : `${activity.remaining} place${activity.remaining > 1 ? 's' : ''}`}
                         </span>
                       ) : null}
                     </li>
@@ -92,7 +97,10 @@ export function EventDetailPage({ data: initialData, embedMode = false }: Props)
         ) : null}
 
         <div className="product-related pb-2">
-          <RelatedContent title={`Autres contenus de ${data.entity.display_name}`} items={data.profileRelated} />
+          <RelatedContent
+            title={`Autres contenus de ${data.entity.display_name}`}
+            items={data.profileRelated}
+          />
           <RelatedContent title="À découvrir aussi" items={data.similarRelated} />
         </div>
 

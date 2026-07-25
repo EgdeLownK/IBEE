@@ -26,7 +26,32 @@ import {
   uploadPublicationMediaAction,
 } from '@/app/dashboard/site/publication-actions'
 
-const EMOJIS = ['😀', '😃', '😄', '😁', '😅', '😂', '🤣', '😊', '😇', '🙂', '😉', '😍', '🥰', '😘', '🤔', '👍', '👏', '🎉', '🔥', '❤️', '💯', '🙌', '✨', '💪']
+const EMOJIS = [
+  '😀',
+  '😃',
+  '😄',
+  '😁',
+  '😅',
+  '😂',
+  '🤣',
+  '😊',
+  '😇',
+  '🙂',
+  '😉',
+  '😍',
+  '🥰',
+  '😘',
+  '🤔',
+  '👍',
+  '👏',
+  '🎉',
+  '🔥',
+  '❤️',
+  '💯',
+  '🙌',
+  '✨',
+  '💪',
+]
 const MAX_VIDEO_SECONDS = 300
 const MAX_MEDIA = 10
 
@@ -131,7 +156,7 @@ export function AddContentDialog({
     setPollOptions(['', ''])
     setError('')
     setEmojiOpen(false)
-    setActiveType(hasNews ? 'news' : toolbarItems[0]?.type ?? 'news')
+    setActiveType(hasNews ? 'news' : (toolbarItems[0]?.type ?? 'news'))
   }, [hasNews, toolbarItems])
 
   useEffect(() => {
@@ -209,17 +234,19 @@ export function AddContentDialog({
     })
   }
 
-  async function uploadFile(file: File, type: 'image' | 'video', width?: number | null, height?: number | null) {
+  async function uploadFile(
+    file: File,
+    type: 'image' | 'video',
+    width?: number | null,
+    height?: number | null,
+  ) {
     if (media.length >= MAX_MEDIA) {
       setError(`Maximum ${MAX_MEDIA} médias par publication.`)
       return
     }
     const id = nextMediaId()
     const previewUrl = URL.createObjectURL(file)
-    setMedia((prev) => [
-      ...prev,
-      { id, type, url: '', previewUrl, uploading: true, width, height },
-    ])
+    setMedia((prev) => [...prev, { id, type, url: '', previewUrl, uploading: true, width, height }])
     setError('')
 
     const fd = new FormData()
@@ -232,7 +259,7 @@ export function AddContentDialog({
         return prev.filter((m) => m.id !== id)
       }
       return prev.map((m) =>
-        m.id === id ? { ...m, url: result.url, type: result.type, uploading: false } : m
+        m.id === id ? { ...m, url: result.url, type: result.type, uploading: false } : m,
       )
     })
   }
@@ -378,15 +405,28 @@ export function AddContentDialog({
 
   return createPortal(
     <div className="add-content" role="presentation">
-      <button type="button" className="add-content__backdrop" aria-label="Fermer" onClick={onClose} />
-      <div className="add-content__panel" role="dialog" aria-modal="true" aria-labelledby="add-content-title">
+      <button
+        type="button"
+        className="add-content__backdrop"
+        aria-label="Fermer"
+        onClick={onClose}
+      />
+      <div
+        className="add-content__panel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="add-content-title"
+      >
         <header className="add-content__head">
           <div className="add-content__user">
             {avatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={avatarUrl} alt="" className="add-content__avatar" width={44} height={44} />
             ) : (
-              <span className="add-content__avatar add-content__avatar--initials" aria-hidden="true">
+              <span
+                className="add-content__avatar add-content__avatar--initials"
+                aria-hidden="true"
+              >
                 {initials}
               </span>
             )}
@@ -397,7 +437,12 @@ export function AddContentDialog({
               </p>
             </div>
           </div>
-          <button type="button" className="add-content__close" aria-label="Fermer" onClick={onClose}>
+          <button
+            type="button"
+            className="add-content__close"
+            aria-label="Fermer"
+            onClick={onClose}
+          >
             <X className="h-5 w-5" />
           </button>
         </header>
@@ -427,7 +472,12 @@ export function AddContentDialog({
                           <div className="add-content__media-thumb">
                             {item.type === 'video' ? (
                               <>
-                                <video src={item.previewUrl || item.url} muted playsInline preload="metadata" />
+                                <video
+                                  src={item.previewUrl || item.url}
+                                  muted
+                                  playsInline
+                                  preload="metadata"
+                                />
                                 <span className="add-content__media-badge">▶</span>
                               </>
                             ) : (
@@ -509,7 +559,7 @@ export function AddContentDialog({
                             value={opt}
                             onChange={(e) =>
                               setPollOptions((prev) =>
-                                prev.map((o, j) => (j === i ? e.target.value : o))
+                                prev.map((o, j) => (j === i ? e.target.value : o)),
                               )
                             }
                           />
@@ -654,6 +704,6 @@ export function AddContentDialog({
         )}
       </div>
     </div>,
-    document.body
+    document.body,
   )
 }

@@ -26,7 +26,8 @@ export function ProfileHeroReact({
 }: ProfileHeroReactProps) {
   const formattedDate = format(new Date(createdAt), 'MMMM yyyy', { locale: fr })
 
-  const nameText = `${displayName.toUpperCase()}\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0`.repeat(20)
+  const nameText =
+    `${displayName.toUpperCase()}\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0`.repeat(20)
 
   return (
     <header>
@@ -38,11 +39,7 @@ export function ProfileHeroReact({
       >
         {/* Image utilisateur (uniquement si avatar défini) */}
         {avatarUrl && (
-          <img
-            src={avatarUrl}
-            alt={displayName}
-            className="h-full w-full object-cover"
-          />
+          <img src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
         )}
 
         {/* Pattern SVG de noms en briques (fallback uniquement) */}
@@ -82,11 +79,7 @@ export function ProfileHeroReact({
           {displayName}
         </h1>
 
-        {role && (
-          <p className="mt-2 text-base font-semibold text-neutral-900 sm:text-lg">
-            {role}
-          </p>
-        )}
+        {role && <p className="mt-2 text-base font-semibold text-neutral-900 sm:text-lg">{role}</p>}
 
         <div className="mt-4 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-neutral-400">
           {location && (

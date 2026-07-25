@@ -19,7 +19,7 @@ export type DefaultEventRegistration = {
 export function resolveDefaultEventRegistration(
   hasActivities: boolean,
   activities: ActivityOption[],
-  ticketTypes: TicketOption[]
+  ticketTypes: TicketOption[],
 ): DefaultEventRegistration | null {
   if (hasActivities) {
     const activity = activities.find((a) => a.statusAvailable && a.ticketTypes.length > 0)

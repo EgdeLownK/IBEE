@@ -19,9 +19,7 @@ import {
   updateTeamMemberRole,
 } from '@ibee/supabase'
 
-type ActionResult<T = undefined> =
-  | { ok: true; data: T }
-  | { ok: false; error: string }
+type ActionResult<T = undefined> = { ok: true; data: T } | { ok: false; error: string }
 
 async function requireOwnerEntity() {
   const supabase = await createClient()
@@ -37,7 +35,7 @@ async function requireOwnerEntity() {
 }
 
 export async function saveTeamRolesAction(
-  roles: TeamRoleDefinition[]
+  roles: TeamRoleDefinition[],
 ): Promise<ActionResult<TeamRoleDefinition[]>> {
   const ctx = await requireOwnerEntity()
   if (!ctx.ok) return ctx
@@ -46,7 +44,7 @@ export async function saveTeamRolesAction(
     const saved = await saveTeamRoles(
       ctx.supabase,
       ctx.entity.id,
-      roles.map(mapRoleDefinitionToSaveInput)
+      roles.map(mapRoleDefinitionToSaveInput),
     )
     revalidatePath('/dashboard/equipe')
     return { ok: true, data: saved.map(mapRoleRecordToDefinition).map((role) => cloneRole(role)) }
@@ -59,7 +57,7 @@ export async function saveTeamRolesAction(
 
 export async function inviteTeamMemberAction(
   email: string,
-  roleId: string
+  roleId: string,
 ): Promise<ActionResult<{ id: string; email: string; roleId: string }>> {
   const ctx = await requireOwnerEntity()
   if (!ctx.ok) return ctx
@@ -77,7 +75,7 @@ export async function inviteTeamMemberAction(
       ctx.supabase,
       ctx.entity.id,
       trimmed,
-      ctx.user.email
+      ctx.user.email,
     )
     if (conflict === 'owner') {
       return { ok: false, error: 'Cette personne fait déjà partie de l’équipe.' }
@@ -109,7 +107,7 @@ export async function inviteTeamMemberAction(
 
 export async function updateTeamMemberRoleAction(
   memberId: string,
-  roleId: string
+  roleId: string,
 ): Promise<ActionResult<{ memberId: string; roleId: string }>> {
   const ctx = await requireOwnerEntity()
   if (!ctx.ok) return ctx

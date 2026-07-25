@@ -10,8 +10,7 @@ const baseClasses =
 const defaultClasses =
   'border-neutral-200 hover:border-neutral-300 focus:border-accent-soft focus:ring-accent/20'
 
-const errorClasses =
-  'border-error hover:border-error focus:border-error focus:ring-error/30'
+const errorClasses = 'border-error hover:border-error focus:border-error focus:ring-error/30'
 
 export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
   ({ error, className, ...props }, ref) => {
@@ -22,7 +21,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
         {...props}
       />
     )
-  }
+  },
 )
 
 Textarea.displayName = 'Textarea'

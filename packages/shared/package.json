@@ -18,9 +18,12 @@
     "./banner-image-crop": "./src/lib/banner-image-crop.ts"
   },
   "scripts": {
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "lint": "eslint"
   },
   "devDependencies": {
-    "typescript": "^5.8.0"
+    "eslint": "^9",
+    "typescript": "^5.8.0",
+    "typescript-eslint": "^8.18.0"
   }
 }

@@ -83,13 +83,15 @@ export function RevenuProjetDashboard({ data }: Props) {
   }, [transfers, expenses, filterTag])
 
   const pendingTransferIds = useMemo(
-    () => transfers.filter((transfer) => transfer.status === 'pending').map((transfer) => transfer.id),
-    [transfers]
+    () =>
+      transfers.filter((transfer) => transfer.status === 'pending').map((transfer) => transfer.id),
+    [transfers],
   )
 
   const exportedTransferIds = useMemo(
-    () => transfers.filter((transfer) => transfer.status === 'exported').map((transfer) => transfer.id),
-    [transfers]
+    () =>
+      transfers.filter((transfer) => transfer.status === 'exported').map((transfer) => transfer.id),
+    [transfers],
   )
 
   function refreshTransferStatus(ids: string[], status: PayoutTransferRecord['status']) {
@@ -103,8 +105,8 @@ export function RevenuProjetDashboard({ data }: Props) {
               exportedAt: status === 'exported' ? now : transfer.exportedAt,
               completedAt: status === 'completed' ? now : transfer.completedAt,
             }
-          : transfer
-      )
+          : transfer,
+      ),
     )
   }
 

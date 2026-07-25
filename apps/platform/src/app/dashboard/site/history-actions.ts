@@ -45,7 +45,7 @@ export async function uploadHistoryImageAction(formData: FormData) {
     return { ok: false as const, error: 'Format non supporté (jpeg, png, webp, gif, avif).' }
   }
   if (file.size > MAX_IMAGE_BYTES) {
-    return { ok: false as const, error: 'L\'image ne doit pas dépasser 10 Mo.' }
+    return { ok: false as const, error: "L'image ne doit pas dépasser 10 Mo." }
   }
 
   try {
@@ -67,14 +67,14 @@ export async function uploadHistoryImageAction(formData: FormData) {
 
     if (uploadError) {
       console.error('[uploadHistoryImageAction]', uploadError)
-      return { ok: false as const, error: 'Erreur lors de l\'envoi du fichier.' }
+      return { ok: false as const, error: "Erreur lors de l'envoi du fichier." }
     }
 
     const { data } = supabase.storage.from('publication-media').getPublicUrl(path)
     return { ok: true as const, url: data.publicUrl }
   } catch (err) {
     console.error('[uploadHistoryImageAction]', err)
-    return { ok: false as const, error: 'Erreur lors de l\'envoi du fichier.' }
+    return { ok: false as const, error: "Erreur lors de l'envoi du fichier." }
   }
 }
 

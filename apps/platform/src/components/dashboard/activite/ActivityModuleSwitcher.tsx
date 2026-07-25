@@ -2,10 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import {
-  resolveActiveActivityModules,
-  type ActivityCapabilitiesView,
-} from '@/lib/activity-modules'
+import { resolveActiveActivityModules, type ActivityCapabilitiesView } from '@/lib/activity-modules'
 
 type Props = {
   capabilities: ActivityCapabilitiesView

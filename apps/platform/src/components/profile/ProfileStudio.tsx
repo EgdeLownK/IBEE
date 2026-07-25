@@ -107,12 +107,19 @@ export function ProfileStudio() {
       ...shell,
       ...(playlists ?? EMPTY_PLAYLISTS),
     }),
-    [shell, playlists]
+    [shell, playlists],
   )
 
   const studioData = useMemo(
-    () => ({ ...baseData, publications, historyBlocks, shopProducts, playlistServices, playlistEvents }),
-    [baseData, publications, historyBlocks, shopProducts, playlistServices, playlistEvents]
+    () => ({
+      ...baseData,
+      publications,
+      historyBlocks,
+      shopProducts,
+      playlistServices,
+      playlistEvents,
+    }),
+    [baseData, publications, historyBlocks, shopProducts, playlistServices, playlistEvents],
   )
 
   const { menuSections, webEditUrl, productCategories } = baseData
@@ -126,29 +133,19 @@ export function ProfileStudio() {
         playlistEvents,
         historyBlocks,
       }),
-    [publications, shopProducts, playlistServices, playlistEvents, historyBlocks]
+    [publications, shopProducts, playlistServices, playlistEvents, historyBlocks],
   )
 
   const visibleTabTypes = useMemo(
-    () =>
-      new Set<string>(
-        getVisibleProfileTabs(
-          'studio',
-          menuSections,
-          tabContent
-        )
-      ),
-    [menuSections, tabContent]
+    () => new Set<string>(getVisibleProfileTabs('studio', menuSections, tabContent)),
+    [menuSections, tabContent],
   )
 
   useEffect(() => {
     if (!visibleTabTypes.has(activeType)) setActiveType('home')
   }, [activeType, visibleTabTypes])
 
-  const addContentSectionTypes = useMemo(
-    () => new Set(['news', 'history', 'talent']),
-    []
-  )
+  const addContentSectionTypes = useMemo(() => new Set(['news', 'history', 'talent']), [])
 
   function openAddContent() {
     setAddContentOpen(true)
@@ -189,8 +186,7 @@ export function ProfileStudio() {
     status?: string
     publication_media?: unknown[]
   }) {
-    const status: Publication['status'] =
-      pub.status === 'scheduled' ? 'scheduled' : 'published'
+    const status: Publication['status'] = pub.status === 'scheduled' ? 'scheduled' : 'published'
     setPublications((prev) => [
       {
         ...pub,
@@ -261,11 +257,13 @@ export function ProfileStudio() {
                           ? (pub.publication_media as Publication['publication_media'])
                           : p.publication_media,
                       }
-                    : p
-                )
+                    : p,
+                ),
               )
             }
-            onPublicationDeleted={(id) => setPublications((prev) => prev.filter((p) => p.id !== id))}
+            onPublicationDeleted={(id) =>
+              setPublications((prev) => prev.filter((p) => p.id !== id))
+            }
             onEventDeleted={(id) => setPlaylistEvents((prev) => prev.filter((ev) => ev.id !== id))}
           />
         )}

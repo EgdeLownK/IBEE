@@ -10,7 +10,7 @@ export async function GET(request: Request) {
   if (!q) {
     return NextResponse.json(
       { results: [], hasMore: false },
-      { headers: { 'Cache-Control': 'no-cache' } }
+      { headers: { 'Cache-Control': 'no-cache' } },
     )
   }
 
@@ -21,7 +21,7 @@ export async function GET(request: Request) {
     .from('entity')
     .select('slug, display_name, role, location, avatar_url')
     .or(
-      `slug.ilike.${pattern},display_name.ilike.${pattern},role.ilike.${pattern},location.ilike.${pattern}`
+      `slug.ilike.${pattern},display_name.ilike.${pattern},role.ilike.${pattern},location.ilike.${pattern}`,
     )
     .order('display_name', { ascending: true })
     .range(offset, offset + limit)
@@ -37,6 +37,6 @@ export async function GET(request: Request) {
 
   return NextResponse.json(
     { results: trimmed, hasMore },
-    { headers: { 'Cache-Control': 'no-cache' } }
+    { headers: { 'Cache-Control': 'no-cache' } },
   )
 }

@@ -8,7 +8,7 @@ export async function GET(request: Request) {
   const cursor = decodeHomeFeedCursor(searchParams.get('cursor'))
   const limit = Math.min(
     24,
-    Math.max(4, Number.parseInt(searchParams.get('limit') ?? '12', 10) || 12)
+    Math.max(4, Number.parseInt(searchParams.get('limit') ?? '12', 10) || 12),
   )
 
   try {

@@ -10,10 +10,7 @@ import {
 } from '@/lib/service-booking-view'
 import { ActiviteCatalogThumb } from './ActiviteCatalogThumb'
 
-const STATUS_CONFIG: Record<
-  BookingStatus,
-  { label: string; color: string; icon: ReactNode }
-> = {
+const STATUS_CONFIG: Record<BookingStatus, { label: string; color: string; icon: ReactNode }> = {
   pending: {
     label: 'À confirmer',
     color: 'status--pending',
@@ -85,9 +82,7 @@ export function InboxBookingCard({
         </div>
         <div className="service-day-booking-card__service-row">
           <p className="service-day-booking-card__service">{booking.serviceTitle}</p>
-          <span
-            className={`service-day-booking-card__format is-${booking.locationType}`}
-          >
+          <span className={`service-day-booking-card__format is-${booking.locationType}`}>
             {formatLabel}
           </span>
         </div>

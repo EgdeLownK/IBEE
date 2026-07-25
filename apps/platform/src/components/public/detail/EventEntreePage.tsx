@@ -37,7 +37,9 @@ export function EventEntreePage({ data }: Props) {
   const [pending, startTransition] = useTransition()
 
   const refreshStats = useCallback(async () => {
-    const response = await fetch(`/api/events/entree-stats?eventId=${encodeURIComponent(data.event.id)}`)
+    const response = await fetch(
+      `/api/events/entree-stats?eventId=${encodeURIComponent(data.event.id)}`,
+    )
     if (!response.ok) return
     const payload = (await response.json()) as EventEntreePublicStats
     setStats(payload)
@@ -98,7 +100,9 @@ export function EventEntreePage({ data }: Props) {
         <p className="m-0 text-center text-xs font-semibold uppercase tracking-wide text-neutral-500">
           Entrée événement
         </p>
-        <h1 className="mt-2 text-center text-2xl font-semibold text-neutral-900">{data.event.title}</h1>
+        <h1 className="mt-2 text-center text-2xl font-semibold text-neutral-900">
+          {data.event.title}
+        </h1>
         <p className="mt-1 text-center text-sm text-neutral-500">{data.entity.displayName}</p>
 
         <section
@@ -106,15 +110,22 @@ export function EventEntreePage({ data }: Props) {
           aria-live="polite"
           aria-label="Compteur d'entrées"
         >
-          <p className="m-0 text-xs font-semibold uppercase tracking-wide text-neutral-500">Entrées validées</p>
+          <p className="m-0 text-xs font-semibold uppercase tracking-wide text-neutral-500">
+            Entrées validées
+          </p>
           <p className="m-0 mt-2 text-4xl font-bold tabular-nums text-neutral-900">
             {stats.checkedInCount}
-            <span className="text-2xl font-semibold text-neutral-400"> / {stats.confirmedCount}</span>
+            <span className="text-2xl font-semibold text-neutral-400">
+              {' '}
+              / {stats.confirmedCount}
+            </span>
           </p>
         </section>
 
         <section className="mt-6 rounded-2xl border border-neutral-200 bg-neutral-0 p-6">
-          <h2 className="m-0 text-center text-base font-semibold text-neutral-900">QR code d&apos;entrée</h2>
+          <h2 className="m-0 text-center text-base font-semibold text-neutral-900">
+            QR code d&apos;entrée
+          </h2>
           <p className="mt-2 text-center text-sm text-neutral-600">
             Affiche ce QR à l&apos;entrée : les participants le scannent pour valider leur billet.
           </p>

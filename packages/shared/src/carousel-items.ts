@@ -5,7 +5,7 @@ export const CAROUSEL_SELECTION_MODES = ['category', 'popular', 'top_rated'] as 
 export type CarouselSelectionMode = (typeof CAROUSEL_SELECTION_MODES)[number]
 
 export function carouselSelectionModesForSource(
-  sourceKind: CarouselSourceKind
+  sourceKind: CarouselSourceKind,
 ): CarouselSelectionMode[] | null {
   switch (sourceKind) {
     case 'shop_category':
@@ -27,7 +27,9 @@ export function parseCarouselSelectionMode(raw: unknown): CarouselSelectionMode 
   return null
 }
 
-export function defaultCarouselSelectionMode(sourceKind: CarouselSourceKind): CarouselSelectionMode | null {
+export function defaultCarouselSelectionMode(
+  sourceKind: CarouselSourceKind,
+): CarouselSelectionMode | null {
   if (sourceKind === 'shop_category') return 'category'
   if (sourceKind === 'services') return 'popular'
   return null
@@ -37,15 +39,11 @@ type RatedItem = { reviewCount: number; reviewAverage: number }
 
 export function sortByCarouselSelection<T extends RatedItem>(
   items: T[],
-  mode: CarouselSelectionMode
+  mode: CarouselSelectionMode,
 ): T[] {
   const copy = [...items]
   if (mode === 'popular') {
-    copy.sort(
-      (a, b) =>
-        b.reviewCount - a.reviewCount ||
-        b.reviewAverage - a.reviewAverage
-    )
+    copy.sort((a, b) => b.reviewCount - a.reviewCount || b.reviewAverage - a.reviewAverage)
     return copy
   }
   if (mode === 'top_rated') {
@@ -66,7 +64,7 @@ type ShopCarouselProduct = RatedItem & { category_id?: string | null }
 
 export function resolveCarouselShopProducts<T extends ShopCarouselProduct>(
   products: T[],
-  cfg: Pick<CarouselWidgetConfig, 'selection_mode' | 'category_id' | 'limit'>
+  cfg: Pick<CarouselWidgetConfig, 'selection_mode' | 'category_id' | 'limit'>,
 ): T[] {
   const limit = cfg.limit ?? 6
   const mode = cfg.selection_mode ?? 'category'
@@ -78,7 +76,7 @@ export function resolveCarouselShopProducts<T extends ShopCarouselProduct>(
 
 export function resolveCarouselServices<T extends RatedItem>(
   services: T[],
-  cfg: Pick<CarouselWidgetConfig, 'selection_mode' | 'limit'>
+  cfg: Pick<CarouselWidgetConfig, 'selection_mode' | 'limit'>,
 ): T[] {
   const limit = cfg.limit ?? 6
   const mode = cfg.selection_mode ?? 'popular'
@@ -90,7 +88,7 @@ type UpcomingEvent = { start_at: string }
 /** Événements à venir uniquement, du plus proche au plus lointain. */
 export function resolveCarouselUpcomingEvents<T extends UpcomingEvent>(
   events: T[],
-  limit = 6
+  limit = 6,
 ): T[] {
   return [...events]
     .sort((a, b) => new Date(a.start_at).getTime() - new Date(b.start_at).getTime())

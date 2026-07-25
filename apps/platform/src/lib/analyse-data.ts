@@ -132,7 +132,7 @@ function makeKpi(
   current: number,
   previous: number,
   chartWeight?: number,
-  format: (n: number) => string = formatMetricNumber
+  format: (n: number) => string = formatMetricNumber,
 ): AnalyseKpi {
   const delta = computeDelta(current, previous)
   return {
@@ -148,7 +148,7 @@ function makeKpi(
 function buildRanking(
   entries: { id: string; label: string; count: number }[],
   total: number,
-  limit: number
+  limit: number,
 ): { items: AnalyseRankingItem[]; hasMore: boolean } {
   const sorted = [...entries].sort((a, b) => b.count - a.count)
   const slice = sorted.slice(0, limit)
@@ -167,7 +167,7 @@ function buildRanking(
 
 function countRowsWithStatus<T extends { status: string }>(
   rows: T[],
-  status?: BookingStatus | 'confirmed' | 'cancelled'
+  status?: BookingStatus | 'confirmed' | 'cancelled',
 ) {
   if (!status) return rows.length
   return rows.filter((row) => row.status === status).length
@@ -178,7 +178,7 @@ async function fetchScopeRaw(
   entityId: string,
   scope: AnalyseScope,
   period: AnalysePeriod,
-  offset: number
+  offset: number,
 ) {
   const current = getPeriodWindow(period, offset)
   const previous = getPeriodWindow(period, offset - 1)
@@ -199,7 +199,7 @@ function buildWebPayload(
   raw: AnalyseWebScopeRaw,
   period: AnalysePeriod,
   offset: number,
-  rankingLimit: number
+  rankingLimit: number,
 ): AnalyseScopePayload {
   const current = getPeriodWindow(period, offset)
 
@@ -231,17 +231,13 @@ function buildWebPayload(
     'kpi:visitors': mergeBucketRows(
       buildBucketLabels(period, current),
       raw.visitor_buckets,
-      period
+      period,
     ),
-    'kpi:members': mergeBucketRows(
-      buildBucketLabels(period, current),
-      raw.member_buckets,
-      period
-    ),
+    'kpi:members': mergeBucketRows(buildBucketLabels(period, current), raw.member_buckets, period),
     'kpi:unsubscribed': mergeBucketRows(
       buildBucketLabels(period, current),
       raw.unsubscribed_buckets,
-      period
+      period,
     ),
   }
 
@@ -272,7 +268,7 @@ function buildServicePayload(
   raw: Record<string, unknown>,
   period: AnalysePeriod,
   offset: number,
-  rankingLimit: number
+  rankingLimit: number,
 ): AnalyseScopePayload {
   const current = getPeriodWindow(period, offset)
 
@@ -289,10 +285,12 @@ function buildServicePayload(
       paid_at: item.paid_at ?? null,
     }
   })
-  const bookingRowsPrev = (Array.isArray(raw.bookings_prev) ? raw.bookings_prev : []).map((row) => ({
-    status: String((row as { status?: string }).status ?? ''),
-    payment_status: String((row as { payment_status?: string }).payment_status ?? ''),
-  }))
+  const bookingRowsPrev = (Array.isArray(raw.bookings_prev) ? raw.bookings_prev : []).map(
+    (row) => ({
+      status: String((row as { status?: string }).status ?? ''),
+      payment_status: String((row as { payment_status?: string }).payment_status ?? ''),
+    }),
+  )
 
   const viewsCur = asNumber(raw.views_cur)
   const viewsPrev = asNumber(raw.views_prev)
@@ -326,10 +324,10 @@ function buildServicePayload(
   const kpis = [
     makeKpi('bookings', 'Réservations', bookingsCur, bookingsPrev, 1),
     makeKpi('revenue', 'Revenu', revenueCur / 100, revenuePrev / 100, 1, (n) =>
-      formatMetricCurrency(Math.round(n * 100))
+      formatMetricCurrency(Math.round(n * 100)),
     ),
     makeKpi('conversion', 'Taux conversion', conversionCur, conversionPrev, 0.28, (n) =>
-      formatMetricPercent(n)
+      formatMetricPercent(n),
     ),
     makeKpi('no-show', 'No-show', noShowCur, noShowPrev, 0.12),
   ]
@@ -338,34 +336,32 @@ function buildServicePayload(
     'kpi:bookings': bucketTimestamps(
       bookingRows.map((b) => b.created_at),
       period,
-      current
+      current,
     ),
     'kpi:revenue': bucketTimestamps(
       bookingRows
         .filter((b) => b.payment_status === 'paid' && b.paid_at)
         .map((b) => b.paid_at as string),
       period,
-      current
+      current,
     ),
     'kpi:conversion': bucketTimestamps(
       bookingRows.filter((b) => b.status === 'completed').map((b) => b.created_at),
       period,
-      current
+      current,
     ),
     'kpi:no-show': bucketTimestamps(
       bookingRows.filter((b) => b.status === 'no_show').map((b) => b.created_at),
       period,
-      current
+      current,
     ),
   }
 
   for (const item of ranking.items) {
     chartSeries[`ranking:${item.id}`] = bucketTimestamps(
-      bookingRows
-        .filter((b) => b.appointment_type_id === item.id)
-        .map((b) => b.created_at),
+      bookingRows.filter((b) => b.appointment_type_id === item.id).map((b) => b.created_at),
       period,
-      current
+      current,
     )
   }
 
@@ -399,7 +395,7 @@ function buildShopPayload(
   raw: Record<string, unknown>,
   period: AnalysePeriod,
   offset: number,
-  rankingLimit: number
+  rankingLimit: number,
 ): AnalyseScopePayload {
   const current = getPeriodWindow(period, offset)
 
@@ -451,7 +447,7 @@ function buildShopPayload(
     'kpi:abandoned': mergeBucketRows(
       buildBucketLabels(period, current),
       parseBucketRows(raw.wishlist_buckets),
-      period
+      period,
     ),
     'kpi:revenue': bucketTimestamps([], period, current),
     'kpi:basket': bucketTimestamps([], period, current),
@@ -496,7 +492,7 @@ function buildEventPayload(
   raw: Record<string, unknown>,
   period: AnalysePeriod,
   offset: number,
-  rankingLimit: number
+  rankingLimit: number,
 ): AnalyseScopePayload {
   const current = getPeriodWindow(period, offset)
 
@@ -512,9 +508,11 @@ function buildEventPayload(
       checked_in_at: item.checked_in_at ?? null,
     }
   })
-  const rowsPrev = (Array.isArray(raw.registrations_prev) ? raw.registrations_prev : []).map((row) => ({
-    status: String((row as { status?: string }).status ?? ''),
-  }))
+  const rowsPrev = (Array.isArray(raw.registrations_prev) ? raw.registrations_prev : []).map(
+    (row) => ({
+      status: String((row as { status?: string }).status ?? ''),
+    }),
+  )
 
   const confirmedRows = rowsCur.filter((r) => r.status === 'confirmed')
   const signupsCur = confirmedRows.length
@@ -554,10 +552,10 @@ function buildEventPayload(
   const kpis = [
     makeKpi('signups', 'Inscriptions', signupsCur, signupsPrev, 1),
     makeKpi('revenue', 'Revenu', revenueCur / 100, revenuePrev / 100, 1, (n) =>
-      formatMetricCurrency(Math.round(n * 100))
+      formatMetricCurrency(Math.round(n * 100)),
     ),
     makeKpi('fill-rate', 'Taux remplissage', fillRateCur, fillRatePrev, 0.3, (n) =>
-      formatMetricPercent(n)
+      formatMetricPercent(n),
     ),
     makeKpi('cancellations', 'Annulations', cancelledCur, cancelledPrev, 0.14),
   ]
@@ -566,22 +564,22 @@ function buildEventPayload(
     'kpi:signups': bucketTimestamps(
       confirmedRows.map((r) => r.created_at),
       period,
-      current
+      current,
     ),
     'kpi:revenue': bucketTimestamps(
       orderRows.filter((o) => o.paid_at).map((o) => o.paid_at as string),
       period,
-      current
+      current,
     ),
     'kpi:fill-rate': bucketTimestamps(
       confirmedRows.map((r) => r.created_at),
       period,
-      current
+      current,
     ),
     'kpi:cancellations': bucketTimestamps(
       rowsCur.filter((r) => r.status === 'cancelled').map((r) => r.created_at),
       period,
-      current
+      current,
     ),
   }
 
@@ -589,7 +587,7 @@ function buildEventPayload(
     chartSeries[`ranking:${item.id}`] = bucketTimestamps(
       confirmedRows.filter((r) => r.event_id === item.id).map((r) => r.created_at),
       period,
-      current
+      current,
     )
   }
 
@@ -621,7 +619,7 @@ function buildNewsPayload(
   raw: Record<string, unknown>,
   period: AnalysePeriod,
   offset: number,
-  rankingLimit: number
+  rankingLimit: number,
 ): AnalyseScopePayload {
   const current = getPeriodWindow(period, offset)
 
@@ -633,7 +631,11 @@ function buildNewsPayload(
   const likesPrev = asNumber(raw.comments_prev)
 
   const pubMap = new Map<string, string>()
-  if (raw.publications && typeof raw.publications === 'object' && !Array.isArray(raw.publications)) {
+  if (
+    raw.publications &&
+    typeof raw.publications === 'object' &&
+    !Array.isArray(raw.publications)
+  ) {
     for (const [id, title] of Object.entries(raw.publications as Record<string, unknown>)) {
       pubMap.set(id, String(title))
     }
@@ -661,13 +663,13 @@ function buildNewsPayload(
     'kpi:views': mergeBucketRows(
       buildBucketLabels(period, current),
       parseBucketRows(raw.views_buckets),
-      period
+      period,
     ),
     'kpi:likes': bucketTimestamps([], period, current),
     'kpi:shares': mergeBucketRows(
       buildBucketLabels(period, current),
       parseBucketRows(raw.shares_buckets),
-      period
+      period,
     ),
   }
 
@@ -691,7 +693,7 @@ export async function loadAnalyseRankingChartSeries(
     period: AnalysePeriod
     offset: number
     rankingItemId: string
-  }
+  },
 ): Promise<AnalyseBarPoint[]> {
   const current = getPeriodWindow(opts.period, opts.offset)
   const cur = windowIso(current)
@@ -702,7 +704,10 @@ export async function loadAnalyseRankingChartSeries(
 
   const sectionKey =
     opts.scope === 'web'
-      ? (opts.rankingItemId.replace('section-', '') as Database['public']['Enums']['menu_section_type'])
+      ? (opts.rankingItemId.replace(
+          'section-',
+          '',
+        ) as Database['public']['Enums']['menu_section_type'])
       : null
 
   const rows = await fetchAnalyseRankingChartBuckets(client, entityId, {
@@ -725,7 +730,7 @@ export async function loadAnalyseScopeData(
     period: AnalysePeriod
     offset: number
     rankingLimit?: number
-  }
+  },
 ): Promise<AnalyseScopePayload> {
   const rankingLimit = opts.rankingLimit ?? 4
   const raw = await fetchScopeRaw(client, entityId, opts.scope, opts.period, opts.offset)

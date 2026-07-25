@@ -75,7 +75,7 @@ function clampCrop(rect: CropRect, imgW: number, imgH: number, mode: BannerCropM
   } else {
     w = clamp(w, MIN_CROP_PX, imgW)
     h = clamp(h, MIN_CROP_PX, imgH)
-    let ar = w / h
+    const ar = w / h
     if (ar < AR_MIN) w = h * AR_MIN
     if (ar > AR_MAX) h = w / AR_MAX
     w = clamp(w, MIN_CROP_PX, imgW)
@@ -95,7 +95,7 @@ function clampCrop(rect: CropRect, imgW: number, imgH: number, mode: BannerCropM
     x = clamp(x, 0, imgW - w)
     y = clamp(y, 0, imgH - h)
   } else {
-    let ar = w / h
+    const ar = w / h
     if (ar < AR_MIN) w = h * AR_MIN
     if (ar > AR_MAX) h = w / AR_MAX
     if (x + w > imgW) {
@@ -122,7 +122,7 @@ function canvasToBlob(canvas: HTMLCanvasElement, mime: string): Promise<Blob | n
 function cropNaturalToBlob(
   image: HTMLImageElement,
   rect: CropRect,
-  mime: string
+  mime: string,
 ): Promise<Blob | null> {
   const safeW = Math.max(1, Math.round(rect.w))
   const safeH = Math.max(1, Math.round(rect.h))
@@ -153,7 +153,7 @@ function displayRectToNatural(
   rect: CropRect,
   displayW: number,
   displayH: number,
-  cropMode: BannerCropMode
+  cropMode: BannerCropMode,
 ): CropRect {
   if (displayW > 0 && displayH > 0) {
     const scaleX = image.naturalWidth / displayW
@@ -169,7 +169,7 @@ function displayRectToNatural(
     defaultCrop(cropMode, image.naturalWidth, image.naturalHeight),
     image.naturalWidth,
     image.naturalHeight,
-    cropMode
+    cropMode,
   )
 }
 
@@ -210,7 +210,7 @@ async function loadImageForCrop(imageUrl: string): Promise<HTMLImageElement> {
 export function imageMatchesBannerFormat(
   width: number,
   height: number,
-  mode: BannerCropMode
+  mode: BannerCropMode,
 ): boolean {
   if (!width || !height) return false
   const ar = width / height
@@ -233,7 +233,7 @@ export async function readImageMeta(imageUrl: string): Promise<BannerImageMeta |
 export async function autoCropImageFromUrl(
   imageUrl: string,
   cropMode: BannerCropMode,
-  fileType = 'image/jpeg'
+  fileType = 'image/jpeg',
 ): Promise<BannerCropResult | null> {
   try {
     const img = await loadImageForCrop(imageUrl)
@@ -242,10 +242,7 @@ export async function autoCropImageFromUrl(
     if (!w || !h) return null
 
     const mime = fileType && fileType.startsWith('image/') ? fileType : 'image/jpeg'
-    const rect =
-      cropMode === 'square'
-        ? coverCrop(w, h, 1)
-        : coverCrop(w, h, clampAspect(w / h))
+    const rect = cropMode === 'square' ? coverCrop(w, h, 1) : coverCrop(w, h, clampAspect(w / h))
 
     const blob = await cropNaturalToBlob(img, rect, mime)
     if (!blob) return null
@@ -290,9 +287,10 @@ export function mountBannerImageCropper(shell: HTMLElement) {
   function applyMode(next: BannerCropMode) {
     mode = next
     if (hintEl) {
-      hintEl.textContent = mode === 'square'
-        ? 'Format carré 1:1 — ajustez le cadre.'
-        : 'Format paysage — ratio libre de 1:1 à 16:9.'
+      hintEl.textContent =
+        mode === 'square'
+          ? 'Format carré 1:1 — ajustez le cadre.'
+          : 'Format paysage — ratio libre de 1:1 à 16:9.'
     }
     layoutSize()
     if (!imgW || !imgH) return
@@ -351,17 +349,20 @@ export function mountBannerImageCropper(shell: HTMLElement) {
     e.preventDefault()
     onConfirm()
   })
-  shell.querySelector('[data-hw-banner-crop-backdrop]')?.addEventListener('click', () => finish(null))
+  shell
+    .querySelector('[data-hw-banner-crop-backdrop]')
+    ?.addEventListener('click', () => finish(null))
 
   img.addEventListener('load', () => scheduleApplyMode(mode))
 
-  let drag: { type: 'move' | 'resize'; startX: number; startY: number; base: CropRect } | null = null
+  let drag: { type: 'move' | 'resize'; startX: number; startY: number; base: CropRect } | null =
+    null
 
   function onPointerMove(e: PointerEvent) {
     if (!drag) return
     const dx = e.clientX - drag.startX
     const dy = e.clientY - drag.startY
-    let next = { ...drag.base }
+    const next = { ...drag.base }
 
     if (drag.type === 'move') {
       next.x += dx
@@ -400,7 +401,11 @@ export function mountBannerImageCropper(shell: HTMLElement) {
   })
   handle.addEventListener('pointerdown', (e) => startDrag('resize', e))
 
-  function open(imageUrl: string, cropMode: BannerCropMode, fileType?: string): Promise<BannerCropResult | null> {
+  function open(
+    imageUrl: string,
+    cropMode: BannerCropMode,
+    fileType?: string,
+  ): Promise<BannerCropResult | null> {
     if (resolvePending) resolvePending(null)
 
     mime = fileType && fileType.startsWith('image/') ? fileType : 'image/jpeg'
@@ -445,19 +450,15 @@ declare global {
     __ibeeBannerCropOpen?: (
       url: string,
       mode: BannerCropMode,
-      type?: string
+      type?: string,
     ) => Promise<BannerCropResult | null>
     __ibeeBannerAutoCrop?: (
       url: string,
       mode: BannerCropMode,
-      type?: string
+      type?: string,
     ) => Promise<BannerCropResult | null>
     __ibeeBannerReadMeta?: (url: string) => Promise<BannerImageMeta | null>
-    __ibeeBannerMatchesFormat?: (
-      width: number,
-      height: number,
-      mode: BannerCropMode
-    ) => boolean
+    __ibeeBannerMatchesFormat?: (width: number, height: number, mode: BannerCropMode) => boolean
   }
 }
 

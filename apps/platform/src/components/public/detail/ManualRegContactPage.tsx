@@ -48,7 +48,9 @@ export function ManualRegContactPage({ data }: Props) {
         <p className="m-0 text-center text-xs font-semibold uppercase tracking-wide text-neutral-500">
           Inscription événement
         </p>
-        <h1 className="mt-2 text-center text-2xl font-semibold text-neutral-900">{data.eventTitle}</h1>
+        <h1 className="mt-2 text-center text-2xl font-semibold text-neutral-900">
+          {data.eventTitle}
+        </h1>
         <p className="mt-1 text-center text-sm text-neutral-500">{data.entityName}</p>
 
         <section className="mt-6 rounded-2xl border border-neutral-200 bg-neutral-0 p-6">
@@ -112,7 +114,11 @@ export function ManualRegContactPage({ data }: Props) {
                   />
                 </div>
                 {error ? <p className="m-0 text-sm text-error">{error}</p> : null}
-                <button type="submit" className="btn btn--accent btn--block w-full" disabled={pending}>
+                <button
+                  type="submit"
+                  className="btn btn--accent btn--block w-full"
+                  disabled={pending}
+                >
                   {pending ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />

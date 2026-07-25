@@ -5,10 +5,7 @@ import type { User } from '@supabase/supabase-js'
 import { getEntityByUserId, listAccessibleEntities } from '@ibee/supabase'
 import type { Database } from '@ibee/supabase'
 import { createClient } from '@/lib/supabase/server'
-import {
-  buildAccountShellData,
-  type AccountShellData,
-} from '@/lib/account-shell-data'
+import { buildAccountShellData, type AccountShellData } from '@/lib/account-shell-data'
 import { measureDashboardLoad } from '@/lib/dashboard-perf'
 
 export type DashboardEntity = Database['public']['Tables']['entity']['Row']

@@ -16,13 +16,13 @@ export type BilletterieCheckInData = {
 export async function loadBilletterieCheckInData(
   client: Client,
   entityId: string,
-  preferredEventId?: string | null
+  preferredEventId?: string | null,
 ): Promise<BilletterieCheckInData> {
   const events = await listEventsForCheckIn(client, entityId)
   const selectedEventId =
     preferredEventId && events.some((event) => event.id === preferredEventId)
       ? preferredEventId
-      : events.find((event) => event.isToday)?.id ?? events[0]?.id ?? null
+      : (events.find((event) => event.isToday)?.id ?? events[0]?.id ?? null)
 
   const stats = selectedEventId
     ? await getEventCheckInLiveStats(client, entityId, selectedEventId)

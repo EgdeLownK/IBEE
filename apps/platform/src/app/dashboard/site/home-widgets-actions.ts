@@ -2,10 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidateAfterEntityMutation } from '@/lib/revalidate-public'
-import {
-  getEntityByUserId,
-  purgeEntityCache,
-} from '@ibee/supabase'
+import { getEntityByUserId, purgeEntityCache } from '@ibee/supabase'
 import {
   isSingleInstanceHomeWidget,
   isWidgetConfigured,
@@ -13,12 +10,7 @@ import {
   sortHomeWidgetsByFixedOrder,
 } from '@ibee/shared'
 
-const CREATABLE_TYPES = [
-  'widget_highlight',
-  'widget_carousel',
-  'widget_bio',
-  'widget_faq',
-] as const
+const CREATABLE_TYPES = ['widget_highlight', 'widget_carousel', 'widget_bio', 'widget_faq'] as const
 
 type CreatableWidgetType = (typeof CREATABLE_TYPES)[number]
 
@@ -49,7 +41,7 @@ function defaultConfigForType(type: CreatableWidgetType): Record<string, unknown
 
 async function applyHomeWidgetFixedOrder(
   supabase: Awaited<ReturnType<typeof createClient>>,
-  entityId: string
+  entityId: string,
 ) {
   const { data: widgets, error } = await supabase
     .from('entity_home_widgets')
@@ -64,7 +56,7 @@ async function applyHomeWidgetFixedOrder(
       type: w.type,
       position: w.position,
       config: normalizeWidgetConfig(w.config),
-    }))
+    })),
   )
   const history = widgets.filter((w) => w.type === 'widget_history')
   const updates: { id: string; position: number }[] = sorted.map((w, i) => ({
@@ -77,8 +69,12 @@ async function applyHomeWidgetFixedOrder(
 
   await Promise.all(
     updates.map(({ id, position }) =>
-      supabase.from('entity_home_widgets').update({ position }).eq('id', id).eq('entity_id', entityId)
-    )
+      supabase
+        .from('entity_home_widgets')
+        .update({ position })
+        .eq('id', id)
+        .eq('entity_id', entityId),
+    ),
   )
 }
 
@@ -99,7 +95,7 @@ export async function createHomeWidgetAction(type: string) {
         .maybeSingle()
 
       if (existing) {
-        return { ok: false as const, error: 'Ce widget est déjà sur l\'accueil.' }
+        return { ok: false as const, error: "Ce widget est déjà sur l'accueil." }
       }
     }
 
@@ -126,7 +122,7 @@ export async function createHomeWidgetAction(type: string) {
 
     if (error || !inserted) {
       console.error('[createHomeWidgetAction]', error)
-      return { ok: false as const, error: 'Impossible d\'ajouter ce widget.' }
+      return { ok: false as const, error: "Impossible d'ajouter ce widget." }
     }
 
     await applyHomeWidgetFixedOrder(supabase, entity.id)
@@ -153,11 +149,14 @@ export async function createHomeWidgetAction(type: string) {
     }
   } catch (err) {
     console.error('[createHomeWidgetAction]', err)
-    return { ok: false as const, error: 'Impossible d\'ajouter ce widget.' }
+    return { ok: false as const, error: "Impossible d'ajouter ce widget." }
   }
 }
 
-export async function updateHomeWidgetConfigAction(widgetId: string, config: Record<string, unknown>) {
+export async function updateHomeWidgetConfigAction(
+  widgetId: string,
+  config: Record<string, unknown>,
+) {
   if (!widgetId) {
     return { ok: false as const, error: 'Widget introuvable.' }
   }

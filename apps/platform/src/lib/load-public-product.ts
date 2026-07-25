@@ -64,7 +64,13 @@ export type PublicProductData = {
     authorName: string
   }[]
   hasNews: boolean
-  newsItems: { id: string; title: string; slug: string; cover_url: string | null; published_at: string | null }[]
+  newsItems: {
+    id: string
+    title: string
+    slug: string
+    cover_url: string | null
+    published_at: string | null
+  }[]
   siteUrl: string
   profileUrl: string
   productUrl: string
@@ -90,14 +96,14 @@ export type ProductLoadResult =
 export async function loadPublicProduct(
   slug: string,
   productSlug: string,
-  searchParams?: { rating?: string; sort?: string; preview?: string }
+  searchParams?: { rating?: string; sort?: string; preview?: string },
 ): Promise<ProductLoadResult> {
   const supabase = await createClient()
   const entity = await getEntityBySlug(supabase, slug)
   if (!entity) return { kind: 'not_found' }
 
   const entityRow = entity as typeof entity & { banner_url?: string | null }
-  
+
   let productRaw: any = null
 
   if (searchParams?.preview === '1') {
@@ -106,12 +112,14 @@ export async function loadPublicProduct(
       if (ctx?.entity.slug === slug) {
         const { data } = await supabase
           .from('products')
-          .select(`
+          .select(
+            `
             *,
             entity_product_categories(name),
             product_media(*),
             product_variants(*)
-          `)
+          `,
+          )
           .eq('entity_id', entityRow.id)
           .eq('slug', productSlug)
           .maybeSingle()
@@ -136,7 +144,11 @@ export async function loadPublicProduct(
   const activeSort: 'recent' | 'oldest' = searchParams?.sort === 'oldest' ? 'oldest' : 'recent'
 
   const [reviews, aggregates, allRatings, menuSections] = await Promise.all([
-    listPublishedReviews(supabase, product.id, { ratings: activeRatings, sortBy: activeSort, limit: 50 }),
+    listPublishedReviews(supabase, product.id, {
+      ratings: activeRatings,
+      sortBy: activeSort,
+      limit: 50,
+    }),
     getReviewAggregates(supabase, product.id),
     listPublishedReviews(supabase, product.id, { limit: 500 }),
     getEntityMenuSections(supabase, entity.id),
@@ -149,7 +161,7 @@ export async function loadPublicProduct(
 
   // Fetch actual real data for related sections
   const entityProducts = await listPublishedProductsByEntity(supabase, entity.id, { limit: 12 })
-  
+
   // Exclude current product
   const availableProducts = entityProducts.filter((p) => p.id !== product.id)
 
@@ -158,20 +170,22 @@ export async function loadPublicProduct(
   const differentCategoryProducts = availableProducts.filter((p) => p.category !== product.category)
 
   const similarProductsRaw = [...sameCategoryProducts, ...differentCategoryProducts].slice(0, 4)
-  
+
   // For "Autres contenus", pick the next ones
   const otherProductsRaw = availableProducts
     .filter((p) => !similarProductsRaw.find((s) => s.id === p.id))
     .slice(0, 4)
 
-  const toRelatedItem = (p: typeof availableProducts[number]) => ({
+  const toRelatedItem = (p: (typeof availableProducts)[number]) => ({
     id: p.id,
     title: p.title,
     slug: p.slug,
     entity_slug: entity.slug,
     entity_name: entity.display_name,
     price_cents: p.price_cents,
-    cover_url: Array.isArray(p.product_media) ? (p.product_media.find((m) => m.display_order === 0)?.url ?? p.product_media[0]?.url ?? null) : null,
+    cover_url: Array.isArray(p.product_media)
+      ? (p.product_media.find((m) => m.display_order === 0)?.url ?? p.product_media[0]?.url ?? null)
+      : null,
     type: p.type as any,
     kind: 'product' as const,
     meta: '',
@@ -179,14 +193,16 @@ export async function loadPublicProduct(
 
   const otherEntityProducts = otherProductsRaw.map(toRelatedItem)
   const similarEntityProducts = similarProductsRaw.map(toRelatedItem)
-  
+
   // Fetch actual news
   const entityNews = await getPublicationsByEntity(supabase, entity.id, { limit: 4 })
-  const newsItems = (entityNews ?? []).map(n => ({
+  const newsItems = (entityNews ?? []).map((n) => ({
     id: n.id,
     title: n.title,
     slug: n.slug,
-    cover_url: Array.isArray(n.publication_media) ? (n.publication_media[0] as any)?.url ?? null : null,
+    cover_url: Array.isArray(n.publication_media)
+      ? ((n.publication_media[0] as any)?.url ?? null)
+      : null,
     published_at: n.published_at,
   }))
 

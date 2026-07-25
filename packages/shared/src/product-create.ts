@@ -103,13 +103,13 @@ export type ProductCreateDraft = {
     | { type: 'text'; content: string }
     | { type: 'title'; content: string }
     | { type: 'list'; items: string[]; description?: string }
-    | { 
+    | {
         type: 'image'
         slot_count: 1 | 2 | 3
         images: ({ url: string; aspect_ratio: number; type: 'image' | 'video' } | null)[]
         title: string
         description: string
-        uploading: boolean 
+        uploading: boolean
       }
   )[]
   faq: { question: string; answer: string }[]
@@ -129,7 +129,10 @@ export function priceToCents(raw: string | number | null | undefined): number | 
   return Math.round(n * 100)
 }
 
-export function validateProductStep(step: 1 | 2 | 3 | 4, draft: ProductCreateDraft): ValidationResult {
+export function validateProductStep(
+  step: 1 | 2 | 3 | 4,
+  draft: ProductCreateDraft,
+): ValidationResult {
   const fieldErrors: Record<string, string> = {}
   const fail = (field: string, msg: string) => {
     fieldErrors[field] = msg
@@ -169,7 +172,10 @@ export function validateProductStep(step: 1 | 2 | 3 | 4, draft: ProductCreateDra
         break
       }
       if (draft.customDetails.length > 1 && cat.category.trim() === '') {
-        fail('custom_details', 'Veuillez nommer chaque groupe d\'informations (ex: Spécifications, Dimensions).')
+        fail(
+          'custom_details',
+          "Veuillez nommer chaque groupe d'informations (ex: Spécifications, Dimensions).",
+        )
         break
       }
       for (const d of cat.items) {
@@ -177,7 +183,10 @@ export function validateProductStep(step: 1 | 2 | 3 | 4, draft: ProductCreateDra
         const v = d.value.trim()
         if (l === '' && v === '') continue
         if (l.length < 1 || l.length > 40 || v.length < 1 || v.length > 100) {
-          fail('custom_details', 'Chaque détail : libellé 1-40 caractères, valeur 1-100 caractères.')
+          fail(
+            'custom_details',
+            'Chaque détail : libellé 1-40 caractères, valeur 1-100 caractères.',
+          )
           break
         }
       }
@@ -224,74 +233,76 @@ export function validateProductStep(step: 1 | 2 | 3 | 4, draft: ProductCreateDra
         if (draft.variants.length > 20) fail('variants', 'Maximum 20 variantes principales.')
         if (draft.variants.length === 0) fail('variants', 'Génère au moins une variante.')
         draft.variants.forEach((v, i) => {
-        let pairCount = 0
-        for (const p of v.pairs) {
-          const k = p.key.trim()
-          const val = p.value.trim()
-          if (k === '' && val === '') continue
-          if (k.length < 1 || k.length > 40 || val.length < 1 || val.length > 40) {
+          let pairCount = 0
+          for (const p of v.pairs) {
+            const k = p.key.trim()
+            const val = p.value.trim()
+            if (k === '' && val === '') continue
+            if (k.length < 1 || k.length > 40 || val.length < 1 || val.length > 40) {
+              fieldErrors[`variants_${i}_attributes`] =
+                'Attribut/valeur : 1 à 40 caractères chacun.'
+              return
+            }
+            pairCount++
+          }
+          if (fieldErrors[`variants_${i}_attributes`]) return
+          if (pairCount < 1) {
             fieldErrors[`variants_${i}_attributes`] =
-              'Attribut/valeur : 1 à 40 caractères chacun.'
+              'Ajoute au moins un attribut (ex : Taille = M).'
             return
           }
-          pairCount++
-        }
-        if (fieldErrors[`variants_${i}_attributes`]) return
-        if (pairCount < 1) {
-          fieldErrors[`variants_${i}_attributes`] = 'Ajoute au moins un attribut (ex : Taille = M).'
-          return
-        }
-        if (v.sku.trim().length > 80) {
-          fieldErrors[`variants_${i}_sku`] = 'Le SKU ne peut pas dépasser 80 caractères.'
-          return
-        }
-        if (draft.variationMode === 'subvariants') {
-          const subVariants = (v as any).subVariants || []
-          if (subVariants.length === 0) {
-            fieldErrors[`variants_${i}_attributes`] = 'Ajoute au moins une sous-variante.'
+          if (v.sku.trim().length > 80) {
+            fieldErrors[`variants_${i}_sku`] = 'Le SKU ne peut pas dépasser 80 caractères.'
             return
           }
-          subVariants.forEach((sub: any, si: number) => {
-            if (sub.price !== '') {
-              const pc = priceToCents(sub.price)
+          if (draft.variationMode === 'subvariants') {
+            const subVariants = (v as any).subVariants || []
+            if (subVariants.length === 0) {
+              fieldErrors[`variants_${i}_attributes`] = 'Ajoute au moins une sous-variante.'
+              return
+            }
+            subVariants.forEach((sub: any, si: number) => {
+              if (sub.price !== '') {
+                const pc = priceToCents(sub.price)
+                if (!(Number.isInteger(pc) && pc! > 0)) {
+                  fieldErrors[`variants_${i}_sub_${si}_price`] = 'Prix > 0.'
+                }
+              }
+              if (sub.stock !== '') {
+                const sq = Number(sub.stock)
+                if (!Number.isInteger(sq) || sq < 0) {
+                  fieldErrors[`variants_${i}_sub_${si}_stock`] = 'Stock entier ≥ 0.'
+                }
+              }
+              if (sub.promoEnabled) {
+                const sp = priceToCents(sub.salePrice)
+                if (sp === null)
+                  fieldErrors[`variants_${i}_sub_${si}_salePrice`] = 'Prix remisé invalide.'
+              }
+            })
+          } else {
+            if (v.price !== '') {
+              const pc = priceToCents(v.price)
               if (!(Number.isInteger(pc) && pc! > 0)) {
-                fieldErrors[`variants_${i}_sub_${si}_price`] = 'Prix > 0.'
+                fieldErrors[`variants_${i}_price_cents_override`] =
+                  'Le prix de la variante doit être supérieur à 0.'
               }
             }
-            if (sub.stock !== '') {
-              const sq = Number(sub.stock)
+            if (v.stock !== '') {
+              const sq = Number(v.stock)
               if (!Number.isInteger(sq) || sq < 0) {
-                fieldErrors[`variants_${i}_sub_${si}_stock`] = 'Stock entier ≥ 0.'
+                fieldErrors[`variants_${i}_stock_quantity`] =
+                  'Le stock doit être un entier positif ou nul.'
               }
             }
-            if (sub.promoEnabled) {
-              const sp = priceToCents(sub.salePrice)
-              if (sp === null) fieldErrors[`variants_${i}_sub_${si}_salePrice`] = 'Prix remisé invalide.'
-            }
-          })
-        } else {
-          if (v.price !== '') {
-            const pc = priceToCents(v.price)
-            if (!(Number.isInteger(pc) && pc! > 0)) {
-              fieldErrors[`variants_${i}_price_cents_override`] =
-                'Le prix de la variante doit être supérieur à 0.'
+            if (v.promoEnabled) {
+              const sp = priceToCents(v.salePrice)
+              if (sp === null) fieldErrors[`variants_${i}_salePrice`] = 'Prix remisé invalide.'
             }
           }
-          if (v.stock !== '') {
-            const sq = Number(v.stock)
-            if (!Number.isInteger(sq) || sq < 0) {
-              fieldErrors[`variants_${i}_stock_quantity`] =
-                'Le stock doit être un entier positif ou nul.'
-            }
-          }
-          if (v.promoEnabled) {
-            const sp = priceToCents(v.salePrice)
-            if (sp === null) fieldErrors[`variants_${i}_salePrice`] = 'Prix remisé invalide.'
-          }
-        }
-      })
+        })
+      }
     }
-  }
   }
 
   if (step === 3) {
@@ -334,11 +345,11 @@ export function validateProductStep(step: 1 | 2 | 3 | 4, draft: ProductCreateDra
           break
         }
         if (b.title && b.title.length > 100) {
-          fail('content_blocks', 'Le titre de l\'image doit faire moins de 100 caractères.')
+          fail('content_blocks', "Le titre de l'image doit faire moins de 100 caractères.")
           break
         }
         if (b.description && b.description.length > 500) {
-          fail('content_blocks', 'La description de l\'image doit faire moins de 500 caractères.')
+          fail('content_blocks', "La description de l'image doit faire moins de 500 caractères.")
           break
         }
       }
@@ -365,27 +376,29 @@ export function buildProductCreatePayload(draft: ProductCreateDraft): ProductCre
   let basePrice = priceToCents(draft.price)
   if (basePrice === null || Number.isNaN(basePrice)) {
     if (draft.variants && draft.variants.length > 0) {
-      const prices = draft.variants.map(v => priceToCents(v.price)).filter(p => p !== null && !Number.isNaN(p)) as number[]
+      const prices = draft.variants
+        .map((v) => priceToCents(v.price))
+        .filter((p) => p !== null && !Number.isNaN(p)) as number[]
       basePrice = prices.length > 0 ? Math.min(...prices) : 0
     } else {
       basePrice = 0
     }
   }
 
-    const payload: ProductCreateInput = {
-      type: draft.type,
-      audience: draft.audience || null,
-      title: draft.title.trim(),
-      description_short: draft.descriptionShort.trim(),
-      price_cents: basePrice,
-      status: 'published',
-    }
+  const payload: ProductCreateInput = {
+    type: draft.type,
+    audience: draft.audience || null,
+    title: draft.title.trim(),
+    description_short: draft.descriptionShort.trim(),
+    price_cents: basePrice,
+    status: 'published',
+  }
 
-    if (draft.publishMode === 'schedule' && draft.scheduleDate) {
-      payload.published_at = new Date(draft.scheduleDate).toISOString()
-    }
+  if (draft.publishMode === 'schedule' && draft.scheduleDate) {
+    payload.published_at = new Date(draft.scheduleDate).toISOString()
+  }
 
-    const bullets = draft.bullets.map((b) => b.trim()).filter((b) => b.length > 0)
+  const bullets = draft.bullets.map((b) => b.trim()).filter((b) => b.length > 0)
   if (bullets.length > 0) payload.bullet_points = bullets
 
   if (draft.promoEnabled) {
@@ -429,7 +442,8 @@ export function buildProductCreatePayload(draft: ProductCreateDraft): ProductCre
       const validImages = []
       for (let i = 0; i < slots; i++) {
         const img = b.images[i]
-        if (img?.url) validImages.push({ url: img.url, aspect_ratio: img.aspect_ratio, type: img.type })
+        if (img?.url)
+          validImages.push({ url: img.url, aspect_ratio: img.aspect_ratio, type: img.type })
       }
       if (validImages.length > 0) {
         blocks.push({
@@ -437,7 +451,7 @@ export function buildProductCreatePayload(draft: ProductCreateDraft): ProductCre
           slot_count: slots,
           images: validImages,
           title: b.title?.trim() || undefined,
-          description: b.description?.trim() || undefined
+          description: b.description?.trim() || undefined,
         })
       }
     }
@@ -471,10 +485,12 @@ export function buildProductCreatePayload(draft: ProductCreateDraft): ProductCre
     if (draft.variationMode === 'unique') {
       if (Number.isInteger(sn) && sn >= 0) payload.physical_stock_quantity = sn
       if (draft.sku.trim()) {
-        payload.variants = [{
-          attributes: {},
-          sku: draft.sku.trim()
-        }]
+        payload.variants = [
+          {
+            attributes: {},
+            sku: draft.sku.trim(),
+          },
+        ]
       }
     } else {
       const variants: VariantInput[] = []
@@ -496,8 +512,9 @@ export function buildProductCreatePayload(draft: ProductCreateDraft): ProductCre
             }
             const out: VariantInput = { attributes: subAttrs }
             if (sub.sku?.trim()) out.sku = sub.sku.trim()
-            if (sub.condition?.trim()) out.sku = out.sku ? `${out.sku} | cond:${sub.condition}` : `cond:${sub.condition}` // Temporary hack to store condition if needed
-            
+            if (sub.condition?.trim())
+              out.sku = out.sku ? `${out.sku} | cond:${sub.condition}` : `cond:${sub.condition}` // Temporary hack to store condition if needed
+
             const pc = priceToCents(sub.price)
             if (pc !== null) out.price_cents_override = pc
             if (sub.stock !== '') {

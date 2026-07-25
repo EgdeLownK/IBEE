@@ -37,11 +37,16 @@ export function WidgetCard({
 
   return (
     <div className="widget-sort-item">
-      <article className={`widget${filled ? ' widget--filled' : ''}${transparentBackground ? ' widget--transparent' : ''}${hidden ? ' widget--header-hidden' : ''}`}>
+      <article
+        className={`widget${filled ? ' widget--filled' : ''}${transparentBackground ? ' widget--transparent' : ''}${hidden ? ' widget--header-hidden' : ''}`}
+      >
         {!hidden && (
           <header className="widget__head">
             {titleHref ? (
-              <a href={titleHref} className="widget__title widget__title--link widget__title--with-arrow">
+              <a
+                href={titleHref}
+                className="widget__title widget__title--link widget__title--with-arrow"
+              >
                 <span>{title}</span>
                 <ChevronRight className="widget__title-arrow" aria-hidden="true" />
               </a>

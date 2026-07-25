@@ -13,9 +13,7 @@ export default function NotificationsPage() {
     <main className="home-stage">
       <div className="home-stage__inner">
         <h1 className="home-stage__title">Activité</h1>
-        <p className="home-stage__lead">
-          Le fil de notifications arrive bientôt sur Next.js.
-        </p>
+        <p className="home-stage__lead">Le fil de notifications arrive bientôt sur Next.js.</p>
         <Link href="/" className="home-stage__cta">
           Retour à l&apos;accueil
         </Link>

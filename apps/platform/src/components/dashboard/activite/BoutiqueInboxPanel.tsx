@@ -21,7 +21,6 @@ import { BoutiqueInboxFilterSummary } from './BoutiqueInboxFilterSummary'
 import { BoutiqueSidePanel } from './BoutiqueSidePanel'
 import { usePrintOrderLabels } from './use-print-order-labels'
 
-
 type Props = {
   data: Pick<BoutiqueDashboardData, 'orders' | 'stockItems' | 'products'>
   orderFilter: BoutiqueOrderFilter
@@ -45,12 +44,7 @@ function canPrintToReady(order: BoutiqueOrderView): boolean {
   )
 }
 
-export function BoutiqueInboxPanel({
-  data,
-  orderFilter,
-  searchQuery,
-  senderName,
-}: Props) {
+export function BoutiqueInboxPanel({ data, orderFilter, searchQuery, senderName }: Props) {
   const [optimisticOrders, addOptimisticOrder] = useOptimistic(
     data.orders,
     (state, update: { id: string; fulfillmentStatus: string }) => {
@@ -64,22 +58,22 @@ export function BoutiqueInboxPanel({
         else if (st === 'shipped') ds = 'expediee'
         else if (st === 'delivered' || st === 'not_applicable') ds = 'livree'
         else if (st === 'returned') ds = 'retour_demande'
-        
+
         return { ...order, fulfillmentStatus: st as any, displayStatus: ds }
       })
-    }
+    },
   )
 
   const visibleOrders = useMemo(
     () => filterBoutiqueOrders(optimisticOrders, orderFilter, searchQuery),
-    [optimisticOrders, orderFilter, searchQuery]
+    [optimisticOrders, orderFilter, searchQuery],
   )
 
   const showBulkSelection = orderFilter === 'to-treat'
 
   const printableVisible = useMemo(
     () => (showBulkSelection ? visibleOrders.filter(canPrintToReady) : []),
-    [showBulkSelection, visibleOrders]
+    [showBulkSelection, visibleOrders],
   )
 
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -116,7 +110,7 @@ export function BoutiqueInboxPanel({
 
   const checkedPrintableOrders = useMemo(
     () => printableVisible.filter((order) => checkedIds.has(order.id)),
-    [printableVisible, checkedIds]
+    [printableVisible, checkedIds],
   )
 
   const ordersToPrint = useMemo(() => {
@@ -145,7 +139,12 @@ export function BoutiqueInboxPanel({
   function runAction(order: BoutiqueOrderView) {
     setActionId(order.id)
     startTransition(async () => {
-      if (order.productType === 'digital' || (order.productType === 'physical' && order.physicalCondition && order.physicalCondition !== 'new')) {
+      if (
+        order.productType === 'digital' ||
+        (order.productType === 'physical' &&
+          order.physicalCondition &&
+          order.physicalCondition !== 'new')
+      ) {
         await markOrderDeliveredAction(order.id)
       } else {
         await markOrderShippedAction(order.id)
@@ -244,7 +243,6 @@ export function BoutiqueInboxPanel({
             ))}
           </ul>
         )}
-
       </div>
 
       <aside
@@ -276,7 +274,10 @@ export function BoutiqueInboxPanel({
                     <Printer className="h-4 w-4" aria-hidden="true" />
                     {printPending ? 'Impression…' : 'Imprimer l’étiquette'}
                   </button>
-                ) : selectedOrder.productType === 'digital' || (selectedOrder.productType === 'physical' && selectedOrder.physicalCondition && selectedOrder.physicalCondition !== 'new') ? (
+                ) : selectedOrder.productType === 'digital' ||
+                  (selectedOrder.productType === 'physical' &&
+                    selectedOrder.physicalCondition &&
+                    selectedOrder.physicalCondition !== 'new') ? (
                   <button
                     type="button"
                     className="boutique-inbox__action-btn"

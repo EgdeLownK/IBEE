@@ -4,7 +4,7 @@ import { ProfileStudioPlaylistsHydrator } from './ProfileStudioDataContext'
 
 export async function ProfileStudioPlaylistsSlot() {
   const playlists = await measureDashboardLoad('page:site-playlists', () =>
-    loadProfileStudioPlaylists()
+    loadProfileStudioPlaylists(),
   )
   if (!playlists) return null
   return <ProfileStudioPlaylistsHydrator playlists={playlists} />

@@ -8,11 +8,7 @@ import {
   type ServiceDashboardData,
 } from '@/lib/service-booking-view'
 import { findClientForBooking } from '@/lib/service-client-view'
-import {
-  getWeekDays,
-  startOfWeekMonday,
-  toIsoDate,
-} from '@/lib/service-planning-view'
+import { getWeekDays, startOfWeekMonday, toIsoDate } from '@/lib/service-planning-view'
 import { ServiceClientProfile } from './ServiceClientProfile'
 import { ServiceClientDetail } from './ServiceClientDetail'
 import { ServiceSidePanel } from './ServiceSidePanel'
@@ -36,13 +32,10 @@ export function ServiceInboxPanel({ data }: Props) {
 
   const dayBookings = useMemo(
     () => bookingsOnDate(data.bookings, selectedDay),
-    [data.bookings, selectedDay]
+    [data.bookings, selectedDay],
   )
 
-  const bookingHourGroups = useMemo(
-    () => groupBookingsByHour(dayBookings),
-    [dayBookings]
-  )
+  const bookingHourGroups = useMemo(() => groupBookingsByHour(dayBookings), [dayBookings])
 
   useEffect(() => {
     const weekDays = getWeekDays(weekStart).map((day) => toIsoDate(day))
@@ -58,14 +51,10 @@ export function ServiceInboxPanel({ data }: Props) {
     if (!stillExists) setSelectedId(null)
   }, [data.bookings, selectedId])
 
-  const selectedBooking =
-    data.bookings.find((booking) => booking.id === selectedId) ?? null
-  const bookingClient = selectedBooking
-    ? findClientForBooking(data.clients, selectedBooking)
-    : null
+  const selectedBooking = data.bookings.find((booking) => booking.id === selectedId) ?? null
+  const bookingClient = selectedBooking ? findClientForBooking(data.clients, selectedBooking) : null
 
-  const profileClient =
-    data.clients.find((client) => client.id === selectedClientId) ?? null
+  const profileClient = data.clients.find((client) => client.id === selectedClientId) ?? null
 
   const selectedDayLabel = useMemo(() => {
     const today = toIsoDate(new Date())
@@ -121,37 +110,35 @@ export function ServiceInboxPanel({ data }: Props) {
             </div>
           ) : (
             <>
-          <header className="boutique-inbox__file-head">
-            <h2 className="boutique-inbox__file-title">{selectedDayLabel}</h2>
-            <span className="boutique-inbox__file-count">
-              {dayBookings.length} rendez-vous
-            </span>
-          </header>
+              <header className="boutique-inbox__file-head">
+                <h2 className="boutique-inbox__file-title">{selectedDayLabel}</h2>
+                <span className="boutique-inbox__file-count">{dayBookings.length} rendez-vous</span>
+              </header>
 
-          <ServiceInboxDaySummary bookings={dayBookings} />
+              <ServiceInboxDaySummary bookings={dayBookings} />
 
-          {dayBookings.length === 0 ? (
-            <p className="boutique-inbox__empty">Aucun rendez-vous ce jour-là.</p>
-          ) : (
-            <div className="boutique-inbox__groups">
-              {bookingHourGroups.map((group) => (
-                <section key={group.hourLabel} className="boutique-inbox__group">
-                  <h3 className="boutique-inbox__group-label">{group.hourLabel}</h3>
-                  <ul className="boutique-inbox__list">
-                    {group.bookings.map((booking) => (
-                      <li key={booking.id}>
-                        <InboxBookingCard
-                          booking={booking}
-                          selected={selectedId === booking.id}
-                          onSelect={() => selectBooking(booking.id)}
-                        />
-                      </li>
-                    ))}
-                  </ul>
-                </section>
-              ))}
-            </div>
-          )}
+              {dayBookings.length === 0 ? (
+                <p className="boutique-inbox__empty">Aucun rendez-vous ce jour-là.</p>
+              ) : (
+                <div className="boutique-inbox__groups">
+                  {bookingHourGroups.map((group) => (
+                    <section key={group.hourLabel} className="boutique-inbox__group">
+                      <h3 className="boutique-inbox__group-label">{group.hourLabel}</h3>
+                      <ul className="boutique-inbox__list">
+                        {group.bookings.map((booking) => (
+                          <li key={booking.id}>
+                            <InboxBookingCard
+                              booking={booking}
+                              selected={selectedId === booking.id}
+                              onSelect={() => selectBooking(booking.id)}
+                            />
+                          </li>
+                        ))}
+                      </ul>
+                    </section>
+                  ))}
+                </div>
+              )}
             </>
           )}
         </div>

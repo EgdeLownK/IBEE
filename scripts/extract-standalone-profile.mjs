@@ -19,7 +19,20 @@ while ((m = re.exec(html)) !== null) {
   if (body.length > 5000) {
     const out = `.tmp-bundle-${id.slice(0, 8)}.jsx`
     fs.writeFileSync(out, body)
-    const labels = ['Analyse', 'Visites', 'Abonnés', 'followers', 'Profil', 'Trafic', 'KPI', 'Performance', '30 jours', 'ChromeWindow', 'function App', 'Profile']
+    const labels = [
+      'Analyse',
+      'Visites',
+      'Abonnés',
+      'followers',
+      'Profil',
+      'Trafic',
+      'KPI',
+      'Performance',
+      '30 jours',
+      'ChromeWindow',
+      'function App',
+      'Profile',
+    ]
     for (const l of labels) {
       if (body.includes(l)) console.log('  ->', l)
     }

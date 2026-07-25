@@ -20,9 +20,7 @@ function TodayEventLiveLink({
   const isMobile = useCheckInMobileLayout()
   const href = `/dashboard/billetterie/check-in?eventId=${live.eventId}${isMobile ? '&scan=1' : ''}`
 
-  return (
-    <Link href={href}>{live.eventTitle}</Link>
-  )
+  return <Link href={href}>{live.eventTitle}</Link>
 }
 
 type Props = {
@@ -67,8 +65,8 @@ export function BilletterieSignalsBand({
             </>
           ) : today.registrations7d > 0 ? (
             <>
-              <span className="boutique-signals__revenue-amount">{today.registrations7d}</span>
-              {' '}inscription{today.registrations7d > 1 ? 's' : ''} sur 7 jours
+              <span className="boutique-signals__revenue-amount">{today.registrations7d}</span>{' '}
+              inscription{today.registrations7d > 1 ? 's' : ''} sur 7 jours
               {today.upcomingEventsCount > 0
                 ? ` · ${today.upcomingEventsCount} événement${today.upcomingEventsCount > 1 ? 's' : ''} à venir`
                 : ''}

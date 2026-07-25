@@ -22,7 +22,7 @@ export const CAROUSEL_SOURCE_EMPTY_LABELS: Record<CarouselSourceKind, string> = 
 
 export function highlightKindHasContent(
   kind: HighlightContentKind,
-  data: WidgetConfigPickerData
+  data: WidgetConfigPickerData,
 ): boolean {
   switch (kind) {
     case 'product':
@@ -38,7 +38,7 @@ export function highlightKindHasContent(
 
 export function carouselSourceHasContent(
   sourceKind: CarouselSourceKind,
-  data: WidgetConfigPickerData
+  data: WidgetConfigPickerData,
 ): boolean {
   switch (sourceKind) {
     case 'shop_category':
@@ -56,7 +56,7 @@ export function categoryIdsWithProducts(data: WidgetConfigPickerData): Set<strin
   return new Set(
     data.products
       .map((p) => p.category_id)
-      .filter((id): id is string => typeof id === 'string' && id.length > 0)
+      .filter((id): id is string => typeof id === 'string' && id.length > 0),
   )
 }
 
@@ -68,7 +68,7 @@ export function categoriesWithProducts(data: WidgetConfigPickerData) {
 export function carouselSelectionModeHasContent(
   sourceKind: CarouselSourceKind,
   mode: CarouselSelectionMode,
-  data: WidgetConfigPickerData
+  data: WidgetConfigPickerData,
 ): boolean {
   if (sourceKind === 'shop_category') {
     if (mode === 'category') {
@@ -83,20 +83,22 @@ export function carouselSelectionModeHasContent(
 }
 
 export function firstAvailableCarouselSource(
-  data: WidgetConfigPickerData
+  data: WidgetConfigPickerData,
 ): CarouselSourceKind | null {
   return CAROUSEL_SOURCE_KINDS.find((kind) => carouselSourceHasContent(kind, data)) ?? null
 }
 
 export function firstAvailableCarouselSelectionMode(
   sourceKind: CarouselSourceKind,
-  data: WidgetConfigPickerData
+  data: WidgetConfigPickerData,
 ): CarouselSelectionMode | null {
   const modes = carouselSelectionModesForSource(sourceKind)
   if (!modes) return null
   return modes.find((mode) => carouselSelectionModeHasContent(sourceKind, mode, data)) ?? null
 }
 
-export function firstAvailableHighlightKind(data: WidgetConfigPickerData): HighlightContentKind | null {
+export function firstAvailableHighlightKind(
+  data: WidgetConfigPickerData,
+): HighlightContentKind | null {
   return HIGHLIGHT_KINDS.find((kind) => highlightKindHasContent(kind, data)) ?? null
 }

@@ -24,7 +24,7 @@ export function BilletterieCheckInDashboard({ data: initialData, preferScanMode 
 
   const selectedEvent = useMemo(
     () => data.events.find((event) => event.id === selectedEventId) ?? null,
-    [data.events, selectedEventId]
+    [data.events, selectedEventId],
   )
 
   const scanMode = isMobileLayout || preferScanMode
@@ -142,7 +142,8 @@ export function BilletterieCheckInDashboard({ data: initialData, preferScanMode 
                 day: 'numeric',
                 month: 'long',
               })}
-              . En attendant, gère les inscriptions depuis l&apos;inbox {getActivityModuleLabel('events')}.
+              . En attendant, gère les inscriptions depuis l&apos;inbox{' '}
+              {getActivityModuleLabel('events')}.
             </p>
           ) : null}
         </>

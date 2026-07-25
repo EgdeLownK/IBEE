@@ -43,7 +43,7 @@ export function PublicPublicationCard({
         width?: number | null
         height?: number | null
       },
-      i: number
+      i: number,
     ) => ({
       id: m.id ?? String(i),
       url: m.url,
@@ -51,7 +51,7 @@ export function PublicPublicationCard({
       position: m.position ?? i,
       width: m.width ?? null,
       height: m.height ?? null,
-    })
+    }),
   )
 
   const initial = entityDisplayName.charAt(0).toUpperCase()

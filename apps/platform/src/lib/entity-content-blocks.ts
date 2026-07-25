@@ -30,7 +30,8 @@ export function parseDetailContentBlocks(entity: {
 
   if (Array.isArray(entity.content_blocks) && entity.content_blocks.length > 0) {
     blocks = entity.content_blocks.filter(
-      (b): b is RawBlock => !!b && typeof b === 'object' && typeof (b as RawBlock).type === 'string'
+      (b): b is RawBlock =>
+        !!b && typeof b === 'object' && typeof (b as RawBlock).type === 'string',
     ) as RawBlock[]
   } else if (entity.description) {
     try {
@@ -90,13 +91,21 @@ export function parseBulletPoints(raw: unknown): string[] {
   return Array.isArray(raw) ? raw.filter((x): x is string => typeof x === 'string') : []
 }
 
-export function parseCustomDetails(raw: unknown): { label: string; value: string; family: string | null }[] {
+export function parseCustomDetails(
+  raw: unknown,
+): { label: string; value: string; family: string | null }[] {
   if (!Array.isArray(raw)) return []
   return raw.flatMap((d): { label: string; value: string; family: string | null }[] => {
     if (!d || typeof d !== 'object') return []
     const item = d as Record<string, unknown>
     if (typeof item.label === 'string' && typeof item.value === 'string') {
-      return [{ label: item.label, value: item.value, family: typeof item.family === 'string' ? item.family : null }]
+      return [
+        {
+          label: item.label,
+          value: item.value,
+          family: typeof item.family === 'string' ? item.family : null,
+        },
+      ]
     }
     return []
   })

@@ -1,7 +1,15 @@
 'use client'
 
 import { useRef, useState } from 'react'
-import { ChevronDown, Image as ImageIcon, Loader2, Trash2, ArrowLeft, ArrowRight, Plus } from 'lucide-react'
+import {
+  ChevronDown,
+  Image as ImageIcon,
+  Loader2,
+  Trash2,
+  ArrowLeft,
+  ArrowRight,
+  Plus,
+} from 'lucide-react'
 import {
   autoCropImageFromUrl,
   BANNER_ASPECT_MAX,
@@ -39,7 +47,7 @@ export function ProductImageBlockEditor({ block, onChange }: Props) {
 
   const validImages = block.images.filter((img) => img?.url)
   const count = validImages.length
-  
+
   const renderedImages = [...validImages]
   if (count === 0 || block.uploading) {
     renderedImages.push(null)
@@ -64,7 +72,11 @@ export function ProductImageBlockEditor({ block, onChange }: Props) {
     }
     const newImages = [...validImages]
     newImages[slotIndex] = { url: result.url!, aspect_ratio: aspectRatio, type: 'image' }
-    patch({ uploading: false, images: newImages, slot_count: Math.max(1, Math.min(newImages.length, 3)) as 1 | 2 | 3 })
+    patch({
+      uploading: false,
+      images: newImages,
+      slot_count: Math.max(1, Math.min(newImages.length, 3)) as 1 | 2 | 3,
+    })
   }
 
   async function uploadFile(file: File, aspectRatio: number, slotIndex: number) {
@@ -78,7 +90,11 @@ export function ProductImageBlockEditor({ block, onChange }: Props) {
     }
     const newImages = [...validImages]
     newImages[slotIndex] = { url: result.url!, aspect_ratio: aspectRatio, type: 'image' }
-    patch({ uploading: false, images: newImages, slot_count: Math.max(1, Math.min(newImages.length, 3)) as 1 | 2 | 3 })
+    patch({
+      uploading: false,
+      images: newImages,
+      slot_count: Math.max(1, Math.min(newImages.length, 3)) as 1 | 2 | 3,
+    })
   }
 
   async function ingestFile(file: File, slotIndex: number) {
@@ -192,7 +208,9 @@ export function ProductImageBlockEditor({ block, onChange }: Props) {
                     aria-label="Ajouter une image"
                     onClick={() => pickSlot(slotIndex, true)}
                   >
-                    <span className={`hw-config__banner-slot-frame hw-config__banner-slot-frame--${layout}`}>
+                    <span
+                      className={`hw-config__banner-slot-frame hw-config__banner-slot-frame--${layout}`}
+                    >
                       <span className="hw-config__banner-slot-add-icon">
                         <ImageIcon className="h-5 w-5" />
                       </span>
@@ -212,12 +230,16 @@ export function ProductImageBlockEditor({ block, onChange }: Props) {
               <div
                 key={`filled-${slotIndex}-${img.url}`}
                 className={`hw-config__banner-slot hw-config__banner-slot--${layout}${warn ? ' hw-config__banner-slot--warn' : ''}`}
-                style={layout === 'landscape' ? ({ '--banner-aspect': String(img.aspect_ratio) } as React.CSSProperties) : undefined}
+                style={
+                  layout === 'landscape'
+                    ? ({ '--banner-aspect': String(img.aspect_ratio) } as React.CSSProperties)
+                    : undefined
+                }
               >
                 <div className="hw-config__banner-slot-media">
                   <img src={img.url} alt="" draggable={false} />
                 </div>
-                
+
                 <div className="absolute top-2 left-2 flex gap-1 z-10">
                   {slotIndex > 0 && (
                     <button
@@ -294,7 +316,7 @@ export function ProductImageBlockEditor({ block, onChange }: Props) {
           e.target.value = ''
           const startIndex = replaceSlotRef.current
           if (files.length === 0 || startIndex == null) return
-          
+
           // If only 1 file is selected, use the existing ingestFile logic which supports cropping
           if (files.length === 1) {
             try {
@@ -304,7 +326,7 @@ export function ProductImageBlockEditor({ block, onChange }: Props) {
             }
             return
           }
-          
+
           // For multiple files, upload them sequentially to avoid race conditions and skip manual crop
           patch({ uploading: true })
           try {
@@ -322,20 +344,24 @@ export function ProductImageBlockEditor({ block, onChange }: Props) {
                   if (meta) aspect = clampBlockAspect(meta.width / meta.height)
                   URL.revokeObjectURL(objectUrl)
                 } catch {}
-                
-                uploadedItems.push({ url: result.url!, aspect_ratio: aspect, type: 'image' as const })
+
+                uploadedItems.push({
+                  url: result.url!,
+                  aspect_ratio: aspect,
+                  type: 'image' as const,
+                })
               }
             }
-            
+
             const newImages = [...validImages]
             for (let i = 0; i < uploadedItems.length; i++) {
               newImages[startIndex + i] = uploadedItems[i]
             }
-            
-            patch({ 
-              uploading: false, 
-              images: newImages, 
-              slot_count: Math.max(1, Math.min(newImages.length, 3)) as 1 | 2 | 3 
+
+            patch({
+              uploading: false,
+              images: newImages,
+              slot_count: Math.max(1, Math.min(newImages.length, 3)) as 1 | 2 | 3,
             })
           } catch (err) {
             console.error(err)

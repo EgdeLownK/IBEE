@@ -77,7 +77,10 @@ function relativeDate(iso: string) {
 function formatPrice(cents: number | null | undefined, currency?: string | null) {
   if (cents == null || cents === 0) return '0€'
   try {
-    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: currency ?? 'EUR' }).format(cents / 100)
+    return new Intl.NumberFormat('fr-FR', {
+      style: 'currency',
+      currency: currency ?? 'EUR',
+    }).format(cents / 100)
   } catch {
     return `${(cents / 100).toFixed(2)} €`
   }
@@ -158,7 +161,7 @@ function WidgetFeaturedCard({
   return (
     <section className="wfeat wfeat--embedded">
       <div className={`wfeat__shell${adminMenu ? ' wfeat__shell--admin' : ''}`}>
-        <div 
+        <div
           className="relative rounded-2xl overflow-hidden group w-full bg-neutral-100"
           style={{ containerType: 'inline-size' }}
         >
@@ -172,35 +175,38 @@ function WidgetFeaturedCard({
                   </div>
                 ))}
               </div>
-                {images.length > 1 && (
-                  <>
-                    <button
-                      type="button"
-                      className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 flex items-center justify-center rounded-full bg-white/80 text-black backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-0"
-                      aria-label="Image précédente"
-                      disabled={!canPrev}
-                      onClick={scrollPrev}
-                    >
-                      <ChevronLeft className="h-4 w-4" aria-hidden="true" />
-                    </button>
-                    <button
-                      type="button"
-                      className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 flex items-center justify-center rounded-full bg-white/80 text-black backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-0"
-                      aria-label="Image suivante"
-                      disabled={!canNext}
-                      onClick={scrollNext}
-                    >
-                      <ChevronRight className="h-4 w-4" aria-hidden="true" />
-                    </button>
-                  </>
-                )}
-              </>
-            ) : (
-              <span className="w-full aspect-[4/5] sm:aspect-[16/9] flex items-center justify-center text-neutral-400" aria-hidden="true">
-                {placeholder}
-              </span>
-            )}
-          
+              {images.length > 1 && (
+                <>
+                  <button
+                    type="button"
+                    className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 flex items-center justify-center rounded-full bg-white/80 text-black backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-0"
+                    aria-label="Image précédente"
+                    disabled={!canPrev}
+                    onClick={scrollPrev}
+                  >
+                    <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                  <button
+                    type="button"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 flex items-center justify-center rounded-full bg-white/80 text-black backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-0"
+                    aria-label="Image suivante"
+                    disabled={!canNext}
+                    onClick={scrollNext}
+                  >
+                    <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                </>
+              )}
+            </>
+          ) : (
+            <span
+              className="w-full aspect-[4/5] sm:aspect-[16/9] flex items-center justify-center text-neutral-400"
+              aria-hidden="true"
+            >
+              {placeholder}
+            </span>
+          )}
+
           {/* Gradient Overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent pointer-events-none z-[2]" />
 
@@ -219,14 +225,22 @@ function WidgetFeaturedCard({
             </span>
           ) : null}
 
-          <Link href={href} className="absolute inset-0 z-10 flex flex-col justify-end p-5 sm:p-6 text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white">
+          <Link
+            href={href}
+            className="absolute inset-0 z-10 flex flex-col justify-end p-5 sm:p-6 text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white"
+          >
             <div className="flex justify-between items-center gap-4 w-full">
               <div className="flex-1 min-w-0">
-                <h3 className="font-display text-xl sm:text-2xl font-bold leading-tight line-clamp-2 drop-shadow-sm">{title}</h3>
+                <h3 className="font-display text-xl sm:text-2xl font-bold leading-tight line-clamp-2 drop-shadow-sm">
+                  {title}
+                </h3>
                 {tags.length > 0 && (
                   <div className="flex flex-wrap gap-2 mt-2.5">
                     {tags.map((tag) => (
-                      <span key={tag} className="inline-flex px-2.5 py-1 rounded-full bg-white/20 text-white text-[11px] sm:text-xs font-medium backdrop-blur-md border border-white/10">
+                      <span
+                        key={tag}
+                        className="inline-flex px-2.5 py-1 rounded-full bg-white/20 text-white text-[11px] sm:text-xs font-medium backdrop-blur-md border border-white/10"
+                      >
                         {tag}
                       </span>
                     ))}
@@ -278,10 +292,22 @@ function CategoryCarousel({
         </div>
         {showNav && (
           <>
-            <button type="button" className="wcat__nav wcat__nav--prev" disabled={!canPrev} onClick={scrollPrev} aria-label="Précédent">
+            <button
+              type="button"
+              className="wcat__nav wcat__nav--prev"
+              disabled={!canPrev}
+              onClick={scrollPrev}
+              aria-label="Précédent"
+            >
               <ChevronLeft className="h-5 w-5" />
             </button>
-            <button type="button" className="wcat__nav wcat__nav--next" disabled={!canNext} onClick={scrollNext} aria-label="Suivant">
+            <button
+              type="button"
+              className="wcat__nav wcat__nav--next"
+              disabled={!canNext}
+              onClick={scrollNext}
+              aria-label="Suivant"
+            >
               <ChevronRight className="h-5 w-5" />
             </button>
           </>
@@ -420,10 +446,22 @@ function NewsCarousel({
         </div>
         {items.length > 1 && (
           <>
-            <button type="button" className="nwidget__nav nwidget__nav--prev" disabled={!canPrev} onClick={scrollPrev} aria-label="Précédent">
+            <button
+              type="button"
+              className="nwidget__nav nwidget__nav--prev"
+              disabled={!canPrev}
+              onClick={scrollPrev}
+              aria-label="Précédent"
+            >
               <ChevronLeft className="h-4 w-4" />
             </button>
-            <button type="button" className="nwidget__nav nwidget__nav--next" disabled={!canNext} onClick={scrollNext} aria-label="Suivant">
+            <button
+              type="button"
+              className="nwidget__nav nwidget__nav--next"
+              disabled={!canNext}
+              onClick={scrollNext}
+              aria-label="Suivant"
+            >
               <ChevronRight className="h-4 w-4" />
             </button>
           </>
@@ -464,7 +502,11 @@ export function WidgetBodyDisplay({
 
   if (widget.type === 'widget_highlight') {
     const cfg = parseHighlightConfig(config)!
-    const loc: Record<string, string> = { video: 'Visio', in_person: 'Sur place', phone: 'Téléphone' }
+    const loc: Record<string, string> = {
+      video: 'Visio',
+      in_person: 'Sur place',
+      phone: 'Téléphone',
+    }
     if (cfg.item.kind === 'product') {
       const p = data.shopProducts.find((x) => x.id === cfg.item.id)
       if (!p) return null
@@ -509,7 +551,11 @@ export function WidgetBodyDisplay({
       const ev = data.playlistEvents.find((x) => x.id === cfg.item.id)
       if (!ev) return null
       const start = new Date(ev.start_at)
-      const tag = new Intl.DateTimeFormat('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' }).format(start)
+      const tag = new Intl.DateTimeFormat('fr-FR', {
+        weekday: 'short',
+        day: 'numeric',
+        month: 'short',
+      }).format(start)
       return (
         <WidgetFeaturedCard
           href={ev.slug ? `${detailBase}/events/${ev.slug}` : `${webBaseUrl}#events`}
@@ -619,7 +665,9 @@ export function WidgetBodyDisplay({
           {items.map((ev) => {
             const start = new Date(ev.start_at)
             const day = new Intl.DateTimeFormat('fr-FR', { day: 'numeric' }).format(start)
-            const month = new Intl.DateTimeFormat('fr-FR', { month: 'short' }).format(start).replace('.', '')
+            const month = new Intl.DateTimeFormat('fr-FR', { month: 'short' })
+              .format(start)
+              .replace('.', '')
             return (
               <div key={ev.id} className="tile tile--rich wcat__tile">
                 <Link
@@ -697,7 +745,9 @@ export function WidgetBodyDisplay({
         />
       )
     }
-    const items = data.shopProducts.filter((p) => p.category_id === cfg.category_id).slice(0, cfg.limit ?? 6)
+    const items = data.shopProducts
+      .filter((p) => p.category_id === cfg.category_id)
+      .slice(0, cfg.limit ?? 6)
     const sectionLink = homeWidgetCarouselSectionLink(widget.type, config, webBaseUrl)!
     return (
       <CategoryCarousel
@@ -730,7 +780,11 @@ export function WidgetBodyDisplay({
 
   if (widget.type === 'widget_service') {
     const cfg = parseServiceConfig(config)!
-    const loc: Record<string, string> = { video: 'Visio', in_person: 'Sur place', phone: 'Téléphone' }
+    const loc: Record<string, string> = {
+      video: 'Visio',
+      in_person: 'Sur place',
+      phone: 'Téléphone',
+    }
     if (cfg.mode === 'service') {
       const s = data.playlistServices.find((x) => x.id === cfg.appointment_type_id)
       if (!s) return null
@@ -788,7 +842,11 @@ export function WidgetBodyDisplay({
       const ev = data.playlistEvents.find((x) => x.id === cfg.event_id)
       if (!ev) return null
       const start = new Date(ev.start_at)
-      const tag = new Intl.DateTimeFormat('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' }).format(start)
+      const tag = new Intl.DateTimeFormat('fr-FR', {
+        weekday: 'short',
+        day: 'numeric',
+        month: 'short',
+      }).format(start)
       return (
         <WidgetFeaturedCard
           href={ev.slug ? `${detailBase}/events/${ev.slug}` : `${webBaseUrl}#events`}
@@ -815,7 +873,9 @@ export function WidgetBodyDisplay({
         {items.map((ev) => {
           const start = new Date(ev.start_at)
           const day = new Intl.DateTimeFormat('fr-FR', { day: 'numeric' }).format(start)
-          const month = new Intl.DateTimeFormat('fr-FR', { month: 'short' }).format(start).replace('.', '')
+          const month = new Intl.DateTimeFormat('fr-FR', { month: 'short' })
+            .format(start)
+            .replace('.', '')
           return (
             <div key={ev.id} className="tile tile--rich wcat__tile">
               <Link
@@ -934,7 +994,9 @@ export function WidgetBodyDisplay({
           </section>
         )}
         {(showEmail || showPhone || showMessage) && (
-          <div className={`bio-widget__contacts${[showEmail, showPhone, showMessage].filter(Boolean).length === 2 ? ' bio-widget__contacts--two' : ''}`}>
+          <div
+            className={`bio-widget__contacts${[showEmail, showPhone, showMessage].filter(Boolean).length === 2 ? ' bio-widget__contacts--two' : ''}`}
+          >
             {showEmail && email && (
               <a href={`mailto:${email}`} className="bio-widget__action">
                 <Mail className="h-5 w-5 shrink-0" />
@@ -987,7 +1049,12 @@ export function WidgetBodyDisplay({
               }
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={img.url} alt={index === 0 && cfg.title ? cfg.title : ''} className="banner-welcome__img" loading="lazy" />
+              <img
+                src={img.url}
+                alt={index === 0 && cfg.title ? cfg.title : ''}
+                className="banner-welcome__img"
+                loading="lazy"
+              />
             </div>
           ))}
         </div>

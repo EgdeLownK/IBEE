@@ -18,10 +18,19 @@ export function HomeFeedNewsRow({ items }: Props) {
         {items.map((item) => (
           <Link key={item.id} href={item.href} className="home-feed-news-card">
             <span className="home-feed-news-card__media">
-              <Image src={item.imageUrl} alt="" width={300} height={200} className="w-full h-full object-cover" loading="lazy" />
+              <Image
+                src={item.imageUrl}
+                alt=""
+                width={300}
+                height={200}
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
             </span>
             <span className="home-feed-news-card__body">
-              <span className="home-feed-news-card__author truncate">{item.entity.displayName}</span>
+              <span className="home-feed-news-card__author truncate">
+                {item.entity.displayName}
+              </span>
               <span className="home-feed-news-card__title">{item.title}</span>
             </span>
           </Link>

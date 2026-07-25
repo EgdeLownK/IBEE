@@ -39,8 +39,8 @@
   --color-warning: #d97706;
   --color-info: #2563eb;
 
-  --font-sans: "Roboto", "Inter Variable", system-ui, sans-serif;
-  --font-display: "Poppins", "Roboto", "Inter Variable", sans-serif;
+  --font-sans: 'Roboto', 'Inter Variable', system-ui, sans-serif;
+  --font-display: 'Poppins', 'Roboto', 'Inter Variable', sans-serif;
   --font-mono: ui-monospace, monospace;
 
   --radius-sm: 6px;
@@ -92,18 +92,18 @@ body {
 }
 
 button:not([disabled]),
-[role="button"]:not([aria-disabled="true"]),
-a[href]:not([aria-disabled="true"]) {
+[role='button']:not([aria-disabled='true']),
+a[href]:not([aria-disabled='true']) {
   cursor: pointer;
 }
 
 /* Drawer mobile */
 @media (max-width: 1199px) {
-  html[data-drawer-open="true"] .main-rail {
+  html[data-drawer-open='true'] .main-rail {
     transform: translateX(0);
   }
 
-  html[data-drawer-open="true"] .main-rail-backdrop {
+  html[data-drawer-open='true'] .main-rail-backdrop {
     opacity: 1;
     pointer-events: auto;
   }

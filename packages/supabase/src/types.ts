@@ -3897,6 +3897,13 @@ export type Database = {
         }
         Returns: Json
       }
+      get_booked_time_ranges: {
+        Args: { p_entity_id: string; p_from: string; p_to: string }
+        Returns: {
+          end_at: string
+          start_at: string
+        }[]
+      }
       get_event_checkin_live_stats: {
         Args: { p_entity_id: string; p_event_id: string }
         Returns: Json
@@ -3919,7 +3926,6 @@ export type Database = {
           view_count: number
         }[]
       }
-      get_user_entity_ids: { Args: never; Returns: string[] }
       group_analytics_by_resource: {
         Args: {
           p_entity_id: string
@@ -3967,10 +3973,6 @@ export type Database = {
           event_count: number
           section_type: Database["public"]["Enums"]["menu_section_type"]
         }[]
-      }
-      insert_slug_history: {
-        Args: { p_entity_id: string; p_old_slug: string }
-        Returns: undefined
       }
       is_event_activity_past: {
         Args: {
@@ -4053,6 +4055,10 @@ export type Database = {
         Returns: number
       }
       rollup_entity_analytics_incremental: { Args: never; Returns: Json }
+      self_check_in_event_registration: {
+        Args: { p_event_id: string; p_ticket_code: string }
+        Returns: Json
+      }
       slugify: { Args: { input: string }; Returns: string }
       submit_manual_reg_contact_session: {
         Args: {

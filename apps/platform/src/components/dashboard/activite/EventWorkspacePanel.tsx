@@ -3,17 +3,12 @@
 import { useEffect, useMemo, useState, useTransition } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { Ban, CalendarDays, Download, Pencil, QrCode, Search, UserPlus, X } from 'lucide-react'
 import {
-  Ban,
-  CalendarDays,
-  Download,
-  Pencil,
-  QrCode,
-  Search,
-  UserPlus,
-  X,
-} from 'lucide-react'
-import { cancelRegistrationAction, banClientAction, unbanClientAction } from '@/app/dashboard/billetterie-actions'
+  cancelRegistrationAction,
+  banClientAction,
+  unbanClientAction,
+} from '@/app/dashboard/billetterie-actions'
 import type { LoadedBilletterieDashboard } from '@/lib/load-billetterie-data'
 import type { BilletterieEventLine, EventFeedSegment } from '@/lib/event-catalog-view'
 import {
@@ -109,9 +104,7 @@ function EventListCard({
             ) : null}
           </div>
         </div>
-        <p className="event-list-card__slot">
-          {formatEventCardTime(event.startAt, event.endAt)}
-        </p>
+        <p className="event-list-card__slot">{formatEventCardTime(event.startAt, event.endAt)}</p>
         {capacity.hasCapacity ? (
           <div className="event-list-card__capacity">
             <div className="event-list-card__capacity-bar" aria-hidden="true">
@@ -120,7 +113,9 @@ function EventListCard({
                 style={{ width: `${Math.round((capacity.fillRatio ?? 0) * 100)}%` }}
               />
             </div>
-            <span className="event-list-card__capacity-label">{formatEventCapacityLabel(event)}</span>
+            <span className="event-list-card__capacity-label">
+              {formatEventCapacityLabel(event)}
+            </span>
           </div>
         ) : (
           <p className="event-list-card__count">{formatEventCapacityLabel(event)}</p>
@@ -135,14 +130,14 @@ function filterParticipants(
   eventId: string,
   statusFilter: ParticipantFilter,
   searchQuery: string,
-  activityId: string | null
+  activityId: string | null,
 ): BilletterieRegistrationView[] {
   let list = registrations.filter((reg) => reg.eventId === eventId)
   if (activityId) list = list.filter((reg) => reg.activityId === activityId)
   if (statusFilter === 'confirmed') list = list.filter((reg) => reg.status === 'confirmed')
   if (statusFilter === 'cancelled') list = list.filter((reg) => reg.status === 'cancelled')
   return searchBilletterieRegistrations(list, searchQuery).sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
   )
 }
 
@@ -164,12 +159,12 @@ export function EventWorkspacePanel({ data }: Props) {
 
   const searchedEvents = useMemo(
     () => searchEventLines(sortedEvents, eventSearchQuery),
-    [sortedEvents, eventSearchQuery]
+    [sortedEvents, eventSearchQuery],
   )
 
   const visibleEvents = useMemo(
     () => searchedEvents.filter((event) => getEventFeedSegment(event) === eventFeedFilter),
-    [searchedEvents, eventFeedFilter]
+    [searchedEvents, eventFeedFilter],
   )
 
   useEffect(() => {
@@ -182,17 +177,16 @@ export function EventWorkspacePanel({ data }: Props) {
     }
   }, [visibleEvents, selectedEventId])
 
-  const selectedEvent =
-    sortedEvents.find((event) => event.id === selectedEventId) ?? null
+  const selectedEvent = sortedEvents.find((event) => event.id === selectedEventId) ?? null
 
   const eventPlaces = useMemo(
-    () => (selectedEventId ? data.activitiesByEventId[selectedEventId] ?? [] : []),
-    [data.activitiesByEventId, selectedEventId]
+    () => (selectedEventId ? (data.activitiesByEventId[selectedEventId] ?? []) : []),
+    [data.activitiesByEventId, selectedEventId],
   )
 
   const participantPlaces = useMemo(
     () => eventPlaces.filter((place) => !isEventRootPlace(place)),
-    [eventPlaces]
+    [eventPlaces],
   )
 
   const hasPlaces = eventPlaces.length > 0
@@ -212,8 +206,7 @@ export function EventWorkspacePanel({ data }: Props) {
   }, [hasMultiplePlaces, selectedEventId, statusFilter])
 
   const showPlacePicker = hasMultiplePlaces && detailTab === 'participants'
-  const showParticipantsForPlace =
-    !hasMultiplePlaces || activityFilterId != null
+  const showParticipantsForPlace = !hasMultiplePlaces || activityFilterId != null
 
   const selectedPlace =
     hasMultiplePlaces && activityFilterId
@@ -227,7 +220,7 @@ export function EventWorkspacePanel({ data }: Props) {
       selectedEventId,
       statusFilter,
       participantSearchQuery,
-      hasMultiplePlaces ? activityFilterId : null
+      hasMultiplePlaces ? activityFilterId : null,
     )
   }, [
     data.registrations,
@@ -241,7 +234,7 @@ export function EventWorkspacePanel({ data }: Props) {
 
   const bannedClients = useMemo(
     () => searchBannedClients(data.bannedClients, participantSearchQuery),
-    [data.bannedClients, participantSearchQuery]
+    [data.bannedClients, participantSearchQuery],
   )
 
   useEffect(() => {
@@ -419,111 +412,109 @@ export function EventWorkspacePanel({ data }: Props) {
           </div>
         ) : (
           <>
-        <header className="boutique-inbox__file-head">
-          <div className="boutique-inbox__file-head-main">
-            <h2 className="boutique-inbox__file-title">Événements</h2>
-            <span className="boutique-inbox__file-count">
-              {visibleEvents.length} événement{visibleEvents.length > 1 ? 's' : ''}
-              {eventSearchQuery.trim() && visibleEvents.length !== sortedEvents.length
-                ? ` · ${sortedEvents.length} au total`
-                : ''}
-            </span>
-          </div>
-        </header>
+            <header className="boutique-inbox__file-head">
+              <div className="boutique-inbox__file-head-main">
+                <h2 className="boutique-inbox__file-title">Événements</h2>
+                <span className="boutique-inbox__file-count">
+                  {visibleEvents.length} événement{visibleEvents.length > 1 ? 's' : ''}
+                  {eventSearchQuery.trim() && visibleEvents.length !== sortedEvents.length
+                    ? ` · ${sortedEvents.length} au total`
+                    : ''}
+                </span>
+              </div>
+            </header>
 
-        {sortedEvents.length > 0 ? (
-          <div className="event-workspace__events-toolbar">
-            <label className="event-workspace__search">
-              <Search className="event-workspace__search-icon" aria-hidden="true" />
-              <input
-                type="search"
-                value={eventSearchQuery}
-                onChange={(event) => setEventSearchQuery(event.target.value)}
-                placeholder="Rechercher un événement…"
-                className="event-workspace__search-input"
-                aria-label="Rechercher un événement"
-              />
-            </label>
-            <div
-              className="event-workspace__filters event-workspace__events-filters"
-              role="tablist"
-              aria-label="Filtrer les événements"
-            >
-              {EVENT_FEED_FILTERS.map(({ id, label }) => (
-                <button
-                  key={id}
-                  type="button"
-                  role="tab"
-                  aria-selected={eventFeedFilter === id}
-                  className={`event-workspace__filter${eventFeedFilter === id ? ' is-active' : ''}`}
-                  onClick={() => setEventFeedFilter(id)}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-        ) : null}
-
-        {sortedEvents.length === 0 ? (
-          <p className="boutique-inbox__empty">
-            Aucun événement pour le moment.{' '}
-            <button
-              type="button"
-              className="service-dash__planning-link"
-              onClick={() => openOverlay('event')}
-            >
-              Créer un événement
-            </button>
-          </p>
-        ) : visibleEvents.length === 0 ? (
-          <p className="boutique-inbox__empty">
-            {eventSearchQuery.trim()
-              ? 'Aucun événement pour cette recherche.'
-              : eventFeedFilter === 'upcoming'
-                ? 'Aucun événement à venir.'
-                : 'Aucun événement passé.'}
-          </p>
-        ) : (
-          <ul className="boutique-inbox__list boutique-inbox__list--flat event-workspace__event-feed">
-            {visibleEvents.flatMap((event, index) => {
-              const items = []
-
-              if (eventFeedFilter === 'upcoming') {
-                const subsegment = getEventUpcomingSubsegment(event)
-                const prevSubsegment =
-                  index > 0
-                    ? getEventUpcomingSubsegment(visibleEvents[index - 1])
-                    : null
-
-                if (index === 0 || subsegment !== prevSubsegment) {
-                  items.push(
-                    <li
-                      key={`event-subsection-${subsegment}-${event.id}`}
-                      className="event-feed__section"
-                    >
-                      <span className="event-feed__section-tag">
-                        {EVENT_UPCOMING_SUBSECTION_LABELS[subsegment]}
-                      </span>
-                    </li>
-                  )
-                }
-              }
-
-              items.push(
-                <li key={event.id}>
-                  <EventListCard
-                    event={event}
-                    selected={selectedEventId === event.id}
-                    onSelect={() => selectEvent(event.id)}
+            {sortedEvents.length > 0 ? (
+              <div className="event-workspace__events-toolbar">
+                <label className="event-workspace__search">
+                  <Search className="event-workspace__search-icon" aria-hidden="true" />
+                  <input
+                    type="search"
+                    value={eventSearchQuery}
+                    onChange={(event) => setEventSearchQuery(event.target.value)}
+                    placeholder="Rechercher un événement…"
+                    className="event-workspace__search-input"
+                    aria-label="Rechercher un événement"
                   />
-                </li>
-              )
+                </label>
+                <div
+                  className="event-workspace__filters event-workspace__events-filters"
+                  role="tablist"
+                  aria-label="Filtrer les événements"
+                >
+                  {EVENT_FEED_FILTERS.map(({ id, label }) => (
+                    <button
+                      key={id}
+                      type="button"
+                      role="tab"
+                      aria-selected={eventFeedFilter === id}
+                      className={`event-workspace__filter${eventFeedFilter === id ? ' is-active' : ''}`}
+                      onClick={() => setEventFeedFilter(id)}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : null}
 
-              return items
-            })}
-          </ul>
-        )}
+            {sortedEvents.length === 0 ? (
+              <p className="boutique-inbox__empty">
+                Aucun événement pour le moment.{' '}
+                <button
+                  type="button"
+                  className="service-dash__planning-link"
+                  onClick={() => openOverlay('event')}
+                >
+                  Créer un événement
+                </button>
+              </p>
+            ) : visibleEvents.length === 0 ? (
+              <p className="boutique-inbox__empty">
+                {eventSearchQuery.trim()
+                  ? 'Aucun événement pour cette recherche.'
+                  : eventFeedFilter === 'upcoming'
+                    ? 'Aucun événement à venir.'
+                    : 'Aucun événement passé.'}
+              </p>
+            ) : (
+              <ul className="boutique-inbox__list boutique-inbox__list--flat event-workspace__event-feed">
+                {visibleEvents.flatMap((event, index) => {
+                  const items = []
+
+                  if (eventFeedFilter === 'upcoming') {
+                    const subsegment = getEventUpcomingSubsegment(event)
+                    const prevSubsegment =
+                      index > 0 ? getEventUpcomingSubsegment(visibleEvents[index - 1]) : null
+
+                    if (index === 0 || subsegment !== prevSubsegment) {
+                      items.push(
+                        <li
+                          key={`event-subsection-${subsegment}-${event.id}`}
+                          className="event-feed__section"
+                        >
+                          <span className="event-feed__section-tag">
+                            {EVENT_UPCOMING_SUBSECTION_LABELS[subsegment]}
+                          </span>
+                        </li>,
+                      )
+                    }
+                  }
+
+                  items.push(
+                    <li key={event.id}>
+                      <EventListCard
+                        event={event}
+                        selected={selectedEventId === event.id}
+                        onSelect={() => selectEvent(event.id)}
+                      />
+                    </li>,
+                  )
+
+                  return items
+                })}
+              </ul>
+            )}
           </>
         )}
       </div>
@@ -617,7 +608,9 @@ export function EventWorkspacePanel({ data }: Props) {
                   role="tab"
                   aria-selected={detailTab === 'places'}
                   className={
-                    detailTab === 'places' ? 'event-workspace__tab is-active' : 'event-workspace__tab'
+                    detailTab === 'places'
+                      ? 'event-workspace__tab is-active'
+                      : 'event-workspace__tab'
                   }
                   onClick={() => changeDetailTab('places')}
                 >
@@ -630,124 +623,135 @@ export function EventWorkspacePanel({ data }: Props) {
               <EventPlacesPanel eventId={selectedEvent.id} places={eventPlaces} />
             ) : (
               <>
-            <div className="event-workspace__toolbar">
-              <label className="event-workspace__search">
-                <Search className="event-workspace__search-icon" aria-hidden="true" />
-                <input
-                  type="search"
-                  value={participantSearchQuery}
-                  onChange={(event) => setParticipantSearchQuery(event.target.value)}
-                  placeholder="Rechercher un participant…"
-                  className="event-workspace__search-input"
-                  aria-label="Rechercher un participant"
-                />
-              </label>
-              {!hideParticipantStatusFilters ? (
-                <div className="event-workspace__filters" role="tablist" aria-label="Filtrer les participants">
-                  {(
-                    [
-                      ['all', 'Tous'],
-                      ['confirmed', 'Confirmés'],
-                      ['cancelled', 'Annulés'],
-                      ['banned', 'Bannis'],
-                    ] as const
-                  ).map(([id, label]) => (
-                    <button
-                      key={id}
-                      type="button"
-                      role="tab"
-                      aria-selected={statusFilter === id}
-                      className={`event-workspace__filter${statusFilter === id ? ' is-active' : ''}`}
-                      onClick={() => changeStatusFilter(id)}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              ) : null}
-            </div>
-
-            {showPlacePicker ? (
-              <EventPlacePicker
-                places={participantPlaces}
-                selectedPlaceId={activityFilterId}
-                onSelectPlace={changeActivityFilter}
-              />
-            ) : null}
-
-            {showPlacePicker && !activityFilterId ? (
-              <p className="event-workspace__empty">
-                Sélectionne un type de place pour afficher les participants.
-              </p>
-            ) : (
-              <>
-            <div className="event-workspace__participants-head">
-              <span className="event-workspace__participants-count">
-                {statusFilter === 'banned'
-                  ? `${bannedClients.length} banni${bannedClients.length > 1 ? 's' : ''}`
-                  : selectedPlace
-                    ? `${participants.length} participant${participants.length > 1 ? 's' : ''} · ${selectedPlace.title}`
-                    : `${participants.length} participant${participants.length > 1 ? 's' : ''}`}
-              </span>
-              {statusFilter !== 'banned' && participants.length > 0 ? (
-                <button type="button" className="event-workspace__export" onClick={exportCsv}>
-                  <Download className="h-3.5 w-3.5" aria-hidden="true" />
-                  CSV
-                </button>
-              ) : null}
-            </div>
-
-            {statusFilter === 'banned' ? (
-              bannedClients.length === 0 ? (
-                <p className="event-workspace__empty">
-                  {participantSearchQuery.trim()
-                    ? 'Aucun client banni pour cette recherche.'
-                    : 'Aucun client banni pour le moment.'}
-                </p>
-              ) : (
-                <ul className="event-workspace__participants-list">
-                  {bannedClients.map((client) => (
-                    <li key={client.id}>
-                      <BannedClientCard
-                        client={client}
-                        selected={selectedBannedId === client.id}
-                        onSelect={() => {
-                          setSelectedBannedId(client.id)
-                          setSelectedParticipantId(null)
-                        }}
-                      />
-                    </li>
-                  ))}
-                </ul>
-              )
-            ) : participants.length === 0 ? (
-              <p className="event-workspace__empty">
-                {participantSearchQuery.trim()
-                  ? 'Aucun participant pour cette recherche.'
-                  : selectedPlace
-                    ? `Aucun participant pour ${selectedPlace.title}.`
-                    : 'Aucun participant pour cet événement.'}
-              </p>
-            ) : (
-              <ul className="event-workspace__participants-list">
-                {participants.map((registration) => (
-                  <li key={registration.id}>
-                    <ParticipantCard
-                      registration={registration}
-                      isNew={isFirstTimeParticipant(registration, data.registrations)}
-                      isBanned={isEmailBanned(data.bannedClients, registration.attendeeEmail)}
-                      selected={selectedParticipantId === registration.id}
-                      onSelect={() => {
-                        setSelectedParticipantId(registration.id)
-                        setSelectedBannedId(null)
-                      }}
+                <div className="event-workspace__toolbar">
+                  <label className="event-workspace__search">
+                    <Search className="event-workspace__search-icon" aria-hidden="true" />
+                    <input
+                      type="search"
+                      value={participantSearchQuery}
+                      onChange={(event) => setParticipantSearchQuery(event.target.value)}
+                      placeholder="Rechercher un participant…"
+                      className="event-workspace__search-input"
+                      aria-label="Rechercher un participant"
                     />
-                  </li>
-                ))}
-              </ul>
-            )}
-              </>
-            )}
+                  </label>
+                  {!hideParticipantStatusFilters ? (
+                    <div
+                      className="event-workspace__filters"
+                      role="tablist"
+                      aria-label="Filtrer les participants"
+                    >
+                      {(
+                        [
+                          ['all', 'Tous'],
+                          ['confirmed', 'Confirmés'],
+                          ['cancelled', 'Annulés'],
+                          ['banned', 'Bannis'],
+                        ] as const
+                      ).map(([id, label]) => (
+                        <button
+                          key={id}
+                          type="button"
+                          role="tab"
+                          aria-selected={statusFilter === id}
+                          className={`event-workspace__filter${statusFilter === id ? ' is-active' : ''}`}
+                          onClick={() => changeStatusFilter(id)}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+
+                {showPlacePicker ? (
+                  <EventPlacePicker
+                    places={participantPlaces}
+                    selectedPlaceId={activityFilterId}
+                    onSelectPlace={changeActivityFilter}
+                  />
+                ) : null}
+
+                {showPlacePicker && !activityFilterId ? (
+                  <p className="event-workspace__empty">
+                    Sélectionne un type de place pour afficher les participants.
+                  </p>
+                ) : (
+                  <>
+                    <div className="event-workspace__participants-head">
+                      <span className="event-workspace__participants-count">
+                        {statusFilter === 'banned'
+                          ? `${bannedClients.length} banni${bannedClients.length > 1 ? 's' : ''}`
+                          : selectedPlace
+                            ? `${participants.length} participant${participants.length > 1 ? 's' : ''} · ${selectedPlace.title}`
+                            : `${participants.length} participant${participants.length > 1 ? 's' : ''}`}
+                      </span>
+                      {statusFilter !== 'banned' && participants.length > 0 ? (
+                        <button
+                          type="button"
+                          className="event-workspace__export"
+                          onClick={exportCsv}
+                        >
+                          <Download className="h-3.5 w-3.5" aria-hidden="true" />
+                          CSV
+                        </button>
+                      ) : null}
+                    </div>
+
+                    {statusFilter === 'banned' ? (
+                      bannedClients.length === 0 ? (
+                        <p className="event-workspace__empty">
+                          {participantSearchQuery.trim()
+                            ? 'Aucun client banni pour cette recherche.'
+                            : 'Aucun client banni pour le moment.'}
+                        </p>
+                      ) : (
+                        <ul className="event-workspace__participants-list">
+                          {bannedClients.map((client) => (
+                            <li key={client.id}>
+                              <BannedClientCard
+                                client={client}
+                                selected={selectedBannedId === client.id}
+                                onSelect={() => {
+                                  setSelectedBannedId(client.id)
+                                  setSelectedParticipantId(null)
+                                }}
+                              />
+                            </li>
+                          ))}
+                        </ul>
+                      )
+                    ) : participants.length === 0 ? (
+                      <p className="event-workspace__empty">
+                        {participantSearchQuery.trim()
+                          ? 'Aucun participant pour cette recherche.'
+                          : selectedPlace
+                            ? `Aucun participant pour ${selectedPlace.title}.`
+                            : 'Aucun participant pour cet événement.'}
+                      </p>
+                    ) : (
+                      <ul className="event-workspace__participants-list">
+                        {participants.map((registration) => (
+                          <li key={registration.id}>
+                            <ParticipantCard
+                              registration={registration}
+                              isNew={isFirstTimeParticipant(registration, data.registrations)}
+                              isBanned={isEmailBanned(
+                                data.bannedClients,
+                                registration.attendeeEmail,
+                              )}
+                              selected={selectedParticipantId === registration.id}
+                              onSelect={() => {
+                                setSelectedParticipantId(registration.id)
+                                setSelectedBannedId(null)
+                              }}
+                            />
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </>
+                )}
               </>
             )}
           </>

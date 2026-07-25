@@ -5,7 +5,7 @@ import { getDashboardContext } from '@/lib/dashboard-context'
 
 export default async function TalentPage() {
   const ctx = await getDashboardContext()
-  
+
   if (!ctx) {
     redirect('/login')
   }
