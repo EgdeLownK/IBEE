@@ -2,7 +2,7 @@
 
 ## Général
 
-1. **Jamais de modification d'un pilier `pilier/`** sans accord explicite de Killian.
+1. **Jamais de modification de `.ibee-brain/_IBEE.md`** (pilier produit) sans accord explicite de Killian.
 2. **L'auto-correction post-test ne dispense pas de la revue.** Les fix automatiques de bugs détectés par typecheck/build/tests sont autorisés, mais les fichiers modifiés sont toujours listés pour revue Killian avant `/commit`.
 
 ## Garde-fous Git (interdits absolus)
