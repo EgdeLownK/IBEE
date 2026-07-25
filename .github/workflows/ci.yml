@@ -76,9 +76,7 @@ jobs:
 
       - run: pnpm format:check
 
-      # TEMPORAIRE — à retirer dès que les ~250 problèmes de lint préexistants
-      # (apps/platform + packages/shared) sont traités par les lots de correction
-      # dédiés. Voir _BRAIN-STATE.md §Dette. Cette étape doit redevenir bloquante
-      # une fois ces lots faits — ne pas laisser ce continue-on-error traîner.
+      # Les ~146 erreurs préexistantes sont gelées dans les eslint-suppressions.json
+      # de chaque package (garde-fou anti-régression, voir apps/platform/eslint.config.mjs
+      # et les fichiers homologues). Toute NOUVELLE violation fait échouer ce step.
       - run: pnpm lint
-        continue-on-error: true
