@@ -1,0 +1,30 @@
+{
+  "src/auth/env.ts": {
+    "@typescript-eslint/ban-ts-comment": {
+      "count": 3
+    }
+  },
+  "src/availability.ts": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    }
+  },
+  "src/cache.ts": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    }
+  },
+  "src/comments.ts": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    }
+  },
+  "src/project-payouts.ts": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    }
+  }
+}

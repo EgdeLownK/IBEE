@@ -25,7 +25,7 @@
   },
   "scripts": {
     "type-check": "tsc --noEmit",
-    "lint": "eslint"
+    "lint": "eslint --max-warnings 0"
   },
   "peerDependencies": {
     "@radix-ui/react-slot": "^1.0.0",
