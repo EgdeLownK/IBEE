@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useTransition } from 'react'
+import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { Bell, Lock, LogOut, Menu, Sun, User, Wallet } from 'lucide-react'
 import { logout } from '@/app/dashboard/actions'
@@ -110,9 +111,9 @@ function GuestGlobalHeader({ loginUrl = '/login' }: Pick<Props, 'loginUrl'>) {
     <header className="app-header">
       <div className="flex items-center gap-2" aria-hidden="true" />
 
-      <a href="/" className="app-header__brand" aria-label="Accueil IBEE">
+      <Link href="/" className="app-header__brand" aria-label="Accueil IBEE">
         IBEE<sup>v0.4</sup>
-      </a>
+      </Link>
 
       <div className="app-header__right">
         <div className="app-header__weather hidden md:inline-flex" aria-label="Météo">
@@ -220,9 +221,9 @@ function AuthenticatedGlobalHeader(_props: Props) {
         {!hideProjectSwitcher ? <ProjectAccountSwitcher variant="header" /> : null}
       </div>
 
-      <a href="/" className="app-header__brand" aria-label="Accueil IBEE">
+      <Link href="/" className="app-header__brand" aria-label="Accueil IBEE">
         IBEE<sup>v0.4</sup>
-      </a>
+      </Link>
 
       <div className="app-header__right">
         <div className="app-header__weather hidden md:inline-flex" aria-label="Météo">
@@ -232,7 +233,7 @@ function AuthenticatedGlobalHeader(_props: Props) {
 
         <span className="app-header__time hidden md:inline">{clock}</span>
 
-        <a
+        <Link
           href="/notifications"
           className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-neutral-600 transition hover:bg-panel md:hidden"
           aria-label="Notifications"
@@ -243,7 +244,7 @@ function AuthenticatedGlobalHeader(_props: Props) {
               {formatBadge(unreadCount)}
             </span>
           )}
-        </a>
+        </Link>
 
         <button
           type="button"
@@ -325,12 +326,12 @@ function AuthenticatedGlobalHeader(_props: Props) {
 
           {notifications.length > 0 && (
             <div className="border-t border-neutral-100 px-4 py-2.5 text-center">
-              <a
+              <Link
                 href="/notifications"
                 className="text-xs font-medium text-accent transition hover:text-accent-hover"
               >
                 Afficher tout
-              </a>
+              </Link>
             </div>
           )}
         </div>
