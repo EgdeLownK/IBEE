@@ -198,3 +198,47 @@ ombre, taille) :
    design produit, pas un détail d'implémentation technique. Killian
    tranche ; l'ajout se fait ensuite dans `tokens.css`, jamais dans un
    composant.
+
+## Garde-fou CI
+
+Le vocabulaire interdit ci-dessus est vérifié automatiquement par
+`scripts/design-guard.mjs`, branché dans le job CI « Lint & format » via
+`pnpm design:check`. Même doctrine que le garde-fou lint
+(`.claude/rules/lint.md`) : l'existant est gelé, seule une **augmentation**
+du nombre d'occurrences fait échouer la CI.
+
+**Périmètre** : `apps/platform/src` et `packages/ui-react/src` (`.ts`/`.tsx`).
+`packages/shared` est hors scope (logique métier pure, pas de JSX/Tailwind).
+
+**Motifs vérifiés** : `bg-white`, `gray-*`, `red-*`/`green-*`/`emerald-*`/`amber-*`
+bruts, `rounded-sm|md|lg|xl|2xl|3xl`, couleur/rayon en valeur arbitraire
+(`bg-[#...]`, `rounded-[...]`, etc. — **zéro tolérance**, aucune occurrence
+gelée), couleur hexadécimale en dur dans un `.tsx`. `text-white` est
+volontairement exclu : légitime comme texte de contraste sur fond sombre/accent,
+ce n'est pas un contournement de `bg-surface`.
+
+**Seuil gelé** : `design-guard-baseline.json` à la racine, compté par couple
+fichier + motif (pas par ligne exacte — insensible aux décalages de ligne dus
+à des éditions sans rapport, comme `eslint-suppressions.json`).
+
+**Allowlist** : dans `scripts/design-guard.mjs`, par **couple fichier + motif**
+uniquement, jamais par fichier entier — un fichier autorisé pour le hex en dur
+(génération d'image Open Graph via `next/og`, config couleur de QR code : deux
+cas où le rendu sort de la cascade CSS et ne peut pas résoudre `var(--color-*)`)
+reste vérifié normalement sur tous les autres motifs.
+
+**Vérifier localement** : `pnpm design:check`
+
+**Procédure après un lot de correction** : une fois des occurrences
+corrigées dans le code, régénérer la baseline avec
+`node scripts/design-guard.mjs --update-baseline`, puis committer le
+`design-guard-baseline.json` mis à jour. Jamais automatique, jamais depuis
+la CI — geste délibéré après une vraie correction.
+
+**Interdiction formelle** : ne jamais élargir la baseline ni l'allowlist pour
+faire passer une CI rouge. Ce garde-fou existe précisément pour empêcher
+qu'un rouge soit « réparé » en élargissant ce qui est toléré plutôt qu'en
+corrigeant ce qui est signalé — même doctrine que `eslint-suppressions.json`
+(voir `.claude/rules/lint.md` §Interdictions formelles). Un ajout à
+l'allowlist ne se justifie que par une contrainte technique réelle (rendu
+hors cascade CSS), jamais par la pression d'un CI rouge à débloquer vite.

@@ -80,3 +80,8 @@ jobs:
       # de chaque package (garde-fou anti-régression, voir apps/platform/eslint.config.mjs
       # et les fichiers homologues). Toute NOUVELLE violation fait échouer ce step.
       - run: pnpm lint
+
+      # Vocabulaire design system (couleurs/rayons hors tokens.css) : l'existant
+      # est gelé dans design-guard-baseline.json, toute NOUVELLE occurrence fait
+      # échouer ce step. Voir .claude/rules/design.md §Garde-fou CI.
+      - run: pnpm design:check

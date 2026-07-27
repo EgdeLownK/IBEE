@@ -1,0 +1,183 @@
+{
+  "apps/platform/src/app/(public)/booking/cancel/page.tsx": {
+    "bg-white": 1,
+    "red|green|emerald|amber bruts": 2,
+    "rounded-<taille>": 1
+  },
+  "apps/platform/src/app/login/page.tsx": {
+    "rounded-<taille>": 7
+  },
+  "apps/platform/src/components/account/AccountPage.tsx": {
+    "bg-white": 1,
+    "rounded-<taille>": 5
+  },
+  "apps/platform/src/components/account/ApplicationsList.tsx": {
+    "bg-white": 1,
+    "red|green|emerald|amber bruts": 4,
+    "rounded-<taille>": 2
+  },
+  "apps/platform/src/components/account/CreateEntityDialog.tsx": {
+    "bg-white": 1,
+    "red|green|emerald|amber bruts": 1,
+    "rounded-<taille>": 4
+  },
+  "apps/platform/src/components/dashboard/activite/boutique-orders-ui.tsx": {
+    "bg-white": 2,
+    "rounded-<taille>": 1
+  },
+  "apps/platform/src/components/dashboard/revenu/PayoutRulesDialog.tsx": {
+    "gray-*": 3,
+    "hex en dur": 3
+  },
+  "apps/platform/src/components/dashboard/revenu/RevenuProjetDashboard.tsx": {
+    "bg-white": 1,
+    "gray-*": 4,
+    "rounded-<taille>": 2
+  },
+  "apps/platform/src/components/dashboard/revenu/RevenuScreen.tsx": {
+    "gray-*": 2
+  },
+  "apps/platform/src/components/dashboard/talent/JobOfferDetails.tsx": {
+    "bg-white": 12,
+    "red|green|emerald|amber bruts": 15,
+    "rounded-<taille>": 24,
+    "hex en dur": 4
+  },
+  "apps/platform/src/components/dashboard/talent/JobOfferDialog.tsx": {
+    "bg-white": 4,
+    "red|green|emerald|amber bruts": 7,
+    "rounded-<taille>": 5
+  },
+  "apps/platform/src/components/dashboard/talent/TalentDashboard.tsx": {
+    "bg-white": 2,
+    "red|green|emerald|amber bruts": 5,
+    "rounded-<taille>": 5
+  },
+  "apps/platform/src/components/profile/event-edit/EventEditStudio.tsx": {
+    "rounded-<taille>": 8
+  },
+  "apps/platform/src/components/profile/history/HistoryEditDialog.tsx": {
+    "red|green|emerald|amber bruts": 1,
+    "rounded-<taille>": 1
+  },
+  "apps/platform/src/components/profile/home-widgets/WidgetBodyDisplay.tsx": {
+    "bg-white": 4,
+    "rounded-<taille>": 1
+  },
+  "apps/platform/src/components/profile/product-create/AddressAutocomplete.tsx": {
+    "bg-white": 1,
+    "rounded-<taille>": 1
+  },
+  "apps/platform/src/components/profile/product-create/ProductCreateWizard.tsx": {
+    "gray-*": 2,
+    "red|green|emerald|amber bruts": 3,
+    "rounded-<taille>": 2
+  },
+  "apps/platform/src/components/profile/product-create/ProductImageBlockEditor.tsx": {
+    "rounded-<taille>": 3
+  },
+  "apps/platform/src/components/profile/product-create/steps/StepDescription.tsx": {
+    "red|green|emerald|amber bruts": 4
+  },
+  "apps/platform/src/components/profile/product-create/steps/StepEssentials.tsx": {
+    "bg-white": 8,
+    "red|green|emerald|amber bruts": 2,
+    "rounded-<taille>": 9
+  },
+  "apps/platform/src/components/profile/product-create/steps/StepFaq.tsx": {
+    "rounded-<taille>": 1
+  },
+  "apps/platform/src/components/profile/product-create/steps/StepTypeSpecific.tsx": {
+    "bg-white": 9,
+    "rounded-<taille>": 8
+  },
+  "apps/platform/src/components/public/BookingCancelForm.tsx": {
+    "bg-white": 2,
+    "red|green|emerald|amber bruts": 3,
+    "rounded-<taille>": 3
+  },
+  "apps/platform/src/components/public/CommentsList.tsx": {
+    "rounded-<taille>": 4
+  },
+  "apps/platform/src/components/public/ExploreClient.tsx": {
+    "rounded-<taille>": 4
+  },
+  "apps/platform/src/components/public/detail/BookingConfirmedPage.tsx": {
+    "rounded-<taille>": 3
+  },
+  "apps/platform/src/components/public/detail/BookingWidget.tsx": {
+    "rounded-<taille>": 8
+  },
+  "apps/platform/src/components/public/detail/EventConfirmedPage.tsx": {
+    "rounded-<taille>": 1
+  },
+  "apps/platform/src/components/public/detail/EventEntreePage.tsx": {
+    "bg-white": 1,
+    "rounded-<taille>": 5
+  },
+  "apps/platform/src/components/public/detail/EventParticipationCta.tsx": {
+    "red|green|emerald|amber bruts": 1
+  },
+  "apps/platform/src/components/public/detail/EventRegistrationWidget.tsx": {
+    "rounded-<taille>": 4
+  },
+  "apps/platform/src/components/public/detail/EventTicketPage.tsx": {
+    "rounded-<taille>": 2
+  },
+  "apps/platform/src/components/public/detail/ManualRegContactPage.tsx": {
+    "rounded-<taille>": 1
+  },
+  "apps/platform/src/components/public/detail/ProductBuyButton.tsx": {
+    "red|green|emerald|amber bruts": 1
+  },
+  "apps/platform/src/components/public/detail/ProductDetailCheckout.tsx": {
+    "rounded-<taille>": 1
+  },
+  "apps/platform/src/components/public/detail/ProductDetailPage.tsx": {
+    "rounded-<taille>": 1
+  },
+  "apps/platform/src/components/public/detail/ProductReviewsList.tsx": {
+    "red|green|emerald|amber bruts": 5
+  },
+  "apps/platform/src/components/public/detail/RelatedContent.tsx": {
+    "bg-white": 1,
+    "gray-*": 1
+  },
+  "apps/platform/src/components/public/jobs/ApplyBottomSheet.tsx": {
+    "bg-white": 1,
+    "red|green|emerald|amber bruts": 1,
+    "rounded-<taille>": 9
+  },
+  "apps/platform/src/components/public/jobs/PublicJobOfferDetail.tsx": {
+    "bg-white": 1,
+    "rounded-<taille>": 2
+  },
+  "apps/platform/src/components/public/jobs/PublicJobOffersList.tsx": {
+    "bg-white": 1,
+    "rounded-<taille>": 1
+  },
+  "packages/ui-react/src/components/AvatarCropperModal.tsx": {
+    "rounded-<taille>": 4
+  },
+  "packages/ui-react/src/components/Input.tsx": {
+    "rounded-<taille>": 3
+  },
+  "packages/ui-react/src/components/ProfileCardReact.tsx": {
+    "rounded-<taille>": 1
+  },
+  "packages/ui-react/src/components/PublicationActionsMenu.tsx": {
+    "rounded-<taille>": 4
+  },
+  "packages/ui-react/src/components/PublicationCardPreview.tsx": {
+    "rounded-<taille>": 2
+  },
+  "packages/ui-react/src/components/Textarea.tsx": {
+    "rounded-<taille>": 1
+  },
+  "packages/ui-react/src/components/UploadAvatar.tsx": {
+    "rounded-<taille>": 2
+  },
+  "packages/ui-react/src/components/UploadPublicationImages.tsx": {
+    "rounded-<taille>": 2
+  }
+}
