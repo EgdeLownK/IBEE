@@ -3897,6 +3897,14 @@ export type Database = {
         }
         Returns: Json
       }
+      get_availability_exception_for_date: {
+        Args: { p_date: string; p_entity_id: string }
+        Returns: {
+          end_time: string
+          is_blocked: boolean
+          start_time: string
+        }[]
+      }
       get_booked_time_ranges: {
         Args: { p_entity_id: string; p_from: string; p_to: string }
         Returns: {
