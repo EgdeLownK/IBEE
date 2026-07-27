@@ -1,0 +1,200 @@
+---
+paths:
+  - "apps/platform/**"
+  - "packages/ui-react/**"
+---
+
+# Design system IBEE
+
+Source des tokens : `packages/ui-react/src/tokens.css` (bloc `@theme`). Ne
+jamais lire les valeurs ci-dessous comme la source de vérité — en cas de
+divergence, `tokens.css` gagne et cette règle doit être corrigée.
+
+## Vocabulaire autorisé (par rôle)
+
+Deux formes existent pour chaque token, à utiliser selon le fichier :
+
+- **Dans un composant JSX/TSX** → la **classe utilitaire** Tailwind générée
+  automatiquement depuis la clé `@theme` (ex. `bg-surface`, `rounded-card`,
+  `shadow-card`, `font-display`).
+- **Dans un fichier `.css`** (`button.css`, `profile-styles.css`, etc.) → la
+  **variable CSS** directement (`var(--color-surface)`, `var(--radius-card)`,
+  `var(--shadow-card)`, `var(--font-display)`). Les classes utilitaires
+  Tailwind n'existent pas en dehors du JSX scanné par `@source` — dans un
+  fichier `.css` custom, seule la variable est accessible.
+
+**Couleurs de fond**
+- `bg-surface` / `var(--color-surface)` — carte/panneau au premier plan (blanc)
+- `bg-panel` / `var(--color-panel)` — fond de section, légèrement distinct de la page
+- `bg-panel-2` / `var(--color-panel-2)` — fond de section, un cran plus marqué que `panel` (hover, zones actives)
+- `bg-background` / `var(--color-background)` — fond de page
+
+**Couleurs de bordure**
+- `border-border` / `var(--color-border)` — bordure standard
+- `border-border-soft` / `var(--color-border-soft)` — bordure discrète
+
+**Couleurs neutres (texte, icônes, fonds gris)**
+- `neutral-0` → `neutral-900` (ex. `bg-neutral-100`, `text-neutral-700`) /
+  `var(--color-neutral-100)`, `var(--color-neutral-700)`, … — échelle de gris
+  IBEE. Ne jamais utiliser l'échelle `gray-*` de Tailwind à la place, même si
+  les valeurs se ressemblent : `neutral-*` est la palette du projet, `gray-*`
+  est celle de Tailwind par défaut — deux échelles distinctes qui peuvent
+  diverger (elles divergent déjà en valeur exacte, voir §Le piège).
+
+**Couleurs sémantiques**
+- `success`, `error`, `warning`, `info` (ex. `bg-success`, `text-error`) /
+  `var(--color-success)`, `var(--color-error)`, … — jamais de
+  `red-*`/`green-*`/`emerald-*` bruts pour exprimer un état
+
+**Couleur d'accent produit**
+- `accent`, `accent-hover`, `accent-soft`, `accent-strong`, `accent-tint`
+  (ex. `bg-accent`) / `var(--color-accent)`, `var(--color-accent-hover)`, …
+
+**Couleurs CTA (bouton d'action principal hors système `.btn`)**
+- `bg-cta-primary` / `var(--color-cta-primary)` — fond
+- `hover:bg-cta-primary-hover` / `var(--color-cta-primary-hover)` — survol
+
+**Rayons (par rôle, jamais par taille)**
+- `rounded-card` / `var(--radius-card)` (18px) — cartes, panneaux
+- `rounded-field` / `var(--radius-field)` (12px) — champs de formulaire, inputs
+- `rounded-pill` / `var(--radius-pill)` (50px) — boutons/pills pleinement arrondis
+- `rounded-chip` / `var(--radius-chip)` (30px) — chips, tags
+- `rounded-tile` / `var(--radius-tile)` (14px) — tuiles/vignettes
+
+**Ombres**
+- `shadow-sm`, `shadow-md`, `shadow-lg` / `var(--shadow-sm)`, `var(--shadow-md)`, `var(--shadow-lg)` — élévation générique
+- `shadow-card` / `var(--shadow-card)` — carte au repos
+- `shadow-pop` / `var(--shadow-pop)` — élément flottant (popover, dropdown)
+- `shadow-nav` / `var(--shadow-nav)` — barres de navigation
+- `shadow-shell` / `var(--shadow-shell)` — conteneur applicatif principal
+
+**Polices**
+- `font-sans` / `var(--font-sans)` (Roboto) — texte courant
+- `font-display` / `var(--font-display)` (Poppins) — titres, boutons
+- `font-mono` / `var(--font-mono)` — code/valeurs techniques
+
+## Vocabulaire interdit dans tout code nouveau
+
+| Interdit | Remplacement | Pourquoi |
+|---|---|---|
+| `bg-white` | `bg-surface` | `surface` peut changer de valeur sans que le code appelant bouge |
+| `gray-*` (Tailwind) | `neutral-*` | substitution invisible : mêmes valeurs actuellement, mais deux échelles distinctes qui peuvent diverger |
+| `red-*`, `green-*`, `emerald-*` bruts | token sémantique (`error`, `success`, …) | un état doit porter un sens, pas une couleur codée en dur |
+| `rounded-sm`/`rounded-md`/`rounded-lg`/`rounded-xl` (échelle Tailwind par taille) | rayon par rôle (`--radius-card`, `--radius-field`, `--radius-pill`, `--radius-chip`, `--radius-tile`) | voir §Le piège ci-dessous |
+| Valeurs arbitraires Tailwind (`[22px]`, `[18px]`, `[#d95525]`, …) | le token existant le plus proche par rôle | une valeur arbitraire contourne le design system silencieusement |
+| Couleur hexadécimale en dur dans un composant | le token correspondant | perd la cohérence thème + casse toute mise à jour centralisée |
+| `--color-amber` (`bg-amber`, …) | `warning` (`--color-warning`) | doublon quasi-identique de `warning` (`#f59e0b` vs `#d97706`) — deux noms pour un seul rôle sémantique, source de confusion sur lequel utiliser |
+
+## Le piège : plusieurs noms Tailwind standards ont une valeur différente ici
+
+`tokens.css` redéfinit plusieurs clés `@theme` qui portent le **même nom**
+qu'un token par défaut de Tailwind, mais avec une **valeur différente**. Se
+fier à la valeur par défaut mémorisée (connaissance Tailwind standard) donne
+donc un résultat faux dans ce projet — pas juste "un peu différent", parfois
+un seuil ou une taille clairement décalés.
+
+**Rayons** (déjà interdits en tant que noms de taille, voir table ci-dessus —
+détail du décalage) :
+
+| Nom | Valeur IBEE | Valeur Tailwind par défaut |
+|---|---|---|
+| `--radius-sm` | 6px | 4px (`0.25rem`) |
+| `--radius-md` | 12px | 6px (`0.375rem`) |
+| `--radius-lg` | 16px | 8px (`0.5rem`) |
+| `--radius-xl` | 24px | 12px (`0.75rem`) |
+
+Concrètement : `--radius-xl` vaut **24px**, alors que `rounded-2xl` (le
+défaut Tailwind, censé être la valeur la plus proche de 24px dans l'échelle
+standard) vaut **16px**. Toute l'échelle de rayons IBEE est décalée de deux
+crans par rapport à l'intuition Tailwind standard — se fier au nom de taille
+Tailwind mémorisé donne systématiquement un rayon trop petit.
+
+C'est pourquoi les noms de **taille** (`sm`, `md`, `lg`, `xl`, `2xl`) sont
+interdits en dehors de `tokens.css` lui-même : utiliser exclusivement les
+noms de **rôle** (`--radius-card`, `--radius-field`, `--radius-pill`,
+`--radius-chip`, `--radius-tile`), qui ne dépendent pas de la mémoire de
+l'échelle par défaut.
+
+**Breakpoint `lg`** : `--breakpoint-lg` vaut **1200px** dans ce projet, alors
+que le défaut Tailwind (`lg:`) vaut **1024px** (`64rem`). Écrire `lg:` en se
+fiant à la connaissance standard de Tailwind fait donc apparaître le
+comportement `lg:` 176px trop tard — un layout testé "en desktop" entre
+1024px et 1200px peut sembler cassé alors que le code est correct : c'est
+juste que `lg:` ne s'est pas encore déclenché dans ce projet. Vérifier
+`--breakpoint-profile` (800px, seuil custom sans équivalent Tailwind) plutôt
+que de deviner un seuil standard pour toute mise en page profil.
+
+**Autres écarts audités dans `tokens.css`** (mêmes noms que Tailwind par
+défaut, valeurs différentes — moins piégeux car ils ne faussent pas un calcul
+de seuil ou de taille, mais à connaître) :
+
+| Nom | Écart |
+|---|---|
+| `--shadow-sm` / `--shadow-md` / `--shadow-lg` | valeurs IBEE nettement plus discrètes que les ombres par défaut Tailwind |
+| `--font-sans` / `--font-mono` | pile de police IBEE (Roboto / ui-monospace, monospace) au lieu de la pile système par défaut Tailwind — customisation volontaire, pas une erreur |
+| `--color-neutral-50` → `--color-neutral-900` | valeurs hex IBEE au lieu de l'échelle `oklch` par défaut Tailwind — c'est précisément pour cette divergence que `gray-*` est interdit au profit de `neutral-*` (voir table ci-dessus) |
+
+Aucun autre token de `tokens.css` ne partage un nom avec un token par défaut
+Tailwind (`--radius-card`, `--breakpoint-profile`, `--color-accent`, etc.
+sont tous des noms propres au projet, sans collision).
+
+## Rayons concentriques
+
+Quand une image est encastrée dans une carte avec une marge intérieure :
+
+```
+rayon extérieur (carte) = rayon intérieur (image) + marge
+```
+
+Sans cette règle, les deux arrondis ne sont pas concentriques et l'écart de
+marge entre l'image et le bord de la carte varie visuellement selon l'angle.
+
+## Espacements
+
+`tokens.css` ne redéfinit **pas** `--spacing` (confirmé : aucune clé
+`--spacing*` dans le bloc `@theme` du projet) — l'échelle d'espacement
+Tailwind par défaut (`--spacing: 0.25rem`, donc `p-4` = 16px, etc.) s'applique
+telle quelle, sans piège de décalage.
+
+Les classes `p-*`, `m-*`, `gap-*` (et variantes `px-`, `py-`, `space-x-`,
+`space-y-`, …) standard Tailwind sont donc du **vocabulaire autorisé**, à
+utiliser librement pour tout espacement courant (marges, paddings, gaps).
+
+**La clause d'escalade ne s'applique pas aux marges/espacements courants.**
+Elle vise les tokens de rôle (couleur, rayon, ombre) où une valeur arbitraire
+contournerait une décision de design déjà prise. L'espacement Tailwind
+standard n'a pas cette contrainte — sans cette précision, la clause
+d'escalade se déclencherait à chaque `p-3` ou `gap-2`, ce qui n'est pas
+l'intention.
+
+## Boutons
+
+`.btn--block` (largeur 100%) existe déjà comme modificateur du système, mais
+est actuellement défini dans `packages/ui-react/src/profile/detail-styles.css`
+plutôt que dans `button.css` — un rapatriement dans `button.css` est prévu
+pour que tous les modificateurs `.btn*` vivent au même endroit. En attendant,
+il reste utilisable (`class="btn btn--dark btn--block"`), simplement pas
+co-localisé avec le reste du système.
+
+Tout bouton utilise le système `.btn` (+ modificateur `.btn--dark` ou
+`.btn--ghost`) ou `.iconbtn` pour les boutons icône seule, défini dans
+`packages/ui-react/src/button.css` et importé globalement via
+`apps/platform/src/app/globals.css`.
+
+Ne jamais restyler un `<button>` au cas par cas (classes Tailwind ad hoc,
+styles inline). Si aucune variante existante ne convient, voir la clause
+d'escalade ci-dessous — ne pas en créer une localement.
+
+## Clause d'escalade (la plus importante)
+
+Si un besoin visuel n'entre dans **aucun** token existant (couleur, rayon,
+ombre, taille) :
+
+1. **Ne pas inventer de valeur.**
+2. **Ne pas utiliser de valeur arbitraire** (`[22px]`, couleur hex en dur, etc.).
+3. **S'arrêter** et décrire précisément le besoin à Killian (où, pourquoi,
+   quelle valeur semblerait nécessaire).
+4. **Demander quel token créer** — un nouveau token est une décision de
+   design produit, pas un détail d'implémentation technique. Killian
+   tranche ; l'ajout se fait ensuite dans `tokens.css`, jamais dans un
+   composant.
