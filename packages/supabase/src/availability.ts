@@ -165,14 +165,16 @@ export async function getAvailableSlots(
   // Check if date is in the past
   if (dateObj < new Date(now.toISOString().split('T')[0] + 'T00:00:00Z')) return []
 
-  // 2. Check exceptions for this date
-  const { data: exceptions } = await client
-    .from('availability_exceptions')
-    .select('*')
-    .eq('entity_id', entityId)
-    .eq('date', date)
+  // 2. Check exceptions for this date (RPC restreinte -- pas de lecture
+  // directe de la table, voir migration 20260727100000_availability_exceptions_public_rpc.sql)
+  const { data: exceptionRows } = await client.rpc('get_availability_exception_for_date', {
+    p_entity_id: entityId,
+    p_date: date,
+  })
 
-  const exception = exceptions?.[0]
+  const exception = exceptionRows?.[0] as
+    | { is_blocked: boolean; start_time: string | null; end_time: string | null }
+    | undefined
   if (exception?.is_blocked) return [] // Day is blocked
 
   // 3. Get schedule for this day of week (or custom hours from exception)
