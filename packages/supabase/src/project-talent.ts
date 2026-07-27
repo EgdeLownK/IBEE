@@ -121,6 +121,23 @@ export async function updateJobApplicationStatus(
   if (error) throw error
 }
 
+// Utilisee par la Server Action publique de candidature : verifie que
+// l'offre existe ET accepte encore les candidatures, sans jamais faire
+// confiance a l'offer_id recu du client. Retourne null (pas d'exception)
+// pour laisser l'appelant produire un message candidat propre plutot que
+// de propager une erreur RLS/Postgres brute.
+export async function getActiveJobOffer(client: Client, offerId: string): Promise<JobOffer | null> {
+  const { data, error } = await client
+    .from('entity_job_offers')
+    .select('*')
+    .eq('id', offerId)
+    .eq('status', 'active')
+    .maybeSingle()
+
+  if (error) throw error
+  return data
+}
+
 export type CreateJobApplicationInput = {
   offer_id: string
   first_name: string

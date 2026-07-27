@@ -27,7 +27,8 @@
     "react-easy-crop": "^6.1.0",
     "sharp": "^0.34.3",
     "sonner": "^2.0.7",
-    "stripe": "^22.2.1"
+    "stripe": "^22.2.1",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
