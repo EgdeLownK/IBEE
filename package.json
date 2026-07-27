@@ -10,7 +10,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "deadcode": "knip",
-    "gen-types": "node scripts/gen-types.mjs"
+    "gen-types": "node scripts/gen-types.mjs",
+    "design:check": "node scripts/design-guard.mjs"
   },
   "devDependencies": {
     "knip": "^6.4.1",
