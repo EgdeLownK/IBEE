@@ -14,3 +14,15 @@ paths:
 - Toasts : `sonner` avec `<Toaster position="bottom-right" richColors />`
 - Navigation : 2 niveaux — Rail principal (`/dashboard/*`) + Sidebar contextuelle (`/dashboard/site/*`)
 - Composants interactifs → `@ibee/ui-react`, logique métier → `@ibee/shared`
+
+## Doctrine des surfaces (post-migration Astro → Next)
+
+| Surface | URL | Rôle |
+|---------|-----|------|
+| Public | `/{slug}`, pages détail, explore… | SSR/ISR SEO, interactions visiteur |
+| Studio | `/dashboard/site` | Édition owner — Server Actions |
+| Preview owner | `/{slug}?preview=1` | Aperçu public sans redirect studio |
+
+- Owner sur `/{slug}` sans `?preview=1` → redirect `/dashboard/site`.
+- Cache prod : `revalidatePath` (Vercel) — pas de purge Cloudflare.
+- Invalidation : `revalidatePublicPaths` / `revalidateAfterEntityMutation` dans les mutations.

@@ -30,4 +30,4 @@ App Next.js déployée sur Vercel. Surface **publique** (profils SEO, pages dét
 pnpm dev   # depuis la racine → localhost:3000
 ```
 
-Variables : voir `apps/platform/.env.example`
+Variables : `apps/platform/.env.local` en local (voir `apps/platform/.env.example` pour le template)
