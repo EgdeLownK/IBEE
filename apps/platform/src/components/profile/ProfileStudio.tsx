@@ -15,6 +15,7 @@ import { ProfileStudioMenuTabs } from './ProfileStudioMenuTabs'
 import { ProfileStudioSections } from './ProfileStudioSections'
 import { ProfileStudioEmptyState } from './ProfileStudioEmptyState'
 import { HomeWidgetsPanel } from './home-widgets/HomeWidgetsPanel'
+import { PublicJobOffersList } from '@/components/public/jobs/PublicJobOffersList'
 import { AddContentDialog } from './add-content/AddContentDialog'
 import { HistoryEditDialog } from './history/HistoryEditDialog'
 import { EventCreateWizard } from './event-create/EventCreateWizard'
@@ -239,6 +240,8 @@ export function ProfileStudio() {
               <StudioPlaylistsSkeleton />
             ) : activeType === 'home' ? (
               <HomeWidgetsPanel data={studioData} onOpenAddContent={openAddContent} />
+            ) : activeType === 'jobs' ? (
+              <PublicJobOffersList offers={jobOffers} entitySlug={baseData.entity.slug} />
             ) : (
               <ProfileStudioSections
                 activeType={activeType}

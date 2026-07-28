@@ -145,9 +145,20 @@ export async function loadProfileStudioPlaylists() {
 
   return {
     publications,
-    // Seul le compte sert au studio (état vide + visibilité de l'onglet) :
-    // pas de contenu Supabase brut renvoyé, cf. TS2742 (type non portable).
-    jobOffers: jobOffers.map((o) => ({ id: o.id })),
+    // Champs mappés explicitement (pas de spread du type Supabase brut, cf.
+    // TS2742 — type non portable) : même forme que PublicJobOffersList,
+    // réutilisé tel quel par le studio (voir ProfileStudio.tsx).
+    jobOffers: jobOffers.map((o) => ({
+      id: o.id,
+      title: o.title,
+      contract_type: o.contract_type,
+      location_type: o.location_type,
+      location_text: o.location_text,
+      compensation_type: o.compensation_type,
+      compensation_amount: o.compensation_amount,
+      compensation_frequency: o.compensation_frequency,
+      created_at: o.created_at,
+    })),
     shopProducts: products.map((p, i) => ({
       id: p.id,
       title: p.title,
