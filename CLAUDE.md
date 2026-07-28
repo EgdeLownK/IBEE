@@ -41,7 +41,8 @@ supabase/migrations/   Migrations SQL
 3. **Auto-amélioration.** Erreur significative (bug introduit, mauvaise approche,
    oubli de vérification) → mémoire de session, pour ne pas la reproduire. Piège
    technique qui passe le filtre de `.claude/rules/collaboration.md` §Traçabilité →
-   `.ibee-brain/_BRAIN-DEV.md`. Erreurs de process → mémoire Claude Code.
+   la règle `.claude/rules/` du domaine concerné. Erreurs de process → mémoire
+   Claude Code.
 4. **Vérifier après chaque tâche** : `pnpm type-check` → `pnpm build` → tests
    unitaires si existants → (modif UI/CSS/JS client) vérif navigateur par Killian
    avant de considérer la tâche close — "0 erreur TypeScript ≠ runtime OK". Check en
