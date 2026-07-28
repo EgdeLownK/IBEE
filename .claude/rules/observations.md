@@ -16,7 +16,7 @@ Les Claudes sont sur le terrain. Killian ne l'est pas. Les observations doivent 
 
 **Dans le chat** : signaler à Killian au moment où c'est détecté (court, factuel).
 
-> `_observations.md` a été retiré du brain (structure simplifiée à 5 fichiers racine, 2026-07-24) — il n'y a plus de canal d'écriture dédié. Si Killian veut qu'une observation persiste au-delà de la session, elle doit être portée dans le fichier canonique concerné (`_BRAIN-STATE.md` §Dette si actionnable techniquement, sinon laissée au chat). Pas de nouveau fichier créé pour ça sans son accord.
+> `_observations.md` a été retiré du brain (structure simplifiée à 5 fichiers racine, 2026-07-24) — il n'y a plus de canal d'écriture dédié. L'état/dette n'est plus tracé dans le dépôt (outil externe) : si Killian veut qu'une observation persiste au-delà de la session, il la porte dans cet outil ; sinon elle reste au chat. Pas de nouveau fichier créé pour ça sans son accord.
 
 ## Ton
 
