@@ -18,6 +18,7 @@ import {
   listMenuSectionStates,
   listProductCategories,
   listProductsByEntity,
+  listProjectJobOffers,
   listUpcomingEventsForOwner,
 } from '@ibee/supabase'
 
@@ -112,13 +113,14 @@ export async function loadProfileStudioPlaylists() {
 
   const { supabase, entity } = ctx
 
-  const [publications, appointmentTypes, products, productCategories, upcomingEvents] =
+  const [publications, appointmentTypes, products, productCategories, upcomingEvents, jobOffers] =
     await Promise.all([
       getPublicationsByEntity(supabase, entity.id, { publicOnly: false, limit: 50 }),
       getAppointmentTypesByEntity(supabase, entity.id, { activeOnly: true }),
       listProductsByEntity(supabase, entity.id, { limit: 60 }),
       listProductCategories(supabase, entity.id),
       listUpcomingEventsForOwner(supabase, entity.id),
+      listProjectJobOffers(supabase, entity.id),
     ])
 
   const [productReviewStats, serviceReviewStats, eventRegistrationCounts] = await Promise.all([
@@ -143,6 +145,9 @@ export async function loadProfileStudioPlaylists() {
 
   return {
     publications,
+    // Seul le compte sert au studio (état vide + visibilité de l'onglet) :
+    // pas de contenu Supabase brut renvoyé, cf. TS2742 (type non portable).
+    jobOffers: jobOffers.map((o) => ({ id: o.id })),
     shopProducts: products.map((p, i) => ({
       id: p.id,
       title: p.title,
