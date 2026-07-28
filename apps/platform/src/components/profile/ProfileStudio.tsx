@@ -13,7 +13,9 @@ import { useProfileStudioData } from './ProfileStudioDataContext'
 import { StudioPlaylistsSkeleton } from './StudioPlaylistsSkeleton'
 import { ProfileStudioMenuTabs } from './ProfileStudioMenuTabs'
 import { ProfileStudioSections } from './ProfileStudioSections'
+import { ProfileStudioEmptyState } from './ProfileStudioEmptyState'
 import { HomeWidgetsPanel } from './home-widgets/HomeWidgetsPanel'
+import { PublicJobOffersList } from '@/components/public/jobs/PublicJobOffersList'
 import { AddContentDialog } from './add-content/AddContentDialog'
 import { HistoryEditDialog } from './history/HistoryEditDialog'
 import { EventCreateWizard } from './event-create/EventCreateWizard'
@@ -26,9 +28,11 @@ type HistoryBlock = ProfileStudioData['historyBlocks'][number]
 type ShopProduct = ProfileStudioData['shopProducts'][number]
 type PlaylistService = ProfileStudioData['playlistServices'][number]
 type PlaylistEvent = ProfileStudioData['playlistEvents'][number]
+type JobOffer = ProfileStudioData['jobOffers'][number]
 
 const EMPTY_PLAYLISTS = {
   publications: [] as Publication[],
+  jobOffers: [] as JobOffer[],
   shopProducts: [] as ShopProduct[],
   productCategories: [] as ProfileStudioData['productCategories'],
   playlistServices: [] as PlaylistService[],
@@ -54,6 +58,7 @@ export function ProfileStudio() {
   const [jobOfferWizardOpen, setJobOfferWizardOpen] = useState(false)
   const [jobOfferReturnToAddContent, setJobOfferReturnToAddContent] = useState(false)
   const [publications, setPublications] = useState<Publication[]>([])
+  const [jobOffers, setJobOffers] = useState<JobOffer[]>([])
   const [historyBlocks, setHistoryBlocks] = useState<HistoryBlock[]>(shell.historyBlocks)
   const [shopProducts, setShopProducts] = useState<ShopProduct[]>([])
   const [playlistServices, setPlaylistServices] = useState<PlaylistService[]>([])
@@ -70,6 +75,7 @@ export function ProfileStudio() {
   useEffect(() => {
     if (!playlists) return
     setPublications(playlists.publications)
+    setJobOffers(playlists.jobOffers)
     setShopProducts(playlists.shopProducts)
     setPlaylistServices(playlists.playlistServices)
     setPlaylistEvents(playlists.playlistEvents)
@@ -132,14 +138,22 @@ export function ProfileStudio() {
         playlistServices,
         playlistEvents,
         historyBlocks,
+        jobOffers,
       }),
-    [publications, shopProducts, playlistServices, playlistEvents, historyBlocks],
+    [publications, shopProducts, playlistServices, playlistEvents, historyBlocks, jobOffers],
   )
 
   const visibleTabTypes = useMemo(
     () => new Set<string>(getVisibleProfileTabs('studio', menuSections, tabContent)),
     [menuSections, tabContent],
   )
+
+  // Accueil est toujours "avec contenu" (hasProfileTabContent), donc exclu ici :
+  // seuls les types de contenu éditorial comptent pour l'état vide global.
+  const hasAnyContent =
+    tabContent.publicationsCount > 0 ||
+    tabContent.jobOffersCount > 0 ||
+    tabContent.historyBlocksCount > 0
 
   useEffect(() => {
     if (!visibleTabTypes.has(activeType)) setActiveType('home')
@@ -211,61 +225,71 @@ export function ProfileStudio() {
           onEntityChange={(patch) => setEntity((prev) => ({ ...prev, ...patch }))}
         />
 
-        <ProfileStudioMenuTabs
-          menuSections={menuSections}
-          tabContent={tabContent}
-          activeType={activeType}
-          onTabChange={setActiveType}
-        />
-
-        {!playlistsReady ? (
-          <StudioPlaylistsSkeleton />
-        ) : activeType === 'home' ? (
-          <HomeWidgetsPanel data={studioData} onOpenAddContent={openAddContent} />
+        {playlistsReady && !hasAnyContent ? (
+          <ProfileStudioEmptyState onAddContent={openAddContent} />
         ) : (
-          <ProfileStudioSections
-            activeType={activeType}
-            homeWidgets={baseData.homeWidgets}
-            shopProducts={shopProducts}
-            playlistServices={playlistServices}
-            playlistEvents={playlistEvents}
-            publications={publications}
-            historyBlocks={historyBlocks}
-            faqItems={baseData.faqItems}
-            productCategories={baseData.productCategories}
-            entitySlug={baseData.entity.slug}
-            entityDisplayName={entity.display_name}
-            entityAvatarUrl={entity.avatar_url}
-            webBaseUrl={baseData.webEditUrl}
-            dashboardBaseUrl={baseData.dashboardUrl}
-            onEditHistory={() => openHistoryEdit(false)}
-            onPublicationUpdated={(pub) =>
-              setPublications((prev) =>
-                prev.map((p) =>
-                  p.id === pub.id
-                    ? {
-                        ...p,
-                        title: pub.title,
-                        slug: pub.slug,
-                        content: pub.content,
-                        published_at: pub.published_at ?? p.published_at,
-                        status:
-                          pub.status === 'published' || pub.status === 'scheduled'
-                            ? pub.status
-                            : p.status,
-                        publication_media: Array.isArray(pub.publication_media)
-                          ? (pub.publication_media as Publication['publication_media'])
-                          : p.publication_media,
-                      }
-                    : p,
-                ),
-              )
-            }
-            onPublicationDeleted={(id) =>
-              setPublications((prev) => prev.filter((p) => p.id !== id))
-            }
-            onEventDeleted={(id) => setPlaylistEvents((prev) => prev.filter((ev) => ev.id !== id))}
-          />
+          <>
+            <ProfileStudioMenuTabs
+              menuSections={menuSections}
+              tabContent={tabContent}
+              activeType={activeType}
+              onTabChange={setActiveType}
+            />
+
+            {!playlistsReady ? (
+              <StudioPlaylistsSkeleton />
+            ) : activeType === 'home' ? (
+              <HomeWidgetsPanel data={studioData} onOpenAddContent={openAddContent} />
+            ) : activeType === 'jobs' ? (
+              <PublicJobOffersList offers={jobOffers} entitySlug={baseData.entity.slug} />
+            ) : (
+              <ProfileStudioSections
+                activeType={activeType}
+                homeWidgets={baseData.homeWidgets}
+                shopProducts={shopProducts}
+                playlistServices={playlistServices}
+                playlistEvents={playlistEvents}
+                publications={publications}
+                historyBlocks={historyBlocks}
+                faqItems={baseData.faqItems}
+                productCategories={baseData.productCategories}
+                entitySlug={baseData.entity.slug}
+                entityDisplayName={entity.display_name}
+                entityAvatarUrl={entity.avatar_url}
+                webBaseUrl={baseData.webEditUrl}
+                dashboardBaseUrl={baseData.dashboardUrl}
+                onEditHistory={() => openHistoryEdit(false)}
+                onPublicationUpdated={(pub) =>
+                  setPublications((prev) =>
+                    prev.map((p) =>
+                      p.id === pub.id
+                        ? {
+                            ...p,
+                            title: pub.title,
+                            slug: pub.slug,
+                            content: pub.content,
+                            published_at: pub.published_at ?? p.published_at,
+                            status:
+                              pub.status === 'published' || pub.status === 'scheduled'
+                                ? pub.status
+                                : p.status,
+                            publication_media: Array.isArray(pub.publication_media)
+                              ? (pub.publication_media as Publication['publication_media'])
+                              : p.publication_media,
+                          }
+                        : p,
+                    ),
+                  )
+                }
+                onPublicationDeleted={(id) =>
+                  setPublications((prev) => prev.filter((p) => p.id !== id))
+                }
+                onEventDeleted={(id) =>
+                  setPlaylistEvents((prev) => prev.filter((ev) => ev.id !== id))
+                }
+              />
+            )}
+          </>
         )}
       </ProfileShell>
 
