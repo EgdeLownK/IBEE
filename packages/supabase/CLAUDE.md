@@ -15,8 +15,8 @@ Package partagé utilisé par `apps/platform`. Types auto-générés, helpers ty
 - `src/cache.ts` — purgeEntityCache, purgePublicationCache
 - `src/index.ts` — barrel exports
 
-## Tables (14)
-entity, entity_menu_sections, entity_home_widgets, entity_global_features, entity_faq_items, follows, publications, publication_media, publication_comments, notifications, appointment_types, availability_schedules, availability_exceptions, bookings
+## Tables
+Liste exacte et à jour dans `src/types.ts` (`Database['public']['Tables']`) — ne pas recopier de compte ici, il dérive à chaque migration.
 
 ## Régénérer les types
 ```bash
