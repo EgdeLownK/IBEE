@@ -10,6 +10,15 @@ Source des tokens : `packages/ui-react/src/tokens.css` (bloc `@theme`). Ne
 jamais lire les valeurs ci-dessous comme la source de vérité — en cas de
 divergence, `tokens.css` gagne et cette règle doit être corrigée.
 
+## Configuration Tailwind (`@source`)
+
+Toute nouvelle source de classes Tailwind (nouveau package workspace scanné,
+ex. `packages/ui-react`) doit être déclarée via `@source` dans
+`apps/platform/src/app/globals.css`. **L'échec est silencieux** : sans cette
+directive, les classes utilitaires du package concerné ne sont simplement pas
+générées — pas d'erreur, pas de warning au build, juste un composant qui rend
+sans le style attendu. C'est ce qui rend ce piège coûteux à diagnostiquer.
+
 ## Vocabulaire autorisé (par rôle)
 
 Deux formes existent pour chaque token, à utiliser selon le fichier :
@@ -184,6 +193,15 @@ Tout bouton utilise le système `.btn` (+ modificateur `.btn--dark` ou
 Ne jamais restyler un `<button>` au cas par cas (classes Tailwind ad hoc,
 styles inline). Si aucune variante existante ne convient, voir la clause
 d'escalade ci-dessous — ne pas en créer une localement.
+
+## Debug CSS
+
+- **Coin/bord rogné ou tronqué** → vérifier `overflow: hidden` + `border-radius`
+  sur un **conteneur parent** : un enfant pleine largeur dont un bord touche le
+  bord du parent voit ses coins clippés par le radius du parent.
+- Avant de styler un élément, lire le CSS de **son conteneur** : reliquats
+  (`overflow`, `border-radius`, `::before`, `z-index`) d'un ancien design
+  cassent souvent l'affichage.
 
 ## Clause d'escalade (la plus importante)
 

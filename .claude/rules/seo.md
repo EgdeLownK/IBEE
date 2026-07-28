@@ -3,6 +3,8 @@ paths:
   - "apps/platform/src/app/robots.ts"
   - "apps/platform/src/app/sitemap.ts"
   - "apps/platform/src/components/public/**/*JsonLd*.tsx"
+  - "apps/platform/src/app/(public)/**"
+  - "apps/platform/src/components/public/**"
 ---
 # SEO/GEO/AEO
 
@@ -20,6 +22,9 @@ SSR/ISR).
   'published'` + services `is_active = true` + produits/événements
   équivalents. Pas de colonne `is_public` — ne pas la chercher, elle
   n'existe pas sur `entity`.
+- **Sémantique HTML stricte** sur toute page/composant public : `<article>`,
+  `<header>`, `<nav>`, `<main>`, `<section>` plutôt que des `<div>` génériques
+  — critique pour le parsing SEO/GEO/AEO (moteurs classiques et LLM).
 - **JSON-LD** : un composant dédié par type de contenu —
   `ProfileJsonLd`, `ProductSchemaJsonLd`, `ServiceSchemaJsonLd`,
   `EventSchemaJsonLd`, `PublicationArticleJsonLd`.

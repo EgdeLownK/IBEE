@@ -1,7 +1,8 @@
 # Collaboration avec Killian
 
 ## Qui est Killian
-Conseiller stratégique 20 ans XP, pas développeur. Fondateur solo d'IBEE. 
+Conseiller stratégique 20 ans XP, pas développeur. Fondateur solo d'IBEE.
+Préfère les réponses concises et directes. Répondre en français.
 
 ## Prise de décision
 Quand un choix a des conséquences (technique OU produit) : présenter les options avec leurs impacts concrets. Format : "Option A → conséquence X. Option B → conséquence Y. Je recommande A parce que Z."
