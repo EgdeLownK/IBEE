@@ -27,3 +27,12 @@ Si une demande contredit `.claude/rules/produit.md` (doctrine produit) ou le mar
 
 ## Validation visuelle
 Claude Code est aveugle sur le rendu. Jamais considérer un changement UI comme "fait" sans validation Killian dans le navigateur.
+
+## Fin de mission : commit + push obligatoires
+Toute mission qui produit ou modifie des fichiers se termine par un commit sur une branche nommée, puis un push. Un livrable non poussé n'existe pas : il n'est ni sauvegardé, ni relisible, ni vérifiable par la CI.
+
+Le rapport indique explicitement le hash du commit, le nom de la branche, et si elle a été poussée. "Arbre de travail propre" ne signifie rien si rien n'a été commité — c'est même le symptôme inverse (du travail a disparu, pas qu'il est fini).
+
+Attention particulière aux fichiers non suivis par git (nouveaux fichiers) : invisibles dans un diff, ils sont perdus par toute commande de nettoyage (`git clean`, changement de branche destructif, etc.).
+
+Exception unique : mission déclarée **LECTURE SEULE** dès le départ (aucun fichier produit). Le rapport le dit explicitement — pas de commit à annoncer.
