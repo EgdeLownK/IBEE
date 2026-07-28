@@ -23,6 +23,6 @@ paths:
 
 ## Chaîne de vérification
 Après chaque tâche d'implémentation :
-1. `pnpm typecheck`
+1. `pnpm type-check`
 2. `pnpm test`
 3. `pnpm build`
