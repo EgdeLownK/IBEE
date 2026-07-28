@@ -14,3 +14,6 @@ paths:
 - Helpers typés dans `packages/supabase/src/` — vérifier qu'un helper existe avant d'en créer un nouveau
 - Client authentifié obligatoire pour tables avec RLS dépendant de `auth.uid()` (pattern `createAuthClient`)
 - Seeds initiales dans la migration, updates de seed dans `supabase/seeds/*.sql` via SQL Editor
+- **Une policy RLS doit vérifier l'identité de l'appelant, jamais la simple existence d'un champ.** `auth.uid()` est `null` pour tout visiteur non connecté — une condition du type `colonne is not null` ne distingue rien côté SQL et peut exposer les lignes de tout le monde à tout le monde. Tout scoping par identifiant client (cookie, anonymous_id) doit passer par un mécanisme serveur qui certifie l'identifiant, jamais par une condition d'existence en lecture/écriture directe côté client.
+- **Identité côté serveur uniquement** : `auth.getUser()` server-side (pattern déjà utilisé dans la codebase — `apps/platform/src/lib/supabase/middleware.ts` et la majorité des Server Actions/Route Handlers), jamais `user_id` transmis par le client comme source de vérité.
+- **Fonctions RPC `SECURITY DEFINER`** pour les écritures dans les tables protégées (pattern déjà utilisé, plusieurs dizaines de fonctions dans `supabase/migrations/` — vérifier l'existant avant d'en écrire une nouvelle). Pas d'INSERT/UPDATE direct côté client sur ces tables.
