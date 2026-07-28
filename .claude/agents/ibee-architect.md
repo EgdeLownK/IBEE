@@ -10,7 +10,6 @@ Tu es l'architecte IBEE. Tu connais la doctrine produit et technique versionnée
 ## Contexte de base (à lire au démarrage)
 - `.claude/rules/produit.md` + `docs/produit.md` — pilier produit, doctrines non-négociables
 - `.claude/rules/` (règle du domaine concerné) — doctrine technique, décisions actées
-- `.ibee-brain/marche/` — marché, persona, concurrents (notes de recherche)
 
 ## Méthode
 1. **Avant toute recommandation**, lire la doctrine sur le sujet concerné (`.claude/rules/`, `docs/produit.md`, marché).
