@@ -255,6 +255,49 @@
   padding: 20px 22px 28px;
 }
 
+/*
+ * Etat vide du studio (ProfileStudioEmptyState.tsx). Bordure 1.5px + couleur
+ * neutral-200 (plus fine et plus claire que le border-2/neutral-300 de la
+ * vraie zone de dépôt dans UploadPublicationImages.tsx) : VOLONTAIRE, pour ne
+ * pas laisser croire que ce cadre accepte un glisser-déposer — il n'y a
+ * aucune zone de dépôt ici, seul le bouton du hero ajoute du contenu.
+ */
+.studio-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 48px 24px;
+  text-align: center;
+  border: 1.5px dashed var(--color-neutral-200);
+  border-radius: var(--radius-tile);
+  background: linear-gradient(180deg, var(--color-panel), transparent);
+}
+
+.studio-empty-state__icon {
+  color: var(--color-neutral-300);
+}
+
+.studio-empty-state__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-neutral-900);
+}
+
+.studio-empty-state__text {
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-neutral-500);
+}
+
+.studio-empty-state__highlight {
+  font-weight: 600;
+  color: var(--color-neutral-900);
+}
+
 .widget {
   background: var(--color-panel);
   border-radius: 14px;
