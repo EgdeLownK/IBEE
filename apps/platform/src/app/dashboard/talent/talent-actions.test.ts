@@ -1,53 +1,81 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 
-// PREUVE PHASE 1 (mission fix/talent-actions-auth) : ce test documente l'etat
-// AVANT correction. Il mocke un backend qui n'applique aucune RLS (represente
-// "et si le RLS etait desactive/mal configure ?", exactement la question que
-// la mission pose) pour isoler ce que la couche applicative controle par
-// elle-meme. Reponse aujourd'hui : rien. `authGetUser` est cable dans le mock
-// mais jamais appele par le code de production - la preuve que talent-actions.ts
-// n'etablit jamais l'identite de l'appelant avant de muter.
-
-const authGetUser = vi.fn()
+// PREUVE PHASE 1 -> PHASE 3 (mission fix/talent-actions-auth).
+// Avant correction, ce fichier prouvait que les 4 actions ne consultaient
+// jamais l'identite de l'appelant (auth.getUser() jamais appele, mutation
+// tentee quel que soit l'entityId recu). Apres correction, les memes
+// scenarios sont inverses : un appel legitime (proprietaire OU membre
+// d'equipe avec la permission 'talent', via la RPC entity_user_has_permission)
+// passe ; le meme appel avec une entite etrangere est refuse par le code
+// AVANT toute mutation en base - meme si le mock ne simule aucune RLS
+// (equivalent a "RLS desactivee"), ce qui isole precisement ce que le code
+// applicatif garantit par lui-meme.
 
 type Call = { table: string; op: string; args: unknown[] }
-let calls: Call[] = []
+let dbCalls: Call[] = []
 
-function makeThenableChain(table: string) {
+let mockUser: { id: string } | null = null
+let mockPermission = false
+let mockApplication: { offer_id: string } | null = null
+let mockOffer: { entity_id: string; status?: string } | null = null
+
+const authGetUser = vi.fn(async () => ({ data: { user: mockUser } }))
+
+const rpcCalls: Array<{ fn: string; args: unknown }> = []
+const rpcMock = vi.fn(async (fn: string, args: unknown) => {
+  rpcCalls.push({ fn, args })
+  if (fn === 'entity_user_has_permission') {
+    return { data: mockPermission, error: null }
+  }
+  return { data: null, error: null }
+})
+
+function singleResult(table: string) {
+  if (table === 'entity_job_applications') return { data: mockApplication, error: null }
+  if (table === 'entity_job_offers') return { data: mockOffer, error: null }
+  return { data: null, error: null }
+}
+
+function makeChain(table: string) {
   const chain = {
     delete: (...args: unknown[]) => {
-      calls.push({ table, op: 'delete', args })
+      dbCalls.push({ table, op: 'delete', args })
       return chain
     },
     update: (...args: unknown[]) => {
-      calls.push({ table, op: 'update', args })
+      dbCalls.push({ table, op: 'update', args })
       return chain
     },
     insert: (...args: unknown[]) => {
-      calls.push({ table, op: 'insert', args })
+      dbCalls.push({ table, op: 'insert', args })
       return chain
     },
     select: (...args: unknown[]) => {
-      calls.push({ table, op: 'select', args })
+      dbCalls.push({ table, op: 'select', args })
       return chain
     },
     eq: (...args: unknown[]) => {
-      calls.push({ table, op: 'eq', args })
+      dbCalls.push({ table, op: 'eq', args })
       return chain
     },
-    single: (...args: unknown[]) => {
-      calls.push({ table, op: 'single', args })
-      return chain
+    single: async () => {
+      dbCalls.push({ table, op: 'single', args: [] })
+      return singleResult(table)
     },
-    // Le query builder Supabase reel est thenable : `await` resout
-    // directement la chaine sans `.then()` explicite cote appelant.
+    maybeSingle: async () => {
+      dbCalls.push({ table, op: 'maybeSingle', args: [] })
+      return singleResult(table)
+    },
+    // Le query builder Supabase reel est thenable : `await` resout la
+    // chaine sans `.then()` explicite cote appelant (cas update/delete/insert
+    // sans .single()/.maybeSingle() final).
     then: (resolve: (v: { data: null; error: null }) => void) =>
       resolve({ data: null, error: null }),
   }
   return chain
 }
 
-const fromMock = vi.fn((table: string) => makeThenableChain(table))
+const fromMock = vi.fn((table: string) => makeChain(table))
 
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
 
@@ -55,6 +83,7 @@ vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn(async () => ({
     from: fromMock,
     auth: { getUser: authGetUser },
+    rpc: rpcMock,
   })),
 }))
 
@@ -66,57 +95,153 @@ const {
 } = await import('./talent-actions')
 
 beforeEach(() => {
-  calls = []
+  dbCalls = []
+  rpcCalls.length = 0
+  mockUser = null
+  mockPermission = false
+  mockApplication = null
+  mockOffer = null
   fromMock.mockClear()
   authGetUser.mockClear()
+  rpcMock.mockClear()
 })
 
-const VICTIM_ENTITY = 'entity-victime-11111111-1111-1111-1111-111111111111'
-const VICTIM_OFFER = 'offer-victime-2222222-2222-2222-2222-222222222222'
+const OWNED_ENTITY = 'entity-proprietaire-1111-1111-1111-111111111111'
+const FOREIGN_ENTITY = 'entity-etrangere-2222-2222-2222-222222222222'
+const OFFER_ID = 'offer-3333-3333-3333-333333333333'
 
-describe('talent-actions.ts — entityId non verifie contre la session (avant correction)', () => {
-  it("deleteJobOfferAction supprime une offre d'une entite non verifiee, sans jamais consulter l'identite de l'appelant", async () => {
-    await deleteJobOfferAction(VICTIM_ENTITY, VICTIM_OFFER)
-
-    // Aucun controle d'identite : auth.getUser() n'est jamais sollicite.
-    expect(authGetUser).not.toHaveBeenCalled()
-    // La mutation part quand meme vers la BDD, filtree sur l'entityId fourni
-    // par l'appelant - jamais compare a un utilisateur authentifie.
-    const deleteCall = calls.find((c) => c.table === 'entity_job_offers' && c.op === 'delete')
-    const entityFilter = calls.find(
-      (c) => c.table === 'entity_job_offers' && c.op === 'eq' && c.args[0] === 'entity_id',
-    )
-    expect(deleteCall).toBeDefined()
-    expect(entityFilter?.args).toEqual(['entity_id', VICTIM_ENTITY])
-  })
-
-  it("updateJobOfferAction met a jour une offre d'une entite non verifiee, sans jamais consulter l'identite de l'appelant", async () => {
-    await updateJobOfferAction(VICTIM_ENTITY, VICTIM_OFFER, { title: 'Modifie par un tiers' })
-
-    expect(authGetUser).not.toHaveBeenCalled()
-    const updateCall = calls.find((c) => c.table === 'entity_job_offers' && c.op === 'update')
-    expect(updateCall).toBeDefined()
-  })
-
-  it('createJobOfferAction crée une offre rattachée à un entityId non vérifié, sans jamais consulter l’identité de l’appelant', async () => {
-    await createJobOfferAction(VICTIM_ENTITY, {
-      title: 'Offre créée par un tiers',
-      contract_type: 'cdi',
-      status: 'active',
-      location_type: 'remote',
+describe('talent-actions.ts — permission verifiee via entity_user_has_permission (apres correction)', () => {
+  describe('createJobOfferAction / updateJobOfferAction / deleteJobOfferAction', () => {
+    const newOfferInput = {
+      title: 'Offre',
+      contract_type: 'cdi' as const,
+      status: 'active' as const,
+      location_type: 'remote' as const,
       blocks: [],
+    }
+
+    it('a) appel légitime (permission accordée sur l’entité) → la mutation atteint la base', async () => {
+      mockUser = { id: 'user-legitime' }
+      mockPermission = true
+
+      await expect(createJobOfferAction(OWNED_ENTITY, newOfferInput)).resolves.toBeUndefined()
+
+      expect(authGetUser).toHaveBeenCalled()
+      expect(rpcCalls[0]).toEqual({
+        fn: 'entity_user_has_permission',
+        args: { p_entity_id: OWNED_ENTITY, p_permission: 'talent' },
+      })
+      expect(dbCalls.some((c) => c.table === 'entity_job_offers' && c.op === 'insert')).toBe(true)
     })
 
-    expect(authGetUser).not.toHaveBeenCalled()
-    const insertCall = calls.find((c) => c.table === 'entity_job_offers' && c.op === 'insert')
-    expect(insertCall).toBeDefined()
+    it('b) même appel avec une entité étrangère → refusé par le code, avant tout appel BDD sur entity_job_offers', async () => {
+      mockUser = { id: 'user-attaquant' }
+      mockPermission = false
+
+      await expect(createJobOfferAction(FOREIGN_ENTITY, newOfferInput)).rejects.toThrow(
+        "Vous n'avez pas les droits sur cette offre d'emploi.",
+      )
+
+      expect(authGetUser).toHaveBeenCalled()
+      expect(dbCalls.some((c) => c.table === 'entity_job_offers' && c.op === 'insert')).toBe(false)
+    })
+
+    it('a) updateJobOfferAction — appel légitime → la mutation atteint la base', async () => {
+      mockUser = { id: 'user-legitime' }
+      mockPermission = true
+
+      await expect(
+        updateJobOfferAction(OWNED_ENTITY, OFFER_ID, { title: 'Modifié' }),
+      ).resolves.toBeUndefined()
+
+      expect(dbCalls.some((c) => c.table === 'entity_job_offers' && c.op === 'update')).toBe(true)
+    })
+
+    it('b) updateJobOfferAction — entité étrangère → refusé avant tout appel BDD', async () => {
+      mockUser = { id: 'user-attaquant' }
+      mockPermission = false
+
+      await expect(
+        updateJobOfferAction(FOREIGN_ENTITY, OFFER_ID, { title: 'Modifié par un tiers' }),
+      ).rejects.toThrow("Vous n'avez pas les droits sur cette offre d'emploi.")
+
+      expect(dbCalls.some((c) => c.table === 'entity_job_offers' && c.op === 'update')).toBe(false)
+    })
+
+    it('a) deleteJobOfferAction — appel légitime → la mutation atteint la base', async () => {
+      mockUser = { id: 'user-legitime' }
+      mockPermission = true
+
+      await expect(deleteJobOfferAction(OWNED_ENTITY, OFFER_ID)).resolves.toBeUndefined()
+
+      expect(dbCalls.some((c) => c.table === 'entity_job_offers' && c.op === 'delete')).toBe(true)
+    })
+
+    it('b) deleteJobOfferAction — entité étrangère → refusé avant tout appel BDD', async () => {
+      mockUser = { id: 'user-attaquant' }
+      mockPermission = false
+
+      await expect(deleteJobOfferAction(FOREIGN_ENTITY, OFFER_ID)).rejects.toThrow(
+        "Vous n'avez pas les droits sur cette offre d'emploi.",
+      )
+
+      expect(dbCalls.some((c) => c.table === 'entity_job_offers' && c.op === 'delete')).toBe(false)
+    })
+
+    it('appel non authentifié → refusé avant toute vérification de permission', async () => {
+      mockUser = null
+
+      await expect(deleteJobOfferAction(OWNED_ENTITY, OFFER_ID)).rejects.toThrow(
+        'Vous devez être connecté pour effectuer cette action.',
+      )
+      expect(rpcMock).not.toHaveBeenCalled()
+    })
   })
 
-  it("updateApplicationStatusAction change le statut d'une candidature sans même recevoir d'entityId à vérifier", async () => {
-    await updateApplicationStatusAction('application-etrangere', 'hired', VICTIM_OFFER)
+  describe('updateApplicationStatusAction — résolution candidature → offre → entité', () => {
+    it("c) appel légitime : l'entité résolue depuis l'application appartient à l'appelant → la mutation atteint la base", async () => {
+      mockUser = { id: 'user-legitime' }
+      mockPermission = true
+      mockApplication = { offer_id: OFFER_ID }
+      mockOffer = { entity_id: OWNED_ENTITY }
 
-    expect(authGetUser).not.toHaveBeenCalled()
-    const updateCall = calls.find((c) => c.table === 'entity_job_applications' && c.op === 'update')
-    expect(updateCall).toBeDefined()
+      await expect(
+        updateApplicationStatusAction('application-1', 'hired', OFFER_ID),
+      ).resolves.toBeUndefined()
+
+      expect(rpcCalls[0]).toEqual({
+        fn: 'entity_user_has_permission',
+        args: { p_entity_id: OWNED_ENTITY, p_permission: 'talent' },
+      })
+      expect(dbCalls.some((c) => c.table === 'entity_job_applications' && c.op === 'update')).toBe(
+        true,
+      )
+    })
+
+    it('c) applicationId appartenant à une entité étrangère → refusé par le code, avant la mutation de statut', async () => {
+      mockUser = { id: 'user-attaquant' }
+      mockPermission = false
+      mockApplication = { offer_id: OFFER_ID }
+      mockOffer = { entity_id: FOREIGN_ENTITY }
+
+      await expect(
+        updateApplicationStatusAction('application-etrangere', 'hired', OFFER_ID),
+      ).rejects.toThrow("Vous n'avez pas les droits sur cette offre d'emploi.")
+
+      expect(dbCalls.some((c) => c.table === 'entity_job_applications' && c.op === 'update')).toBe(
+        false,
+      )
+    })
+
+    it('applicationId inexistant (résolution échoue) → refusé, message générique', async () => {
+      mockUser = { id: 'user-attaquant' }
+      mockApplication = null
+
+      await expect(
+        updateApplicationStatusAction('application-inconnue', 'hired', OFFER_ID),
+      ).rejects.toThrow('Candidature introuvable.')
+
+      expect(rpcMock).not.toHaveBeenCalled()
+    })
   })
 })

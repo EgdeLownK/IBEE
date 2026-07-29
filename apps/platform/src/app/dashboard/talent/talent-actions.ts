@@ -11,6 +11,40 @@ import { revalidatePath } from 'next/cache'
 import type { HistoryBlock } from '@ibee/shared'
 import type { JobApplicationStatus } from '@ibee/supabase'
 
+// Une Server Action est un point d'entree HTTP public : entityId (et
+// applicationId pour updateApplicationStatusAction) arrivent du client, sans
+// garantie qu'ils appartiennent a l'appelant. auth.getUser() etablit
+// l'identite server-side, puis la RPC entity_user_has_permission (definie en
+// base, policies RLS entity_job_offers/entity_job_applications) est la seule
+// source de verite sur le droit d'agir - proprietaire OU membre d'equipe avec
+// la permission 'talent'. Voir .claude/rules/server-actions.md.
+async function requireTalentPermission(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  entityId: string,
+) {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    console.error('[talent-actions] refus : appel non authentifie')
+    throw new Error('Vous devez être connecté pour effectuer cette action.')
+  }
+
+  const { data: hasPermission, error } = await supabase.rpc('entity_user_has_permission', {
+    p_entity_id: entityId,
+    p_permission: 'talent',
+  })
+  if (error) throw error
+
+  if (!hasPermission) {
+    console.error(
+      `[talent-actions] refus : utilisateur ${user.id} sans permission 'talent' sur l'entite ${entityId}`,
+    )
+    throw new Error("Vous n'avez pas les droits sur cette offre d'emploi.")
+  }
+}
+
 export async function createJobOfferAction(
   entityId: string,
   input: {
@@ -27,6 +61,7 @@ export async function createJobOfferAction(
   },
 ) {
   const supabase = await createClient()
+  await requireTalentPermission(supabase, entityId)
   await createProjectJobOffer(supabase, entityId, input)
   revalidatePath('/dashboard/talent')
 }
@@ -48,6 +83,7 @@ export async function updateJobOfferAction(
   },
 ) {
   const supabase = await createClient()
+  await requireTalentPermission(supabase, entityId)
 
   if (input.status === 'active') {
     const { data: existingOffer } = await supabase
@@ -72,6 +108,7 @@ export async function updateJobOfferAction(
 
 export async function deleteJobOfferAction(entityId: string, offerId: string) {
   const supabase = await createClient()
+  await requireTalentPermission(supabase, entityId)
   await deleteProjectJobOffer(supabase, entityId, offerId)
   revalidatePath('/dashboard/talent')
 }
@@ -82,6 +119,36 @@ export async function updateApplicationStatusAction(
   offerId: string,
 ) {
   const supabase = await createClient()
+
+  // Ni entityId ni offerId ne sont fournis de confiance ici : offerId n'est
+  // utilise que pour revalidatePath (cache), jamais pour l'autorisation.
+  // La chaine candidature -> offre -> entite est reresolue depuis la BDD a
+  // partir du seul applicationId, pour verifier la permission sur l'entite
+  // reellement proprietaire de cette candidature.
+  const { data: application, error: applicationError } = await supabase
+    .from('entity_job_applications')
+    .select('offer_id')
+    .eq('id', applicationId)
+    .maybeSingle()
+  if (applicationError) throw applicationError
+  if (!application) {
+    console.error(`[talent-actions] refus : candidature ${applicationId} introuvable`)
+    throw new Error('Candidature introuvable.')
+  }
+
+  const { data: offer, error: offerError } = await supabase
+    .from('entity_job_offers')
+    .select('entity_id')
+    .eq('id', application.offer_id)
+    .maybeSingle()
+  if (offerError) throw offerError
+  if (!offer) {
+    console.error(`[talent-actions] refus : offre ${application.offer_id} introuvable`)
+    throw new Error('Offre introuvable.')
+  }
+
+  await requireTalentPermission(supabase, offer.entity_id)
+
   await updateJobApplicationStatus(supabase, applicationId, status)
   revalidatePath(`/dashboard/talent/${offerId}`)
 }
