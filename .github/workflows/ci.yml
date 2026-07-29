@@ -85,3 +85,8 @@ jobs:
       # est gelé dans design-guard-baseline.json, toute NOUVELLE occurrence fait
       # échouer ce step. Voir .claude/rules/design.md §Garde-fou CI.
       - run: pnpm design:check
+
+      # Références à des chemins introuvables dans la doctrine (CLAUDE.md,
+      # .claude/rules/**, .claude/agents/**, docs/produit.md). Tolérance
+      # zéro, pas de baseline. Voir .claude/rules/doctrine-guard.md.
+      - run: pnpm context:check

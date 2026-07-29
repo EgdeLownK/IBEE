@@ -11,7 +11,8 @@
     "format:check": "prettier --check .",
     "deadcode": "knip",
     "gen-types": "node scripts/gen-types.mjs",
-    "design:check": "node scripts/design-guard.mjs"
+    "design:check": "node scripts/design-guard.mjs",
+    "context:check": "node scripts/context-guard.mjs"
   },
   "devDependencies": {
     "knip": "^6.4.1",
