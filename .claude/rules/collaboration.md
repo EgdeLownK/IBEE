@@ -36,3 +36,7 @@ Le rapport indique explicitement le hash du commit, le nom de la branche, et si 
 Attention particulière aux fichiers non suivis par git (nouveaux fichiers) : invisibles dans un diff, ils sont perdus par toute commande de nettoyage (`git clean`, changement de branche destructif, etc.).
 
 Exception unique : mission déclarée **LECTURE SEULE** dès le départ (aucun fichier produit). Le rapport le dit explicitement — pas de commit à annoncer.
+
+Motif : le 28/07, trois pertes de travail non commité dans la même journée,
+dont des fichiers non suivis par git qui auraient disparu à la moindre
+commande de nettoyage.
