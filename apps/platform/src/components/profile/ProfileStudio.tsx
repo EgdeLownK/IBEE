@@ -226,7 +226,7 @@ export function ProfileStudio() {
         />
 
         {playlistsReady && !hasAnyContent ? (
-          <ProfileStudioEmptyState onAddContent={openAddContent} />
+          <ProfileStudioEmptyState />
         ) : (
           <>
             <ProfileStudioMenuTabs
