@@ -802,6 +802,74 @@
   }
 }
 
+/*
+ * Offres d'emploi (JobOfferRow, apps/platform/src/components/public/jobs/).
+ * Reutilise la grille .event-row et ses classes de structure (media, body,
+ * title, meta, excerpt, footer, cta, stretch) sans les modifier. Seules ces
+ * deux pastilles sont propres au job : aucun equivalent event a reutiliser
+ * pour le type de contrat ou le statut en ligne/hors ligne.
+ */
+.event-row__contract {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 4px;
+  border-radius: var(--radius-field);
+  background: var(--color-accent-tint);
+  color: var(--color-accent);
+  line-height: 1.15;
+  text-align: center;
+}
+
+.event-row__contract-code {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.event-row__contract-label {
+  margin-top: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+.event-row__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.event-row__status::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: currentColor;
+}
+
+.event-row__status--active {
+  background: color-mix(in srgb, var(--color-success) 12%, var(--color-surface));
+  color: var(--color-success);
+}
+
+.event-row__status--inactive {
+  background: var(--color-neutral-100);
+  color: var(--color-neutral-500);
+}
+
+@media (max-width: 640px) {
+  .event-row__contract {
+    grid-area: date;
+  }
+}
+
 @media (max-width: 640px) {
   .grid-tiles {
     grid-template-columns: repeat(2, 1fr);
