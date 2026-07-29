@@ -174,7 +174,7 @@ const EXCEPTIONS = [
     file: '.claude/rules/secrets.md',
     resolvedPath: 'apps/platform/.env.local',
     reason:
-      "catégorie 2 — fichier local gitignored (.env.local, voir .gitignore) : jamais tracké ni présent en CI par construction, la doctrine documente correctement une convention locale.",
+      'catégorie 2 — fichier local gitignored (.env.local, voir .gitignore) : jamais tracké ni présent en CI par construction, la doctrine documente correctement une convention locale.',
   },
   {
     file: 'apps/platform/CLAUDE.md',
@@ -185,7 +185,7 @@ const EXCEPTIONS = [
     file: '.claude/rules/guardrails.md',
     resolvedPath: '.ibee-brain/_IBEE.md',
     reason:
-      "catégorie 2 — .ibee-brain/ est gitignored par conception (voir .gitignore) mais existe réellement en local chez Killian ; ce garde-fou nomme précisément ce fichier pour en interdire la modification sans accord explicite — le nommer est le but même de la règle, pas une référence morte.",
+      'catégorie 2 — .ibee-brain/ est gitignored par conception (voir .gitignore) mais existe réellement en local chez Killian ; ce garde-fou nomme précisément ce fichier pour en interdire la modification sans accord explicite — le nommer est le but même de la règle, pas une référence morte.',
   },
   {
     file: '.claude/rules/guardrails.md',
@@ -216,7 +216,7 @@ const EXCEPTIONS = [
     file: 'docs/produit.md',
     resolvedPath: '.ibee-brain/_IBEE.md',
     reason:
-      "catégorie 2 — même fichier et même raison que les exceptions guardrails.md ci-dessus : gitignored par conception, présent en local chez Killian, référence légitime expliquant la provenance du contenu migré (§4/§9 délibérément laissés hors dépôt, voir docs/produit.md en-tête).",
+      'catégorie 2 — même fichier et même raison que les exceptions guardrails.md ci-dessus : gitignored par conception, présent en local chez Killian, référence légitime expliquant la provenance du contenu migré (§4/§9 délibérément laissés hors dépôt, voir docs/produit.md en-tête).',
   },
 ]
 
@@ -279,7 +279,7 @@ console.error(
   '\nCorriger la référence dans le fichier de doctrine (chemin déplacé/renommé/supprimé),',
 )
 console.error(
-  "ou si le chemin est légitimement hors dépôt, déclarer une exception nommée (fichier + chemin,",
+  'ou si le chemin est légitimement hors dépôt, déclarer une exception nommée (fichier + chemin,',
 )
 console.error(
   'avec sa raison) dans scripts/context-guard.mjs — jamais élargir ROOT_ANCHORS ni la regex',
