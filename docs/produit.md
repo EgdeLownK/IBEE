@@ -24,7 +24,7 @@ activité, dont la page pro est le sous-produit.
 - **Onliness statement** : _"IBEE est la seule infrastructure pro où
   l'identité du solopreneur s'active au sein d'un écosystème interconnecté,
   permettant d'être trouvé, recommandé et payé sans avoir à bâtir son propre
-  réseau technique."_❓
+  réseau technique."_
 
 ## 2. Le problème et le job
 
@@ -69,13 +69,13 @@ je souhaite m'investir pleinement dans mon activité."_
 
 - Pas de machine de marketing agressive (≠ ClickFunnels)
 - Pas d'automatisation de prospection à froid (≠ Lemlist) — IBEE joue
-  l'inbound et la recommandation organique ⁉️
+  l'inbound et la recommandation organique 
 - Pas d'éditeur visuel libre (≠ Webflow) — pour tenir la promesse "zéro
   construction"
-- Pas de CRM commercial avec pipeline de leads (≠ HubSpot, Pipedrive)❓
-- Pas d'automation d'emails marketing (≠ Brevo, Mailchimp)❓
+- Pas de CRM commercial avec pipeline de leads (≠ HubSpot, Pipedrive)
+- Pas d'automation d'emails marketing (≠ Brevo, Mailchimp)
 
-**Reportés mais validés** ☀️ :
+**Reportés mais validés**  :
 
 - **Vente physique avec inventaire et expéditions** — MVP centré service et
   numérique pour valider le flux de paiement.
@@ -93,7 +93,7 @@ je souhaite m'investir pleinement dans mon activité."_
 - **Time to First Lead** — temps publication → première interaction client
   (clic, RDV, achat).
 - **Excellence technique** — Lighthouse proche de 100 par défaut (perf,
-  accessibilité, SEO technique). ⁉️
+  accessibilité, SEO technique). 
 - **Autonomie native** — couvrir les besoins quotidiens (présence, vente,
   gestion) pour minimiser les outils tiers.
 
