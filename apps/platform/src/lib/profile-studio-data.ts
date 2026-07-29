@@ -158,6 +158,7 @@ export async function loadProfileStudioPlaylists() {
       compensation_amount: o.compensation_amount,
       compensation_frequency: o.compensation_frequency,
       created_at: o.created_at,
+      blocks: o.blocks as unknown, // TS2742, cf. commentaire ci-dessus
     })),
     shopProducts: products.map((p, i) => ({
       id: p.id,

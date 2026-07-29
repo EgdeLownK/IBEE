@@ -176,6 +176,9 @@ export async function loadPublicProfileBySlug(slug: string) {
     compensation_amount: offer.compensation_amount,
     compensation_frequency: offer.compensation_frequency,
     created_at: offer.created_at,
+    // `as unknown` : évite TS2742 (type Json non portable hors du package
+    // @ibee/supabase, cf. commentaire équivalent dans profile-studio-data.ts).
+    blocks: offer.blocks as unknown,
   }))
 
   const siteUrl = process.env.NEXT_PUBLIC_WEB_URL ?? 'http://localhost:3000'
