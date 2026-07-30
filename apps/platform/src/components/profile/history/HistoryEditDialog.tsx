@@ -150,12 +150,11 @@ export function HistoryEditDialog({
       }
       onSaved(result.blocks)
       toast.success('Histoire enregistrée')
-      if (returnToAddContent) {
-        onClose()
-        onReturnToAddContent?.()
-      } else {
-        onClose()
-      }
+      // Succes -> fermeture totale, jamais de retour sur AddContentDialog.
+      // onReturnToAddContent reste reserve a l'annulation (handleClose) -
+      // meme principe que ProductCreateWizard/ServiceCreateWizard/EventCreateWizard
+      // et JobOfferDialog (parametre reason: 'success').
+      onClose()
     })
   }
 
