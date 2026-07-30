@@ -46,8 +46,15 @@ type JobOfferDialogProps = {
   // fermeture par annulation (backdrop, croix, Echap, bouton Annuler) - les
   // deux passent par le meme onOpenChange(false) mais l'appelant a besoin de
   // savoir laquelle s'est produite pour decider s'il doit rouvrir un overlay
-  // parent (voir ProfileStudio.tsx).
-  onOpenChange: (open: boolean, reason?: 'success') => void
+  // parent (voir ProfileStudio.tsx). `meta` n'est fourni qu'avec 'success' :
+  // isCreate distingue creation/edition, status le statut envoye au serveur -
+  // necessaire pour que l'appelant sache s'il doit basculer sur l'onglet
+  // Offres (creation + publication active uniquement).
+  onOpenChange: (
+    open: boolean,
+    reason?: 'success',
+    meta?: { isCreate: boolean; status: 'active' | 'inactive' },
+  ) => void
   entityId: string
   offer?: JobOffer | null
 }
@@ -222,6 +229,8 @@ export function JobOfferDialog({ open, onOpenChange, entityId, offer }: JobOffer
             toast.success(
               'Offre enregistrée hors ligne — retrouvable dans Pilotage > Talent pour la publier plus tard.',
             )
+          } else {
+            toast.success('Offre publiée.')
           }
         }
         // reason: 'success' - distingue d'une fermeture par annulation, voir
@@ -230,7 +239,7 @@ export function JobOfferDialog({ open, onOpenChange, entityId, offer }: JobOffer
         // apparaisse sans rechargement manuel (meme motif que
         // ServiceClientProfile.tsx et les autres appelants de
         // router.refresh() apres une Server Action reussie).
-        onOpenChange(false, 'success')
+        onOpenChange(false, 'success', { isCreate: !isEditing, status: targetStatus })
         router.refresh()
       } catch (err: any) {
         setError(err.message || 'Une erreur est survenue.')

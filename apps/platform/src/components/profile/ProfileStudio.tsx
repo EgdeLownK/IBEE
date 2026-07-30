@@ -62,6 +62,13 @@ export function ProfileStudio() {
   const [jobOfferReturnToAddContent, setJobOfferReturnToAddContent] = useState(false)
   const [selectedJobOffer, setSelectedJobOffer] = useState<JobOffer | null>(null)
   const [jobOfferActionPendingId, setJobOfferActionPendingId] = useState<string | null>(null)
+  // Bascule differee vers l'onglet Offres apres publication (voir l'effet
+  // plus bas) : createJobOfferAction ne retourne pas l'offre creee (pas de
+  // modification de server action ici), donc jobOffers/visibleTabTypes ne se
+  // mettent a jour qu'apres le router.refresh() asynchrone de JobOfferDialog.
+  // Un setActiveType('jobs') immediat serait annule par le garde-fou
+  // ci-dessous si l'onglet n'existait pas encore (premiere offre publiee).
+  const [jobOfferPendingTab, setJobOfferPendingTab] = useState(false)
   const [publications, setPublications] = useState<Publication[]>([])
   const [jobOffers, setJobOffers] = useState<JobOffer[]>([])
   const [historyBlocks, setHistoryBlocks] = useState<HistoryBlock[]>(shell.historyBlocks)
@@ -166,6 +173,13 @@ export function ProfileStudio() {
   useEffect(() => {
     if (!visibleTabTypes.has(activeType)) setActiveType('home')
   }, [activeType, visibleTabTypes])
+
+  useEffect(() => {
+    if (jobOfferPendingTab && visibleTabTypes.has('jobs')) {
+      setActiveType('jobs')
+      setJobOfferPendingTab(false)
+    }
+  }, [jobOfferPendingTab, visibleTabTypes])
 
   const addContentSectionTypes = useMemo(() => new Set(['news', 'history', 'talent']), [])
 
@@ -308,7 +322,13 @@ export function ProfileStudio() {
               menuSections={menuSections}
               tabContent={tabContent}
               activeType={activeType}
-              onTabChange={setActiveType}
+              onTabChange={(type) => {
+                // L'utilisateur choisit lui-meme un onglet : la bascule
+                // differee vers "jobs" (voir jobOfferPendingTab) ne doit plus
+                // le contredire une fois la publication rafraichie.
+                setJobOfferPendingTab(false)
+                setActiveType(type)
+              }}
             />
 
             {!playlistsReady ? (
@@ -477,7 +497,7 @@ export function ProfileStudio() {
         // (voir profile-studio-data.ts, meme motif TS2742 documente la-bas) -
         // repartir sur le type Supabase brut ici recreerait ce probleme.
         offer={selectedJobOffer as unknown as SupabaseJobOffer | null}
-        onOpenChange={(isOpen, reason) => {
+        onOpenChange={(isOpen, reason, meta) => {
           setJobOfferWizardOpen(isOpen)
           if (isOpen) return
           setJobOfferReturnToAddContent(false)
@@ -487,6 +507,12 @@ export function ProfileStudio() {
           // onCreated puis onClose sans passer par onReturnToAddContent).
           if (reason !== 'success' && jobOfferReturnToAddContent) {
             setAddContentOpen(true)
+          }
+          // Creation + publication active uniquement -> bascule differee sur
+          // l'onglet Offres (voir jobOfferPendingTab). Brouillon ou edition :
+          // aucun changement d'onglet.
+          if (reason === 'success' && meta?.isCreate && meta.status === 'active') {
+            setJobOfferPendingTab(true)
           }
         }}
         entityId={shell.entity.id}
