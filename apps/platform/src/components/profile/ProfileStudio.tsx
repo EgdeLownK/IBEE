@@ -80,7 +80,10 @@ export function ProfileStudio() {
   useEffect(() => {
     if (!playlists) return
     setPublications(playlists.publications)
-    setJobOffers(playlists.jobOffers)
+    // Le profil (studio + visiteur) n'affiche que les offres actives - la
+    // reactivation d'une offre hors ligne se fait uniquement depuis
+    // /dashboard/talent (Pilotage), jamais depuis cette vue.
+    setJobOffers(playlists.jobOffers.filter((o) => o.status === 'active'))
     setShopProducts(playlists.shopProducts)
     setPlaylistServices(playlists.playlistServices)
     setPlaylistEvents(playlists.playlistEvents)
@@ -209,13 +212,23 @@ export function ProfileStudio() {
   // carte se mette a jour dans le studio, meme motif que JobOfferDialog.tsx.
   async function handleToggleJobOfferStatus(offerId: string, currentStatus: 'active' | 'inactive') {
     const nextStatus = currentStatus === 'active' ? 'inactive' : 'active'
-    // Repasser inactive -> active archive les candidatures en cours
-    // (talent-actions.ts, updateJobOfferAction) - effet de bord serveur non
-    // modifiable ici, seulement signale avant que l'utilisateur ne le declenche.
-    if (
-      nextStatus === 'active' &&
+    if (nextStatus === 'active') {
+      // Repasser inactive -> active archive les candidatures en cours
+      // (talent-actions.ts, updateJobOfferAction) - effet de bord serveur non
+      // modifiable ici, seulement signale avant que l'utilisateur ne le declenche.
+      // En pratique jamais atteint depuis le studio (offres actives uniquement,
+      // voir le filtre sur jobOffers ci-dessus) - garde-fou defensif conserve
+      // au cas ou une offre listee deviendrait inactive entre deux rendus.
+      if (
+        !window.confirm(
+          'Remettre cette offre en ligne archivera les candidatures en cours. Continuer ?',
+        )
+      ) {
+        return
+      }
+    } else if (
       !window.confirm(
-        'Remettre cette offre en ligne archivera les candidatures en cours. Continuer ?',
+        'Mettre cette offre hors ligne la fera disparaître de cette vue. Elle reste accessible et réactivable depuis Pilotage > Talent.',
       )
     ) {
       return
