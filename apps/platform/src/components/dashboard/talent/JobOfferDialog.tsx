@@ -3,6 +3,7 @@
 import { useEffect, useState, useTransition } from 'react'
 import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 import { JobOffer, JobCompType, JobCompFreq } from '@ibee/supabase'
 import {
   createJobOfferAction,
@@ -56,6 +57,9 @@ export function JobOfferDialog({ open, onOpenChange, entityId, offer }: JobOffer
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [step, setStep] = useState<1 | 2>(1)
+  // Distingue quel bouton est en vol (creation seulement, deux boutons) pour
+  // afficher le bon libelle/spinner - inutile en edition (un seul bouton).
+  const [pendingIntent, setPendingIntent] = useState<'publish' | 'draft' | null>(null)
 
   const isEditing = !!offer
 
@@ -173,7 +177,11 @@ export function JobOfferDialog({ open, onOpenChange, entityId, offer }: JobOffer
     setStep(2)
   }
 
-  const handleSubmit = async () => {
+  // `explicitStatus` porte le choix Publier ('active') / Enregistrer
+  // ('inactive') du footer a la creation. En edition, aucun bouton ne le
+  // fournit : on retombe sur le `status` interne (jamais expose dans le
+  // formulaire, voir useState ci-dessus) - comportement d'edition inchange.
+  const handleSubmit = async (explicitStatus?: 'active' | 'inactive') => {
     setError(null)
     if (blocks.some((b) => b.type === 'image' && b.uploading)) {
       setError("Patiente, une image est en cours d'envoi.")
@@ -188,12 +196,15 @@ export function JobOfferDialog({ open, onOpenChange, entityId, offer }: JobOffer
       return
     }
 
+    const targetStatus = explicitStatus ?? status
+    if (!isEditing) setPendingIntent(targetStatus === 'active' ? 'publish' : 'draft')
+
     startTransition(async () => {
       try {
         const payload = {
           title,
           contract_type: contractType as any,
-          status: status as any,
+          status: targetStatus as any,
           location_type: locationType as any,
           location_text: locationText || null,
           blocks: payloadBlocks,
@@ -207,6 +218,11 @@ export function JobOfferDialog({ open, onOpenChange, entityId, offer }: JobOffer
           await updateJobOfferAction(entityId, offer.id, payload)
         } else {
           await createJobOfferAction(entityId, payload)
+          if (targetStatus === 'inactive') {
+            toast.success(
+              'Offre enregistrée hors ligne — retrouvable dans Pilotage > Talent pour la publier plus tard.',
+            )
+          }
         }
         // reason: 'success' - distingue d'une fermeture par annulation, voir
         // JobOfferDialogProps.onOpenChange. router.refresh() invalide le
@@ -218,6 +234,8 @@ export function JobOfferDialog({ open, onOpenChange, entityId, offer }: JobOffer
         router.refresh()
       } catch (err: any) {
         setError(err.message || 'Une erreur est survenue.')
+      } finally {
+        setPendingIntent(null)
       }
     })
   }
@@ -513,22 +531,41 @@ export function JobOfferDialog({ open, onOpenChange, entityId, offer }: JobOffer
               <button type="button" className="pco__btn pco__btn--primary" onClick={handleNext}>
                 Suivant <ArrowRight className="h-4 w-4" />
               </button>
-            ) : (
+            ) : isEditing ? (
               <button
                 type="button"
                 className="pco__btn pco__btn--primary"
                 disabled={isPending}
-                onClick={handleSubmit}
+                onClick={() => handleSubmit()}
               >
                 {isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                <span>
-                  {isPending
-                    ? 'Enregistrement...'
-                    : isEditing
-                      ? "Mettre à jour l'offre"
-                      : "Créer l'offre"}
-                </span>
+                <span>{isPending ? 'Enregistrement...' : "Mettre à jour l'offre"}</span>
               </button>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  className="pco__btn pco__btn--ghost"
+                  disabled={isPending}
+                  onClick={() => handleSubmit('inactive')}
+                >
+                  {pendingIntent === 'draft' ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : null}
+                  <span>{pendingIntent === 'draft' ? 'Enregistrement...' : 'Enregistrer'}</span>
+                </button>
+                <button
+                  type="button"
+                  className="pco__btn pco__btn--primary"
+                  disabled={isPending}
+                  onClick={() => handleSubmit('active')}
+                >
+                  {pendingIntent === 'publish' ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : null}
+                  <span>{pendingIntent === 'publish' ? 'Publication...' : 'Publier'}</span>
+                </button>
+              </>
             )}
           </div>
         </footer>
