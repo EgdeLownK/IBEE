@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { toast } from 'sonner'
 import {
   ProfileShell,
   getVisibleProfileTabs,
@@ -22,6 +23,8 @@ import { EventCreateWizard } from './event-create/EventCreateWizard'
 import { ProductCreateWizard } from './product-create/ProductCreateWizard'
 import { ServiceCreateWizard } from './service-create/ServiceCreateWizard'
 import { JobOfferDialog } from '../dashboard/talent/JobOfferDialog'
+import { deleteJobOfferAction, updateJobOfferAction } from '@/app/dashboard/talent/talent-actions'
+import type { JobOffer as SupabaseJobOffer } from '@ibee/supabase'
 
 type Publication = ProfileStudioData['publications'][number]
 type HistoryBlock = ProfileStudioData['historyBlocks'][number]
@@ -57,6 +60,8 @@ export function ProfileStudio() {
   const [eventReturnToAddContent, setEventReturnToAddContent] = useState(false)
   const [jobOfferWizardOpen, setJobOfferWizardOpen] = useState(false)
   const [jobOfferReturnToAddContent, setJobOfferReturnToAddContent] = useState(false)
+  const [selectedJobOffer, setSelectedJobOffer] = useState<JobOffer | null>(null)
+  const [jobOfferActionPendingId, setJobOfferActionPendingId] = useState<string | null>(null)
   const [publications, setPublications] = useState<Publication[]>([])
   const [jobOffers, setJobOffers] = useState<JobOffer[]>([])
   const [historyBlocks, setHistoryBlocks] = useState<HistoryBlock[]>(shell.historyBlocks)
@@ -186,8 +191,65 @@ export function ProfileStudio() {
   }
 
   function openJobOfferWizard(fromAddContent = false) {
+    setSelectedJobOffer(null)
     setJobOfferReturnToAddContent(fromAddContent)
     setJobOfferWizardOpen(true)
+  }
+
+  function handleEditJobOffer(offerId: string) {
+    const offer = jobOffers.find((o) => o.id === offerId)
+    if (!offer) return
+    setSelectedJobOffer(offer)
+    setJobOfferReturnToAddContent(false)
+    setJobOfferWizardOpen(true)
+  }
+
+  // updateJobOfferAction/deleteJobOfferAction ne revalident que /dashboard/talent
+  // (talent-actions.ts) : router.refresh() est necessaire ici pour que la
+  // carte se mette a jour dans le studio, meme motif que JobOfferDialog.tsx.
+  async function handleToggleJobOfferStatus(offerId: string, currentStatus: 'active' | 'inactive') {
+    const nextStatus = currentStatus === 'active' ? 'inactive' : 'active'
+    // Repasser inactive -> active archive les candidatures en cours
+    // (talent-actions.ts, updateJobOfferAction) - effet de bord serveur non
+    // modifiable ici, seulement signale avant que l'utilisateur ne le declenche.
+    if (
+      nextStatus === 'active' &&
+      !window.confirm(
+        'Remettre cette offre en ligne archivera les candidatures en cours. Continuer ?',
+      )
+    ) {
+      return
+    }
+    setJobOfferActionPendingId(offerId)
+    try {
+      await updateJobOfferAction(shell.entity.id, offerId, { status: nextStatus })
+      router.refresh()
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Impossible de changer le statut de l'offre."
+      toast.error(msg)
+    } finally {
+      setJobOfferActionPendingId(null)
+    }
+  }
+
+  async function handleDeleteJobOffer(offerId: string) {
+    if (
+      !window.confirm(
+        'Êtes-vous sûr de vouloir supprimer cette offre ? Cette action est irréversible.',
+      )
+    ) {
+      return
+    }
+    setJobOfferActionPendingId(offerId)
+    try {
+      await deleteJobOfferAction(shell.entity.id, offerId)
+      router.refresh()
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Impossible de supprimer cette offre.'
+      toast.error(msg)
+    } finally {
+      setJobOfferActionPendingId(null)
+    }
   }
 
   function handlePublished(pub: {
@@ -241,7 +303,16 @@ export function ProfileStudio() {
             ) : activeType === 'home' ? (
               <HomeWidgetsPanel data={studioData} onOpenAddContent={openAddContent} />
             ) : activeType === 'jobs' ? (
-              <PublicJobOffersList offers={jobOffers} entitySlug={baseData.entity.slug} />
+              <PublicJobOffersList
+                offers={jobOffers}
+                entitySlug={baseData.entity.slug}
+                adminActions={{
+                  pendingId: jobOfferActionPendingId,
+                  onEdit: handleEditJobOffer,
+                  onToggleStatus: handleToggleJobOfferStatus,
+                  onDelete: handleDeleteJobOffer,
+                }}
+              />
             ) : (
               <ProfileStudioSections
                 activeType={activeType}
@@ -387,10 +458,17 @@ export function ProfileStudio() {
 
       <JobOfferDialog
         open={jobOfferWizardOpen}
+        // Cast volontaire : JobOfferDialog attend le JobOffer complet
+        // (@ibee/supabase, toutes les colonnes entity_job_offers), mais ne lit
+        // en pratique que les champs deja presents sur ProfileStudioData
+        // (voir profile-studio-data.ts, meme motif TS2742 documente la-bas) -
+        // repartir sur le type Supabase brut ici recreerait ce probleme.
+        offer={selectedJobOffer as unknown as SupabaseJobOffer | null}
         onOpenChange={(isOpen, reason) => {
           setJobOfferWizardOpen(isOpen)
           if (isOpen) return
           setJobOfferReturnToAddContent(false)
+          setSelectedJobOffer(null)
           // Succes -> tout se ferme, jamais de retour sur AddContentDialog
           // (meme motif que ProductCreateWizard/ServiceCreateWizard/EventCreateWizard :
           // onCreated puis onClose sans passer par onReturnToAddContent).

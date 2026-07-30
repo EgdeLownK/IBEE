@@ -133,11 +133,6 @@
       "count": 3
     }
   },
-  "src/components/profile/ProfileStudio.tsx": {
-    "react-hooks/set-state-in-effect": {
-      "count": 6
-    }
-  },
   "src/components/profile/add-content/AddContentDialog.tsx": {
     "react-hooks/set-state-in-effect": {
       "count": 1

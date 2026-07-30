@@ -1,5 +1,6 @@
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { Briefcase, MapPin } from 'lucide-react'
+import { Briefcase, Eye, EyeOff, MapPin, MoreVertical, Pencil, Trash2 } from 'lucide-react'
 import type { HistoryBlock } from '@ibee/shared'
 import { entityDetailExcerpt } from '@/lib/entity-detail-excerpt'
 
@@ -11,6 +12,14 @@ import { entityDetailExcerpt } from '@/lib/entity-detail-excerpt'
  * (contrat, statut) — voir profile-styles.css.
  * Utilise par PublicJobOffersList (visiteur ET apercu studio) et par
  * TalentDashboard (proprietaire, via la variante 'owner').
+ *
+ * `adminMenu` (menu "trois points" Modifier/Bascule/Supprimer) est
+ * volontairement independant de `variant` : le studio (ProfileStudio.tsx)
+ * garde `variant="visitor"` pour conserver le CTA "Postuler" tel quel et
+ * ajoute seulement ce menu par-dessus - meme motif (.event-row__admin /
+ * .widget-menu, profile-styles.css) que le menu proprietaire des events
+ * dans ProfileStudioSections.tsx. Absent (PublicJobOffersList visiteur,
+ * TalentDashboard) = aucune trace dans le DOM.
  */
 
 type ContractType = 'cdi' | 'cdd' | 'mission'
@@ -44,6 +53,15 @@ function formatPublishedDate(value: string): string {
   }).format(new Date(value))
 }
 
+export type JobOfferAdminMenu = {
+  status: 'active' | 'inactive'
+  onEdit: () => void
+  onToggleStatus: () => void
+  onDelete: () => void
+  /** Desactive le declencheur pendant qu'une action serveur est en vol. */
+  pending?: boolean
+}
+
 type JobOfferRowBaseProps = {
   href: string | null
   title: string
@@ -54,6 +72,7 @@ type JobOfferRowBaseProps = {
   compensationLabel?: string | null
   /** Json brut de la colonne `blocks` (entity_job_offers) — HistoryBlock[] en pratique. */
   blocks?: unknown
+  adminMenu?: JobOfferAdminMenu
 }
 
 type JobOfferRowProps =
@@ -79,13 +98,101 @@ export function JobOfferRow(props: JobOfferRowProps) {
     createdAt,
     compensationLabel,
     blocks,
+    adminMenu,
   } = props
   const pill = CONTRACT_PILL[contractType]
   const excerpt = blocks ? entityDetailExcerpt({ content_blocks: blocks as HistoryBlock[] }) : ''
+  const displayStatus = props.variant === 'owner' ? props.status : adminMenu?.status
+
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!menuOpen) return
+    function onDocClick(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', onDocClick)
+    return () => document.removeEventListener('mousedown', onDocClick)
+  }, [menuOpen])
 
   return (
     <article className="event-row">
       {href && <Link className="event-row__stretch" href={href} aria-label={title} />}
+
+      {adminMenu && (
+        <div className={`event-row__admin${menuOpen ? ' is-open' : ''}`} ref={menuRef}>
+          <button
+            type="button"
+            className="event-row__menu-trigger"
+            aria-haspopup="menu"
+            aria-expanded={menuOpen}
+            aria-label={`Options pour ${title}`}
+            disabled={adminMenu.pending}
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              setMenuOpen((v) => !v)
+            }}
+          >
+            <MoreVertical className="h-5 w-5" aria-hidden="true" />
+          </button>
+          {menuOpen && (
+            <div className="widget-menu" role="menu">
+              <button
+                type="button"
+                className="widget-menu__item"
+                role="menuitem"
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  setMenuOpen(false)
+                  adminMenu.onEdit()
+                }}
+              >
+                <Pencil className="h-4 w-4" aria-hidden="true" />
+                <span>Modifier</span>
+              </button>
+              <button
+                type="button"
+                className="widget-menu__item"
+                role="menuitem"
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  setMenuOpen(false)
+                  adminMenu.onToggleStatus()
+                }}
+              >
+                {adminMenu.status === 'active' ? (
+                  <EyeOff className="h-4 w-4" aria-hidden="true" />
+                ) : (
+                  <Eye className="h-4 w-4" aria-hidden="true" />
+                )}
+                <span>
+                  {adminMenu.status === 'active' ? 'Mettre hors ligne' : 'Mettre en ligne'}
+                </span>
+              </button>
+              <button
+                type="button"
+                className="widget-menu__item widget-menu__item--danger"
+                role="menuitem"
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  setMenuOpen(false)
+                  adminMenu.onDelete()
+                }}
+              >
+                <Trash2 className="h-4 w-4" aria-hidden="true" />
+                <span>Supprimer</span>
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="event-row__contract" aria-hidden="true">
         <span className="event-row__contract-code">{pill.code}</span>
@@ -111,19 +218,17 @@ export function JobOfferRow(props: JobOfferRowProps) {
         <div className="event-row__footer">
           <div className="event-row__footer-start flex items-center gap-2.5">
             {compensationLabel && <p className="event-row__price">{compensationLabel}</p>}
-            {props.variant === 'owner' && (
-              <>
-                <span
-                  className={`event-row__status event-row__status--${props.status === 'active' ? 'active' : 'inactive'}`}
-                >
-                  {props.status === 'active' ? 'En ligne' : 'Hors ligne'}
-                </span>
-                {props.applicationsCount != null && (
-                  <span className="text-xs text-neutral-500">
-                    {props.applicationsCount} candidature{props.applicationsCount > 1 ? 's' : ''}
-                  </span>
-                )}
-              </>
+            {displayStatus && (
+              <span
+                className={`event-row__status event-row__status--${displayStatus === 'active' ? 'active' : 'inactive'}`}
+              >
+                {displayStatus === 'active' ? 'En ligne' : 'Hors ligne'}
+              </span>
+            )}
+            {props.variant === 'owner' && props.applicationsCount != null && (
+              <span className="text-xs text-neutral-500">
+                {props.applicationsCount} candidature{props.applicationsCount > 1 ? 's' : ''}
+              </span>
             )}
           </div>
           <div className="event-row__footer-actions">
