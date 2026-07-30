@@ -387,11 +387,15 @@ export function ProfileStudio() {
 
       <JobOfferDialog
         open={jobOfferWizardOpen}
-        onOpenChange={(isOpen) => {
+        onOpenChange={(isOpen, reason) => {
           setJobOfferWizardOpen(isOpen)
-          if (!isOpen && jobOfferReturnToAddContent) {
+          if (isOpen) return
+          setJobOfferReturnToAddContent(false)
+          // Succes -> tout se ferme, jamais de retour sur AddContentDialog
+          // (meme motif que ProductCreateWizard/ServiceCreateWizard/EventCreateWizard :
+          // onCreated puis onClose sans passer par onReturnToAddContent).
+          if (reason !== 'success' && jobOfferReturnToAddContent) {
             setAddContentOpen(true)
-            setJobOfferReturnToAddContent(false)
           }
         }}
         entityId={shell.entity.id}
