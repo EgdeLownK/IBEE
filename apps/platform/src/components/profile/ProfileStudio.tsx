@@ -209,6 +209,17 @@ export function ProfileStudio() {
   // carte se mette a jour dans le studio, meme motif que JobOfferDialog.tsx.
   async function handleToggleJobOfferStatus(offerId: string, currentStatus: 'active' | 'inactive') {
     const nextStatus = currentStatus === 'active' ? 'inactive' : 'active'
+    // Repasser inactive -> active archive les candidatures en cours
+    // (talent-actions.ts, updateJobOfferAction) - effet de bord serveur non
+    // modifiable ici, seulement signale avant que l'utilisateur ne le declenche.
+    if (
+      nextStatus === 'active' &&
+      !window.confirm(
+        'Remettre cette offre en ligne archivera les candidatures en cours. Continuer ?',
+      )
+    ) {
+      return
+    }
     setJobOfferActionPendingId(offerId)
     try {
       await updateJobOfferAction(shell.entity.id, offerId, { status: nextStatus })
