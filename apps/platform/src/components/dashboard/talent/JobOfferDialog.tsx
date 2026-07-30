@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useTransition } from 'react'
 import { createPortal } from 'react-dom'
+import { useRouter } from 'next/navigation'
 import { JobOffer, JobCompType, JobCompFreq } from '@ibee/supabase'
 import {
   createJobOfferAction,
@@ -40,12 +41,18 @@ import { HistoryImageBlockEditor } from '../../profile/history/HistoryImageBlock
 
 type JobOfferDialogProps = {
   open: boolean
-  onOpenChange: (open: boolean) => void
+  // `reason: 'success'` distingue une fermeture par creation reussie d'une
+  // fermeture par annulation (backdrop, croix, Echap, bouton Annuler) - les
+  // deux passent par le meme onOpenChange(false) mais l'appelant a besoin de
+  // savoir laquelle s'est produite pour decider s'il doit rouvrir un overlay
+  // parent (voir ProfileStudio.tsx).
+  onOpenChange: (open: boolean, reason?: 'success') => void
   entityId: string
   offer?: JobOffer | null
 }
 
 export function JobOfferDialog({ open, onOpenChange, entityId, offer }: JobOfferDialogProps) {
+  const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [step, setStep] = useState<1 | 2>(1)
@@ -201,7 +208,14 @@ export function JobOfferDialog({ open, onOpenChange, entityId, offer }: JobOffer
         } else {
           await createJobOfferAction(entityId, payload)
         }
-        onOpenChange(false)
+        // reason: 'success' - distingue d'une fermeture par annulation, voir
+        // JobOfferDialogProps.onOpenChange. router.refresh() invalide le
+        // rendu serveur de la route courante pour que la nouvelle offre
+        // apparaisse sans rechargement manuel (meme motif que
+        // ServiceClientProfile.tsx et les autres appelants de
+        // router.refresh() apres une Server Action reussie).
+        onOpenChange(false, 'success')
+        router.refresh()
       } catch (err: any) {
         setError(err.message || 'Une erreur est survenue.')
       }
