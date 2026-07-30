@@ -11,6 +11,19 @@ type JobOfferPublic = {
   compensation_frequency: string | null
   created_at: string
   blocks?: unknown
+  status?: 'active' | 'inactive'
+}
+
+/**
+ * Actions proprietaire (menu "trois points") relayees par offre - fournies
+ * uniquement par le studio (ProfileStudio.tsx). Absent = vrai visiteur
+ * public, aucune trace du menu dans le DOM (voir JobOfferRow.tsx).
+ */
+type JobOfferAdminActions = {
+  pendingId?: string | null
+  onEdit: (offerId: string) => void
+  onToggleStatus: (offerId: string, currentStatus: 'active' | 'inactive') => void
+  onDelete: (offerId: string) => void
 }
 
 function compensationLabel(offer: JobOfferPublic): string | null {
@@ -30,9 +43,11 @@ function compensationLabel(offer: JobOfferPublic): string | null {
 export function PublicJobOffersList({
   offers,
   entitySlug,
+  adminActions,
 }: {
   offers: JobOfferPublic[]
   entitySlug: string
+  adminActions?: JobOfferAdminActions
 }) {
   if (offers.length === 0) {
     return (
@@ -60,6 +75,17 @@ export function PublicJobOffersList({
           createdAt={offer.created_at}
           compensationLabel={compensationLabel(offer)}
           blocks={offer.blocks}
+          adminMenu={
+            adminActions && offer.status
+              ? {
+                  status: offer.status,
+                  pending: adminActions.pendingId === offer.id,
+                  onEdit: () => adminActions.onEdit(offer.id),
+                  onToggleStatus: () => adminActions.onToggleStatus(offer.id, offer.status!),
+                  onDelete: () => adminActions.onDelete(offer.id),
+                }
+              : undefined
+          }
         />
       ))}
     </div>
