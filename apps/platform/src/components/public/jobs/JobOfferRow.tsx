@@ -2,7 +2,9 @@ import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { Briefcase, Eye, EyeOff, MapPin, MoreVertical, Pencil, Trash2 } from 'lucide-react'
 import type { HistoryBlock } from '@ibee/shared'
+import type { JobContractType } from '@ibee/supabase'
 import { entityDetailExcerpt } from '@/lib/entity-detail-excerpt'
+import { contractPill } from './contract-labels'
 
 /**
  * Carte de liste d'une offre d'emploi, alignee sur EventListRow
@@ -22,17 +24,7 @@ import { entityDetailExcerpt } from '@/lib/entity-detail-excerpt'
  * TalentDashboard) = aucune trace dans le DOM.
  */
 
-type ContractType = 'cdi' | 'cdd' | 'mission'
 type LocationType = 'remote' | 'onsite' | 'hybrid'
-
-// Code court (ligne 1) + libelle secondaire (ligne 2) de la pastille contrat.
-// VOLONTAIRE : le libelle secondaire n'a pas de colonne dediee en base (seul
-// contract_type existe) — texte de presentation, pas une donnee verifiee.
-const CONTRACT_PILL: Record<ContractType, { code: string; label: string }> = {
-  cdi: { code: 'CDI', label: 'Temps plein' },
-  cdd: { code: 'CDD', label: 'Durée déterminée' },
-  mission: { code: 'FREE', label: 'Mission' },
-}
 
 const LOCATION_LABELS: Record<LocationType, string> = {
   remote: '100% Télétravail',
@@ -65,7 +57,7 @@ export type JobOfferAdminMenu = {
 type JobOfferRowBaseProps = {
   href: string | null
   title: string
-  contractType: ContractType
+  contractType: JobContractType
   locationType: LocationType
   locationText: string | null
   createdAt: string
@@ -100,7 +92,7 @@ export function JobOfferRow(props: JobOfferRowProps) {
     blocks,
     adminMenu,
   } = props
-  const pill = CONTRACT_PILL[contractType]
+  const pill = contractPill(contractType)
   const excerpt = blocks ? entityDetailExcerpt({ content_blocks: blocks as HistoryBlock[] }) : ''
   const displayStatus = props.variant === 'owner' ? props.status : adminMenu?.status
 

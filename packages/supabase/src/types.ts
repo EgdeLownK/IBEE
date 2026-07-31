@@ -1220,6 +1220,7 @@ export type Database = {
           end_date: string | null
           entity_id: string
           id: string
+          is_cadre: boolean | null
           location_text: string | null
           location_type: Database["public"]["Enums"]["entity_job_location_type"]
           status: Database["public"]["Enums"]["entity_job_status_v2"]
@@ -1241,6 +1242,7 @@ export type Database = {
           end_date?: string | null
           entity_id: string
           id?: string
+          is_cadre?: boolean | null
           location_text?: string | null
           location_type?: Database["public"]["Enums"]["entity_job_location_type"]
           status?: Database["public"]["Enums"]["entity_job_status_v2"]
@@ -1262,6 +1264,7 @@ export type Database = {
           end_date?: string | null
           entity_id?: string
           id?: string
+          is_cadre?: boolean | null
           location_text?: string | null
           location_type?: Database["public"]["Enums"]["entity_job_location_type"]
           status?: Database["public"]["Enums"]["entity_job_status_v2"]
@@ -4157,7 +4160,14 @@ export type Database = {
         | "rejected"
       entity_job_comp_freq: "weekly" | "monthly" | "mission"
       entity_job_comp_type: "fixed" | "percentage"
-      entity_job_contract_type: "cdi" | "cdd" | "mission"
+      entity_job_contract_type:
+        | "cdi"
+        | "cdd"
+        | "mission"
+        | "interim"
+        | "contrat_pro"
+        | "apprentissage"
+        | "stage"
       entity_job_location_type: "remote" | "onsite" | "hybrid"
       entity_job_status: "draft" | "published" | "closed"
       entity_job_status_v2: "active" | "inactive"
@@ -4424,7 +4434,15 @@ export const Constants = {
       ],
       entity_job_comp_freq: ["weekly", "monthly", "mission"],
       entity_job_comp_type: ["fixed", "percentage"],
-      entity_job_contract_type: ["cdi", "cdd", "mission"],
+      entity_job_contract_type: [
+        "cdi",
+        "cdd",
+        "mission",
+        "interim",
+        "contrat_pro",
+        "apprentissage",
+        "stage",
+      ],
       entity_job_location_type: ["remote", "onsite", "hybrid"],
       entity_job_status: ["draft", "published", "closed"],
       entity_job_status_v2: ["active", "inactive"],

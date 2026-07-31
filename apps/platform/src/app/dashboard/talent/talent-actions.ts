@@ -9,7 +9,7 @@ import {
 } from '@ibee/supabase'
 import { revalidatePath } from 'next/cache'
 import type { HistoryBlock } from '@ibee/shared'
-import type { JobApplicationStatus } from '@ibee/supabase'
+import type { JobApplicationStatus, JobContractType } from '@ibee/supabase'
 
 // Une Server Action est un point d'entree HTTP public : entityId (et
 // applicationId pour updateApplicationStatusAction) arrivent du client, sans
@@ -91,7 +91,7 @@ export async function createJobOfferAction(
   entityId: string,
   input: {
     title: string
-    contract_type: 'cdi' | 'cdd' | 'mission'
+    contract_type: JobContractType
     status: 'active' | 'inactive'
     location_type: 'remote' | 'onsite' | 'hybrid'
     location_text?: string | null
@@ -101,6 +101,7 @@ export async function createJobOfferAction(
     compensation_frequency?: 'weekly' | 'monthly' | 'mission' | null
     apply_url?: string | null
     end_date?: string | null
+    is_cadre?: boolean | null
   },
 ) {
   const supabase = await createClient()
@@ -117,7 +118,7 @@ export async function updateJobOfferAction(
   offerId: string,
   input: {
     title?: string
-    contract_type?: 'cdi' | 'cdd' | 'mission'
+    contract_type?: JobContractType
     status?: 'active' | 'inactive'
     location_type?: 'remote' | 'onsite' | 'hybrid'
     location_text?: string | null
@@ -127,6 +128,7 @@ export async function updateJobOfferAction(
     compensation_frequency?: 'weekly' | 'monthly' | 'mission' | null
     apply_url?: string | null
     end_date?: string | null
+    is_cadre?: boolean | null
   },
 ) {
   const supabase = await createClient()
