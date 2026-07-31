@@ -1217,6 +1217,7 @@ export type Database = {
             | null
           contract_type: Database["public"]["Enums"]["entity_job_contract_type"]
           created_at: string
+          end_date: string | null
           entity_id: string
           id: string
           location_text: string | null
@@ -1237,6 +1238,7 @@ export type Database = {
             | null
           contract_type: Database["public"]["Enums"]["entity_job_contract_type"]
           created_at?: string
+          end_date?: string | null
           entity_id: string
           id?: string
           location_text?: string | null
@@ -1257,6 +1259,7 @@ export type Database = {
             | null
           contract_type?: Database["public"]["Enums"]["entity_job_contract_type"]
           created_at?: string
+          end_date?: string | null
           entity_id?: string
           id?: string
           location_text?: string | null

@@ -45,6 +45,17 @@ async function requireTalentPermission(
   }
 }
 
+// Comparaison en chaine ISO ('YYYY-MM-DD', format exact d'un <input
+// type="date">) plutot qu'en objets Date : evite tout ecart de fuseau
+// horaire entre la date saisie (sans heure) et "aujourd'hui" cote serveur.
+function requireFutureEndDate(endDate: string | null | undefined) {
+  if (!endDate) return
+  const today = new Date().toISOString().slice(0, 10)
+  if (endDate <= today) {
+    throw new Error('La date de fin doit être postérieure à aujourd’hui.')
+  }
+}
+
 export async function createJobOfferAction(
   entityId: string,
   input: {
@@ -58,10 +69,12 @@ export async function createJobOfferAction(
     compensation_amount?: number | null
     compensation_frequency?: 'weekly' | 'monthly' | 'mission' | null
     apply_url?: string | null
+    end_date?: string | null
   },
 ) {
   const supabase = await createClient()
   await requireTalentPermission(supabase, entityId)
+  requireFutureEndDate(input.end_date)
   await createProjectJobOffer(supabase, entityId, input)
   revalidatePath('/dashboard/talent')
 }
@@ -80,6 +93,7 @@ export async function updateJobOfferAction(
     compensation_amount?: number | null
     compensation_frequency?: 'weekly' | 'monthly' | 'mission' | null
     apply_url?: string | null
+    end_date?: string | null
   },
 ) {
   const supabase = await createClient()
