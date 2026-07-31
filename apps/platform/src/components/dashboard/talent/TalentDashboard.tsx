@@ -78,18 +78,6 @@ export function TalentDashboard({ entityId, offers }: { entityId: string; offers
     }
   }
 
-  const getCompensationLabel = (offer: JobOffer) => {
-    if (!offer.compensation_type) return null
-    const amount = offer.compensation_amount ? offer.compensation_amount.toString() : ''
-    const unit = offer.compensation_type === 'percentage' ? '%' : '€'
-    let freq = ''
-    if (offer.compensation_frequency === 'weekly') freq = ' / semaine'
-    if (offer.compensation_frequency === 'monthly') freq = ' / mois'
-    if (offer.compensation_frequency === 'mission') freq = ' / mission'
-
-    return `${amount}${unit}${freq}`
-  }
-
   const filteredAndSortedOffers = useMemo(() => {
     return offers
       .filter((offer) => offer.title.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -160,7 +148,9 @@ export function TalentDashboard({ entityId, offers }: { entityId: string; offers
               locationText={offer.location_text}
               endDate={offer.end_date}
               isCadre={offer.is_cadre}
-              compensationLabel={getCompensationLabel(offer)}
+              compensationAmount={offer.compensation_amount}
+              compensationType={offer.compensation_type}
+              compensationFrequency={offer.compensation_frequency}
               blocks={offer.blocks}
               status={offer.status}
               onEdit={() => handleEdit(offer)}
