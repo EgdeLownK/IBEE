@@ -112,12 +112,20 @@ const OFFER_ID = 'offer-3333-3333-3333-333333333333'
 
 describe('talent-actions.ts — permission verifiee via entity_user_has_permission (apres correction)', () => {
   describe('createJobOfferAction / updateJobOfferAction / deleteJobOfferAction', () => {
+    // Remuneration + localisation obligatoires a la creation depuis
+    // requireCompensation/requireLocationText (talent-actions.ts) : fixture
+    // complete pour que ces tests de permission ne soient pas bloques par la
+    // validation metier qu'ils ne visent pas a tester. location_type: 'remote'
+    // dispense de location_text (jamais requis pour ce type).
     const newOfferInput = {
       title: 'Offre',
       contract_type: 'cdi' as const,
       status: 'active' as const,
       location_type: 'remote' as const,
       blocks: [],
+      compensation_type: 'fixed' as const,
+      compensation_amount: 3000,
+      compensation_frequency: 'monthly' as const,
     }
 
     it('a) appel légitime (permission accordée sur l’entité) → la mutation atteint la base', async () => {

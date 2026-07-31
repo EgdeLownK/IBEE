@@ -122,7 +122,7 @@
   },
   "src/components/dashboard/talent/JobOfferDialog.tsx": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 9
+      "count": 7
     }
   },
   "src/components/dashboard/team/TeamDialogs.tsx": {
