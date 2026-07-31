@@ -80,6 +80,7 @@ export function JobOfferDialog({ open, onOpenChange, entityId, offer }: JobOffer
   const [compAmount, setCompAmount] = useState<string>(offer?.compensation_amount?.toString() || '')
   const [compFreq, setCompFreq] = useState<JobCompFreq | ''>(offer?.compensation_frequency || '')
   const [applyUrl, setApplyUrl] = useState(offer?.apply_url || '')
+  const [endDate, setEndDate] = useState(offer?.end_date || '')
 
   // Step 2 states
   const [blocks, setBlocks] = useState<DraftBlock[]>([])
@@ -97,6 +98,7 @@ export function JobOfferDialog({ open, onOpenChange, entityId, offer }: JobOffer
       setCompAmount(offer?.compensation_amount?.toString() || '')
       setCompFreq(offer?.compensation_frequency || '')
       setApplyUrl(offer?.apply_url || '')
+      setEndDate(offer?.end_date || '')
 
       const initialBlocks = offer?.blocks ? parseHistoryBlocks(offer.blocks) : []
       setBlocks(draftBlocksFromInitial(initialBlocks))
@@ -203,6 +205,18 @@ export function JobOfferDialog({ open, onOpenChange, entityId, offer }: JobOffer
       return
     }
 
+    // Verifiee uniquement a la creation : editer une offre existante ne doit
+    // pas se remettre a exiger une date future pour un champ deja enregistre
+    // (talent-actions.ts applique la meme regle cote serveur, source de
+    // verite - ce controle client n'est qu'un retour immediat a la saisie).
+    if (!isEditing && endDate) {
+      const todayStr = new Date().toISOString().slice(0, 10)
+      if (endDate <= todayStr) {
+        setError('La date de fin doit être postérieure à aujourd’hui.')
+        return
+      }
+    }
+
     const targetStatus = explicitStatus ?? status
     if (!isEditing) setPendingIntent(targetStatus === 'active' ? 'publish' : 'draft')
 
@@ -219,6 +233,7 @@ export function JobOfferDialog({ open, onOpenChange, entityId, offer }: JobOffer
           compensation_amount: compAmount ? parseFloat(compAmount) : null,
           compensation_frequency: compFreq ? (compFreq as JobCompFreq) : null,
           apply_url: applyUrl || null,
+          end_date: endDate || null,
         }
 
         if (isEditing && offer) {
@@ -398,6 +413,11 @@ export function JobOfferDialog({ open, onOpenChange, entityId, offer }: JobOffer
                   onChange={(e) => setApplyUrl(e.target.value)}
                   placeholder="Ex: https://forms.gle/... ou jobs@entreprise.com"
                 />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Date de fin (optionnel)</label>
+                <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
               </div>
             </div>
           ) : (
