@@ -4,7 +4,7 @@ import { Briefcase, Eye, EyeOff, MoreVertical, Pencil, Trash2 } from 'lucide-rea
 import type { HistoryBlock } from '@ibee/shared'
 import type { JobContractType } from '@ibee/supabase'
 import { entityDetailExcerpt } from '@/lib/entity-detail-excerpt'
-import { contractPill } from './contract-labels'
+import { contractLabel } from './contract-labels'
 
 /**
  * Carte de liste d'une offre d'emploi. Grille `.job-row` DEDIEE (packages/
@@ -14,7 +14,9 @@ import { contractPill } from './contract-labels'
  * partageaient `.event-row` a l'origine ; la carte offre a perdu sa colonne
  * pastille de contrat (remplacee par un tag dans la ligne de tags), ce qui
  * aurait exige de modifier une classe partagee avec un autre type de
- * contenu — d'ou cette grille propre, sur 2 colonnes (media, corps).
+ * contenu — d'ou cette grille propre, sur 3 zones nommees en display="full"
+ * (media, body, comp — colonne remuneration separee par un filet vertical)
+ * et une ligne flex unique en display="compact" (pas de zone comp).
  *
  * Utilise par PublicJobOffersList (visiteur ET apercu studio) et par
  * TalentDashboard (proprietaire, via la variante 'owner').
@@ -33,6 +35,8 @@ import { contractPill } from './contract-labels'
  */
 
 type LocationType = 'remote' | 'onsite' | 'hybrid'
+type CompensationType = 'fixed' | 'percentage'
+type CompensationFrequency = 'weekly' | 'monthly' | 'mission'
 
 // Un tag par information de lieu (pas un libelle unique) : hybrid produit
 // DEUX tags (ville puis "Hybride"), les autres types un seul. VOLONTAIRE :
@@ -45,11 +49,33 @@ function locationTags(locationType: LocationType, locationText: string | null): 
   return [city || 'Sur site']
 }
 
+// "1er" pour le premier du mois, sinon le quantieme brut — Intl.DateTimeFormat
+// ne met jamais d'ordinal en francais (rendrait "1 aout" sans correction).
 function formatEndDate(value: string): string {
-  const label = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short' }).format(
-    new Date(value),
-  )
-  return `Jusqu'au ${label}`
+  const date = new Date(value)
+  const day = date.getDate()
+  const month = new Intl.DateTimeFormat('fr-FR', { month: 'short' }).format(date)
+  return `Jusqu'au ${day === 1 ? '1er' : day} ${month}`
+}
+
+// Montant + unite (%/€) de la remuneration — compensation_amount et
+// compensation_type sont deux colonnes distinctes en base (entity_job_offers),
+// jamais concatenees ici : le montant seul doit rester la plus grosse valeur
+// affichee, formate independamment de la frequence (voir compensationUnitLabel).
+function formatCompensationAmount(amount: number, type: CompensationType): string {
+  const formatted = new Intl.NumberFormat('fr-FR').format(amount)
+  return type === 'percentage' ? `${formatted}%` : `${formatted}€`
+}
+
+// Ligne "unite" sous le montant (ex. "par mois"). compensation_type
+// 'percentage' peut n'avoir aucune compensation_frequency en base (ex. un
+// pourcentage de commission sans cadence fixe) — retourne null dans ce cas,
+// la ligne est alors simplement absente (pas de valeur inventee).
+function compensationUnitLabel(frequency: CompensationFrequency | null): string | null {
+  if (frequency === 'weekly') return 'par semaine'
+  if (frequency === 'monthly') return 'par mois'
+  if (frequency === 'mission') return 'par mission'
+  return null
 }
 
 export type JobOfferAdminMenu = {
@@ -69,7 +95,9 @@ type JobOfferRowBaseProps = {
   locationText: string | null
   endDate: string | null
   isCadre: boolean | null
-  compensationLabel?: string | null
+  compensationAmount?: number | null
+  compensationType?: CompensationType | null
+  compensationFrequency?: CompensationFrequency | null
   /** Json brut de la colonne `blocks` (entity_job_offers) — HistoryBlock[] en pratique. */
   blocks?: unknown
   adminMenu?: JobOfferAdminMenu
@@ -99,17 +127,24 @@ export function JobOfferRow(props: JobOfferRowProps) {
     locationText,
     endDate,
     isCadre,
-    compensationLabel,
+    compensationAmount,
+    compensationType,
+    compensationFrequency,
     blocks,
     adminMenu,
     display = 'full',
   } = props
-  const pill = contractPill(contractType)
+  const contractName = contractLabel(contractType)
   const tags = [
-    pill.code,
+    contractName,
     ...locationTags(locationType, locationText),
     ...(isCadre ? ['Cadre'] : []),
   ]
+  const compensationAmountLabel =
+    compensationAmount && compensationType
+      ? formatCompensationAmount(compensationAmount, compensationType)
+      : null
+  const compensationUnit = compensationUnitLabel(compensationFrequency ?? null)
   const excerpt = blocks ? entityDetailExcerpt({ content_blocks: blocks as HistoryBlock[] }) : ''
   // La pastille statut a disparu du profil (seules les offres actives y sont
   // listees, elle n'informerait de rien) mais reste affichee sur la carte
@@ -212,7 +247,9 @@ export function JobOfferRow(props: JobOfferRowProps) {
         <div className="job-row__body">
           <h3 className="job-row__title">{title}</h3>
           <div className="job-row__tags">
-            <span className="job-row__tag job-row__tag--contract">{pill.code}</span>
+            {/* Carte reduite : tag contrat en fond neutre, PAS le fond sombre
+                de la carte pleine (variante 2e validee, cf. rapport phase 0). */}
+            <span className="job-row__tag">{contractName}</span>
             {compactStatus && (
               <span className={`event-row__status event-row__status--${compactStatus}`}>
                 {compactStatus === 'active' ? 'En ligne' : 'Hors ligne'}
@@ -242,28 +279,33 @@ export function JobOfferRow(props: JobOfferRowProps) {
             </span>
           ))}
         </div>
-        <div className="job-row__footer">
-          <div className="job-row__footer-start flex items-center gap-2.5">
-            {compensationLabel && <p className="job-row__price">{compensationLabel}</p>}
-            {props.variant === 'owner' && props.applicationsCount != null && (
-              <span className="text-xs text-neutral-500">
-                {props.applicationsCount} candidature{props.applicationsCount > 1 ? 's' : ''}
-              </span>
-            )}
-          </div>
-          <div className="job-row__footer-actions">
-            {props.variant === 'visitor' ? (
-              <Link className="job-row__cta" href={props.applyHref}>
-                Postuler
-              </Link>
-            ) : (
-              props.onEdit && (
-                <button type="button" className="job-row__cta" onClick={props.onEdit}>
-                  Modifier
-                </button>
-              )
-            )}
-          </div>
+      </div>
+      <div className="job-row__comp">
+        <div className="job-row__comp-info">
+          {compensationAmountLabel && (
+            <>
+              <p className="job-row__comp-amount">{compensationAmountLabel}</p>
+              {compensationUnit && <p className="job-row__comp-unit">{compensationUnit}</p>}
+            </>
+          )}
+          {props.variant === 'owner' && props.applicationsCount != null && (
+            <span className="job-row__comp-meta">
+              {props.applicationsCount} candidature{props.applicationsCount > 1 ? 's' : ''}
+            </span>
+          )}
+        </div>
+        <div className="job-row__comp-actions">
+          {props.variant === 'visitor' ? (
+            <Link className="job-row__cta" href={props.applyHref}>
+              Postuler
+            </Link>
+          ) : (
+            props.onEdit && (
+              <button type="button" className="job-row__cta" onClick={props.onEdit}>
+                Modifier
+              </button>
+            )
+          )}
         </div>
       </div>
     </article>

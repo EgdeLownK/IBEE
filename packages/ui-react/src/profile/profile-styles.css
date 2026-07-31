@@ -847,13 +847,16 @@
  * en production). Les deux grilles partageaient .event-row a l'origine ; la
  * refonte carte-offre (suppression de la pastille contrat, ajout d'une ligne
  * de tags) aurait exige de modifier une classe partagee avec un autre type
- * de contenu, d'ou cette grille propre au job, sur 2 colonnes (media, corps)
- * au lieu de 3.
+ * de contenu, d'ou cette grille propre au job.
+ * 3 zones nommees (media, body, comp) : vignette, corps flexible, colonne
+ * remuneration separee par un filet. Sous 640px, la zone comp repasse sous
+ * le corps (voir media query en fin de bloc).
  */
 .job-row {
   position: relative;
   display: grid;
-  grid-template-columns: 120px 1fr;
+  grid-template-columns: 112px 1fr 150px;
+  grid-template-areas: 'media body comp';
   align-items: stretch;
   gap: 16px;
   padding: 14px;
@@ -885,11 +888,12 @@
 }
 
 .job-row:has(.job-row__stretch) .job-row__media,
-.job-row:has(.job-row__stretch) .job-row__body {
+.job-row:has(.job-row__stretch) .job-row__body,
+.job-row:has(.job-row__stretch) .job-row__comp {
   pointer-events: none;
 }
 
-.job-row:has(.job-row__stretch) .job-row__footer-actions {
+.job-row:has(.job-row__stretch) .job-row__comp-actions {
   pointer-events: auto;
 }
 
@@ -910,7 +914,7 @@
   justify-content: center;
   width: 32px;
   height: 32px;
-  border: 0;
+  border: 1px solid var(--color-border);
   border-radius: 999px;
   background: color-mix(in srgb, var(--color-surface) 88%, transparent);
   color: var(--color-neutral-600);
@@ -930,7 +934,13 @@
   text-decoration: none;
 }
 
+/* align-self: start — sans ca, .job-row (grid, align-items: stretch pour que
+   .job-row__comp remplisse la hauteur de la ligne) etire aussi la vignette a
+   la hauteur du corps, ecrasant aspect-ratio: 1. Reste carree quelle que
+   soit la hauteur de la carte, alignee en haut. */
 .job-row__media {
+  grid-area: media;
+  align-self: start;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -954,6 +964,7 @@
 }
 
 .job-row__body {
+  grid-area: body;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -964,20 +975,21 @@
 .job-row__title {
   margin: 0;
   font-family: var(--font-display);
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
   color: var(--color-neutral-900);
 }
 
 .job-row__end-date {
   margin: 0;
   font-size: 12.5px;
-  color: var(--color-neutral-600);
+  color: var(--color-neutral-400);
 }
 
 .job-row__excerpt {
   margin: 2px 0 0;
-  font-size: 13px;
+  font-size: 13.5px;
   line-height: 1.4;
   color: var(--color-neutral-500);
   display: -webkit-box;
@@ -991,7 +1003,8 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 6px;
-  margin-top: 2px;
+  margin-top: auto;
+  padding-top: 8px;
 }
 
 .job-row__tag {
@@ -999,53 +1012,79 @@
   align-items: center;
   padding: 3px 10px;
   border-radius: var(--radius-chip);
-  background: var(--color-panel);
-  color: var(--color-neutral-700);
+  background: var(--color-neutral-100);
+  color: var(--color-neutral-600);
   font-size: 11.5px;
   font-weight: 600;
   white-space: nowrap;
 }
 
 .job-row__tag--contract {
-  background: var(--color-accent-tint);
-  color: var(--color-accent);
-}
-
-.job-row__price {
-  margin: 0;
-  font-size: 15px;
+  background: var(--color-neutral-900);
+  color: var(--color-surface);
   font-weight: 700;
-  color: var(--color-neutral-900);
+  letter-spacing: 0.03em;
 }
 
-.job-row__footer {
-  position: relative;
-  z-index: 2;
+/* Colonne remuneration : filet vertical a gauche (--color-border, cf. Q3
+   phase 0), montant en avant, bouton pleine largeur colle en bas. */
+.job-row__comp {
+  grid-area: comp;
   display: flex;
-  align-items: center;
+  flex-direction: column;
   justify-content: space-between;
-  gap: 12px;
-  margin-top: auto;
-  padding-top: 10px;
+  gap: 10px;
+  min-width: 0;
+  padding-left: 16px;
+  border-left: 1px solid var(--color-border);
 }
 
-.job-row__footer-start {
+.job-row__comp-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   min-width: 0;
 }
 
-.job-row__footer-actions {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-  flex-shrink: 0;
+/* overflow-wrap : un montant long (ex. "454 231€") ne doit jamais deborder
+   la colonne de 150px — le separateur de milliers Intl (espace fine
+   insecable) n'est pas un point de cesure garanti dans tous les
+   navigateurs, d'ou ce filet de securite plutot qu'une taille fixe. */
+.job-row__comp-amount {
+  margin: 0;
+  overflow-wrap: break-word;
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--color-neutral-900);
+}
+
+.job-row__comp-unit {
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-neutral-400);
+}
+
+/* Nombre de candidatures (variant owner uniquement) — pas de zone dediee
+   dans la maquette (generique visiteur+owner), placee ici a defaut d'un
+   autre emplacement dans la colonne remuneration. */
+.job-row__comp-meta {
+  font-size: 12px;
+  color: var(--color-neutral-400);
+}
+
+.job-row__comp-actions {
+  position: relative;
+  z-index: 2;
 }
 
 .job-row__cta {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 8px 16px;
+  width: 100%;
+  padding: 10px 16px;
   border-radius: 999px;
   background: var(--color-neutral-900);
   color: var(--color-surface);
@@ -1055,34 +1094,107 @@
   white-space: nowrap;
   border: 0;
   cursor: pointer;
-  transition: opacity 0.15s ease;
+  transition: background-color 0.15s ease;
 }
 
 .job-row__cta:hover {
-  opacity: 0.88;
+  background: var(--color-accent-hover);
 }
 
-/* Carte reduite (Pilotage, offre hors ligne) : image + titre + tag contrat +
-   menu uniquement — pas de min-height forcee, la hauteur suit le contenu. */
+/* Carte reduite (Pilotage, offre hors ligne) : ligne flex unique — image,
+   titre, tag contrat, pastille statut, menu. Pas de min-height forcee, la
+   hauteur suit le contenu. Passe en flex (au lieu d'heriter de la grille
+   3 colonnes de .job-row) car aucune zone comp n'est rendue en compact. */
 .job-row--compact {
-  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 14px;
+}
+
+.job-row--compact .job-row__media {
+  width: 52px;
+  flex-shrink: 0;
+  /* Contrecarre align-self: start de la regle grid de base — en ligne flex,
+     la vignette doit rester centree verticalement comme le reste de la ligne. */
+  align-self: center;
 }
 
 .job-row--compact .job-row__body {
-  justify-content: center;
-  gap: 6px;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
   min-height: 0;
+}
+
+.job-row--compact .job-row__title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: normal;
+  color: var(--color-neutral-700);
+}
+
+.job-row--compact .job-row__tags {
+  flex-wrap: nowrap;
+  flex-shrink: 0;
+  margin-top: 0;
+  padding-top: 0;
+}
+
+.job-row--compact .job-row__menu-trigger {
+  border: 0;
+  background: transparent;
+  backdrop-filter: none;
+}
+
+.job-row--compact .job-row__menu-trigger:hover {
+  background: var(--color-neutral-100);
 }
 
 @media (max-width: 640px) {
   .job-row {
     grid-template-columns: 84px 1fr;
+    grid-template-areas:
+      'media body'
+      'comp comp';
     gap: 12px;
     padding: 12px;
   }
 
   .job-row__body {
     min-height: 0;
+  }
+
+  .job-row__comp {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding-left: 0;
+    padding-top: 10px;
+    border-left: 0;
+  }
+
+  .job-row__cta {
+    width: auto;
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+}
+
+/* Doit rester APRES la media query .job-row ci-dessus : meme specificite,
+   le CSS ecrase par ordre de source (reduction des ecarts uniquement, la
+   carte reduite reste sur une seule ligne). */
+@media (max-width: 640px) {
+  .job-row--compact {
+    gap: 8px;
+    padding: 8px 10px;
   }
 }
 

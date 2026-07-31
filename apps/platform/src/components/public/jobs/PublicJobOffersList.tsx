@@ -29,20 +29,6 @@ type JobOfferAdminActions = {
   onDelete: (offerId: string) => void
 }
 
-function compensationLabel(offer: JobOfferPublic): string | null {
-  if (!offer.compensation_type || !offer.compensation_amount) return null
-  const unit = offer.compensation_type === 'percentage' ? '%' : '€'
-  const freq =
-    offer.compensation_frequency === 'monthly'
-      ? '/mois'
-      : offer.compensation_frequency === 'weekly'
-        ? '/semaine'
-        : offer.compensation_frequency === 'mission'
-          ? '/mission'
-          : ''
-  return `${offer.compensation_amount}${unit}${freq ? ' ' + freq : ''}`
-}
-
 export function PublicJobOffersList({
   offers,
   entitySlug,
@@ -77,7 +63,11 @@ export function PublicJobOffersList({
           locationText={offer.location_text}
           endDate={offer.end_date}
           isCadre={offer.is_cadre}
-          compensationLabel={compensationLabel(offer)}
+          compensationAmount={offer.compensation_amount}
+          compensationType={offer.compensation_type as 'fixed' | 'percentage' | null}
+          compensationFrequency={
+            offer.compensation_frequency as 'weekly' | 'monthly' | 'mission' | null
+          }
           blocks={offer.blocks}
           adminMenu={
             adminActions && offer.status
