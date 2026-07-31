@@ -1027,7 +1027,11 @@
 }
 
 /* Colonne remuneration : filet vertical a gauche (--color-border, cf. Q3
-   phase 0), montant en avant, bouton pleine largeur colle en bas. */
+   phase 0), montant en avant, bouton pleine largeur colle en bas.
+   padding-top: 34px — decalage maquette (variante 2e) pour que le montant
+   demarre sous le menu trois points (.job-row__admin, top: 10px + 32px de
+   haut) plutot qu'a son niveau. Le filet vertical (border-left, sur la
+   boite) reste sur toute la hauteur de la colonne malgre ce padding. */
 .job-row__comp {
   grid-area: comp;
   display: flex;
@@ -1035,6 +1039,7 @@
   justify-content: space-between;
   gap: 10px;
   min-width: 0;
+  padding-top: 34px;
   padding-left: 16px;
   border-left: 1px solid var(--color-border);
 }
@@ -1046,10 +1051,9 @@
   min-width: 0;
 }
 
-/* overflow-wrap : un montant long (ex. "454 231€") ne doit jamais deborder
-   la colonne de 150px — le separateur de milliers Intl (espace fine
-   insecable) n'est pas un point de cesure garanti dans tous les
-   navigateurs, d'ou ce filet de securite plutot qu'une taille fixe. */
+/* overflow-wrap : filet de securite si le seuil --long (calcule en JS sur la
+   longueur du libelle formate, JobOfferRow.tsx) laisse quand meme passer un
+   cas limite — la colonne fait ~150px, jamais de debordement visuel. */
 .job-row__comp-amount {
   margin: 0;
   overflow-wrap: break-word;
@@ -1058,6 +1062,12 @@
   font-weight: 800;
   letter-spacing: -0.02em;
   color: var(--color-neutral-900);
+}
+
+/* Montant long (ex. "454 231€", seuil > 7 caracteres) : taille reduite
+   plutot que de laisser deborder une colonne de largeur fixe (~150px). */
+.job-row__comp-amount--long {
+  font-size: 18px;
 }
 
 .job-row__comp-unit {

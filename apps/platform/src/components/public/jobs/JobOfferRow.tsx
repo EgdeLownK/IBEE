@@ -145,6 +145,10 @@ export function JobOfferRow(props: JobOfferRowProps) {
       ? formatCompensationAmount(compensationAmount, compensationType)
       : null
   const compensationUnit = compensationUnitLabel(compensationFrequency ?? null)
+  // Colonne remuneration a largeur fixe (~150px, profile-styles.css) : au-dela
+  // de 7 caracteres (ex. "454 231€"), le montant a 24px/800 touche le bord —
+  // .job-row__comp-amount--long bascule sur une taille plus petite.
+  const isLongCompensationAmount = (compensationAmountLabel?.length ?? 0) > 7
   const excerpt = blocks ? entityDetailExcerpt({ content_blocks: blocks as HistoryBlock[] }) : ''
   // La pastille statut a disparu du profil (seules les offres actives y sont
   // listees, elle n'informerait de rien) mais reste affichee sur la carte
@@ -284,7 +288,11 @@ export function JobOfferRow(props: JobOfferRowProps) {
         <div className="job-row__comp-info">
           {compensationAmountLabel && (
             <>
-              <p className="job-row__comp-amount">{compensationAmountLabel}</p>
+              <p
+                className={`job-row__comp-amount${isLongCompensationAmount ? ' job-row__comp-amount--long' : ''}`}
+              >
+                {compensationAmountLabel}
+              </p>
               {compensationUnit && <p className="job-row__comp-unit">{compensationUnit}</p>}
             </>
           )}
