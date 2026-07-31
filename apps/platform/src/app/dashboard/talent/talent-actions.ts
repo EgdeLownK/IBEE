@@ -56,6 +56,37 @@ function requireFutureEndDate(endDate: string | null | undefined) {
   }
 }
 
+// Rémunération obligatoire a la creation (decision Killian) : type + montant
+// + frequence doivent tous etre renseignes. Appelee uniquement dans
+// createJobOfferAction - jamais dans updateJobOfferAction, dont le type
+// d'entree reste optionnel pour ne pas casser la bascule de statut du menu
+// trois points (updateJobOfferAction(entityId, offerId, { status })).
+function requireCompensation(input: {
+  compensation_type?: 'fixed' | 'percentage' | null
+  compensation_amount?: number | null
+  compensation_frequency?: 'weekly' | 'monthly' | 'mission' | null
+}) {
+  if (!input.compensation_type || !input.compensation_frequency) {
+    throw new Error('Veuillez renseigner le type et la fréquence de la rémunération.')
+  }
+  if (input.compensation_amount == null || input.compensation_amount <= 0) {
+    throw new Error('Veuillez renseigner le montant de la rémunération.')
+  }
+}
+
+// Localisation obligatoire a la creation pour "Sur site"/"Hybride" (decision
+// Killian) - jamais pour "100% Teletravail", ou le champ est masque cote
+// formulaire. Meme portee restreinte a createJobOfferAction que
+// requireCompensation ci-dessus.
+function requireLocationText(
+  locationType: 'remote' | 'onsite' | 'hybrid',
+  locationText: string | null | undefined,
+) {
+  if (locationType !== 'remote' && !locationText?.trim()) {
+    throw new Error('Veuillez renseigner la localisation.')
+  }
+}
+
 export async function createJobOfferAction(
   entityId: string,
   input: {
@@ -75,6 +106,8 @@ export async function createJobOfferAction(
   const supabase = await createClient()
   await requireTalentPermission(supabase, entityId)
   requireFutureEndDate(input.end_date)
+  requireCompensation(input)
+  requireLocationText(input.location_type, input.location_text)
   await createProjectJobOffer(supabase, entityId, input)
   revalidatePath('/dashboard/talent')
 }

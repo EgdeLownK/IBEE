@@ -76,9 +76,9 @@ export function JobOfferDialog({ open, onOpenChange, entityId, offer }: JobOffer
   const [status, setStatus] = useState(offer?.status || 'inactive')
   const [locationType, setLocationType] = useState(offer?.location_type || 'onsite')
   const [locationText, setLocationText] = useState(offer?.location_text || '')
-  const [compType, setCompType] = useState<JobCompType | ''>(offer?.compensation_type || '')
+  const [compType, setCompType] = useState<JobCompType>(offer?.compensation_type || 'fixed')
   const [compAmount, setCompAmount] = useState<string>(offer?.compensation_amount?.toString() || '')
-  const [compFreq, setCompFreq] = useState<JobCompFreq | ''>(offer?.compensation_frequency || '')
+  const [compFreq, setCompFreq] = useState<JobCompFreq>(offer?.compensation_frequency || 'monthly')
   const [applyUrl, setApplyUrl] = useState(offer?.apply_url || '')
   const [endDate, setEndDate] = useState(offer?.end_date || '')
 
@@ -94,9 +94,9 @@ export function JobOfferDialog({ open, onOpenChange, entityId, offer }: JobOffer
       setStatus(offer?.status || 'inactive')
       setLocationType(offer?.location_type || 'onsite')
       setLocationText(offer?.location_text || '')
-      setCompType(offer?.compensation_type || '')
+      setCompType(offer?.compensation_type || 'fixed')
       setCompAmount(offer?.compensation_amount?.toString() || '')
-      setCompFreq(offer?.compensation_frequency || '')
+      setCompFreq(offer?.compensation_frequency || 'monthly')
       setApplyUrl(offer?.apply_url || '')
       setEndDate(offer?.end_date || '')
 
@@ -182,6 +182,14 @@ export function JobOfferDialog({ open, onOpenChange, entityId, offer }: JobOffer
       setError('Veuillez renseigner le titre du poste.')
       return
     }
+    if (locationType !== 'remote' && !locationText.trim()) {
+      setError('Veuillez renseigner la localisation.')
+      return
+    }
+    if (!compAmount || parseFloat(compAmount) <= 0) {
+      setError('Veuillez renseigner le montant de la rémunération.')
+      return
+    }
     setError(null)
     setStep(2)
   }
@@ -229,9 +237,9 @@ export function JobOfferDialog({ open, onOpenChange, entityId, offer }: JobOffer
           location_type: locationType as any,
           location_text: locationText || null,
           blocks: payloadBlocks,
-          compensation_type: compType ? (compType as JobCompType) : null,
+          compensation_type: compType,
           compensation_amount: compAmount ? parseFloat(compAmount) : null,
-          compensation_frequency: compFreq ? (compFreq as JobCompFreq) : null,
+          compensation_frequency: compFreq,
           apply_url: applyUrl || null,
           end_date: endDate || null,
         }
@@ -345,14 +353,17 @@ export function JobOfferDialog({ open, onOpenChange, entityId, offer }: JobOffer
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Ville (optionnel)</label>
-                <Input
-                  value={locationText}
-                  onChange={(e) => setLocationText(e.target.value)}
-                  placeholder="Ex: Paris, France"
-                />
-              </div>
+              {locationType !== 'remote' && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Localisation *</label>
+                  <Input
+                    value={locationText}
+                    onChange={(e) => setLocationText(e.target.value)}
+                    placeholder="Ex: Paris, France"
+                    required
+                  />
+                </div>
+              )}
 
               <div className="border-t border-neutral-100 pt-4 mt-2">
                 <h3 className="text-sm font-semibold mb-3">Rémunération</h3>
@@ -361,46 +372,43 @@ export function JobOfferDialog({ open, onOpenChange, entityId, offer }: JobOffer
                     <label className="text-xs font-medium text-neutral-500">Type</label>
                     <select
                       value={compType}
-                      onChange={(e) => setCompType(e.target.value as any)}
+                      onChange={(e) => setCompType(e.target.value as JobCompType)}
                       className="block w-full rounded-lg border border-neutral-200 bg-white px-4 py-3 text-neutral-900 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-neutral-900/20 hover:border-neutral-300"
                     >
-                      <option value="">Non spécifié</option>
                       <option value="fixed">Fixe (€)</option>
                       <option value="percentage">Pourcentage (%)</option>
                     </select>
                   </div>
-                  {compType && (
-                    <div className="flex gap-4">
-                      <div className="flex-1 space-y-2">
-                        <label className="text-xs font-medium text-neutral-500">Montant</label>
-                        <div className="relative">
-                          <Input
-                            type="number"
-                            placeholder="0.00"
-                            value={compAmount}
-                            onChange={(e) => setCompAmount(e.target.value)}
-                            className="pr-8"
-                          />
-                          <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-neutral-500 text-sm">
-                            {compType === 'percentage' ? '%' : '€'}
-                          </div>
+                  <div className="flex gap-4">
+                    <div className="flex-1 space-y-2">
+                      <label className="text-xs font-medium text-neutral-500">Montant brut</label>
+                      <div className="relative">
+                        <Input
+                          type="number"
+                          placeholder="0.00"
+                          value={compAmount}
+                          onChange={(e) => setCompAmount(e.target.value)}
+                          className="pr-8"
+                          required
+                        />
+                        <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-neutral-500 text-sm">
+                          {compType === 'percentage' ? '%' : '€'}
                         </div>
                       </div>
-                      <div className="flex-1 space-y-2">
-                        <label className="text-xs font-medium text-neutral-500">Fréquence</label>
-                        <select
-                          value={compFreq}
-                          onChange={(e) => setCompFreq(e.target.value as any)}
-                          className="block w-full rounded-lg border border-neutral-200 bg-white px-4 py-3 text-neutral-900 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-neutral-900/20 hover:border-neutral-300"
-                        >
-                          <option value="">Au choix</option>
-                          <option value="weekly">Par semaine</option>
-                          <option value="monthly">Par mois</option>
-                          <option value="mission">À la mission</option>
-                        </select>
-                      </div>
                     </div>
-                  )}
+                    <div className="flex-1 space-y-2">
+                      <label className="text-xs font-medium text-neutral-500">Fréquence</label>
+                      <select
+                        value={compFreq}
+                        onChange={(e) => setCompFreq(e.target.value as JobCompFreq)}
+                        className="block w-full rounded-lg border border-neutral-200 bg-white px-4 py-3 text-neutral-900 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-neutral-900/20 hover:border-neutral-300"
+                      >
+                        <option value="weekly">Par semaine</option>
+                        <option value="monthly">Par mois</option>
+                        <option value="mission">À la mission</option>
+                      </select>
+                    </div>
+                  </div>
                 </div>
               </div>
 
