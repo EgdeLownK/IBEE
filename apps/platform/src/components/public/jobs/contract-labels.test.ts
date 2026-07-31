@@ -28,11 +28,22 @@ describe('contractPill', () => {
   })
 })
 
+const EXPECTED_NAMES: Record<JobContractType, string> = {
+  cdi: 'CDI',
+  cdd: 'CDD',
+  interim: 'Intérim',
+  contrat_pro: 'Contrat pro',
+  apprentissage: 'Apprentissage',
+  stage: 'Stage',
+  mission: 'Freelance',
+}
+
 describe('contractLabel', () => {
-  it('reprend le libellé secondaire de la pastille pour une valeur connue', () => {
-    expect(contractLabel('cdi')).toBe('Temps plein')
-    expect(contractLabel('mission')).toBe('Freelance')
-  })
+  for (const [value, expected] of Object.entries(EXPECTED_NAMES)) {
+    it(`affiche le nom du contrat "${expected}" pour "${value}" (page détail)`, () => {
+      expect(contractLabel(value)).toBe(expected)
+    })
+  }
 
   it('ne plante pas sur une valeur inconnue et rend un texte, jamais une exception', () => {
     expect(() => contractLabel('freelance_futur')).not.toThrow()

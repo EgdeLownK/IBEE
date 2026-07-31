@@ -34,10 +34,25 @@ export function contractPill(value: string): { code: string; label: string } {
   )
 }
 
-// Libellé pastille de la page détail : même contenu que le libellé
-// secondaire de la carte (décision produit, mission
-// feat/job-offer-contract-types-ui) — un seul Record en amont (CONTRACT_PILL)
-// pour ne pas les faire diverger.
+// Nom du contrat pour la page détail (PublicJobOfferDetail.tsx) — distinct du
+// libellé secondaire de la pastille carte (CONTRACT_PILL.label, ex. "Temps
+// plein" pour cdi) : le candidat doit voir le TYPE de contrat proposé, pas
+// seulement sa description. VOLONTAIRE : Record séparé plutôt que de
+// réutiliser CONTRACT_PILL.label ici — corrigé après une première version qui
+// affichait le libellé secondaire et faisait disparaître le nom du contrat
+// (ex. une offre CDI affichait "Temps plein" au lieu de "CDI").
+const CONTRACT_NAME: Record<JobContractType, string> = {
+  cdi: 'CDI',
+  cdd: 'CDD',
+  interim: 'Intérim',
+  contrat_pro: 'Contrat pro',
+  apprentissage: 'Apprentissage',
+  stage: 'Stage',
+  mission: 'Freelance',
+}
+
+// Libellé pastille de la page détail. Repli sur la valeur brute si inconnue
+// de CONTRACT_NAME, même motif que contractPill : jamais de crash.
 export function contractLabel(value: string): string {
-  return contractPill(value).label || value
+  return (CONTRACT_NAME as Record<string, string | undefined>)[value] ?? value
 }
