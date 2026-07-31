@@ -6,12 +6,7 @@ import { ArrowLeft, Briefcase, MapPin } from 'lucide-react'
 import type { JobOffer } from '@ibee/supabase'
 import { parseHistoryBlocks } from '@ibee/shared'
 import { ApplyBottomSheet } from './ApplyBottomSheet'
-
-const CONTRACT_LABELS: Record<string, string> = {
-  cdi: 'CDI',
-  cdd: 'CDD',
-  mission: 'Mission / Freelance',
-}
+import { contractLabel } from './contract-labels'
 
 const LOCATION_LABELS: Record<string, string> = {
   remote: '100% Télétravail',
@@ -83,7 +78,7 @@ export function PublicJobOfferDetail({
           <div className="flex flex-wrap gap-2 mt-3">
             <span className="inline-flex items-center gap-1.5 rounded-full border border-neutral-200 bg-neutral-50 px-3 py-1 text-xs text-neutral-700">
               <Briefcase className="h-3 w-3" />
-              {CONTRACT_LABELS[offer.contract_type] ?? offer.contract_type}
+              {contractLabel(offer.contract_type)}
             </span>
             <span className="inline-flex items-center gap-1.5 rounded-full border border-neutral-200 bg-neutral-50 px-3 py-1 text-xs text-neutral-700">
               <MapPin className="h-3 w-3" />

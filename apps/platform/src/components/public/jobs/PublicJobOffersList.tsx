@@ -1,9 +1,10 @@
+import type { JobContractType } from '@ibee/supabase'
 import { JobOfferRow } from './JobOfferRow'
 
 type JobOfferPublic = {
   id: string
   title: string
-  contract_type: string
+  contract_type: JobContractType
   location_type: string
   location_text: string | null
   compensation_type: string | null
@@ -69,7 +70,7 @@ export function PublicJobOffersList({
           href={`/${entitySlug}/offres/${offer.id}`}
           applyHref={`/${entitySlug}/offres/${offer.id}`}
           title={offer.title}
-          contractType={offer.contract_type as 'cdi' | 'cdd' | 'mission'}
+          contractType={offer.contract_type}
           locationType={offer.location_type as 'remote' | 'onsite' | 'hybrid'}
           locationText={offer.location_text}
           createdAt={offer.created_at}

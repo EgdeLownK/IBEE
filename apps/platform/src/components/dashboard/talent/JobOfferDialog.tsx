@@ -4,7 +4,7 @@ import { useEffect, useState, useTransition } from 'react'
 import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { JobOffer, JobCompType, JobCompFreq } from '@ibee/supabase'
+import { JobOffer, JobCompType, JobCompFreq, JobContractType } from '@ibee/supabase'
 import {
   createJobOfferAction,
   updateJobOfferAction,
@@ -40,6 +40,11 @@ import {
 } from '../../profile/history/history-edit-utils'
 import { HistoryImageBlockEditor } from '../../profile/history/HistoryImageBlockEditor'
 
+// Types eligibles au statut cadre (decision produit, mission
+// feat/job-offer-contract-types-ui) : la case est masquee pour les autres,
+// meme motif que la localisation masquee pour le teletravail ci-dessous.
+const CADRE_ELIGIBLE_TYPES: JobContractType[] = ['cdi', 'cdd', 'interim']
+
 type JobOfferDialogProps = {
   open: boolean
   // `reason: 'success'` distingue une fermeture par creation reussie d'une
@@ -72,7 +77,8 @@ export function JobOfferDialog({ open, onOpenChange, entityId, offer }: JobOffer
 
   // Step 1 states
   const [title, setTitle] = useState(offer?.title || '')
-  const [contractType, setContractType] = useState(offer?.contract_type || 'cdi')
+  const [contractType, setContractType] = useState<JobContractType>(offer?.contract_type || 'cdi')
+  const [isCadre, setIsCadre] = useState<boolean>(offer?.is_cadre ?? false)
   const [status, setStatus] = useState(offer?.status || 'inactive')
   const [locationType, setLocationType] = useState(offer?.location_type || 'onsite')
   const [locationText, setLocationText] = useState(offer?.location_text || '')
@@ -91,6 +97,7 @@ export function JobOfferDialog({ open, onOpenChange, entityId, offer }: JobOffer
       setError(null)
       setTitle(offer?.title || '')
       setContractType(offer?.contract_type || 'cdi')
+      setIsCadre(offer?.is_cadre ?? false)
       setStatus(offer?.status || 'inactive')
       setLocationType(offer?.location_type || 'onsite')
       setLocationText(offer?.location_text || '')
@@ -232,7 +239,7 @@ export function JobOfferDialog({ open, onOpenChange, entityId, offer }: JobOffer
       try {
         const payload = {
           title,
-          contract_type: contractType as any,
+          contract_type: contractType,
           status: targetStatus as any,
           location_type: locationType as any,
           location_text: locationText || null,
@@ -242,6 +249,11 @@ export function JobOfferDialog({ open, onOpenChange, entityId, offer }: JobOffer
           compensation_frequency: compFreq,
           apply_url: applyUrl || null,
           end_date: endDate || null,
+          // Normalise a la soumission plutot qu'a chaque changement de type :
+          // point de passage unique (impossible a contourner par un autre
+          // chemin UI), et la coche n'est pas perdue si l'utilisateur bascule
+          // cdi -> stage -> cdi avant de valider.
+          is_cadre: CADRE_ELIGIBLE_TYPES.includes(contractType) ? isCadre : null,
         }
 
         if (isEditing && offer) {
@@ -331,11 +343,15 @@ export function JobOfferDialog({ open, onOpenChange, entityId, offer }: JobOffer
                   <label className="text-sm font-medium">Type de contrat *</label>
                   <select
                     value={contractType}
-                    onChange={(e) => setContractType(e.target.value as any)}
+                    onChange={(e) => setContractType(e.target.value as JobContractType)}
                     className="block w-full rounded-lg border border-neutral-200 bg-white px-4 py-3 text-neutral-900 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-neutral-900/20 hover:border-neutral-300"
                   >
                     <option value="cdi">CDI</option>
                     <option value="cdd">CDD</option>
+                    <option value="interim">Intérim</option>
+                    <option value="contrat_pro">Contrat pro</option>
+                    <option value="apprentissage">Apprentissage</option>
+                    <option value="stage">Stage</option>
                     <option value="mission">Mission / Freelance</option>
                   </select>
                 </div>
@@ -362,6 +378,21 @@ export function JobOfferDialog({ open, onOpenChange, entityId, offer }: JobOffer
                     placeholder="Ex: Paris, France"
                     required
                   />
+                </div>
+              )}
+
+              {CADRE_ELIGIBLE_TYPES.includes(contractType) && (
+                <div className="flex items-center gap-2">
+                  <input
+                    id="job-offer-cadre"
+                    type="checkbox"
+                    className="h-4 w-4"
+                    checked={isCadre}
+                    onChange={(e) => setIsCadre(e.target.checked)}
+                  />
+                  <label htmlFor="job-offer-cadre" className="text-sm font-medium">
+                    Statut cadre
+                  </label>
                 </div>
               )}
 
