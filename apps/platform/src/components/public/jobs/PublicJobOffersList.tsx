@@ -7,6 +7,8 @@ type JobOfferPublic = {
   contract_type: JobContractType
   location_type: string
   location_text: string | null
+  end_date: string | null
+  is_cadre: boolean | null
   compensation_type: string | null
   compensation_amount: number | null
   compensation_frequency: string | null
@@ -73,7 +75,8 @@ export function PublicJobOffersList({
           contractType={offer.contract_type}
           locationType={offer.location_type as 'remote' | 'onsite' | 'hybrid'}
           locationText={offer.location_text}
-          createdAt={offer.created_at}
+          endDate={offer.end_date}
+          isCadre={offer.is_cadre}
           compensationLabel={compensationLabel(offer)}
           blocks={offer.blocks}
           adminMenu={

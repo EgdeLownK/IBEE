@@ -803,38 +803,14 @@
 }
 
 /*
- * Offres d'emploi (JobOfferRow, apps/platform/src/components/public/jobs/).
- * Reutilise la grille .event-row et ses classes de structure (media, body,
- * title, meta, excerpt, footer, cta, stretch) sans les modifier. Seules ces
- * deux pastilles sont propres au job : aucun equivalent event a reutiliser
- * pour le type de contrat ou le statut en ligne/hors ligne.
+ * Pastille de statut en ligne/hors ligne (JobOfferRow, apps/platform/src/
+ * components/public/jobs/). N'apparait plus sur le profil (seules les
+ * offres actives y sont listees, la pastille n'informerait de rien) mais
+ * reste utilisee sur la carte reduite de /dashboard/talent (Pilotage,
+ * JobOfferRow display="compact"), seule surface qui liste aussi les offres
+ * hors ligne. Nom historique (prefixe event-row) conserve tel quel : aucun
+ * equivalent event a reutiliser, renommer n'apporterait rien.
  */
-.event-row__contract {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 8px 4px;
-  border-radius: var(--radius-field);
-  background: var(--color-accent-tint);
-  color: var(--color-accent);
-  line-height: 1.15;
-  text-align: center;
-}
-
-.event-row__contract-code {
-  font-family: var(--font-display);
-  font-size: 15px;
-  font-weight: 700;
-}
-
-.event-row__contract-label {
-  margin-top: 3px;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.03em;
-}
-
 .event-row__status {
   display: inline-flex;
   align-items: center;
@@ -864,9 +840,249 @@
   color: var(--color-neutral-500);
 }
 
+/*
+ * Offres d'emploi (JobOfferRow, apps/platform/src/components/public/jobs/).
+ * Grille DEDIEE, distincte de .event-row (reservee a EventListRow,
+ * apps/platform/src/components/profile/ProfileStudioSections.tsx — evenements
+ * en production). Les deux grilles partageaient .event-row a l'origine ; la
+ * refonte carte-offre (suppression de la pastille contrat, ajout d'une ligne
+ * de tags) aurait exige de modifier une classe partagee avec un autre type
+ * de contenu, d'ou cette grille propre au job, sur 2 colonnes (media, corps)
+ * au lieu de 3.
+ */
+.job-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  align-items: stretch;
+  gap: 16px;
+  padding: 14px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-tile);
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.job-row:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--color-neutral-900) 16%, var(--color-border));
+  box-shadow: 0 6px 20px -12px rgba(0, 0, 0, 0.25);
+}
+
+.job-row:has(.job-row__stretch) {
+  cursor: pointer;
+}
+
+.job-row__stretch {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+  cursor: pointer;
+}
+
+.job-row:has(.job-row__stretch) .job-row__media,
+.job-row:has(.job-row__stretch) .job-row__body {
+  pointer-events: none;
+}
+
+.job-row:has(.job-row__stretch) .job-row__footer-actions {
+  pointer-events: auto;
+}
+
+.job-row__admin {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 3;
+}
+
+.job-row__admin.is-open {
+  z-index: 40;
+}
+
+.job-row__menu-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-surface) 88%, transparent);
+  color: var(--color-neutral-600);
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.job-row__menu-trigger:hover {
+  background: var(--color-surface);
+  color: var(--color-neutral-900);
+}
+
+.job-row__admin .widget-menu__item {
+  text-decoration: none;
+}
+
+.job-row__media {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--color-neutral-100);
+  color: var(--color-neutral-400);
+}
+
+.job-row__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.job-row__media-icon {
+  width: 28px;
+  height: 28px;
+}
+
+.job-row__body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  min-height: 120px;
+}
+
+.job-row__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-neutral-900);
+}
+
+.job-row__end-date {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--color-neutral-600);
+}
+
+.job-row__excerpt {
+  margin: 2px 0 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--color-neutral-500);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.job-row__tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.job-row__tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: var(--radius-chip);
+  background: var(--color-panel);
+  color: var(--color-neutral-700);
+  font-size: 11.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.job-row__tag--contract {
+  background: var(--color-accent-tint);
+  color: var(--color-accent);
+}
+
+.job-row__price {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-neutral-900);
+}
+
+.job-row__footer {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 10px;
+}
+
+.job-row__footer-start {
+  min-width: 0;
+}
+
+.job-row__footer-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.job-row__cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: var(--color-neutral-900);
+  color: var(--color-surface);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  border: 0;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.job-row__cta:hover {
+  opacity: 0.88;
+}
+
+/* Carte reduite (Pilotage, offre hors ligne) : image + titre + tag contrat +
+   menu uniquement — pas de min-height forcee, la hauteur suit le contenu. */
+.job-row--compact {
+  padding: 10px 14px;
+}
+
+.job-row--compact .job-row__body {
+  justify-content: center;
+  gap: 6px;
+  min-height: 0;
+}
+
 @media (max-width: 640px) {
-  .event-row__contract {
-    grid-area: date;
+  .job-row {
+    grid-template-columns: 84px 1fr;
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .job-row__body {
+    min-height: 0;
   }
 }
 
