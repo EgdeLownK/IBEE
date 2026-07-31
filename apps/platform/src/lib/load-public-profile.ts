@@ -172,6 +172,8 @@ export async function loadPublicProfileBySlug(slug: string) {
     contract_type: offer.contract_type,
     location_type: offer.location_type,
     location_text: offer.location_text,
+    end_date: offer.end_date,
+    is_cadre: offer.is_cadre,
     compensation_type: offer.compensation_type,
     compensation_amount: offer.compensation_amount,
     compensation_frequency: offer.compensation_frequency,

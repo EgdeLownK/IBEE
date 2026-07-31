@@ -152,12 +152,14 @@ export function TalentDashboard({ entityId, offers }: { entityId: string; offers
             <JobOfferRow
               key={offer.id}
               variant="owner"
+              display={offer.status === 'inactive' ? 'compact' : 'full'}
               href={`/dashboard/talent/${offer.id}`}
               title={offer.title}
               contractType={offer.contract_type}
               locationType={offer.location_type}
               locationText={offer.location_text}
-              createdAt={offer.created_at}
+              endDate={offer.end_date}
+              isCadre={offer.is_cadre}
               compensationLabel={getCompensationLabel(offer)}
               blocks={offer.blocks}
               status={offer.status}

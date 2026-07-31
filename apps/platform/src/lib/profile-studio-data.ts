@@ -154,6 +154,8 @@ export async function loadProfileStudioPlaylists() {
       contract_type: o.contract_type,
       location_type: o.location_type,
       location_text: o.location_text,
+      end_date: o.end_date,
+      is_cadre: o.is_cadre,
       compensation_type: o.compensation_type,
       compensation_amount: o.compensation_amount,
       compensation_frequency: o.compensation_frequency,
