@@ -535,6 +535,37 @@
   gap: 12px;
 }
 
+/* Sections "En ligne"/"Hors ligne" de /dashboard/talent (TalentDashboard.tsx)
+ * — encadre un .event-list par groupe de statut. Scope specifique aux offres
+ * (job-list-*), pas de nom generique : .event-row* a deja ete reutilise pour
+ * les offres avant d'avoir sa propre grille .job-row (voir plus bas dans ce
+ * fichier), dette qu'on evite de reproduire ici. A generaliser seulement
+ * quand un deuxieme dashboard aura le meme besoin.
+ */
+.job-list-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.job-list-section__head {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.job-list-section__title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-neutral-900);
+}
+
+.job-list-section__count {
+  font-size: 13px;
+  color: var(--color-neutral-500);
+}
+
 .event-row {
   position: relative;
   display: grid;
