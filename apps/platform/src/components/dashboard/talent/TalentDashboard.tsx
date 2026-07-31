@@ -1,15 +1,20 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 import { Plus, Search } from 'lucide-react'
 import { JobOffer } from '@ibee/supabase'
 import { JobOfferDialog } from './JobOfferDialog'
 import { JobOfferRow } from '@/components/public/jobs/JobOfferRow'
+import { updateJobOfferAction, deleteJobOfferAction } from '@/app/dashboard/talent/talent-actions'
 
 export function TalentDashboard({ entityId, offers }: { entityId: string; offers: JobOffer[] }) {
+  const router = useRouter()
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [selectedOffer, setSelectedOffer] = useState<JobOffer | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [actionPendingId, setActionPendingId] = useState<string | null>(null)
 
   const handleCreate = () => {
     setSelectedOffer(null)
@@ -19,6 +24,58 @@ export function TalentDashboard({ entityId, offers }: { entityId: string; offers
   const handleEdit = (offer: JobOffer) => {
     setSelectedOffer(offer)
     setIsDialogOpen(true)
+  }
+
+  // talent-actions.ts ne revalide que /dashboard/talent (pas de cache d'une
+  // autre route a invalider ici) mais ne met pas a jour le state local :
+  // router.refresh() reste necessaire, meme motif que ProfileStudio.tsx et le
+  // reste du dashboard (ServicePlanningPanel, EventPlacesPanel, etc.).
+  async function handleToggleStatus(offer: JobOffer) {
+    const nextStatus = offer.status === 'active' ? 'inactive' : 'active'
+    // Repasser inactive -> active archive les candidatures en cours
+    // (talent-actions.ts, updateJobOfferAction) - effet de bord serveur non
+    // modifiable ici, seulement signale avant declenchement. Pas de message
+    // equivalent pour la mise hors ligne : contrairement au studio (qui ne
+    // liste que les offres actives), /dashboard/talent affiche toutes les
+    // offres - l'offre reste visible ici, aucune disparition a signaler.
+    if (
+      nextStatus === 'active' &&
+      !window.confirm(
+        'Remettre cette offre en ligne archivera les candidatures en cours. Continuer ?',
+      )
+    ) {
+      return
+    }
+    setActionPendingId(offer.id)
+    try {
+      await updateJobOfferAction(entityId, offer.id, { status: nextStatus })
+      router.refresh()
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Impossible de changer le statut de l'offre."
+      toast.error(msg)
+    } finally {
+      setActionPendingId(null)
+    }
+  }
+
+  async function handleDelete(offer: JobOffer) {
+    if (
+      !window.confirm(
+        'Êtes-vous sûr de vouloir supprimer cette offre ? Cette action est irréversible.',
+      )
+    ) {
+      return
+    }
+    setActionPendingId(offer.id)
+    try {
+      await deleteJobOfferAction(entityId, offer.id)
+      router.refresh()
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Impossible de supprimer cette offre.'
+      toast.error(msg)
+    } finally {
+      setActionPendingId(null)
+    }
   }
 
   const getCompensationLabel = (offer: JobOffer) => {
@@ -105,6 +162,13 @@ export function TalentDashboard({ entityId, offers }: { entityId: string; offers
               blocks={offer.blocks}
               status={offer.status}
               onEdit={() => handleEdit(offer)}
+              adminMenu={{
+                status: offer.status,
+                pending: actionPendingId === offer.id,
+                onEdit: () => handleEdit(offer),
+                onToggleStatus: () => handleToggleStatus(offer),
+                onDelete: () => handleDelete(offer),
+              }}
             />
           ))}
         </div>
