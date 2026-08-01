@@ -142,11 +142,18 @@ export async function updateJobOfferAction(
       .single()
 
     if (existingOffer && existingOffer.status === 'inactive') {
-      await supabase
-        .from('entity_job_applications')
-        .update({ is_archived: true })
-        .eq('offer_id', offerId)
-        .eq('is_archived', false)
+      // relaunch_job_offer (SECURITY DEFINER) archive les candidatures
+      // actives ET incremente session_count dans une seule transaction -
+      // supabase-js ne permet aucune transaction multi-requetes, impossible
+      // a garantir avec deux .update() separes. Le controle de permission
+      // cote base (entity_user_has_permission) y est revalide en interne :
+      // requireTalentPermission ci-dessus reste la premiere ligne de
+      // defense cote application, la RPC en est la doublure, pas un
+      // remplacement.
+      const { error: relaunchError } = await supabase.rpc('relaunch_job_offer', {
+        p_offer_id: offerId,
+      })
+      if (relaunchError) throw relaunchError
     }
   }
 
