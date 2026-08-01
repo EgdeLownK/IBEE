@@ -134,11 +134,8 @@ export function TalentDashboard({ entityId, offers }: { entityId: string; offers
             Gérez vos offres d&apos;emploi et recrutements.
           </p>
         </div>
-        <button
-          onClick={handleCreate}
-          className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-950 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-neutral-900 text-neutral-50 hover:bg-neutral-900/90 h-10 px-4 py-2"
-        >
-          <Plus className="mr-2 h-4 w-4" /> Offre
+        <button onClick={handleCreate} className="btn btn--dark">
+          <Plus className="h-4 w-4" /> Nouvelle offre
         </button>
       </div>
 
