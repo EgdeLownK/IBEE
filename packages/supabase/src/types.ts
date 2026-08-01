@@ -4033,6 +4033,38 @@ export type Database = {
         Args: { p_client_id: string }
         Returns: undefined
       }
+      relaunch_job_offer: {
+        Args: { p_offer_id: string }
+        Returns: {
+          apply_url: string | null
+          blocks: Json
+          compensation_amount: number | null
+          compensation_frequency:
+            | Database["public"]["Enums"]["entity_job_comp_freq"]
+            | null
+          compensation_type:
+            | Database["public"]["Enums"]["entity_job_comp_type"]
+            | null
+          contract_type: Database["public"]["Enums"]["entity_job_contract_type"]
+          created_at: string
+          end_date: string | null
+          entity_id: string
+          id: string
+          is_cadre: boolean | null
+          location_text: string | null
+          location_type: Database["public"]["Enums"]["entity_job_location_type"]
+          session_count: number
+          status: Database["public"]["Enums"]["entity_job_status_v2"]
+          title: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "entity_job_offers"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       resolve_appointment_charge_cents: {
         Args: {
           p_type: Database["public"]["Tables"]["appointment_types"]["Row"]

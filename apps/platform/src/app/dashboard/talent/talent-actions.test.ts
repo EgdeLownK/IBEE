@@ -18,6 +18,7 @@ let mockUser: { id: string } | null = null
 let mockPermission = false
 let mockApplication: { offer_id: string } | null = null
 let mockOffer: { entity_id: string; status?: string } | null = null
+let mockRelaunchError: { message: string; code?: string } | null = null
 
 const authGetUser = vi.fn(async () => ({ data: { user: mockUser } }))
 
@@ -26,6 +27,9 @@ const rpcMock = vi.fn(async (fn: string, args: unknown) => {
   rpcCalls.push({ fn, args })
   if (fn === 'entity_user_has_permission') {
     return { data: mockPermission, error: null }
+  }
+  if (fn === 'relaunch_job_offer') {
+    return { data: null, error: mockRelaunchError }
   }
   return { data: null, error: null }
 })
@@ -101,6 +105,7 @@ beforeEach(() => {
   mockPermission = false
   mockApplication = null
   mockOffer = null
+  mockRelaunchError = null
   fromMock.mockClear()
   authGetUser.mockClear()
   rpcMock.mockClear()
@@ -174,6 +179,56 @@ describe('talent-actions.ts — permission verifiee via entity_user_has_permissi
       ).rejects.toThrow("Vous n'avez pas les droits sur cette offre d'emploi.")
 
       expect(dbCalls.some((c) => c.table === 'entity_job_offers' && c.op === 'update')).toBe(false)
+    })
+
+    // PREUVE mission feat/talent-relaunch-rpc-wiring : remplacement des deux
+    // .from().update() separes (archivage + increment) par un appel unique
+    // a la RPC relaunch_job_offer, lors d'une remise en ligne (inactive ->
+    // active).
+    it('a) updateJobOfferAction — remise en ligne légitime → appelle relaunch_job_offer, plus d’update direct sur entity_job_applications', async () => {
+      mockUser = { id: 'user-legitime' }
+      mockPermission = true
+      mockOffer = { entity_id: OWNED_ENTITY, status: 'inactive' }
+
+      await expect(
+        updateJobOfferAction(OWNED_ENTITY, OFFER_ID, { status: 'active' }),
+      ).resolves.toBeUndefined()
+
+      expect(rpcCalls).toContainEqual({
+        fn: 'relaunch_job_offer',
+        args: { p_offer_id: OFFER_ID },
+      })
+      expect(dbCalls.some((c) => c.table === 'entity_job_applications' && c.op === 'update')).toBe(
+        false,
+      )
+    })
+
+    it('b) updateJobOfferAction — remise en ligne sans permission (entité étrangère) → refusé côté application, relaunch_job_offer jamais appelée', async () => {
+      mockUser = { id: 'user-attaquant' }
+      mockPermission = false
+      mockOffer = { entity_id: FOREIGN_ENTITY, status: 'inactive' }
+
+      await expect(
+        updateJobOfferAction(FOREIGN_ENTITY, OFFER_ID, { status: 'active' }),
+      ).rejects.toThrow("Vous n'avez pas les droits sur cette offre d'emploi.")
+
+      expect(rpcCalls.some((c) => c.fn === 'relaunch_job_offer')).toBe(false)
+    })
+
+    it('b) updateJobOfferAction — relaunch_job_offer refuse côté base (Forbidden) → l’erreur remonte, jamais d’échec silencieux', async () => {
+      mockUser = { id: 'user-legitime' }
+      mockPermission = true
+      mockOffer = { entity_id: OWNED_ENTITY, status: 'inactive' }
+      mockRelaunchError = { message: 'Forbidden', code: 'P0001' }
+
+      await expect(
+        updateJobOfferAction(OWNED_ENTITY, OFFER_ID, { status: 'active' }),
+      ).rejects.toEqual({ message: 'Forbidden', code: 'P0001' })
+
+      expect(rpcCalls).toContainEqual({
+        fn: 'relaunch_job_offer',
+        args: { p_offer_id: OFFER_ID },
+      })
     })
 
     it('a) deleteJobOfferAction — appel légitime → la mutation atteint la base', async () => {
