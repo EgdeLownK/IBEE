@@ -1142,15 +1142,22 @@
   background: var(--color-accent-hover);
 }
 
-/* Carte reduite (Pilotage, offre hors ligne) : ligne flex unique — image,
-   titre, tag contrat, pastille statut, menu. Pas de min-height forcee, la
-   hauteur suit le contenu. Passe en flex (au lieu d'heriter de la grille
-   3 colonnes de .job-row) car aucune zone comp n'est rendue en compact. */
+/* Carte reduite (Pilotage, offre hors ligne) : ligne flex — image, corps sur
+   deux lignes (titre puis ligne de tags complete), remuneration, menu. Pas
+   de min-height forcee, la hauteur suit le contenu (desormais deux lignes
+   dans le corps). Passe en flex (au lieu d'heriter de la grille 3 colonnes
+   de .job-row) car aucune zone comp en grid-area n'est rendue en compact —
+   la remuneration compacte est un simple enfant flex, voir
+   .job-row__compact-comp plus bas. */
 .job-row--compact {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 8px 14px;
+  /* padding-right releve (14 -> 46px) : reserve l'espace du bouton menu
+     trois points (32px, position absolute top:10/right:10 sur .job-row__admin)
+     pour que la remuneration poussee a droite (margin-left: auto, voir
+     .job-row__compact-comp) ne passe jamais dessous. */
+  padding: 8px 46px 8px 14px;
 }
 
 .job-row--compact .job-row__media {
@@ -1162,15 +1169,14 @@
 }
 
 .job-row--compact .job-row__body {
-  flex-direction: row;
-  align-items: center;
-  gap: 10px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
   min-width: 0;
   min-height: 0;
 }
 
 .job-row--compact .job-row__title {
-  flex: 1;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1182,10 +1188,21 @@
 }
 
 .job-row--compact .job-row__tags {
-  flex-wrap: nowrap;
-  flex-shrink: 0;
   margin-top: 0;
   padding-top: 0;
+}
+
+/* Remuneration de la carte reduite : memes classes .job-row__comp-info/
+   .job-row__comp-amount/.job-row__comp-unit que la carte pleine (meme
+   formatage montant + unite, y compris le seuil --long), poussees a droite
+   du corps via margin-left: auto plutot qu'une grid-area (pas de grille en
+   compact). flex-shrink: 0 pour ne jamais compresser le montant : c'est le
+   corps (titre + tags) qui absorbe le manque de place sur petit ecran. */
+.job-row--compact .job-row__compact-comp {
+  flex-shrink: 0;
+  margin-left: auto;
+  align-items: flex-end;
+  text-align: right;
 }
 
 .job-row--compact .job-row__menu-trigger {
@@ -1235,7 +1252,9 @@
 @media (max-width: 640px) {
   .job-row--compact {
     gap: 8px;
-    padding: 8px 10px;
+    /* padding-right reste releve (10 -> 42px) : meme motif qu'en desktop,
+       clearance du bouton menu trois points pour la remuneration a droite. */
+    padding: 8px 42px 8px 10px;
   }
 }
 

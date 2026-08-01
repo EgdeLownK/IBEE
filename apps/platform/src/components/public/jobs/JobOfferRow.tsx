@@ -29,9 +29,12 @@ import { contractLabel } from './contract-labels'
  *
  * `display` ('full' par defaut) est independant de `variant` : seul
  * TalentDashboard (Pilotage) passe 'compact' pour les offres hors ligne
- * (image + titre + tag contrat + menu, hauteur reduite, pas de date/
- * description/lieu/remuneration). PublicJobOffersList ne l'utilise jamais,
- * elle n'affiche que des offres actives.
+ * (image + corps sur deux lignes — titre puis ligne de tags complete,
+ * identique a la carte pleine mais tag contrat en fond neutre — +
+ * remuneration a droite + menu). Pas de date/description/pastille statut
+ * (le titre de section "Hors ligne (N)" porte deja cette info).
+ * PublicJobOffersList ne l'utilise jamais, elle n'affiche que des offres
+ * actives.
  */
 
 type LocationType = 'remote' | 'onsite' | 'hybrid'
@@ -145,16 +148,12 @@ export function JobOfferRow(props: JobOfferRowProps) {
       ? formatCompensationAmount(compensationAmount, compensationType)
       : null
   const compensationUnit = compensationUnitLabel(compensationFrequency ?? null)
-  // Colonne remuneration a largeur fixe (~150px, profile-styles.css) : au-dela
-  // de 7 caracteres (ex. "454 231€"), le montant a 24px/800 touche le bord —
+  // Seuil partage carte pleine (colonne remuneration a largeur fixe, ~150px)
+  // ET carte reduite (zone remuneration collee au bouton menu) : au-dela de
+  // 7 caracteres (ex. "454 231€"), le montant a 24px/800 touche le bord —
   // .job-row__comp-amount--long bascule sur une taille plus petite.
   const isLongCompensationAmount = (compensationAmountLabel?.length ?? 0) > 7
   const excerpt = blocks ? entityDetailExcerpt({ content_blocks: blocks as HistoryBlock[] }) : ''
-  // La pastille statut a disparu du profil (seules les offres actives y sont
-  // listees, elle n'informerait de rien) mais reste affichee sur la carte
-  // reduite de Pilotage — seule surface qui liste aussi les offres hors ligne.
-  const compactStatus =
-    props.variant === 'owner' && display === 'compact' ? props.status : undefined
 
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -251,16 +250,27 @@ export function JobOfferRow(props: JobOfferRowProps) {
         <div className="job-row__body">
           <h3 className="job-row__title">{title}</h3>
           <div className="job-row__tags">
-            {/* Carte reduite : tag contrat en fond neutre, PAS le fond sombre
-                de la carte pleine (variante 2e validee, cf. rapport phase 0). */}
-            <span className="job-row__tag">{contractName}</span>
-            {compactStatus && (
-              <span className={`event-row__status event-row__status--${compactStatus}`}>
-                {compactStatus === 'active' ? 'En ligne' : 'Hors ligne'}
+            {/* Meme liste que la carte pleine (contrat, lieu(x), Cadre) mais
+                AUCUN tag--contract : sur la carte reduite le tag contrat
+                reste en fond neutre, pas le fond sombre de la carte pleine
+                (variante 2e validee, cf. rapport phase 0). */}
+            {tags.map((tag, i) => (
+              <span key={i} className="job-row__tag">
+                {tag}
               </span>
-            )}
+            ))}
           </div>
         </div>
+        {compensationAmountLabel && (
+          <div className="job-row__comp-info job-row__compact-comp">
+            <p
+              className={`job-row__comp-amount${isLongCompensationAmount ? ' job-row__comp-amount--long' : ''}`}
+            >
+              {compensationAmountLabel}
+            </p>
+            {compensationUnit && <p className="job-row__comp-unit">{compensationUnit}</p>}
+          </div>
+        )}
       </article>
     )
   }
