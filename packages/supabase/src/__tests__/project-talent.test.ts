@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '../types'
-import { getActiveJobOffer } from '../project-talent'
+import { getActiveJobOffer, createJobApplication } from '../project-talent'
 
 type Client = SupabaseClient<Database>
 
@@ -49,5 +49,39 @@ describe('getActiveJobOffer', () => {
     const client = createMockClient({ data: null, error: new Error('DB error') })
 
     await expect(getActiveJobOffer(client, 'offer-1')).rejects.toThrow('DB error')
+  })
+})
+
+describe('createJobApplication', () => {
+  // Preuve : une candidature creee porte le session_number courant de
+  // l'offre (fige par apply-actions.ts a partir de offer.session_count,
+  // jamais recalcule cote base) - voir apps/platform/.../apply-actions.ts.
+  it('transmet le session_number recu a l’insert, sans le recalculer', async () => {
+    const insertedRow = {
+      id: 'app-1',
+      offer_id: 'offer-1',
+      session_number: 3,
+    }
+    const insertMock = vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        single: vi.fn().mockResolvedValue({ data: insertedRow, error: null }),
+      }),
+    })
+    const client = {
+      from: vi.fn().mockReturnValue({ insert: insertMock }),
+    } as unknown as SupabaseClient<Database>
+
+    const result = await createJobApplication(client, {
+      offer_id: 'offer-1',
+      first_name: 'Ada',
+      last_name: 'Lovelace',
+      email: 'ada@example.com',
+      session_number: 3,
+    })
+
+    expect(insertMock).toHaveBeenCalledWith(
+      expect.objectContaining({ offer_id: 'offer-1', session_number: 3 }),
+    )
+    expect(result.session_number).toBe(3)
   })
 })

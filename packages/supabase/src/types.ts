@@ -1148,6 +1148,7 @@ export type Database = {
           offer_id: string
           phone: string | null
           resume_url: string | null
+          session_number: number
           skills: string[] | null
           status: Database["public"]["Enums"]["entity_job_application_status"]
           updated_at: string
@@ -1169,6 +1170,7 @@ export type Database = {
           offer_id: string
           phone?: string | null
           resume_url?: string | null
+          session_number?: number
           skills?: string[] | null
           status?: Database["public"]["Enums"]["entity_job_application_status"]
           updated_at?: string
@@ -1190,6 +1192,7 @@ export type Database = {
           offer_id?: string
           phone?: string | null
           resume_url?: string | null
+          session_number?: number
           skills?: string[] | null
           status?: Database["public"]["Enums"]["entity_job_application_status"]
           updated_at?: string
@@ -1223,6 +1226,7 @@ export type Database = {
           is_cadre: boolean | null
           location_text: string | null
           location_type: Database["public"]["Enums"]["entity_job_location_type"]
+          session_count: number
           status: Database["public"]["Enums"]["entity_job_status_v2"]
           title: string
           updated_at: string
@@ -1245,6 +1249,7 @@ export type Database = {
           is_cadre?: boolean | null
           location_text?: string | null
           location_type?: Database["public"]["Enums"]["entity_job_location_type"]
+          session_count?: number
           status?: Database["public"]["Enums"]["entity_job_status_v2"]
           title: string
           updated_at?: string
@@ -1267,6 +1272,7 @@ export type Database = {
           is_cadre?: boolean | null
           location_text?: string | null
           location_type?: Database["public"]["Enums"]["entity_job_location_type"]
+          session_count?: number
           status?: Database["public"]["Enums"]["entity_job_status_v2"]
           title?: string
           updated_at?: string
