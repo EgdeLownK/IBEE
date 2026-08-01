@@ -78,6 +78,9 @@ export function TalentDashboard({ entityId, offers }: { entityId: string; offers
     }
   }
 
+  // Tri actif-d'abord-puis-date INCHANGE : les sections ci-dessous se
+  // contentent de partitionner ce tableau deja trie par statut (filter
+  // preserve l'ordre relatif), aucun re-tri necessaire par section.
   const filteredAndSortedOffers = useMemo(() => {
     return offers
       .filter((offer) => offer.title.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -87,6 +90,39 @@ export function TalentDashboard({ entityId, offers }: { entityId: string; offers
         return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       })
   }, [offers, searchQuery])
+
+  const activeOffers = filteredAndSortedOffers.filter((offer) => offer.status === 'active')
+  const inactiveOffers = filteredAndSortedOffers.filter((offer) => offer.status === 'inactive')
+
+  function renderOfferRow(offer: JobOffer) {
+    return (
+      <JobOfferRow
+        key={offer.id}
+        variant="owner"
+        display={offer.status === 'inactive' ? 'compact' : 'full'}
+        href={`/dashboard/talent/${offer.id}`}
+        title={offer.title}
+        contractType={offer.contract_type}
+        locationType={offer.location_type}
+        locationText={offer.location_text}
+        endDate={offer.end_date}
+        isCadre={offer.is_cadre}
+        compensationAmount={offer.compensation_amount}
+        compensationType={offer.compensation_type}
+        compensationFrequency={offer.compensation_frequency}
+        blocks={offer.blocks}
+        status={offer.status}
+        onEdit={() => handleEdit(offer)}
+        adminMenu={{
+          status: offer.status,
+          pending: actionPendingId === offer.id,
+          onEdit: () => handleEdit(offer),
+          onToggleStatus: () => handleToggleStatus(offer),
+          onDelete: () => handleDelete(offer),
+        }}
+      />
+    )
+  }
 
   return (
     <div className="flex flex-1 flex-col gap-6 p-8">
@@ -135,34 +171,25 @@ export function TalentDashboard({ entityId, offers }: { entityId: string; offers
           )}
         </div>
       ) : (
-        <div className="event-list">
-          {filteredAndSortedOffers.map((offer) => (
-            <JobOfferRow
-              key={offer.id}
-              variant="owner"
-              display={offer.status === 'inactive' ? 'compact' : 'full'}
-              href={`/dashboard/talent/${offer.id}`}
-              title={offer.title}
-              contractType={offer.contract_type}
-              locationType={offer.location_type}
-              locationText={offer.location_text}
-              endDate={offer.end_date}
-              isCadre={offer.is_cadre}
-              compensationAmount={offer.compensation_amount}
-              compensationType={offer.compensation_type}
-              compensationFrequency={offer.compensation_frequency}
-              blocks={offer.blocks}
-              status={offer.status}
-              onEdit={() => handleEdit(offer)}
-              adminMenu={{
-                status: offer.status,
-                pending: actionPendingId === offer.id,
-                onEdit: () => handleEdit(offer),
-                onToggleStatus: () => handleToggleStatus(offer),
-                onDelete: () => handleDelete(offer),
-              }}
-            />
-          ))}
+        <div className="flex flex-col gap-6">
+          {activeOffers.length > 0 && (
+            <div className="job-list-section">
+              <div className="job-list-section__head">
+                <h2 className="job-list-section__title">En ligne</h2>
+                <span className="job-list-section__count">({activeOffers.length})</span>
+              </div>
+              <div className="event-list">{activeOffers.map(renderOfferRow)}</div>
+            </div>
+          )}
+          {inactiveOffers.length > 0 && (
+            <div className="job-list-section">
+              <div className="job-list-section__head">
+                <h2 className="job-list-section__title">Hors ligne</h2>
+                <span className="job-list-section__count">({inactiveOffers.length})</span>
+              </div>
+              <div className="event-list">{inactiveOffers.map(renderOfferRow)}</div>
+            </div>
+          )}
         </div>
       )}
 
