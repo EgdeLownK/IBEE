@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import { JobOffer, JobApplication } from '@ibee/supabase'
+import type { HistoryBlock } from '@ibee/shared'
 import {
   Edit,
   MapPin,
-  Eye,
   Download,
   Users,
   Archive,
@@ -18,11 +18,69 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { entityDetailExcerpt } from '@/lib/entity-detail-excerpt'
 import { JobOfferDialog } from './JobOfferDialog'
+import { contractLabel } from '@/components/public/jobs/contract-labels'
+import {
+  locationTags,
+  formatShortDate,
+  formatCompensationAmount,
+  compensationUnitLabel,
+} from '@/components/public/jobs/JobOfferRow'
 import {
   updateApplicationStatusAction,
   deleteJobOfferAction,
 } from '../../../app/dashboard/talent/talent-actions'
+
+type ApplicationStatus = 'new' | 'shortlisted' | 'interviewing' | 'hired' | 'rejected'
+
+// Systeme de badges statut candidature — repris de la maquette Claude Design
+// (mission feat/talent-detail-design, voir rapport phase 0) : chaque statut
+// se distingue par une COULEUR/FOND (tokens IBEE, jamais de bleu/jaune/indigo/
+// vert/rouge Tailwind par defaut) ET une FORME de marqueur (plein, cercle,
+// carre, tirete) — pas seulement une teinte, pour rester lisible meme sans
+// percevoir la couleur. 'new' et 'hired' partagent le marqueur plein
+// (accent) mais des fonds opposes (clair/sombre), voir StatusBadge.
+const STATUS_META: Record<
+  ApplicationStatus,
+  { label: string; badgeClass: string; marker: 'dot' | 'ring' | 'square' | 'dash' }
+> = {
+  new: { label: 'Nouvelle', badgeClass: 'bg-accent-tint text-accent-hover', marker: 'dot' },
+  shortlisted: { label: 'Retenue', badgeClass: 'bg-neutral-100 text-neutral-900', marker: 'ring' },
+  interviewing: {
+    label: 'Rencontre',
+    badgeClass: 'bg-neutral-200 text-neutral-900',
+    marker: 'square',
+  },
+  hired: { label: 'Validée', badgeClass: 'bg-neutral-900 text-surface', marker: 'dot' },
+  rejected: {
+    label: 'Refusée',
+    badgeClass: 'border border-border text-neutral-400',
+    marker: 'dash',
+  },
+}
+
+function StatusMarker({ type }: { type: 'dot' | 'ring' | 'square' | 'dash' }) {
+  if (type === 'dot') return <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
+  if (type === 'ring')
+    return <span className="h-1.5 w-1.5 shrink-0 rounded-full border border-accent" />
+  if (type === 'square') return <span className="h-1.5 w-1.5 shrink-0 bg-neutral-900" />
+  return <span className="h-px w-2 shrink-0 bg-neutral-400" />
+}
+
+function StatusBadge({ status, size = 'sm' }: { status: ApplicationStatus; size?: 'sm' | 'lg' }) {
+  const meta = STATUS_META[status]
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-pill font-bold whitespace-nowrap ${meta.badgeClass} ${
+        size === 'lg' ? 'px-3 py-1.5 text-sm' : 'px-2.5 py-1 text-[11px]'
+      }`}
+    >
+      <StatusMarker type={meta.marker} />
+      {meta.label}
+    </span>
+  )
+}
 
 export function JobOfferDetails({
   entityId,
@@ -76,16 +134,23 @@ export function JobOfferDetails({
   const selectedApp =
     localApplications.find((a) => a.id === selectedAppId) || displayedApplications[0] || null
 
-  // --- Analytics Logic ---
-  const kpis = {
-    total: displayedApplications.length,
-    new: displayedApplications.filter((a) => a.status === 'new').length,
-    shortlisted: displayedApplications.filter((a) => a.status === 'shortlisted').length,
-    interviewing: displayedApplications.filter((a) => a.status === 'interviewing').length,
-    hired: displayedApplications.filter((a) => a.status === 'hired').length,
-    rejected: displayedApplications.filter((a) => a.status === 'rejected').length,
+  // Compteurs des onglets de filtre : calcules sur les candidatures actives/
+  // archivees SELON showArchives, mais INDEPENDAMMENT de searchQuery et de
+  // l'onglet actif — sinon chaque onglet n'afficherait que son propre
+  // compte courant au lieu d'un aperçu stable de la repartition. Maquette
+  // Claude Design (voir rapport phase 0) : libelles au singulier + compteur
+  // ("Nouvelle 2"), remplace le pluriel sans compteur (decision explicite de
+  // Killian, la maquette fait foi ici).
+  const baseApplications = localApplications.filter((a) => Boolean(a.is_archived) === showArchives)
+  const statusCounts = {
+    new: baseApplications.filter((a) => a.status === 'new').length,
+    shortlisted: baseApplications.filter((a) => a.status === 'shortlisted').length,
+    interviewing: baseApplications.filter((a) => a.status === 'interviewing').length,
+    hired: baseApplications.filter((a) => a.status === 'hired').length,
+    rejected: baseApplications.filter((a) => a.status === 'rejected').length,
   }
 
+  // --- Analytics Logic ---
   const locations = displayedApplications.reduce(
     (acc, app) => {
       const loc = app.location || 'Non renseigné'
@@ -133,38 +198,59 @@ export function JobOfferDetails({
 
   const archivedCount = applications.filter((a) => Boolean(a.is_archived)).length
 
+  // Bloc "caracteristiques de l'offre" (statut/contrat/lieu/cadre/
+  // remuneration/date de fin/candidatures/publiee le/description) — ajoute
+  // par la maquette Claude Design, absent de la page avant cette mission.
+  // Toutes les donnees existent deja sur `offer`/`applications` (aucune
+  // ecriture, aucun nouvel appel serveur). Candidatures/nouvelles comptees
+  // sur les candidatures NON archivees uniquement (measure de la campagne
+  // active, coherent avec archivedCount ci-dessus).
+  const activeApplicationsForOffer = applications.filter((a) => !a.is_archived)
+  const totalApplicationsCount = activeApplicationsForOffer.length
+  const newApplicationsCount = activeApplicationsForOffer.filter((a) => a.status === 'new').length
+  const compensationAmountLabel =
+    offer.compensation_amount && offer.compensation_type
+      ? formatCompensationAmount(offer.compensation_amount, offer.compensation_type)
+      : null
+  const compensationUnit = compensationUnitLabel(offer.compensation_frequency ?? null)
+  const offerExcerpt = offer.blocks
+    ? entityDetailExcerpt({ content_blocks: offer.blocks as HistoryBlock[] })
+    : ''
+
   return (
-    <div className="flex flex-col gap-8 max-w-[1200px] mx-auto w-full">
+    <div className="talent-page flex flex-col gap-6">
       {/* HEADER ACTIONS */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="flex items-center gap-4">
+        <div className="flex items-start gap-2.5">
           <Link
             href="/dashboard/talent"
-            className="inline-flex items-center justify-center w-8 h-8 rounded-md text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100 transition-colors"
+            className="mt-1 inline-flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-field text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900 transition-colors"
           >
             <ChevronLeft className="h-5 w-5" />
           </Link>
-          <div>
-            <h1 className="font-display text-2xl font-semibold text-neutral-900">{offer.title}</h1>
-            <p className="text-sm text-neutral-500 mt-1">
+          <div className="min-w-0">
+            <h1 className="font-display text-3xl font-bold tracking-tight text-neutral-900">
+              {offer.title}
+            </h1>
+            <p className="text-sm text-neutral-500 mt-1.5">
               Gérez les détails de l&apos;offre et les candidatures reçues.
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {archivedCount > 0 && (
             <button
               onClick={() => setShowArchives(!showArchives)}
-              className={`inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border h-10 px-4 shadow-sm ${
+              className={`inline-flex items-center justify-center gap-1.5 rounded-field text-[13.5px] font-semibold transition-colors border h-[38px] px-3.5 ${
                 showArchives
-                  ? 'bg-neutral-900 text-white border-neutral-900 hover:bg-neutral-800'
-                  : 'bg-white text-neutral-600 border-neutral-200 hover:bg-neutral-50'
+                  ? 'bg-neutral-900 text-surface border-neutral-900 hover:bg-accent'
+                  : 'bg-surface text-neutral-900 border-border hover:bg-panel-2'
               }`}
             >
               {showArchives ? (
-                <ArchiveRestore className="w-4 h-4 mr-2" />
+                <ArchiveRestore className="w-4 h-4" />
               ) : (
-                <Archive className="w-4 h-4 mr-2" />
+                <Archive className="w-4 h-4" />
               )}
               {showArchives
                 ? 'Retour à la campagne active'
@@ -173,9 +259,9 @@ export function JobOfferDetails({
           )}
           <button
             onClick={() => setIsEditOpen(true)}
-            className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors bg-white border border-neutral-200 hover:bg-neutral-100 text-neutral-900 h-10 px-4 shadow-sm"
+            className="inline-flex items-center justify-center gap-1.5 rounded-field text-[13.5px] font-semibold transition-colors bg-surface border border-border hover:bg-panel-2 text-neutral-900 h-[38px] px-3.5"
           >
-            <Edit className="w-4 h-4 mr-2" />
+            <Edit className="w-4 h-4" />
             Modifier l&apos;offre
           </button>
           <button
@@ -189,150 +275,238 @@ export function JobOfferDetails({
                 router.push('/dashboard/talent')
               }
             }}
-            className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors bg-white border border-red-200 hover:bg-red-50 text-red-700 h-10 px-4 shadow-sm"
+            className="inline-flex items-center justify-center gap-1.5 rounded-field text-[13.5px] font-semibold transition-colors bg-surface border border-border hover:bg-panel-2 text-neutral-500 h-[38px] px-3.5"
           >
-            <Trash className="w-4 h-4 mr-2" />
+            <Trash className="w-4 h-4" />
             Supprimer l&apos;offre
           </button>
         </div>
       </div>
 
       {showArchives && (
-        <div className="bg-neutral-900 text-white p-4 rounded-xl shadow-sm text-sm font-medium flex items-center justify-center gap-2">
+        <div className="bg-neutral-900 text-surface p-4 rounded-card shadow-sm text-sm font-medium flex items-center justify-center gap-2">
           <Archive className="w-4 h-4 text-neutral-400" />
           Vous consultez actuellement l&apos;historique des candidatures des campagnes précédentes.
         </div>
       )}
 
-      {/* ANALYTICS DASHBOARD */}
-      <div className="flex flex-col gap-6">
-        <div className="grid grid-cols-3 gap-6">
-          <div className="bg-white rounded-xl shadow-sm border border-neutral-200 p-6">
-            <div className="flex items-center gap-2 mb-6">
-              <MapPin className="w-5 h-5 text-neutral-400" />
-              <h3 className="text-base font-semibold text-neutral-900">Localisation</h3>
+      {/* CARACTERISTIQUES DE L'OFFRE */}
+      <div className="bg-surface border border-border rounded-card p-5">
+        <div className="flex flex-wrap items-center gap-1.5 mb-3.5">
+          <span className="inline-flex items-center gap-1.5 rounded-pill bg-accent-tint px-2.5 py-1 text-[11.5px] font-bold text-accent-hover">
+            <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+            {offer.status === 'active' ? 'En ligne' : 'Hors ligne'}
+          </span>
+          <span className="rounded-pill bg-neutral-900 px-2.5 py-1 text-[11px] font-bold text-surface">
+            {contractLabel(offer.contract_type)}
+          </span>
+          {locationTags(offer.location_type, offer.location_text).map((tag) => (
+            <span
+              key={tag}
+              className="rounded-pill bg-neutral-100 px-2.5 py-1 text-[11px] font-semibold text-neutral-600"
+            >
+              {tag}
+            </span>
+          ))}
+          {offer.is_cadre && (
+            <span className="rounded-pill border border-border px-2.5 py-1 text-[11px] font-semibold text-neutral-500">
+              Cadre
+            </span>
+          )}
+        </div>
+        <div className="grid grid-cols-2 profile:grid-cols-4 gap-4 border-t border-neutral-100 pt-3.5">
+          <div>
+            <div className="text-[10.5px] uppercase tracking-wider text-neutral-400 mb-1">
+              Rémunération
             </div>
-            {Object.keys(locations).length === 0 ? (
-              <p className="text-neutral-500 text-sm">Pas de données.</p>
-            ) : (
-              <div className="space-y-4">
-                {Object.entries(locations)
-                  .sort((a, b) => b[1] - a[1])
-                  .map(([loc, count]) => (
-                    <div key={loc} className="flex items-center gap-4">
-                      <div className="w-32 text-sm text-neutral-600 truncate" title={loc}>
-                        {loc}
-                      </div>
-                      <div className="flex-1 bg-neutral-100 h-2 rounded-full overflow-hidden">
-                        <div
-                          className="bg-neutral-900 h-full rounded-full transition-all"
-                          style={{
-                            width: `${(count / Math.max(...Object.values(locations))) * 100}%`,
-                          }}
-                        />
-                      </div>
-                      <div className="w-8 text-sm font-medium text-right text-neutral-900">
-                        {count}
-                      </div>
-                    </div>
-                  ))}
-              </div>
-            )}
+            <div className="text-base font-bold tabular-nums">
+              {compensationAmountLabel ?? '—'}
+              {compensationUnit && (
+                <span className="ml-1 text-xs font-medium text-neutral-400">
+                  {compensationUnit}
+                </span>
+              )}
+            </div>
           </div>
-
-          <div className="bg-white rounded-xl shadow-sm border border-neutral-200 p-6 flex flex-col">
-            <div className="flex items-center gap-2 mb-6">
-              <Users2 className="w-5 h-5 text-neutral-400" />
-              <h3 className="text-base font-semibold text-neutral-900">Répartition par sexe</h3>
+          <div>
+            <div className="text-[10.5px] uppercase tracking-wider text-neutral-400 mb-1">
+              Date de fin
             </div>
-            <div className="flex-1 flex flex-col items-center justify-center gap-6">
+            <div className="text-base font-bold">
+              {offer.end_date ? formatShortDate(offer.end_date) : '—'}
+            </div>
+          </div>
+          <div>
+            <div className="text-[10.5px] uppercase tracking-wider text-neutral-400 mb-1">
+              Candidatures
+            </div>
+            <div className="text-base font-bold">
+              {totalApplicationsCount}
+              {newApplicationsCount > 0 && (
+                <span className="ml-1 text-xs font-semibold text-accent-hover">
+                  · {newApplicationsCount} nouvelle{newApplicationsCount > 1 ? 's' : ''}
+                </span>
+              )}
+            </div>
+          </div>
+          <div>
+            <div className="text-[10.5px] uppercase tracking-wider text-neutral-400 mb-1">
+              Publiée le
+            </div>
+            <div className="text-base font-bold">{formatShortDate(offer.created_at)}</div>
+          </div>
+        </div>
+        {offerExcerpt && (
+          <p className="mt-3.5 max-w-[70ch] text-sm leading-relaxed text-neutral-500">
+            {offerExcerpt}
+          </p>
+        )}
+      </div>
+
+      {/* ANALYTICS DASHBOARD */}
+      <div className="grid grid-cols-1 profile:grid-cols-3 gap-5">
+        <div className="bg-surface rounded-card border border-border p-[18px]">
+          <div className="flex items-center gap-2 mb-4">
+            <MapPin className="w-[18px] h-[18px] text-neutral-400" />
+            <h3 className="text-[15px] font-bold text-neutral-900">Localisation</h3>
+          </div>
+          {Object.keys(locations).length === 0 ? (
+            <p className="text-neutral-500 text-sm">Pas de données.</p>
+          ) : (
+            <div className="space-y-2.5">
+              {Object.entries(locations)
+                .sort((a, b) => b[1] - a[1])
+                .map(([loc, count]) => (
+                  <div key={loc} className="flex items-center gap-2.5">
+                    <div
+                      className="w-24 shrink-0 truncate text-[13px] text-neutral-600"
+                      title={loc}
+                    >
+                      {loc}
+                    </div>
+                    <div className="flex-1 bg-neutral-100 h-2 rounded-pill overflow-hidden">
+                      <div
+                        className="bg-accent h-full rounded-pill transition-all"
+                        style={{
+                          width: `${(count / Math.max(...Object.values(locations))) * 100}%`,
+                        }}
+                      />
+                    </div>
+                    <div className="w-[22px] shrink-0 text-right text-[12.5px] font-bold tabular-nums text-neutral-900">
+                      {count}
+                    </div>
+                  </div>
+                ))}
+            </div>
+          )}
+        </div>
+
+        <div className="bg-surface rounded-card border border-border p-[18px] flex flex-col">
+          <div className="flex items-center gap-2 mb-2">
+            <Users2 className="w-[18px] h-[18px] text-neutral-400" />
+            <h3 className="text-[15px] font-bold text-neutral-900">Répartition par sexe</h3>
+          </div>
+          <div className="flex-1 flex flex-col items-center justify-center gap-3">
+            <div className="relative w-40 h-40 shrink-0">
               <div
-                className="relative w-32 h-32 rounded-full flex items-center justify-center shrink-0 shadow-sm"
+                className="absolute inset-0 rounded-full"
                 style={{
                   background:
                     totalWithGender === 0
-                      ? '#f5f5f5'
-                      : `conic-gradient(#f472b6 0% ${femalePct}%, #3b82f6 ${femalePct}% ${femalePct + malePct}%, #a855f7 ${femalePct + malePct}% 100%)`,
+                      ? 'var(--color-neutral-100)'
+                      : `conic-gradient(var(--color-accent) 0% ${femalePct}%, var(--color-neutral-900) ${femalePct}% ${femalePct + malePct}%, var(--color-neutral-300) ${femalePct + malePct}% 100%)`,
                 }}
-              >
-                <div className="absolute inset-0 rounded-full border border-black/5" />
-                <div className="w-24 h-24 bg-white rounded-full flex flex-col items-center justify-center shadow-sm relative z-10 border border-neutral-100">
-                  <div className="text-2xl font-bold text-neutral-900">{totalWithGender}</div>
-                  <div className="text-[10px] uppercase font-semibold text-neutral-400 tracking-wider">
-                    Total
-                  </div>
+              />
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <div className="font-display text-3xl font-bold leading-none text-neutral-900">
+                  {totalWithGender}
+                </div>
+                <div className="text-[10px] tracking-[0.1em] text-neutral-400 mt-1">TOTAL</div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-center gap-5">
+              <div className="text-center">
+                <div className="flex items-center justify-center gap-1.5 text-xs text-neutral-500">
+                  <span className="h-[7px] w-[7px] rounded-full bg-accent" />
+                  Femme
+                </div>
+                <div className="text-sm font-bold mt-0.5 tabular-nums text-neutral-900">
+                  {femalePct}%
                 </div>
               </div>
-
-              <div className="flex items-center justify-center gap-4 w-full">
-                <div className="flex flex-col items-center">
-                  <div className="flex items-center gap-1.5 mb-0.5">
-                    <div className="w-2 h-2 rounded-full bg-pink-400" />
-                    <span className="text-xs font-medium text-neutral-500">Femme</span>
-                  </div>
-                  <div className="text-base font-bold text-neutral-900">{femalePct}%</div>
+              <div className="text-center">
+                <div className="flex items-center justify-center gap-1.5 text-xs text-neutral-500">
+                  <span className="h-[7px] w-[7px] rounded-full bg-neutral-900" />
+                  Homme
                 </div>
-                <div className="flex flex-col items-center">
-                  <div className="flex items-center gap-1.5 mb-0.5">
-                    <div className="w-2 h-2 rounded-full bg-blue-500" />
-                    <span className="text-xs font-medium text-neutral-500">Homme</span>
-                  </div>
-                  <div className="text-base font-bold text-neutral-900">{malePct}%</div>
+                <div className="text-sm font-bold mt-0.5 tabular-nums text-neutral-900">
+                  {malePct}%
                 </div>
-                <div className="flex flex-col items-center">
-                  <div className="flex items-center gap-1.5 mb-0.5">
-                    <div className="w-2 h-2 rounded-full bg-purple-500" />
-                    <span className="text-xs font-medium text-neutral-500">LGBT+</span>
-                  </div>
-                  <div className="text-base font-bold text-neutral-900">{lgbtPct}%</div>
+              </div>
+              <div className="text-center">
+                <div className="flex items-center justify-center gap-1.5 text-xs text-neutral-500">
+                  <span className="h-[7px] w-[7px] rounded-full bg-neutral-300" />
+                  LGBT+
+                </div>
+                <div className="text-sm font-bold mt-0.5 tabular-nums text-neutral-900">
+                  {lgbtPct}%
                 </div>
               </div>
             </div>
           </div>
+        </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-neutral-200 p-6">
-            <div className="flex items-center gap-2 mb-6">
-              <CalendarDays className="w-5 h-5 text-neutral-400" />
-              <h3 className="text-base font-semibold text-neutral-900">Répartition par âge</h3>
-            </div>
-            <div className="space-y-4">
-              {Object.entries(ageBrackets).map(([bracket, count]) => {
-                const pct = totalWithAge > 0 ? Math.round((count / totalWithAge) * 100) : 0
-                return (
-                  <div key={bracket} className="flex items-center gap-4">
-                    <div className="w-20 text-sm text-neutral-600 truncate">{bracket}</div>
-                    <div className="flex-1 bg-neutral-100 h-2 rounded-full overflow-hidden">
-                      <div
-                        className="bg-neutral-900 h-full rounded-full transition-all"
-                        style={{ width: `${pct}%` }}
-                      />
-                    </div>
-                    <div className="w-8 text-sm font-medium text-right text-neutral-900">
-                      {pct}%
-                    </div>
+        <div className="bg-surface rounded-card border border-border p-[18px]">
+          <div className="flex items-center gap-2 mb-4">
+            <CalendarDays className="w-[18px] h-[18px] text-neutral-400" />
+            <h3 className="text-[15px] font-bold text-neutral-900">Répartition par âge</h3>
+          </div>
+          <div className="space-y-2.5">
+            {Object.entries(ageBrackets).map(([bracket, count]) => {
+              const pct = totalWithAge > 0 ? Math.round((count / totalWithAge) * 100) : 0
+              return (
+                <div key={bracket} className="flex items-center gap-2.5">
+                  <div className="w-[74px] shrink-0 text-[13px] text-neutral-600">{bracket}</div>
+                  <div className="flex-1 bg-neutral-100 h-2 rounded-pill overflow-hidden">
+                    <div
+                      className="bg-accent h-full rounded-pill transition-all"
+                      style={{ width: `${pct}%` }}
+                    />
                   </div>
-                )
-              })}
-            </div>
+                  <div className="w-[34px] shrink-0 text-right text-[12.5px] font-semibold tabular-nums text-neutral-600">
+                    {pct}%
+                  </div>
+                </div>
+              )
+            })}
           </div>
         </div>
       </div>
 
       {/* APPLICATIONS LIST & DETAILS */}
-      <div className="flex flex-col gap-4 mt-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <h2 className="text-xl font-semibold text-neutral-900">
-            Liste des Candidatures {showArchives ? '(Archive)' : ''}
+      <div className="flex flex-col gap-3.5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <h2 className="font-display text-xl font-bold tracking-tight text-neutral-900">
+            Liste des candidatures {showArchives ? '(Archive)' : ''}
           </h2>
 
-          <div className="flex items-center gap-2 overflow-x-auto pb-2 sm:pb-0 hide-scrollbar">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 no-scrollbar">
             {[
-              { id: 'new', label: 'Nouvelles' },
-              { id: 'shortlisted', label: 'Retenues' },
-              { id: 'interviewing', label: 'Rencontres' },
-              { id: 'hired', label: 'Validées' },
-              { id: 'rejected', label: 'Refusées' },
-              { id: 'all', label: 'Toutes' },
+              { id: 'new', label: STATUS_META.new.label, count: statusCounts.new },
+              {
+                id: 'shortlisted',
+                label: STATUS_META.shortlisted.label,
+                count: statusCounts.shortlisted,
+              },
+              {
+                id: 'interviewing',
+                label: STATUS_META.interviewing.label,
+                count: statusCounts.interviewing,
+              },
+              { id: 'hired', label: STATUS_META.hired.label, count: statusCounts.hired },
+              { id: 'rejected', label: STATUS_META.rejected.label, count: statusCounts.rejected },
+              { id: 'all', label: 'Toutes', count: baseApplications.length },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -340,20 +514,20 @@ export function JobOfferDetails({
                   setFilterStatus(tab.id)
                   setSelectedAppId(null) // reset selection on filter change
                 }}
-                className={`px-3 py-1.5 text-sm font-medium rounded-full whitespace-nowrap transition-colors ${
+                className={`shrink-0 h-[34px] px-3.5 text-[13px] font-semibold rounded-pill whitespace-nowrap transition-colors ${
                   filterStatus === tab.id
-                    ? 'bg-neutral-900 text-white'
-                    : 'bg-white text-neutral-600 border border-neutral-200 hover:bg-neutral-50'
+                    ? 'bg-accent text-surface'
+                    : 'bg-surface text-neutral-600 border border-border hover:bg-panel-2'
                 }`}
               >
-                {tab.label}
+                {tab.label} {tab.count}
               </button>
             ))}
           </div>
         </div>
 
         {displayedApplications.length === 0 ? (
-          <div className="bg-white rounded-xl shadow-sm border border-neutral-200 p-12 text-center text-neutral-500 flex flex-col items-center">
+          <div className="bg-surface rounded-card shadow-sm border border-border p-12 text-center text-neutral-500 flex flex-col items-center">
             <div className="w-12 h-12 rounded-full bg-neutral-100 flex items-center justify-center mb-4">
               <Users className="w-6 h-6 text-neutral-400" />
             </div>
@@ -361,208 +535,172 @@ export function JobOfferDetails({
             <p className="text-sm mt-1">Aucune candidature ne correspond à cette vue.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* LEFT COLUMN: Scrollable List */}
-            <div className="col-span-1 bg-white rounded-xl shadow-sm border border-neutral-200 overflow-hidden flex flex-col h-[600px]">
-              <div className="p-3 border-b border-neutral-100 bg-neutral-50/50">
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Search className="h-4 w-4 text-neutral-400" />
-                  </div>
-                  <input
-                    type="text"
-                    placeholder="Rechercher un candidat..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="block w-full rounded-md border-0 py-1.5 pl-9 text-neutral-900 ring-1 ring-inset ring-neutral-200 placeholder:text-neutral-400 focus:ring-2 focus:ring-inset focus:ring-neutral-900 sm:text-sm sm:leading-6"
-                  />
+          <div className="grid grid-cols-1 profile:grid-cols-[352px_1fr] gap-[18px] items-start">
+            {/* LEFT COLUMN: List (hauteur libre, pas de plafond — decision
+                explicite de Killian, la maquette proposait 600px desktop/
+                340px mobile mais la consigne recue est de n'en garder
+                aucune). */}
+            <div className="flex flex-col gap-2.5 min-w-0">
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Search className="h-4 w-4 text-neutral-400" />
                 </div>
+                <input
+                  type="text"
+                  placeholder="Rechercher un candidat..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="block w-full h-[38px] rounded-field border border-border bg-surface pl-9 pr-3 text-[13.5px] text-neutral-900 outline-none transition-colors placeholder:text-neutral-400 focus:border-accent"
+                />
               </div>
-              <div className="overflow-y-auto flex-1 p-2 space-y-1">
+              <div className="bg-surface border border-border rounded-card p-1.5 flex flex-col gap-1">
                 {displayedApplications.map((app) => (
                   <button
                     key={app.id}
                     onClick={() => setSelectedAppId(app.id)}
-                    className={`w-full text-left p-3 rounded-lg flex flex-col gap-2 transition-colors ${selectedApp?.id === app.id ? 'bg-neutral-100 ring-1 ring-neutral-200' : 'hover:bg-neutral-50'}`}
+                    className={`w-full text-left p-3 rounded-field flex items-center justify-between gap-2.5 transition-colors ${
+                      selectedApp?.id === app.id
+                        ? 'bg-neutral-100 shadow-[inset_3px_0_0_var(--color-accent)]'
+                        : 'hover:bg-panel'
+                    }`}
                   >
-                    <div className="flex justify-between items-start">
-                      <div className="font-medium text-neutral-900 truncate pr-2">
+                    <div className="min-w-0">
+                      <div className="font-semibold text-[14.5px] text-neutral-900 truncate">
                         {app.first_name} {app.last_name}
                       </div>
-                      <div className="text-xs text-neutral-400 whitespace-nowrap">
+                      <div className="text-xs text-neutral-400 mt-0.5">
                         {new Date(app.created_at).toLocaleDateString('fr-FR')}
                       </div>
                     </div>
-                    <div className="flex items-center justify-between mt-1">
-                      <span
-                        className={`text-xs rounded-md px-2 py-1 font-medium ${
-                          app.status === 'new'
-                            ? 'bg-blue-50 text-blue-700'
-                            : app.status === 'shortlisted'
-                              ? 'bg-yellow-50 text-yellow-800'
-                              : app.status === 'interviewing'
-                                ? 'bg-indigo-50 text-indigo-700'
-                                : app.status === 'hired'
-                                  ? 'bg-green-50 text-green-700'
-                                  : 'bg-red-50 text-red-700'
-                        }`}
-                      >
-                        {app.status === 'new'
-                          ? 'Nouvelle'
-                          : app.status === 'shortlisted'
-                            ? 'Retenue'
-                            : app.status === 'interviewing'
-                              ? 'Rencontre'
-                              : app.status === 'hired'
-                                ? 'Validée'
-                                : 'Refusée'}
-                      </span>
-                      {app.location && (
-                        <div className="flex items-center gap-1 text-xs text-neutral-500">
-                          <MapPin className="h-3 w-3" />{' '}
-                          <span className="truncate max-w-[100px]">{app.location}</span>
-                        </div>
-                      )}
-                    </div>
+                    <StatusBadge status={app.status as ApplicationStatus} />
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* RIGHT COLUMN: Profile Detail (Fixed) */}
-            <div className="col-span-2">
+            {/* RIGHT COLUMN: Profile Detail */}
+            <div className="min-w-0">
               {selectedApp ? (
-                <div className="bg-white rounded-xl shadow-sm border border-neutral-200 p-6 sticky top-6">
+                <div className="bg-surface rounded-card shadow-sm border border-border p-5">
                   <div className="mb-6">
-                    <div className="mb-3">
-                      <span
-                        className={`inline-block px-2.5 py-1 text-sm font-bold rounded-md ${
-                          selectedApp.status === 'new'
-                            ? 'bg-blue-100 text-blue-800'
-                            : selectedApp.status === 'shortlisted'
-                              ? 'bg-yellow-100 text-yellow-800'
-                              : selectedApp.status === 'interviewing'
-                                ? 'bg-indigo-100 text-indigo-800'
-                                : selectedApp.status === 'hired'
-                                  ? 'bg-green-100 text-green-800'
-                                  : 'bg-red-100 text-red-800'
-                        }`}
-                      >
-                        {selectedApp.status === 'new'
-                          ? 'Nouvelle'
-                          : selectedApp.status === 'shortlisted'
-                            ? 'Retenue'
-                            : selectedApp.status === 'interviewing'
-                              ? 'Rencontre'
-                              : selectedApp.status === 'hired'
-                                ? 'Validée'
-                                : 'Refusée'}
-                      </span>
+                    <div className="mb-2.5">
+                      <StatusBadge status={selectedApp.status as ApplicationStatus} size="lg" />
                     </div>
-                    <div className="flex justify-between items-start">
+                    <div className="flex flex-wrap justify-between items-start gap-3">
                       <div>
-                        <h3 className="text-2xl font-bold text-neutral-900">
+                        <h3 className="font-display text-2xl font-bold tracking-tight text-neutral-900 mt-2.5 mb-1.5">
                           {selectedApp.first_name} {selectedApp.last_name}
                         </h3>
-                        <div className="text-neutral-500 mt-1">
-                          {selectedApp.email} {selectedApp.phone ? ` • ${selectedApp.phone}` : ''}
+                        <div className="flex flex-wrap items-center gap-2 text-[13.5px] text-neutral-500">
+                          <span>{selectedApp.email}</span>
+                          {selectedApp.phone && (
+                            <>
+                              <span className="text-neutral-300">·</span>
+                              <span>{selectedApp.phone}</span>
+                            </>
+                          )}
                         </div>
                       </div>
+                    </div>
 
-                      {/* Actions */}
-                      <div className="flex items-center gap-3">
-                        <div className="flex bg-neutral-100 p-1 rounded-lg border border-neutral-200">
-                          {[
-                            { id: 'shortlisted', label: 'Retenue' },
-                            { id: 'interviewing', label: 'Rencontre' },
-                            { id: 'hired', label: 'Validée' },
-                          ].map((status) => (
-                            <button
-                              key={status.id}
-                              disabled={showArchives}
-                              onClick={() => handleStatusChange(selectedApp.id, status.id)}
-                              className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all disabled:opacity-50 ${
-                                selectedApp.status === status.id
-                                  ? 'bg-white text-neutral-900 shadow-sm ring-1 ring-black/5'
-                                  : 'text-neutral-500 hover:text-neutral-700 hover:bg-neutral-200/50'
-                              }`}
-                            >
-                              {status.label}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
+                    <div className="h-px bg-neutral-100 my-[18px]" />
+
+                    <div className="flex flex-wrap gap-2">
+                      {[
+                        { id: 'shortlisted', label: 'Retenue' },
+                        { id: 'interviewing', label: 'Rencontre' },
+                      ].map((status) => (
+                        <button
+                          key={status.id}
+                          disabled={showArchives}
+                          onClick={() => handleStatusChange(selectedApp.id, status.id)}
+                          className="h-9 px-3.5 rounded-field border border-border bg-surface text-[13px] font-semibold text-neutral-900 transition-colors hover:bg-panel-2 disabled:opacity-50"
+                        >
+                          {status.label}
+                        </button>
+                      ))}
+                      <button
+                        disabled={showArchives}
+                        onClick={() => handleStatusChange(selectedApp.id, 'hired')}
+                        className="h-9 px-3.5 rounded-field bg-neutral-900 text-[13px] font-semibold text-surface transition-colors hover:bg-accent disabled:opacity-50"
+                      >
+                        Validée
+                      </button>
+                      <button
+                        disabled={showArchives || selectedApp.status === 'rejected'}
+                        onClick={() => handleStatusChange(selectedApp.id, 'rejected')}
+                        className="h-9 px-3.5 rounded-field border border-neutral-300 bg-surface text-[13px] font-semibold text-neutral-600 transition-colors hover:bg-panel-2 disabled:opacity-50 disabled:pointer-events-none"
+                      >
+                        Refuser la candidature
+                      </button>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                    <div className="p-4 bg-neutral-50 rounded-lg">
-                      <div className="text-xs text-neutral-500 mb-1">Âge</div>
-                      <div className="font-medium text-neutral-900">
+                  <div className="grid grid-cols-2 profile:grid-cols-4 gap-2.5">
+                    <div className="p-3 bg-panel rounded-tile">
+                      <div className="text-[10.5px] uppercase tracking-wider text-neutral-400 mb-1">
+                        Âge
+                      </div>
+                      <div className="text-[14.5px] font-bold text-neutral-900">
                         {/* @ts-ignore */}
                         {selectedApp.age !== undefined && selectedApp.age !== null
                           ? `${selectedApp.age} ans`
                           : 'Non renseigné'}
                       </div>
                     </div>
-                    <div className="p-4 bg-neutral-50 rounded-lg">
-                      <div className="text-xs text-neutral-500 mb-1">Genre</div>
-                      <div className="font-medium text-neutral-900">
+                    <div className="p-3 bg-panel rounded-tile">
+                      <div className="text-[10.5px] uppercase tracking-wider text-neutral-400 mb-1">
+                        Genre
+                      </div>
+                      <div className="text-[14.5px] font-bold text-neutral-900">
                         {selectedApp.gender || 'Non renseigné'}
                       </div>
                     </div>
-                    <div className="p-4 bg-neutral-50 rounded-lg">
-                      <div className="text-xs text-neutral-500 mb-1">Localisation</div>
+                    <div className="p-3 bg-panel rounded-tile">
+                      <div className="text-[10.5px] uppercase tracking-wider text-neutral-400 mb-1">
+                        Localisation
+                      </div>
                       <div
-                        className="font-medium text-neutral-900 truncate"
+                        className="text-[14.5px] font-bold text-neutral-900 truncate"
                         title={selectedApp.location || ''}
                       >
                         {selectedApp.location || 'Non renseigné'}
                       </div>
                     </div>
-                    <div className="p-4 bg-neutral-50 rounded-lg">
-                      <div className="text-xs text-neutral-500 mb-1">Candidature le</div>
-                      <div className="font-medium text-neutral-900">
+                    <div className="p-3 bg-panel rounded-tile">
+                      <div className="text-[10.5px] uppercase tracking-wider text-neutral-400 mb-1">
+                        Candidature le
+                      </div>
+                      <div className="text-[14.5px] font-bold text-neutral-900">
                         {new Date(selectedApp.created_at).toLocaleDateString('fr-FR')}
                       </div>
                     </div>
                   </div>
 
                   {selectedApp.message && (
-                    <div className="mb-6">
-                      <h4 className="text-sm font-semibold text-neutral-900 mb-2">
-                        Message du candidat
-                      </h4>
-                      <div className="p-4 bg-neutral-50 rounded-lg text-sm text-neutral-700 whitespace-pre-wrap">
-                        {selectedApp.message}
+                    <div className="mt-[18px]">
+                      <div className="text-[10.5px] uppercase tracking-wider text-neutral-400 mb-1.5">
+                        Message
                       </div>
+                      <p className="text-sm leading-relaxed text-neutral-600 whitespace-pre-wrap">
+                        {selectedApp.message}
+                      </p>
                     </div>
                   )}
 
                   {selectedApp.resume_url && (
-                    <div>
+                    <div className="mt-[18px]">
                       <a
                         href={selectedApp.resume_url}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-neutral-900 text-white rounded-lg hover:bg-neutral-800 transition-colors text-sm font-medium"
+                        className="inline-flex items-center justify-center gap-2 h-10 px-4 rounded-field border border-border bg-surface text-[13.5px] font-semibold text-neutral-900 transition-colors hover:bg-panel-2"
                       >
                         <Download className="h-4 w-4" />
                         Télécharger le CV
                       </a>
                     </div>
                   )}
-
-                  {/* Danger Zone */}
-                  <div className="pt-6 mt-6 border-t border-neutral-100 flex justify-end">
-                    <button
-                      disabled={showArchives || selectedApp.status === 'rejected'}
-                      onClick={() => handleStatusChange(selectedApp.id, 'rejected')}
-                      className="px-4 py-2 text-sm font-medium text-red-700 bg-red-50 hover:bg-red-100 rounded-lg transition-colors border border-red-200 disabled:opacity-50 disabled:pointer-events-none"
-                    >
-                      Refuser la candidature
-                    </button>
-                  </div>
                 </div>
               ) : null}
             </div>

@@ -37,15 +37,15 @@ import { contractLabel } from './contract-labels'
  * n'affiche que des offres actives.
  */
 
-type LocationType = 'remote' | 'onsite' | 'hybrid'
-type CompensationType = 'fixed' | 'percentage'
-type CompensationFrequency = 'weekly' | 'monthly' | 'mission'
+export type LocationType = 'remote' | 'onsite' | 'hybrid'
+export type CompensationType = 'fixed' | 'percentage'
+export type CompensationFrequency = 'weekly' | 'monthly' | 'mission'
 
 // Un tag par information de lieu (pas un libelle unique) : hybrid produit
 // DEUX tags (ville puis "Hybride"), les autres types un seul. VOLONTAIRE :
 // si la ville manque en hybrid, on n'invente pas de repli — seul onsite a un
 // repli documente ("Sur site"), rien de tel n'a ete demande pour hybrid.
-function locationTags(locationType: LocationType, locationText: string | null): string[] {
+export function locationTags(locationType: LocationType, locationText: string | null): string[] {
   const city = locationText?.trim() || null
   if (locationType === 'remote') return ['Télétravail']
   if (locationType === 'hybrid') return city ? [city, 'Hybride'] : ['Hybride']
@@ -54,18 +54,31 @@ function locationTags(locationType: LocationType, locationText: string | null): 
 
 // "1er" pour le premier du mois, sinon le quantieme brut — Intl.DateTimeFormat
 // ne met jamais d'ordinal en francais (rendrait "1 aout" sans correction).
-function formatEndDate(value: string): string {
+// Factorise avec formatEndDate/formatShortDate (JobOfferDetails.tsx reutilise
+// le second pour "Date de fin"/"Publiee le", sans le prefixe "Jusqu'au").
+function dayMonth(value: string): string {
   const date = new Date(value)
   const day = date.getDate()
   const month = new Intl.DateTimeFormat('fr-FR', { month: 'short' }).format(date)
-  return `Jusqu'au ${day === 1 ? '1er' : day} ${month}`
+  return `${day === 1 ? '1er' : day} ${month}`
+}
+
+export function formatEndDate(value: string): string {
+  return `Jusqu'au ${dayMonth(value)}`
+}
+
+// Date courte sans prefixe (ex. "9 août") — JobOfferDetails.tsx (bloc
+// caracteristiques : "Date de fin", "Publiée le"), ou le libelle du champ
+// porte deja le sens, pas besoin de "Jusqu'au".
+export function formatShortDate(value: string): string {
+  return dayMonth(value)
 }
 
 // Montant + unite (%/€) de la remuneration — compensation_amount et
 // compensation_type sont deux colonnes distinctes en base (entity_job_offers),
 // jamais concatenees ici : le montant seul doit rester la plus grosse valeur
 // affichee, formate independamment de la frequence (voir compensationUnitLabel).
-function formatCompensationAmount(amount: number, type: CompensationType): string {
+export function formatCompensationAmount(amount: number, type: CompensationType): string {
   const formatted = new Intl.NumberFormat('fr-FR').format(amount)
   return type === 'percentage' ? `${formatted}%` : `${formatted}€`
 }
@@ -74,7 +87,7 @@ function formatCompensationAmount(amount: number, type: CompensationType): strin
 // 'percentage' peut n'avoir aucune compensation_frequency en base (ex. un
 // pourcentage de commission sans cadence fixe) — retourne null dans ce cas,
 // la ligne est alors simplement absente (pas de valeur inventee).
-function compensationUnitLabel(frequency: CompensationFrequency | null): string | null {
+export function compensationUnitLabel(frequency: CompensationFrequency | null): string | null {
   if (frequency === 'weekly') return 'par semaine'
   if (frequency === 'monthly') return 'par mois'
   if (frequency === 'mission') return 'par mission'
