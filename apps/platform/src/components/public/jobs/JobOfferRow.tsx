@@ -119,6 +119,10 @@ type JobOfferRowProps =
       /** Absente = non chargee par l'appelant : ne jamais afficher "0 candidature". */
       applicationsCount?: number
       onEdit?: () => void
+      /** Libelle du CTA carte pleine (proprietaire) — 'Modifier' par defaut.
+       * /dashboard/talent passe 'Ouvrir' : n'affecte que ce bouton, pas
+       * l'entree "Modifier" du menu trois points (adminMenu.onEdit). */
+      ctaLabel?: string
     })
 
 export function JobOfferRow(props: JobOfferRowProps) {
@@ -150,8 +154,8 @@ export function JobOfferRow(props: JobOfferRowProps) {
   const compensationUnit = compensationUnitLabel(compensationFrequency ?? null)
   // Seuil partage carte pleine (colonne remuneration a largeur fixe, ~150px)
   // ET carte reduite (zone remuneration collee au bouton menu) : au-dela de
-  // 7 caracteres (ex. "454 231€"), le montant a 24px/800 touche le bord —
-  // .job-row__comp-amount--long bascule sur une taille plus petite.
+  // 7 caracteres (ex. "454 231€"), .job-row__comp-amount--long bascule sur
+  // une taille plus petite pour rester dans la largeur disponible.
   const isLongCompensationAmount = (compensationAmountLabel?.length ?? 0) > 7
   const excerpt = blocks ? entityDetailExcerpt({ content_blocks: blocks as HistoryBlock[] }) : ''
 
@@ -320,7 +324,7 @@ export function JobOfferRow(props: JobOfferRowProps) {
           ) : (
             props.onEdit && (
               <button type="button" className="job-row__cta" onClick={props.onEdit}>
-                Modifier
+                {props.ctaLabel ?? 'Modifier'}
               </button>
             )
           )}

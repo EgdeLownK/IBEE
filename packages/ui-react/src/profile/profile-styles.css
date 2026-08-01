@@ -939,6 +939,18 @@
   z-index: 40;
 }
 
+/* Sans cette regle, le dropdown ouvert d'une carte passe SOUS la carte
+   suivante : .job-row:hover applique un transform (juste en dessous), qui
+   cree un nouveau contexte d'empilement des qu'on survole la carte pour
+   cliquer son bouton menu — le z-index:40 de .job-row__admin.is-open reste
+   alors piege a l'interieur de ce contexte local et ne peut plus depasser
+   la carte suivante (peinte apres elle en ordre DOM). Elever la carte
+   elle-meme (meme z-index que le menu) resout le probleme quel que soit
+   l'etat de survol. */
+.job-row:has(.job-row__admin.is-open) {
+  z-index: 40;
+}
+
 .job-row__menu-trigger {
   display: inline-flex;
   align-items: center;
@@ -1089,7 +1101,7 @@
   margin: 0;
   overflow-wrap: break-word;
   font-family: var(--font-display);
-  font-size: 24px;
+  font-size: 19px;
   font-weight: 800;
   letter-spacing: -0.02em;
   color: var(--color-neutral-900);
@@ -1098,7 +1110,7 @@
 /* Montant long (ex. "454 231€", seuil > 7 caracteres) : taille reduite
    plutot que de laisser deborder une colonne de largeur fixe (~150px). */
 .job-row__comp-amount--long {
-  font-size: 18px;
+  font-size: 15px;
 }
 
 .job-row__comp-unit {
