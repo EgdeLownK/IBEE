@@ -889,11 +889,15 @@
   grid-template-columns: 112px 1fr 150px;
   grid-template-areas: 'media body comp';
   align-items: stretch;
-  gap: 16px;
-  padding: 14px;
+  gap: 20px;
+  padding: 16px;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-tile);
+  /* --radius-card (18px) plutot que --radius-tile (14px, valeur precedente) :
+     la maquette Claude Design (reference visuelle, cf. rapport phase 0) vise
+     20px, sans equivalent exact dans tokens.css — --radius-card est le token
+     de role le plus proche (2px d'ecart). */
+  border-radius: var(--radius-card);
   transition:
     transform 0.18s ease,
     box-shadow 0.18s ease,
@@ -959,10 +963,10 @@
   height: 32px;
   border: 1px solid var(--color-border);
   border-radius: 999px;
-  background: color-mix(in srgb, var(--color-surface) 88%, transparent);
+  background: color-mix(in srgb, var(--color-surface) 75%, transparent);
   color: var(--color-neutral-600);
   cursor: pointer;
-  backdrop-filter: blur(6px);
+  backdrop-filter: blur(4px);
   transition:
     background 0.15s ease,
     color 0.15s ease;
@@ -990,7 +994,11 @@
   width: 100%;
   aspect-ratio: 1;
   overflow: hidden;
-  border-radius: 12px;
+  /* --radius-tile : correspond exactement au rayon vignette de la maquette
+     Claude Design (14px, carte pleine). Remplace l'ancienne valeur en dur
+     (12px) — aucun changement visuel de fond, seulement le raccordement au
+     token de role deja existant pour ce cas d'usage. */
+  border-radius: var(--radius-tile);
   background: var(--color-neutral-100);
   color: var(--color-neutral-400);
 }
@@ -1024,16 +1032,42 @@
   color: var(--color-neutral-900);
 }
 
-.job-row__end-date {
-  margin: 0;
+/* Reserve l'espace du bouton menu trois points (.job-row__admin, absolute
+   top:10/right:10, 32px) pour que le titre ne passe jamais dessous — gap
+   observe dans la maquette Claude Design, absent du code avant cette
+   mission. Modificateur conditionnel (ajoute seulement quand adminMenu est
+   fourni, JobOfferRow.tsx) plutot qu'un padding systematique : evite de
+   retirer de la largeur au titre sur les cartes visiteur (PublicJobOffersList),
+   qui n'affichent jamais ce menu. */
+.job-row__title--with-menu {
+  padding-right: 36px;
+}
+
+/* Ligne meta (date · candidatures) : conteneur flex introduit par la
+   maquette Claude Design pour regrouper la date de fin et, plus tard, le
+   nombre de candidatures (non cable aujourd'hui — voir JobOfferRow.tsx). */
+.job-row__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
   font-size: 12.5px;
   color: var(--color-neutral-400);
 }
 
+.job-row__meta-sep {
+  color: var(--color-neutral-300);
+}
+
+.job-row__meta-count {
+  font-weight: 600;
+  color: var(--color-neutral-900);
+}
+
 .job-row__excerpt {
   margin: 2px 0 0;
-  font-size: 13.5px;
-  line-height: 1.4;
+  font-size: 14px;
+  line-height: 1.5;
   color: var(--color-neutral-500);
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -1053,11 +1087,11 @@
 .job-row__tag {
   display: inline-flex;
   align-items: center;
-  padding: 3px 10px;
+  padding: 4px 10px;
   border-radius: var(--radius-chip);
   background: var(--color-neutral-100);
   color: var(--color-neutral-600);
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 600;
   white-space: nowrap;
 }
@@ -1066,7 +1100,16 @@
   background: var(--color-neutral-900);
   color: var(--color-surface);
   font-weight: 700;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.01em;
+}
+
+/* Tag Cadre : variante "outline" (bordure seule, pas de fond) introduite par
+   la maquette Claude Design pour le distinguer visuellement des tags
+   contrat/lieu. */
+.job-row__tag--outline {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-neutral-500);
 }
 
 /* Colonne remuneration : filet vertical a gauche (--color-border, cf. Q3
@@ -1082,8 +1125,15 @@
   justify-content: space-between;
   gap: 10px;
   min-width: 0;
+  /* padding-top: 34px INCHANGE malgre la maquette (qui ne prevoit aucun
+     decalage) : valeur deja corrigee et validee au navigateur (mission
+     anterieure) pour que le montant ne passe jamais sous le bouton menu
+     trois points — la maquette presente le meme risque de chevauchement en
+     coordonnees brutes (bouton menu top:12/right:12 sur 32px, colonne
+     remuneration sans padding-top) mais ne semble pas l'avoir teste avec un
+     montant long. Ecart deliberement conserve, voir rapport phase 0. */
   padding-top: 34px;
-  padding-left: 16px;
+  padding-left: 20px;
   border-left: 1px solid var(--color-border);
 }
 
@@ -1103,7 +1153,8 @@
   font-family: var(--font-display);
   font-size: 19px;
   font-weight: 800;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
   color: var(--color-neutral-900);
 }
 
@@ -1119,14 +1170,6 @@
   color: var(--color-neutral-400);
 }
 
-/* Nombre de candidatures (variant owner uniquement) — pas de zone dediee
-   dans la maquette (generique visiteur+owner), placee ici a defaut d'un
-   autre emplacement dans la colonne remuneration. */
-.job-row__comp-meta {
-  font-size: 12px;
-  color: var(--color-neutral-400);
-}
-
 .job-row__comp-actions {
   position: relative;
   z-index: 2;
@@ -1137,11 +1180,12 @@
   align-items: center;
   justify-content: center;
   width: 100%;
-  padding: 10px 16px;
+  height: 40px;
+  padding: 0 16px;
   border-radius: 999px;
   background: var(--color-neutral-900);
   color: var(--color-surface);
-  font-size: 13px;
+  font-size: 13.5px;
   font-weight: 600;
   text-decoration: none;
   white-space: nowrap;
@@ -1151,7 +1195,7 @@
 }
 
 .job-row__cta:hover {
-  background: var(--color-accent-hover);
+  background: var(--color-accent);
 }
 
 /* Carte reduite (Pilotage, offre hors ligne) : ligne flex — image, corps sur
@@ -1177,6 +1221,10 @@
   /* Contrecarre align-self: start de la regle grid de base — en ligne flex,
      la vignette doit rester centree verticalement comme le reste de la ligne. */
   align-self: center;
+  /* --radius-field (12px) : la maquette Claude Design donne un rayon plus
+     petit a la vignette compacte (52px) qu'a la vignette pleine (112px,
+     --radius-tile 14px) — correspondance exacte, pas d'ecart. */
+  border-radius: var(--radius-field);
 }
 
 .job-row--compact .job-row__body {
@@ -1187,15 +1235,26 @@
   min-height: 0;
 }
 
+/* padding-right: 0 — contrecarre .job-row__title--with-menu (base carte
+   pleine) : la carte compacte reserve deja l'espace du menu au niveau de la
+   ligne entiere (padding-right sur .job-row--compact), pas besoin de le
+   dupliquer sur le titre. */
 .job-row--compact .job-row__title {
   min-width: 0;
+  padding-right: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 15px;
-  font-weight: 600;
+  /* weight 700 + encre (au lieu de 600 + neutral-700 muet, valeur
+     precedente) : la maquette Claude Design ne distingue pas visuellement
+     les cartes hors ligne des cartes en ligne sur le titre — alignement
+     demande explicitement par "fidelite a 100%" (voir rapport phase 0),
+     remplace un choix anterieur d'attenuation volontaire des offres hors
+     ligne. */
+  font-weight: 700;
   letter-spacing: normal;
-  color: var(--color-neutral-700);
+  color: var(--color-neutral-900);
 }
 
 .job-row--compact .job-row__tags {
@@ -1203,22 +1262,70 @@
   padding-top: 0;
 }
 
+.job-row--compact .job-row__tag {
+  padding: 3px 8px;
+  font-size: 10.5px;
+  font-weight: 700;
+}
+
+/* Regroupe remuneration + bouton "Ouvrir" (ajoute par la maquette Claude
+   Design, cf. JobOfferRow.tsx) a droite du corps. position:relative +
+   z-index:2 : necessaire pour passer au-dessus de .job-row__stretch (le
+   <Link> absolute inset:0 qui rend toute la carte cliquable), meme motif que
+   .job-row__comp-actions sur la carte pleine — sans ca, le clic sur le
+   bouton naviguerait via le stretch au lieu de declencher onEdit. */
+.job-row__compact-actions {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
 /* Remuneration de la carte reduite : UNE seule ligne, en petit (montant +
    unite sur le meme <p>, pas les classes .job-row__comp-amount/--unit de la
-   carte pleine — celle-ci garde son propre traitement, non touche). Poussee
-   a droite du corps via margin-left: auto plutot qu'une grid-area (pas de
-   grille en compact). flex-shrink: 0 pour ne jamais compresser le montant :
-   c'est le corps (titre + tag) qui absorbe le manque de place sur petit
-   ecran. */
+   carte pleine — celle-ci garde son propre traitement, non touche). Le
+   salaire garde EXACTEMENT sa position/son style d'avant cette mission
+   (demande explicite de Killian, qui a vu que la maquette le deplacait en
+   petit a cote du tag contrat et a tranche pour le garder ici) — seul le
+   bouton "Ouvrir" ci-dessous est nouveau. flex-shrink: 0 pour ne jamais
+   compresser le montant : c'est le corps (titre + tag) qui absorbe le
+   manque de place sur petit ecran. */
 .job-row--compact .job-row__compact-comp {
   flex-shrink: 0;
   margin: 0;
-  margin-left: auto;
   white-space: nowrap;
   text-align: right;
   font-size: 13px;
   font-weight: 600;
   color: var(--color-neutral-700);
+}
+
+/* Bouton "Ouvrir" — ajoute par la maquette Claude Design sur la carte
+   reduite (contredit une decision anterieure, applique sur demande explicite
+   de Killian : voir commentaire JobOfferRow.tsx). */
+.job-row__compact-open {
+  flex-shrink: 0;
+  height: 32px;
+  padding: 0 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--color-neutral-900);
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.job-row__compact-open:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent-hover);
 }
 
 .job-row--compact .job-row__menu-trigger {
@@ -1233,12 +1340,12 @@
 
 @media (max-width: 640px) {
   .job-row {
-    grid-template-columns: 84px 1fr;
+    grid-template-columns: 76px 1fr;
     grid-template-areas:
       'media body'
       'comp comp';
-    gap: 12px;
-    padding: 12px;
+    gap: 14px;
+    padding: 14px;
   }
 
   .job-row__body {
@@ -1247,18 +1354,21 @@
 
   .job-row__comp {
     flex-direction: row;
-    align-items: center;
+    align-items: flex-end;
     justify-content: space-between;
     gap: 12px;
     padding-left: 0;
-    padding-top: 10px;
+    padding-top: 12px;
+    /* border-top plutot que border-left : la colonne remuneration devient
+       une ligne horizontale sous le corps, la maquette Claude Design separe
+       les deux avec un filet horizontal (aucun equivalent exact du gris de
+       la maquette, meme token --color-border que le filet vertical desktop). */
     border-left: 0;
+    border-top: 1px solid var(--color-border);
   }
 
   .job-row__cta {
-    width: auto;
-    padding-left: 20px;
-    padding-right: 20px;
+    width: 120px;
   }
 }
 

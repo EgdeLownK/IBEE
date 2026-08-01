@@ -147,6 +147,10 @@ export function JobOfferRow(props: JobOfferRowProps) {
     ...locationTags(locationType, locationText),
     ...(isCadre ? ['Cadre'] : []),
   ]
+  // Index du tag Cadre calcule par position (toujours en dernier quand present),
+  // pas par comparaison de texte : locationText est une saisie libre (onsite/
+  // hybrid) qui pourrait theoriquement contenir la chaine "Cadre".
+  const cadreTagIndex = isCadre ? tags.length - 1 : -1
   const compensationAmountLabel =
     compensationAmount && compensationType
       ? formatCompensationAmount(compensationAmount, compensationType)
@@ -261,11 +265,28 @@ export function JobOfferRow(props: JobOfferRowProps) {
             <span className="job-row__tag">{contractName}</span>
           </div>
         </div>
-        {compensationAmountLabel && (
-          <p className="job-row__compact-comp">
-            {compensationAmountLabel}
-            {compensationUnit ? ` ${compensationUnit}` : ''}
-          </p>
+        {/* Bouton "Ouvrir" ajoute par la maquette Claude Design (voir rapport
+            phase 0) : contredit sciemment une decision precedente (carte
+            reduite sans bouton) — applique sur demande explicite de Killian,
+            qui a tranche apres avoir vu la maquette. Le salaire reste a sa
+            place (pas repris tel quel de la maquette, qui le deplacait en
+            petit a cote du tag). position:relative + z-index:2 necessaires
+            pour passer au-dessus de .job-row__stretch (voir job-row__comp-actions
+            plus haut dans ce fichier, meme motif). */}
+        {(compensationAmountLabel || props.variant === 'owner') && (
+          <div className="job-row__compact-actions">
+            {compensationAmountLabel && (
+              <p className="job-row__compact-comp">
+                {compensationAmountLabel}
+                {compensationUnit ? ` ${compensationUnit}` : ''}
+              </p>
+            )}
+            {props.variant === 'owner' && props.onEdit && (
+              <button type="button" className="job-row__compact-open" onClick={props.onEdit}>
+                {props.ctaLabel ?? 'Ouvrir'}
+              </button>
+            )}
+          </div>
         )}
       </article>
     )
@@ -279,12 +300,35 @@ export function JobOfferRow(props: JobOfferRowProps) {
         <Briefcase className="job-row__media-icon" aria-hidden="true" />
       </div>
       <div className="job-row__body">
-        <h3 className="job-row__title">{title}</h3>
-        {endDate && <p className="job-row__end-date">{formatEndDate(endDate)}</p>}
+        <h3 className={`job-row__title${adminMenu ? ' job-row__title--with-menu' : ''}`}>
+          {title}
+        </h3>
+        {/* Ligne meta (date · candidatures) : emplacement et style repris de
+            la maquette Claude Design (voir rapport phase 0), mais le nombre
+            de candidatures n'est pas cable (donnee non disponible aujourd'hui,
+            applicationsCount jamais fourni par TalentDashboard) — seule la
+            date s'affiche tant que cette donnee n'existe pas. Sujet suivi
+            separement, ne pas cabler ici. */}
+        {(endDate || (props.variant === 'owner' && props.applicationsCount != null)) && (
+          <div className="job-row__meta">
+            {endDate && <span>{formatEndDate(endDate)}</span>}
+            {props.variant === 'owner' && props.applicationsCount != null && (
+              <>
+                {endDate && <span className="job-row__meta-sep">·</span>}
+                <span className="job-row__meta-count">
+                  {props.applicationsCount} candidature{props.applicationsCount > 1 ? 's' : ''}
+                </span>
+              </>
+            )}
+          </div>
+        )}
         {excerpt && <p className="job-row__excerpt">{excerpt}</p>}
         <div className="job-row__tags">
           {tags.map((tag, i) => (
-            <span key={i} className={`job-row__tag${i === 0 ? ' job-row__tag--contract' : ''}`}>
+            <span
+              key={i}
+              className={`job-row__tag${i === 0 ? ' job-row__tag--contract' : ''}${i === cadreTagIndex ? ' job-row__tag--outline' : ''}`}
+            >
               {tag}
             </span>
           ))}
@@ -301,11 +345,6 @@ export function JobOfferRow(props: JobOfferRowProps) {
               </p>
               {compensationUnit && <p className="job-row__comp-unit">{compensationUnit}</p>}
             </>
-          )}
-          {props.variant === 'owner' && props.applicationsCount != null && (
-            <span className="job-row__comp-meta">
-              {props.applicationsCount} candidature{props.applicationsCount > 1 ? 's' : ''}
-            </span>
           )}
         </div>
         <div className="job-row__comp-actions">

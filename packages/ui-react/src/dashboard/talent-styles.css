@@ -10,19 +10,72 @@
   width: 100%;
   max-width: 1120px;
   margin: 0 auto;
-  padding: 28px 24px 40px;
+  /* 32px/24px/56px : valeurs de la maquette Claude Design (voir rapport
+     phase 0 de la mission "feat/talent-list-design"), remplacent les
+     valeurs 28/24/40 d'une mission anterieure — changement volontaire pour
+     la fidelite demandee cette fois. */
+  padding: 32px 24px 56px;
 }
 
-/* Padding reduit sous 640px (demande explicite) — scope au conteneur
-   propre a talent, pas a un layout partage avec d'autres pages dashboard
-   (DashboardContentArea n'impose aucun padding, verifie avant d'ecrire
-   cette regle). Horizontal a 8px (4px + 4px ajoutes) pour que les cartes
-   ne touchent plus le bord de l'ecran ; vertical reste a 4px, le padding
-   bas de la nav flottante est deja reserve plus haut dans l'arbre par
-   .app-layout__content (--app-navpill-clearance, packages/ui-react/src/
-   app-shell.css) — pas besoin de le dupliquer ici. */
+/* Padding reduit sous 640px — scope au conteneur propre a talent, pas a un
+   layout partage avec d'autres pages dashboard (DashboardContentArea
+   n'impose aucun padding, verifie avant d'ecrire cette regle). Horizontal a
+   8px pour que les cartes ne touchent pas le bord de l'ecran. Bas a 28px
+   (valeur maquette) : vient s'ajouter au padding bas deja reserve plus haut
+   dans l'arbre par .app-layout__content pour la nav flottante
+   (--app-navpill-clearance, packages/ui-react/src/app-shell.css) — pas de
+   conflit, juste un peu plus de respiration avant cette zone reservee. */
 @media (max-width: 640px) {
   .talent-page {
-    padding: 4px 8px;
+    padding: 4px 8px 28px;
   }
+}
+
+/* Bouton "Nouvelle offre" : hauteur fixe + cercle translucide autour de
+   l'icone, repris de la maquette Claude Design. Complete .btn/.btn--dark
+   (packages/ui-react/src/button.css) plutot que de le remplacer — garde la
+   couleur/interaction du systeme existant, n'ajoute que les ecarts de
+   dimension propres a ce bouton precis. */
+.talent-page__create-btn {
+  height: 44px;
+  padding: 0 20px 0 14px;
+  gap: 10px;
+}
+
+.talent-page__create-btn-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  /* Traduit rgba(255,255,255,.16) de la maquette via color-mix sur le token
+     --color-surface plutot qu'une couleur en dur — meme technique que
+     .job-row__menu-trigger (profile-styles.css). */
+  background: color-mix(in srgb, var(--color-surface) 16%, transparent);
+}
+
+/* Barre de recherche : --radius-field est le token de role le plus proche
+   (12px, "champs de formulaire, inputs" — correspond exactement au role de
+   cet element) du rayon de la maquette (10px, pas d'equivalent exact). */
+.talent-page__search-input {
+  height: 40px;
+  padding-right: 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-field);
+  background: var(--color-surface);
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.talent-page__search-input:focus {
+  border-color: var(--color-accent);
+}
+
+/* Liste "Hors ligne" : gap reduit (8px vs 12px pour "En ligne"), ecart
+   demande par la maquette Claude Design. Classe scopee plutot qu'une
+   modification de .event-list, partagee avec d'autres listes dashboard. */
+.talent-page__list--compact {
+  gap: 8px;
 }

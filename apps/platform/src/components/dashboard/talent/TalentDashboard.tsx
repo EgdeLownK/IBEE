@@ -127,20 +127,28 @@ export function TalentDashboard({ entityId, offers }: { entityId: string; offers
 
   return (
     <div className="talent-page flex flex-1 flex-col gap-6">
-      <div className="flex items-center justify-between">
+      {/* items-start + colonne sous 640px : la maquette Claude Design empile
+          titre et bouton sur mobile (au lieu de rester cote a cote), voir
+          rapport phase 0. */}
+      <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="font-display text-2xl font-semibold text-neutral-900">Talent</h1>
-          <p className="text-sm text-neutral-500 mt-1">
+          <h1 className="font-display text-3xl font-bold tracking-tight text-neutral-900">
+            Talent
+          </h1>
+          <p className="text-sm text-neutral-500 mt-1.5">
             Gérez vos offres d&apos;emploi et recrutements.
           </p>
         </div>
-        <button onClick={handleCreate} className="btn btn--dark">
-          <Plus className="h-4 w-4" /> Nouvelle offre
+        <button onClick={handleCreate} className="btn btn--dark talent-page__create-btn">
+          <span className="talent-page__create-btn-icon">
+            <Plus className="h-4 w-4" />
+          </span>
+          Nouvelle offre
         </button>
       </div>
 
       <div className="relative max-w-sm">
-        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
           <Search className="h-4 w-4 text-neutral-400" />
         </div>
         <input
@@ -148,7 +156,7 @@ export function TalentDashboard({ entityId, offers }: { entityId: string; offers
           placeholder="Rechercher une offre..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="block w-full rounded-md border-0 py-2 pl-10 text-neutral-900 ring-1 ring-inset ring-neutral-300 placeholder:text-neutral-400 focus:ring-2 focus:ring-inset focus:ring-neutral-900 sm:text-sm sm:leading-6"
+          className="talent-page__search-input block w-full pl-10 text-neutral-900 placeholder:text-neutral-400"
         />
       </div>
 
@@ -185,7 +193,13 @@ export function TalentDashboard({ entityId, offers }: { entityId: string; offers
                 <h2 className="job-list-section__title">Hors ligne</h2>
                 <span className="job-list-section__count">({inactiveOffers.length})</span>
               </div>
-              <div className="event-list">{inactiveOffers.map(renderOfferRow)}</div>
+              {/* gap 8px (vs 12px pour "En ligne") : ecart demande par la
+                  maquette Claude Design. Nouvelle classe scopee plutot qu'une
+                  modification de .event-list (partagee avec d'autres listes
+                  dashboard). */}
+              <div className="event-list talent-page__list--compact">
+                {inactiveOffers.map(renderOfferRow)}
+              </div>
             </div>
           )}
         </div>
