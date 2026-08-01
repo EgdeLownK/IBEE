@@ -148,6 +148,7 @@ export type CreateJobApplicationInput = {
   applicant_user_id?: string | null
   phone?: string | null
   location?: string | null
+  session_number?: number
 }
 
 export async function createJobApplication(

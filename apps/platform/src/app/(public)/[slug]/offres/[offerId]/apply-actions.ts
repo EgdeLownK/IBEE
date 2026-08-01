@@ -53,6 +53,9 @@ export async function createJobApplicationAction(
       email: fieldsResult.data.email,
       message: fieldsResult.data.message ?? null,
       applicant_user_id: user?.id ?? null,
+      // Fige la vague de recrutement courante sur la candidature : offer
+      // vient de getActiveJobOffer ci-dessus, jamais du client.
+      session_number: offer.session_count,
     })
     return {}
   } catch (err: unknown) {
