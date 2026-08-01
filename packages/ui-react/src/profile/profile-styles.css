@@ -1155,12 +1155,11 @@
 }
 
 /* Carte reduite (Pilotage, offre hors ligne) : ligne flex — image, corps sur
-   deux lignes (titre puis ligne de tags complete), remuneration, menu. Pas
-   de min-height forcee, la hauteur suit le contenu (desormais deux lignes
-   dans le corps). Passe en flex (au lieu d'heriter de la grille 3 colonnes
-   de .job-row) car aucune zone comp en grid-area n'est rendue en compact —
-   la remuneration compacte est un simple enfant flex, voir
-   .job-row__compact-comp plus bas. */
+   deux lignes (titre puis SEUL le tag contrat), remuneration, menu. Pas de
+   min-height forcee, la hauteur suit le contenu. Passe en flex (au lieu
+   d'heriter de la grille 3 colonnes de .job-row) car aucune zone comp en
+   grid-area n'est rendue en compact — la remuneration compacte est un
+   simple enfant flex, voir .job-row__compact-comp plus bas. */
 .job-row--compact {
   display: flex;
   align-items: center;
@@ -1204,17 +1203,22 @@
   padding-top: 0;
 }
 
-/* Remuneration de la carte reduite : memes classes .job-row__comp-info/
-   .job-row__comp-amount/.job-row__comp-unit que la carte pleine (meme
-   formatage montant + unite, y compris le seuil --long), poussees a droite
-   du corps via margin-left: auto plutot qu'une grid-area (pas de grille en
-   compact). flex-shrink: 0 pour ne jamais compresser le montant : c'est le
-   corps (titre + tags) qui absorbe le manque de place sur petit ecran. */
+/* Remuneration de la carte reduite : UNE seule ligne, en petit (montant +
+   unite sur le meme <p>, pas les classes .job-row__comp-amount/--unit de la
+   carte pleine — celle-ci garde son propre traitement, non touche). Poussee
+   a droite du corps via margin-left: auto plutot qu'une grid-area (pas de
+   grille en compact). flex-shrink: 0 pour ne jamais compresser le montant :
+   c'est le corps (titre + tag) qui absorbe le manque de place sur petit
+   ecran. */
 .job-row--compact .job-row__compact-comp {
   flex-shrink: 0;
+  margin: 0;
   margin-left: auto;
-  align-items: flex-end;
+  white-space: nowrap;
   text-align: right;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-neutral-700);
 }
 
 .job-row--compact .job-row__menu-trigger {
