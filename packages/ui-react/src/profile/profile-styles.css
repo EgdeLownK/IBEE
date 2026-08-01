@@ -939,6 +939,18 @@
   z-index: 40;
 }
 
+/* Sans cette regle, le dropdown ouvert d'une carte passe SOUS la carte
+   suivante : .job-row:hover applique un transform (juste en dessous), qui
+   cree un nouveau contexte d'empilement des qu'on survole la carte pour
+   cliquer son bouton menu — le z-index:40 de .job-row__admin.is-open reste
+   alors piege a l'interieur de ce contexte local et ne peut plus depasser
+   la carte suivante (peinte apres elle en ordre DOM). Elever la carte
+   elle-meme (meme z-index que le menu) resout le probleme quel que soit
+   l'etat de survol. */
+.job-row:has(.job-row__admin.is-open) {
+  z-index: 40;
+}
+
 .job-row__menu-trigger {
   display: inline-flex;
   align-items: center;
@@ -1089,7 +1101,7 @@
   margin: 0;
   overflow-wrap: break-word;
   font-family: var(--font-display);
-  font-size: 24px;
+  font-size: 19px;
   font-weight: 800;
   letter-spacing: -0.02em;
   color: var(--color-neutral-900);
@@ -1098,7 +1110,7 @@
 /* Montant long (ex. "454 231€", seuil > 7 caracteres) : taille reduite
    plutot que de laisser deborder une colonne de largeur fixe (~150px). */
 .job-row__comp-amount--long {
-  font-size: 18px;
+  font-size: 15px;
 }
 
 .job-row__comp-unit {
@@ -1143,12 +1155,11 @@
 }
 
 /* Carte reduite (Pilotage, offre hors ligne) : ligne flex — image, corps sur
-   deux lignes (titre puis ligne de tags complete), remuneration, menu. Pas
-   de min-height forcee, la hauteur suit le contenu (desormais deux lignes
-   dans le corps). Passe en flex (au lieu d'heriter de la grille 3 colonnes
-   de .job-row) car aucune zone comp en grid-area n'est rendue en compact —
-   la remuneration compacte est un simple enfant flex, voir
-   .job-row__compact-comp plus bas. */
+   deux lignes (titre puis SEUL le tag contrat), remuneration, menu. Pas de
+   min-height forcee, la hauteur suit le contenu. Passe en flex (au lieu
+   d'heriter de la grille 3 colonnes de .job-row) car aucune zone comp en
+   grid-area n'est rendue en compact — la remuneration compacte est un
+   simple enfant flex, voir .job-row__compact-comp plus bas. */
 .job-row--compact {
   display: flex;
   align-items: center;
@@ -1192,17 +1203,22 @@
   padding-top: 0;
 }
 
-/* Remuneration de la carte reduite : memes classes .job-row__comp-info/
-   .job-row__comp-amount/.job-row__comp-unit que la carte pleine (meme
-   formatage montant + unite, y compris le seuil --long), poussees a droite
-   du corps via margin-left: auto plutot qu'une grid-area (pas de grille en
-   compact). flex-shrink: 0 pour ne jamais compresser le montant : c'est le
-   corps (titre + tags) qui absorbe le manque de place sur petit ecran. */
+/* Remuneration de la carte reduite : UNE seule ligne, en petit (montant +
+   unite sur le meme <p>, pas les classes .job-row__comp-amount/--unit de la
+   carte pleine — celle-ci garde son propre traitement, non touche). Poussee
+   a droite du corps via margin-left: auto plutot qu'une grid-area (pas de
+   grille en compact). flex-shrink: 0 pour ne jamais compresser le montant :
+   c'est le corps (titre + tag) qui absorbe le manque de place sur petit
+   ecran. */
 .job-row--compact .job-row__compact-comp {
   flex-shrink: 0;
+  margin: 0;
   margin-left: auto;
-  align-items: flex-end;
+  white-space: nowrap;
   text-align: right;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-neutral-700);
 }
 
 .job-row--compact .job-row__menu-trigger {

@@ -28,13 +28,13 @@ import { contractLabel } from './contract-labels'
  * visiteur, TalentDashboard sans action) = aucune trace dans le DOM.
  *
  * `display` ('full' par defaut) est independant de `variant` : seul
- * TalentDashboard (Pilotage) passe 'compact' pour les offres hors ligne
- * (image + corps sur deux lignes — titre puis ligne de tags complete,
- * identique a la carte pleine mais tag contrat en fond neutre — +
- * remuneration a droite + menu). Pas de date/description/pastille statut
- * (le titre de section "Hors ligne (N)" porte deja cette info).
- * PublicJobOffersList ne l'utilise jamais, elle n'affiche que des offres
- * actives.
+ * TalentDashboard (Pilotage) passe 'compact' pour les offres hors ligne —
+ * version simplifiee de la carte pleine (image + corps sur deux lignes —
+ * titre puis SEUL le tag contrat, fond neutre — + remuneration sur une
+ * seule ligne en petit + menu). Pas de date/description/pastille statut/
+ * tags de lieu/Cadre (le titre de section "Hors ligne (N)" porte deja
+ * l'info de statut). PublicJobOffersList ne l'utilise jamais, elle
+ * n'affiche que des offres actives.
  */
 
 type LocationType = 'remote' | 'onsite' | 'hybrid'
@@ -119,6 +119,10 @@ type JobOfferRowProps =
       /** Absente = non chargee par l'appelant : ne jamais afficher "0 candidature". */
       applicationsCount?: number
       onEdit?: () => void
+      /** Libelle du CTA carte pleine (proprietaire) — 'Modifier' par defaut.
+       * /dashboard/talent passe 'Ouvrir' : n'affecte que ce bouton, pas
+       * l'entree "Modifier" du menu trois points (adminMenu.onEdit). */
+      ctaLabel?: string
     })
 
 export function JobOfferRow(props: JobOfferRowProps) {
@@ -148,10 +152,11 @@ export function JobOfferRow(props: JobOfferRowProps) {
       ? formatCompensationAmount(compensationAmount, compensationType)
       : null
   const compensationUnit = compensationUnitLabel(compensationFrequency ?? null)
-  // Seuil partage carte pleine (colonne remuneration a largeur fixe, ~150px)
-  // ET carte reduite (zone remuneration collee au bouton menu) : au-dela de
-  // 7 caracteres (ex. "454 231€"), le montant a 24px/800 touche le bord —
-  // .job-row__comp-amount--long bascule sur une taille plus petite.
+  // Seuil carte pleine (colonne remuneration a largeur fixe, ~150px) :
+  // au-dela de 7 caracteres (ex. "454 231€"), .job-row__comp-amount--long
+  // bascule sur une taille plus petite pour rester dans la largeur
+  // disponible. La carte reduite n'utilise plus ces classes (remuneration
+  // en petit sur une seule ligne, voir .job-row__compact-comp).
   const isLongCompensationAmount = (compensationAmountLabel?.length ?? 0) > 7
   const excerpt = blocks ? entityDetailExcerpt({ content_blocks: blocks as HistoryBlock[] }) : ''
 
@@ -250,26 +255,17 @@ export function JobOfferRow(props: JobOfferRowProps) {
         <div className="job-row__body">
           <h3 className="job-row__title">{title}</h3>
           <div className="job-row__tags">
-            {/* Meme liste que la carte pleine (contrat, lieu(x), Cadre) mais
-                AUCUN tag--contract : sur la carte reduite le tag contrat
-                reste en fond neutre, pas le fond sombre de la carte pleine
-                (variante 2e validee, cf. rapport phase 0). */}
-            {tags.map((tag, i) => (
-              <span key={i} className="job-row__tag">
-                {tag}
-              </span>
-            ))}
+            {/* Carte reduite simplifiee : seul le tag contrat (pas de lieu,
+                pas de Cadre). Fond neutre, pas le fond sombre de la carte
+                pleine (variante 2e validee, cf. rapport phase 0). */}
+            <span className="job-row__tag">{contractName}</span>
           </div>
         </div>
         {compensationAmountLabel && (
-          <div className="job-row__comp-info job-row__compact-comp">
-            <p
-              className={`job-row__comp-amount${isLongCompensationAmount ? ' job-row__comp-amount--long' : ''}`}
-            >
-              {compensationAmountLabel}
-            </p>
-            {compensationUnit && <p className="job-row__comp-unit">{compensationUnit}</p>}
-          </div>
+          <p className="job-row__compact-comp">
+            {compensationAmountLabel}
+            {compensationUnit ? ` ${compensationUnit}` : ''}
+          </p>
         )}
       </article>
     )
@@ -320,7 +316,7 @@ export function JobOfferRow(props: JobOfferRowProps) {
           ) : (
             props.onEdit && (
               <button type="button" className="job-row__cta" onClick={props.onEdit}>
-                Modifier
+                {props.ctaLabel ?? 'Modifier'}
               </button>
             )
           )}

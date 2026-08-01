@@ -1,0 +1,28 @@
+/* Page Talent (/dashboard/talent) — meme pattern de conteneur que les
+   autres pages dashboard (.team-page/.analyse-page, team-styles.css/
+   analyse-styles.css : width:100%, max-width, margin auto, padding dedie).
+   Largeur max 1120px : valeur reutilisee de .team-page et .analyse-page
+   (2 des 3 pages dashboard avec un conteneur dedie l'utilisent deja),
+   plutot que .revenu-page (960px, page differente). Fichier CSS dedie
+   (plutot que des classes Tailwind dans TalentDashboard.tsx) pour suivre
+   la meme convention que les autres pages dashboard. */
+.talent-page {
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 28px 24px 40px;
+}
+
+/* Padding reduit sous 640px (demande explicite) — scope au conteneur
+   propre a talent, pas a un layout partage avec d'autres pages dashboard
+   (DashboardContentArea n'impose aucun padding, verifie avant d'ecrire
+   cette regle). Horizontal a 8px (4px + 4px ajoutes) pour que les cartes
+   ne touchent plus le bord de l'ecran ; vertical reste a 4px, le padding
+   bas de la nav flottante est deja reserve plus haut dans l'arbre par
+   .app-layout__content (--app-navpill-clearance, packages/ui-react/src/
+   app-shell.css) — pas besoin de le dupliquer ici. */
+@media (max-width: 640px) {
+  .talent-page {
+    padding: 4px 8px;
+  }
+}

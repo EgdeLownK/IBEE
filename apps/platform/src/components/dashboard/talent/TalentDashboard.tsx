@@ -113,6 +113,7 @@ export function TalentDashboard({ entityId, offers }: { entityId: string; offers
         blocks={offer.blocks}
         status={offer.status}
         onEdit={() => handleEdit(offer)}
+        ctaLabel="Ouvrir"
         adminMenu={{
           status: offer.status,
           pending: actionPendingId === offer.id,
@@ -125,7 +126,7 @@ export function TalentDashboard({ entityId, offers }: { entityId: string; offers
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-6 p-8">
+    <div className="talent-page flex flex-1 flex-col gap-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-display text-2xl font-semibold text-neutral-900">Talent</h1>
@@ -137,7 +138,7 @@ export function TalentDashboard({ entityId, offers }: { entityId: string; offers
           onClick={handleCreate}
           className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-950 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-neutral-900 text-neutral-50 hover:bg-neutral-900/90 h-10 px-4 py-2"
         >
-          <Plus className="mr-2 h-4 w-4" /> Nouvelle offre
+          <Plus className="mr-2 h-4 w-4" /> Offre
         </button>
       </div>
 
