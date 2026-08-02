@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { Briefcase, Eye, EyeOff, MoreVertical, Pencil, Trash2 } from 'lucide-react'
+import { Briefcase } from 'lucide-react'
 import type { HistoryBlock } from '@ibee/shared'
 import type { JobContractType } from '@ibee/supabase'
 import { entityDetailExcerpt } from '@/lib/entity-detail-excerpt'
 import { contractLabel } from './contract-labels'
+import { JobOfferAdminMenu } from './JobOfferAdminMenu'
 
 /**
  * Carte de liste d'une offre d'emploi. Grille `.job-row` DEDIEE (packages/
@@ -94,7 +94,9 @@ export function compensationUnitLabel(frequency: CompensationFrequency | null): 
   return null
 }
 
-export type JobOfferAdminMenu = {
+// Nom "Config" (pas "JobOfferAdminMenu") : evite la collision avec le
+// composant du meme nom fonctionnel extrait dans ./JobOfferAdminMenu.tsx.
+export type JobOfferAdminMenuConfig = {
   status: 'active' | 'inactive'
   onEdit: () => void
   onToggleStatus: () => void
@@ -116,7 +118,7 @@ type JobOfferRowBaseProps = {
   compensationFrequency?: CompensationFrequency | null
   /** Json brut de la colonne `blocks` (entity_job_offers) — HistoryBlock[] en pratique. */
   blocks?: unknown
-  adminMenu?: JobOfferAdminMenu
+  adminMenu?: JobOfferAdminMenuConfig
   /** 'compact' reserve a TalentDashboard (offre hors ligne) — voir en-tete de fichier. */
   display?: 'full' | 'compact'
 }
@@ -177,88 +179,15 @@ export function JobOfferRow(props: JobOfferRowProps) {
   const isLongCompensationAmount = (compensationAmountLabel?.length ?? 0) > 7
   const excerpt = blocks ? entityDetailExcerpt({ content_blocks: blocks as HistoryBlock[] }) : ''
 
-  const [menuOpen, setMenuOpen] = useState(false)
-  const menuRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!menuOpen) return
-    function onDocClick(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setMenuOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', onDocClick)
-    return () => document.removeEventListener('mousedown', onDocClick)
-  }, [menuOpen])
-
   const adminMenuNode = adminMenu && (
-    <div className={`job-row__admin${menuOpen ? ' is-open' : ''}`} ref={menuRef}>
-      <button
-        type="button"
-        className="job-row__menu-trigger"
-        aria-haspopup="menu"
-        aria-expanded={menuOpen}
-        aria-label={`Options pour ${title}`}
-        disabled={adminMenu.pending}
-        onClick={(e) => {
-          e.preventDefault()
-          e.stopPropagation()
-          setMenuOpen((v) => !v)
-        }}
-      >
-        <MoreVertical className="h-5 w-5" aria-hidden="true" />
-      </button>
-      {menuOpen && (
-        <div className="widget-menu" role="menu">
-          <button
-            type="button"
-            className="widget-menu__item"
-            role="menuitem"
-            onClick={(e) => {
-              e.preventDefault()
-              e.stopPropagation()
-              setMenuOpen(false)
-              adminMenu.onEdit()
-            }}
-          >
-            <Pencil className="h-4 w-4" aria-hidden="true" />
-            <span>Modifier</span>
-          </button>
-          <button
-            type="button"
-            className="widget-menu__item"
-            role="menuitem"
-            onClick={(e) => {
-              e.preventDefault()
-              e.stopPropagation()
-              setMenuOpen(false)
-              adminMenu.onToggleStatus()
-            }}
-          >
-            {adminMenu.status === 'active' ? (
-              <EyeOff className="h-4 w-4" aria-hidden="true" />
-            ) : (
-              <Eye className="h-4 w-4" aria-hidden="true" />
-            )}
-            <span>{adminMenu.status === 'active' ? 'Mettre hors ligne' : 'Mettre en ligne'}</span>
-          </button>
-          <button
-            type="button"
-            className="widget-menu__item widget-menu__item--danger"
-            role="menuitem"
-            onClick={(e) => {
-              e.preventDefault()
-              e.stopPropagation()
-              setMenuOpen(false)
-              adminMenu.onDelete()
-            }}
-          >
-            <Trash2 className="h-4 w-4" aria-hidden="true" />
-            <span>Supprimer</span>
-          </button>
-        </div>
-      )}
-    </div>
+    <JobOfferAdminMenu
+      title={title}
+      status={adminMenu.status}
+      pending={adminMenu.pending}
+      onEdit={adminMenu.onEdit}
+      onToggleStatus={adminMenu.onToggleStatus}
+      onDelete={adminMenu.onDelete}
+    />
   )
 
   if (display === 'compact') {
