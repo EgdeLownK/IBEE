@@ -8,23 +8,25 @@ import { JobOffer, JobCompType, JobCompFreq, JobContractType } from '@ibee/supab
 import {
   createJobOfferAction,
   updateJobOfferAction,
+  getJobOfferMediaAction,
 } from '../../../app/dashboard/talent/talent-actions'
+import { uploadProductMediaAction } from '@/app/dashboard/site/product-actions'
 import { Input } from '@ibee/ui-react'
 import {
   ArrowDown,
   ArrowUp,
-  Edit,
+  ChevronLeft,
+  ChevronRight,
   Image as ImageIcon,
+  ImagePlus,
+  Loader2,
   Plus,
-  Trash,
   Trash2,
   Type,
   X,
-  ExternalLink,
   List,
   ArrowLeft,
   ArrowRight,
-  Loader2,
 } from 'lucide-react'
 import {
   HISTORY_MAX_BLOCKS,
@@ -44,6 +46,38 @@ import { HistoryImageBlockEditor } from '../../profile/history/HistoryImageBlock
 // feat/job-offer-contract-types-ui) : la case est masquee pour les autres,
 // meme motif que la localisation masquee pour le teletravail ci-dessous.
 const CADRE_ELIGIBLE_TYPES: JobContractType[] = ['cdi', 'cdd', 'interim']
+
+// Meme forme que MediaDraft (product-create/types.ts) - dupliquee ici plutot
+// qu'importee : ces deux domaines (talent/boutique) ne partagent pas de
+// dependance directe (voir apps/platform/CLAUDE.md, frontiere par domaine).
+// L'action serveur d'upload (uploadProductMediaAction), elle, est bien
+// reutilisee telle quelle - c'est le mecanisme partage qui compte, pas le
+// type client local.
+type JobOfferMediaDraft = {
+  id: string
+  type: 'image' | 'video'
+  url: string
+  previewUrl: string
+  uploading: boolean
+}
+
+// Limites cote client - MIROIR EXACT des constantes serveur
+// (MAX_JOB_OFFER_MEDIA/MAX_JOB_OFFER_VIDEOS, talent-actions.ts), qui restent
+// la source de verite (verifiees a nouveau server-side, un appel direct a
+// l'action ne peut pas les contourner). A VALIDER PAR KILLIAN - voir rapport
+// phase 0 mission feat/job-offer-media-form : reprises par defaut des
+// limites boutique (StepEssentials.tsx), faute de besoin metier connu
+// specifique aux offres.
+const MAX_JOB_OFFER_MEDIA = 10
+const MAX_JOB_OFFER_VIDEOS = 1
+
+function jobOfferMediaHasVideo(media: JobOfferMediaDraft[]): boolean {
+  return media.some((m) => m.type === 'video')
+}
+
+function canAddJobOfferMedia(media: JobOfferMediaDraft[]): boolean {
+  return media.length < MAX_JOB_OFFER_MEDIA
+}
 
 type JobOfferDialogProps = {
   open: boolean
@@ -68,15 +102,17 @@ export function JobOfferDialog({ open, onOpenChange, entityId, offer }: JobOffer
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
-  const [step, setStep] = useState<1 | 2>(1)
+  const [step, setStep] = useState<1 | 2 | 3>(1)
   // Distingue quel bouton est en vol (creation seulement, deux boutons) pour
   // afficher le bon libelle/spinner - inutile en edition (un seul bouton).
   const [pendingIntent, setPendingIntent] = useState<'publish' | 'draft' | null>(null)
 
   const isEditing = !!offer
 
-  // Step 1 states
+  // Step 1 "Vitrine" states
+  const [media, setMedia] = useState<JobOfferMediaDraft[]>([])
   const [title, setTitle] = useState(offer?.title || '')
+  // Step 2 "Informations" states
   const [contractType, setContractType] = useState<JobContractType>(offer?.contract_type || 'cdi')
   const [isCadre, setIsCadre] = useState<boolean>(offer?.is_cadre ?? false)
   const [status, setStatus] = useState(offer?.status || 'inactive')
@@ -88,7 +124,7 @@ export function JobOfferDialog({ open, onOpenChange, entityId, offer }: JobOffer
   const [applyUrl, setApplyUrl] = useState(offer?.apply_url || '')
   const [endDate, setEndDate] = useState(offer?.end_date || '')
 
-  // Step 2 states
+  // Step 3 "Contenu" states
   const [blocks, setBlocks] = useState<DraftBlock[]>([])
 
   useEffect(() => {
@@ -109,8 +145,38 @@ export function JobOfferDialog({ open, onOpenChange, entityId, offer }: JobOffer
 
       const initialBlocks = offer?.blocks ? parseHistoryBlocks(offer.blocks) : []
       setBlocks(draftBlocksFromInitial(initialBlocks))
+
+      // Medias : table separee (entity_job_offer_media), pas portee par
+      // `offer` (JobOffer) - rechargee a chaque ouverture depuis le serveur.
+      // Reset synchrone (creation, ou avant que la lecture async resolve en
+      // edition) + garde `cancelled` pour ignorer un resultat perime si le
+      // dialogue se refermait/rouvrait sur une autre offre entre-temps.
+      setMedia([])
+      if (offer) {
+        let cancelled = false
+        getJobOfferMediaAction(entityId, offer.id)
+          .then((rows) => {
+            if (cancelled) return
+            setMedia(
+              rows.map((r) => ({
+                id: r.id,
+                type: r.media_type,
+                url: r.url,
+                previewUrl: r.url,
+                uploading: false,
+              })),
+            )
+          })
+          .catch(() => {
+            if (cancelled) return
+            toast.error('Impossible de charger les médias de cette offre.')
+          })
+        return () => {
+          cancelled = true
+        }
+      }
     }
-  }, [open, offer])
+  }, [open, offer, entityId])
 
   useEffect(() => {
     if (!open) return
@@ -127,7 +193,89 @@ export function JobOfferDialog({ open, onOpenChange, entityId, offer }: JobOffer
 
   if (!open || typeof document === 'undefined') return null
 
-  // --- Step 2 Block Functions ---
+  // --- Step 1 Media Functions --- (motif repris de StepEssentials.tsx,
+  // apps/platform/src/components/profile/product-create/steps/ - meme action
+  // serveur d'upload, sans le recadrage, non demande ici).
+  async function uploadOneMedia(file: File) {
+    const isVideo = file.type.startsWith('video/') || /\.(mp4|webm|mov)$/i.test(file.name)
+    const id = crypto.randomUUID()
+    const mediaType = isVideo ? ('video' as const) : ('image' as const)
+    const previewUrl = URL.createObjectURL(file)
+    let accepted = false
+
+    setMedia((prev) => {
+      if (prev.length >= MAX_JOB_OFFER_MEDIA) {
+        toast.error(`Maximum ${MAX_JOB_OFFER_MEDIA} médias.`)
+        return prev
+      }
+      if (isVideo && jobOfferMediaHasVideo(prev)) {
+        toast.error('Une seule vidéo est autorisée.')
+        return prev
+      }
+      accepted = true
+      return [...prev, { id, type: mediaType, url: '', previewUrl, uploading: true }]
+    })
+
+    if (!accepted) {
+      URL.revokeObjectURL(previewUrl)
+      return
+    }
+
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      const result = await uploadProductMediaAction(fd)
+
+      setMedia((prev) => {
+        const item = prev.find((m) => m.id === id)
+        if (!item) return prev
+
+        if (!result.ok) {
+          toast.error(result.error)
+          if (item.previewUrl.startsWith('blob:')) URL.revokeObjectURL(item.previewUrl)
+          return prev.filter((m) => m.id !== id)
+        }
+
+        return prev.map((m) =>
+          m.id === id ? { ...m, url: result.url, type: result.type, uploading: false } : m,
+        )
+      })
+    } catch {
+      toast.error("Erreur réseau lors de l'envoi du média.")
+      setMedia((prev) => {
+        const item = prev.find((m) => m.id === id)
+        if (item?.previewUrl.startsWith('blob:')) URL.revokeObjectURL(item.previewUrl)
+        return prev.filter((m) => m.id !== id)
+      })
+    }
+  }
+
+  async function handleMediaFiles(files: FileList | null) {
+    if (!files?.length) return
+    for (const file of Array.from(files)) {
+      await uploadOneMedia(file)
+    }
+  }
+
+  function removeMedia(id: string) {
+    setMedia((prev) => {
+      const item = prev.find((m) => m.id === id)
+      if (item?.previewUrl.startsWith('blob:')) URL.revokeObjectURL(item.previewUrl)
+      return prev.filter((m) => m.id !== id)
+    })
+  }
+
+  function moveMedia(index: number, delta: -1 | 1) {
+    setMedia((prev) => {
+      const target = index + delta
+      if (target < 0 || target >= prev.length) return prev
+      const copy = [...prev]
+      ;[copy[index], copy[target]] = [copy[target]!, copy[index]!]
+      return copy
+    })
+  }
+
+  // --- Step 3 Block Functions ---
   function moveBlock(index: number, dir: -1 | 1) {
     const target = index + dir
     if (target < 0 || target >= blocks.length) return
@@ -184,11 +332,20 @@ export function JobOfferDialog({ open, onOpenChange, entityId, offer }: JobOffer
     setBlocks((prev) => prev.map((b, i) => (i === index ? block : b)))
   }
 
-  const handleNext = () => {
+  // Etape 1 "Vitrine" -> 2 "Informations" : seul le titre est requis ici (la
+  // zone media est optionnelle, cf. rapport phase 0).
+  const handleNextFromVitrine = () => {
     if (!title.trim()) {
       setError('Veuillez renseigner le titre du poste.')
       return
     }
+    setError(null)
+    setStep(2)
+  }
+
+  // Etape 2 "Informations" -> 3 "Contenu" : reprend telles quelles les deux
+  // validations qui portaient auparavant sur l'unique etape 1.
+  const handleNextFromInformations = () => {
     if (locationType !== 'remote' && !locationText.trim()) {
       setError('Veuillez renseigner la localisation.')
       return
@@ -198,7 +355,7 @@ export function JobOfferDialog({ open, onOpenChange, entityId, offer }: JobOffer
       return
     }
     setError(null)
-    setStep(2)
+    setStep(3)
   }
 
   // `explicitStatus` porte le choix Publier ('active') / Enregistrer
@@ -207,6 +364,10 @@ export function JobOfferDialog({ open, onOpenChange, entityId, offer }: JobOffer
   // formulaire, voir useState ci-dessus) - comportement d'edition inchange.
   const handleSubmit = async (explicitStatus?: 'active' | 'inactive') => {
     setError(null)
+    if (media.some((m) => m.uploading)) {
+      setError("Patiente, un média est en cours d'envoi.")
+      return
+    }
     if (blocks.some((b) => b.type === 'image' && b.uploading)) {
       setError("Patiente, une image est en cours d'envoi.")
       return
@@ -254,6 +415,9 @@ export function JobOfferDialog({ open, onOpenChange, entityId, offer }: JobOffer
           // chemin UI), et la coche n'est pas perdue si l'utilisateur bascule
           // cdi -> stage -> cdi avant de valider.
           is_cadre: CADRE_ELIGIBLE_TYPES.includes(contractType) ? isCadre : null,
+          // Uploads en attente deja bloques par le garde media.some(uploading)
+          // plus haut - ne reste ici que des medias avec une url definitive.
+          media: media.map((m) => ({ url: m.url, type: m.type, alt_text: null })),
         }
 
         if (isEditing && offer) {
@@ -308,13 +472,15 @@ export function JobOfferDialog({ open, onOpenChange, entityId, offer }: JobOffer
         </header>
 
         <nav className="pco__steps" aria-label="Étapes de création">
-          {[1, 2].map((n) => (
+          {[1, 2, 3].map((n) => (
             <span
               key={n}
               className={`pco__step${step === n ? ' is-active' : ''}${step > n ? ' is-done' : ''}`}
             >
               <span className="pco__step-num">{n}</span>
-              <span className="pco__step-label">{n === 1 ? 'Informations' : 'Contenu'}</span>
+              <span className="pco__step-label">
+                {n === 1 ? 'Vitrine' : n === 2 ? 'Informations' : 'Contenu'}
+              </span>
             </span>
           ))}
         </nav>
@@ -327,17 +493,104 @@ export function JobOfferDialog({ open, onOpenChange, entityId, offer }: JobOffer
           ) : null}
 
           {step === 1 ? (
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Titre du poste *</label>
+            <section className="pco__stage">
+              <div className="pco__field">
+                <span className="pco__label">
+                  Médias{' '}
+                  <span className="pco__hint">
+                    (jusqu&apos;à {MAX_JOB_OFFER_MEDIA}, dont {MAX_JOB_OFFER_VIDEOS} vidéo max — la
+                    1<sup>re</sup> est la vignette)
+                  </span>
+                </span>
+                {media.length > 0 ? (
+                  <div className="pco__media-grid">
+                    {media.map((m, i) => (
+                      <div key={m.id} className="pco__media-item">
+                        {m.type === 'video' ? (
+                          <video src={m.previewUrl || m.url} muted playsInline />
+                        ) : (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={m.previewUrl || m.url} alt="" />
+                        )}
+                        {m.uploading ? (
+                          <span className="pco__media-uploading">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          </span>
+                        ) : null}
+                        {i === 0 && !m.uploading ? (
+                          <span className="pco__media-cover">Vignette</span>
+                        ) : m.type === 'video' ? (
+                          <span className="pco__media-badge">Vidéo</span>
+                        ) : null}
+                        {!m.uploading ? (
+                          <div className="pco__media-controls">
+                            <button
+                              type="button"
+                              className="pco__mini-btn"
+                              disabled={i === 0}
+                              aria-label="Déplacer à gauche"
+                              onClick={() => moveMedia(i, -1)}
+                            >
+                              <ChevronLeft className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              className="pco__mini-btn"
+                              disabled={i === media.length - 1}
+                              aria-label="Déplacer à droite"
+                              onClick={() => moveMedia(i, 1)}
+                            >
+                              <ChevronRight className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              className="pco__mini-btn pco__mini-btn--danger"
+                              aria-label="Retirer"
+                              onClick={() => removeMedia(m.id)}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        ) : null}
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+                {canAddJobOfferMedia(media) ? (
+                  <label className="pco__upload">
+                    <input
+                      type="file"
+                      accept="image/*,video/*"
+                      className="pco__upload-input"
+                      multiple
+                      onChange={(e) => {
+                        void handleMediaFiles(e.target.files)
+                        e.target.value = ''
+                      }}
+                    />
+                    <span className="pco__upload-empty">
+                      <ImagePlus className="h-5 w-5" />
+                      Ajouter une photo ou vidéo
+                    </span>
+                  </label>
+                ) : null}
+              </div>
+
+              <div className="pco__field">
+                <label className="text-sm font-medium" htmlFor="job-offer-title">
+                  Titre du poste *
+                </label>
                 <Input
+                  id="job-offer-title"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   required
                   placeholder="Ex: Développeur Fullstack React"
                 />
               </div>
-
+            </section>
+          ) : step === 2 ? (
+            <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Type de contrat *</label>
@@ -588,15 +841,31 @@ export function JobOfferDialog({ open, onOpenChange, entityId, offer }: JobOffer
               >
                 Annuler
               </button>
-            ) : (
+            ) : step === 2 ? (
               <button type="button" className="pco__btn pco__btn--ghost" onClick={() => setStep(1)}>
+                <ArrowLeft className="h-4 w-4" /> Précédent
+              </button>
+            ) : (
+              <button type="button" className="pco__btn pco__btn--ghost" onClick={() => setStep(2)}>
                 <ArrowLeft className="h-4 w-4" /> Précédent
               </button>
             )}
           </div>
           <div className="pco__actions-end flex items-center gap-3">
             {step === 1 ? (
-              <button type="button" className="pco__btn pco__btn--primary" onClick={handleNext}>
+              <button
+                type="button"
+                className="pco__btn pco__btn--primary"
+                onClick={handleNextFromVitrine}
+              >
+                Suivant <ArrowRight className="h-4 w-4" />
+              </button>
+            ) : step === 2 ? (
+              <button
+                type="button"
+                className="pco__btn pco__btn--primary"
+                onClick={handleNextFromInformations}
+              >
                 Suivant <ArrowRight className="h-4 w-4" />
               </button>
             ) : isEditing ? (

@@ -17,7 +17,7 @@ let dbCalls: Call[] = []
 let mockUser: { id: string } | null = null
 let mockPermission = false
 let mockApplication: { offer_id: string } | null = null
-let mockOffer: { entity_id: string; status?: string } | null = null
+let mockOffer: { id?: string; entity_id: string; status?: string } | null = null
 let mockRelaunchError: { message: string; code?: string } | null = null
 
 const authGetUser = vi.fn(async () => ({ data: { user: mockUser } }))
@@ -156,6 +156,83 @@ describe('talent-actions.ts — permission verifiee via entity_user_has_permissi
       )
 
       expect(authGetUser).toHaveBeenCalled()
+      expect(dbCalls.some((c) => c.table === 'entity_job_offers' && c.op === 'insert')).toBe(false)
+    })
+
+    // PREUVE mission feat/job-offer-media-form, sens (a) : une offre creee
+    // avec des medias les enregistre dans le bon ordre. createJobOfferAction
+    // cree l'offre PUIS insere les medias via addJobOfferMedia (offer_id =
+    // l'id retourne par l'insert precedent) - display_order derive de la
+    // position dans le tableau recu, pas d'un champ fourni par le client.
+    it('c) créée avec des médias → enregistrés via addJobOfferMedia, display_order croissant selon l’ordre reçu', async () => {
+      mockUser = { id: 'user-legitime' }
+      mockPermission = true
+      mockOffer = { id: 'new-offer-id', entity_id: OWNED_ENTITY, status: 'active' }
+
+      await expect(
+        createJobOfferAction(OWNED_ENTITY, {
+          ...newOfferInput,
+          media: [
+            { url: 'https://x.test/1.jpg', type: 'image' },
+            { url: 'https://x.test/2.jpg', type: 'image' },
+            { url: 'https://x.test/3.mp4', type: 'video' },
+          ],
+        }),
+      ).resolves.toBeUndefined()
+
+      const mediaInsert = dbCalls.find(
+        (c) => c.table === 'entity_job_offer_media' && c.op === 'insert',
+      )
+      expect(mediaInsert).toBeDefined()
+      const rows = mediaInsert!.args[0] as Array<{
+        offer_id: string
+        url: string
+        display_order: number
+      }>
+      expect(rows.every((r) => r.offer_id === 'new-offer-id')).toBe(true)
+      expect(rows.map((r) => r.display_order)).toEqual([0, 1, 2])
+      expect(rows.map((r) => r.url)).toEqual([
+        'https://x.test/1.jpg',
+        'https://x.test/2.jpg',
+        'https://x.test/3.mp4',
+      ])
+    })
+
+    // PREUVE mission feat/job-offer-media-form, sens (b) : un depassement de
+    // la limite de nombre est refuse COTE SERVEUR - appel direct de l'action
+    // avec une charge deja hors limite (comme le ferait un appel qui
+    // contourne JobOfferDialog.tsx), sans jamais passer par le formulaire.
+    it('d) plus de 10 médias → refusé côté serveur avant tout appel BDD (contournement direct du client)', async () => {
+      mockUser = { id: 'user-legitime' }
+      mockPermission = true
+
+      const tooManyMedia = Array.from({ length: 11 }, (_, i) => ({
+        url: `https://x.test/${i}.jpg`,
+        type: 'image' as const,
+      }))
+
+      await expect(
+        createJobOfferAction(OWNED_ENTITY, { ...newOfferInput, media: tooManyMedia }),
+      ).rejects.toThrow('Maximum 10 médias.')
+
+      expect(dbCalls.some((c) => c.table === 'entity_job_offers' && c.op === 'insert')).toBe(false)
+      expect(dbCalls.some((c) => c.table === 'entity_job_offer_media')).toBe(false)
+    })
+
+    it('d) plus d’une vidéo → refusé côté serveur avant tout appel BDD', async () => {
+      mockUser = { id: 'user-legitime' }
+      mockPermission = true
+
+      await expect(
+        createJobOfferAction(OWNED_ENTITY, {
+          ...newOfferInput,
+          media: [
+            { url: 'https://x.test/1.mp4', type: 'video' },
+            { url: 'https://x.test/2.mp4', type: 'video' },
+          ],
+        }),
+      ).rejects.toThrow('Une seule vidéo est autorisée.')
+
       expect(dbCalls.some((c) => c.table === 'entity_job_offers' && c.op === 'insert')).toBe(false)
     })
 

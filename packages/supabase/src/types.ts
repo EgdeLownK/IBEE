@@ -1207,6 +1207,44 @@ export type Database = {
           },
         ]
       }
+      entity_job_offer_media: {
+        Row: {
+          alt_text: string | null
+          created_at: string
+          display_order: number
+          id: string
+          media_type: Database["public"]["Enums"]["entity_job_offer_media_type"]
+          offer_id: string
+          url: string
+        }
+        Insert: {
+          alt_text?: string | null
+          created_at?: string
+          display_order?: number
+          id?: string
+          media_type: Database["public"]["Enums"]["entity_job_offer_media_type"]
+          offer_id: string
+          url: string
+        }
+        Update: {
+          alt_text?: string | null
+          created_at?: string
+          display_order?: number
+          id?: string
+          media_type?: Database["public"]["Enums"]["entity_job_offer_media_type"]
+          offer_id?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entity_job_offer_media_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "entity_job_offers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       entity_job_offers: {
         Row: {
           apply_url: string | null
@@ -4207,6 +4245,7 @@ export type Database = {
         | "apprentissage"
         | "stage"
       entity_job_location_type: "remote" | "onsite" | "hybrid"
+      entity_job_offer_media_type: "image" | "video"
       entity_job_status: "draft" | "published" | "closed"
       entity_job_status_v2: "active" | "inactive"
       entity_payout_amount_type: "fixed" | "percent"
@@ -4482,6 +4521,7 @@ export const Constants = {
         "stage",
       ],
       entity_job_location_type: ["remote", "onsite", "hybrid"],
+      entity_job_offer_media_type: ["image", "video"],
       entity_job_status: ["draft", "published", "closed"],
       entity_job_status_v2: ["active", "inactive"],
       entity_payout_amount_type: ["fixed", "percent"],

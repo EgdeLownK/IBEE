@@ -14,6 +14,10 @@ export type JobOffer = Database['public']['Tables']['entity_job_offers']['Row']
 export type JobApplicationStatus = Database['public']['Enums']['entity_job_application_status']
 export type JobApplication = Database['public']['Tables']['entity_job_applications']['Row']
 
+export type JobOfferMediaType = Database['public']['Enums']['entity_job_offer_media_type']
+export type JobOfferMedia = Database['public']['Tables']['entity_job_offer_media']['Row']
+type JobOfferMediaInsert = Database['public']['Tables']['entity_job_offer_media']['Insert']
+
 export async function listProjectJobOffers(
   client: Client,
   entityId: string
@@ -92,6 +96,65 @@ export async function deleteProjectJobOffer(
     .eq('entity_id', entityId)
 
   if (error) throw error
+}
+
+// ---------------------------------------------------------------------------
+// Gestion médias owner (galerie vitrine, entity_job_offer_media) — memes
+// choix que addProductMedia (packages/supabase/src/products.ts) : insert en
+// masse, display_order par index si non fourni.
+// ---------------------------------------------------------------------------
+
+export async function listJobOfferMedia(
+  client: Client,
+  offerId: string
+): Promise<JobOfferMedia[]> {
+  const { data, error } = await client
+    .from('entity_job_offer_media')
+    .select('*')
+    .eq('offer_id', offerId)
+    .order('display_order', { ascending: true })
+
+  if (error) throw error
+  return data
+}
+
+export async function addJobOfferMedia(
+  client: Client,
+  offerId: string,
+  media: Omit<JobOfferMediaInsert, 'offer_id'>[]
+): Promise<JobOfferMedia[]> {
+  const inserts: JobOfferMediaInsert[] = media.map((m, i) => ({
+    ...m,
+    offer_id: offerId,
+    display_order: m.display_order ?? i,
+  }))
+
+  const { data, error } = await client
+    .from('entity_job_offer_media')
+    .insert(inserts)
+    .select()
+
+  if (error) throw error
+  return data ?? []
+}
+
+// Remplacement integral (delete puis insert) - meme simplicite que le
+// remplacement de `blocks` sur entity_job_offers (colonne ecrasee en bloc a
+// chaque update), pas de diff granulaire ligne a ligne.
+export async function replaceJobOfferMedia(
+  client: Client,
+  offerId: string,
+  media: Omit<JobOfferMediaInsert, 'offer_id'>[]
+): Promise<JobOfferMedia[]> {
+  const { error: deleteError } = await client
+    .from('entity_job_offer_media')
+    .delete()
+    .eq('offer_id', offerId)
+
+  if (deleteError) throw deleteError
+  if (media.length === 0) return []
+
+  return addJobOfferMedia(client, offerId, media)
 }
 
 export async function listJobApplications(
