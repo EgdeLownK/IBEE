@@ -3,19 +3,7 @@
 import { useState, useEffect } from 'react'
 import { JobOffer, JobApplication } from '@ibee/supabase'
 import type { HistoryBlock } from '@ibee/shared'
-import {
-  Edit,
-  MapPin,
-  Download,
-  Users,
-  Archive,
-  ArchiveRestore,
-  Users2,
-  CalendarDays,
-  ChevronLeft,
-  Search,
-  Trash,
-} from 'lucide-react'
+import { MapPin, Download, Users, Users2, CalendarDays, ChevronLeft, Search } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { entityDetailExcerpt } from '@/lib/entity-detail-excerpt'
@@ -27,6 +15,7 @@ import {
   formatCompensationAmount,
   compensationUnitLabel,
 } from '@/components/public/jobs/JobOfferRow'
+import { JobOfferAdminMenu } from '@/components/public/jobs/JobOfferAdminMenu'
 import {
   updateApplicationStatusAction,
   deleteJobOfferAction,
@@ -93,7 +82,6 @@ export function JobOfferDetails({
 }) {
   const router = useRouter()
   const [isEditOpen, setIsEditOpen] = useState(false)
-  const [showArchives, setShowArchives] = useState(false)
   const [selectedAppId, setSelectedAppId] = useState<string | null>(null)
   const getDefaultStatus = (apps: JobApplication[]) => {
     const activeApps = apps.filter((a) => !a.is_archived)
@@ -122,7 +110,7 @@ export function JobOfferDetails({
   }
 
   const displayedApplications = localApplications.filter((a) => {
-    if (Boolean(a.is_archived) !== showArchives) return false
+    if (a.is_archived) return false
     if (filterStatus !== 'all' && a.status !== filterStatus) return false
     if (searchQuery) {
       const q = searchQuery.toLowerCase()
@@ -134,14 +122,15 @@ export function JobOfferDetails({
   const selectedApp =
     localApplications.find((a) => a.id === selectedAppId) || displayedApplications[0] || null
 
-  // Compteurs des onglets de filtre : calcules sur les candidatures actives/
-  // archivees SELON showArchives, mais INDEPENDAMMENT de searchQuery et de
-  // l'onglet actif — sinon chaque onglet n'afficherait que son propre
-  // compte courant au lieu d'un aperçu stable de la repartition. Maquette
-  // Claude Design (voir rapport phase 0) : libelles au singulier + compteur
-  // ("Nouvelle 2"), remplace le pluriel sans compteur (decision explicite de
-  // Killian, la maquette fait foi ici).
-  const baseApplications = localApplications.filter((a) => Boolean(a.is_archived) === showArchives)
+  // Compteurs des onglets de filtre : calcules sur les candidatures actives
+  // (jamais les archivees, voir rapport phase 0 "fix/talent-detail-header-
+  // menu" — la vue archives a disparu de l'interface), mais INDEPENDAMMENT
+  // de searchQuery et de l'onglet actif — sinon chaque onglet n'afficherait
+  // que son propre compte courant au lieu d'un aperçu stable de la
+  // repartition. Maquette Claude Design (voir rapport phase 0) : libelles au
+  // singulier + compteur ("Nouvelle 2"), remplace le pluriel sans compteur
+  // (decision explicite de Killian, la maquette fait foi ici).
+  const baseApplications = localApplications.filter((a) => !a.is_archived)
   const statusCounts = {
     new: baseApplications.filter((a) => a.status === 'new').length,
     shortlisted: baseApplications.filter((a) => a.status === 'shortlisted').length,
@@ -196,15 +185,13 @@ export function JobOfferDetails({
     }
   })
 
-  const archivedCount = applications.filter((a) => Boolean(a.is_archived)).length
-
   // Bloc "caracteristiques de l'offre" (statut/contrat/lieu/cadre/
   // remuneration/date de fin/candidatures/publiee le/description) — ajoute
   // par la maquette Claude Design, absent de la page avant cette mission.
   // Toutes les donnees existent deja sur `offer`/`applications` (aucune
   // ecriture, aucun nouvel appel serveur). Candidatures/nouvelles comptees
   // sur les candidatures NON archivees uniquement (measure de la campagne
-  // active, coherent avec archivedCount ci-dessus).
+  // active).
   const activeApplicationsForOffer = applications.filter((a) => !a.is_archived)
   const totalApplicationsCount = activeApplicationsForOffer.length
   const newApplicationsCount = activeApplicationsForOffer.filter((a) => a.status === 'new').length
@@ -237,35 +224,15 @@ export function JobOfferDetails({
             </p>
           </div>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          {archivedCount > 0 && (
-            <button
-              onClick={() => setShowArchives(!showArchives)}
-              className={`inline-flex items-center justify-center gap-1.5 rounded-field text-[13.5px] font-semibold transition-colors border h-[38px] px-3.5 ${
-                showArchives
-                  ? 'bg-neutral-900 text-surface border-neutral-900 hover:bg-accent'
-                  : 'bg-surface text-neutral-900 border-border hover:bg-panel-2'
-              }`}
-            >
-              {showArchives ? (
-                <ArchiveRestore className="w-4 h-4" />
-              ) : (
-                <Archive className="w-4 h-4" />
-              )}
-              {showArchives
-                ? 'Retour à la campagne active'
-                : `Voir l'historique (${archivedCount})`}
-            </button>
-          )}
-          <button
-            onClick={() => setIsEditOpen(true)}
-            className="inline-flex items-center justify-center gap-1.5 rounded-field text-[13.5px] font-semibold transition-colors bg-surface border border-border hover:bg-panel-2 text-neutral-900 h-[38px] px-3.5"
-          >
-            <Edit className="w-4 h-4" />
-            Modifier l&apos;offre
-          </button>
-          <button
-            onClick={async () => {
+        {/* Ancre position:relative de taille fixe pour .job-row__admin
+            (position:absolute top:10/right:10 sur 32px, voir
+            JobOfferAdminMenu.tsx) hors du contexte carte — voir
+            .talent-page__admin-menu-anchor, talent-styles.css. */}
+        <div className="talent-page__admin-menu-anchor">
+          <JobOfferAdminMenu
+            title={offer.title}
+            onEdit={() => setIsEditOpen(true)}
+            onDelete={async () => {
               if (
                 window.confirm(
                   'Êtes-vous sûr de vouloir supprimer cette offre ? Cette action est irréversible.',
@@ -275,20 +242,9 @@ export function JobOfferDetails({
                 router.push('/dashboard/talent')
               }
             }}
-            className="inline-flex items-center justify-center gap-1.5 rounded-field text-[13.5px] font-semibold transition-colors bg-surface border border-border hover:bg-panel-2 text-neutral-500 h-[38px] px-3.5"
-          >
-            <Trash className="w-4 h-4" />
-            Supprimer l&apos;offre
-          </button>
+          />
         </div>
       </div>
-
-      {showArchives && (
-        <div className="bg-neutral-900 text-surface p-4 rounded-card shadow-sm text-sm font-medium flex items-center justify-center gap-2">
-          <Archive className="w-4 h-4 text-neutral-400" />
-          Vous consultez actuellement l&apos;historique des candidatures des campagnes précédentes.
-        </div>
-      )}
 
       {/* CARACTERISTIQUES DE L'OFFRE */}
       <div className="bg-surface border border-border rounded-card p-5">
@@ -488,7 +444,7 @@ export function JobOfferDetails({
       <div className="flex flex-col gap-3.5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <h2 className="font-display text-xl font-bold tracking-tight text-neutral-900">
-            Liste des candidatures {showArchives ? '(Archive)' : ''}
+            Liste des candidatures
           </h2>
 
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 no-scrollbar">
@@ -612,7 +568,6 @@ export function JobOfferDetails({
                       ].map((status) => (
                         <button
                           key={status.id}
-                          disabled={showArchives}
                           onClick={() => handleStatusChange(selectedApp.id, status.id)}
                           className="h-9 px-3.5 rounded-field border border-border bg-surface text-[13px] font-semibold text-neutral-900 transition-colors hover:bg-panel-2 disabled:opacity-50"
                         >
@@ -620,14 +575,13 @@ export function JobOfferDetails({
                         </button>
                       ))}
                       <button
-                        disabled={showArchives}
                         onClick={() => handleStatusChange(selectedApp.id, 'hired')}
                         className="h-9 px-3.5 rounded-field bg-neutral-900 text-[13px] font-semibold text-surface transition-colors hover:bg-accent disabled:opacity-50"
                       >
                         Validée
                       </button>
                       <button
-                        disabled={showArchives || selectedApp.status === 'rejected'}
+                        disabled={selectedApp.status === 'rejected'}
                         onClick={() => handleStatusChange(selectedApp.id, 'rejected')}
                         className="h-9 px-3.5 rounded-field border border-neutral-300 bg-surface text-[13px] font-semibold text-neutral-600 transition-colors hover:bg-panel-2 disabled:opacity-50 disabled:pointer-events-none"
                       >

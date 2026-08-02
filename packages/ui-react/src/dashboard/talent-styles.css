@@ -79,3 +79,15 @@
 .talent-page__list--compact {
   gap: 8px;
 }
+
+/* Ancre position:relative pour le bouton menu trois points de l'en-tete
+   detail offre (JobOfferAdminMenu.tsx) — reutilise tel quel .job-row__admin
+   (position:absolute, top:10px/right:10px sur un bouton 32px, profile-
+   styles.css), qui suppose normalement le padding d'une carte .job-row.
+   Hors carte, cette boite 42x42 (10px d'inset + 32px de bouton) reproduit
+   le meme espacement sans en dependre. */
+.talent-page__admin-menu-anchor {
+  position: relative;
+  width: 42px;
+  height: 42px;
+}
