@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useTransition } from 'react'
-import { createPortal } from 'react-dom'
+import { createPortal, flushSync } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { JobOffer, JobCompType, JobCompFreq, JobContractType } from '@ibee/supabase'
@@ -203,17 +203,24 @@ export function JobOfferDialog({ open, onOpenChange, entityId, offer }: JobOffer
     const previewUrl = URL.createObjectURL(file)
     let accepted = false
 
-    setMedia((prev) => {
-      if (prev.length >= MAX_JOB_OFFER_MEDIA) {
-        toast.error(`Maximum ${MAX_JOB_OFFER_MEDIA} médias.`)
-        return prev
-      }
-      if (isVideo && jobOfferMediaHasVideo(prev)) {
-        toast.error('Une seule vidéo est autorisée.')
-        return prev
-      }
-      accepted = true
-      return [...prev, { id, type: mediaType, url: '', previewUrl, uploading: true }]
+    // flushSync OBLIGATOIRE (motif StepEssentials.tsx) : sans lui, sous le
+    // batching automatique de React 18, le updater ci-dessous n'est pas
+    // execute avant le `if (!accepted)` suivant - `accepted` lirait donc
+    // toujours sa valeur initiale `false`, revoquant previewUrl et
+    // retournant avant meme l'appel a uploadProductMediaAction.
+    flushSync(() => {
+      setMedia((prev) => {
+        if (prev.length >= MAX_JOB_OFFER_MEDIA) {
+          toast.error(`Maximum ${MAX_JOB_OFFER_MEDIA} médias.`)
+          return prev
+        }
+        if (isVideo && jobOfferMediaHasVideo(prev)) {
+          toast.error('Une seule vidéo est autorisée.')
+          return prev
+        }
+        accepted = true
+        return [...prev, { id, type: mediaType, url: '', previewUrl, uploading: true }]
+      })
     })
 
     if (!accepted) {
