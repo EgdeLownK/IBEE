@@ -6,10 +6,41 @@ import {
   updateProjectJobOffer,
   deleteProjectJobOffer,
   updateJobApplicationStatus,
+  listJobOfferMedia,
+  addJobOfferMedia,
+  replaceJobOfferMedia,
 } from '@ibee/supabase'
 import { revalidatePath } from 'next/cache'
 import type { HistoryBlock } from '@ibee/shared'
-import type { JobApplicationStatus, JobContractType } from '@ibee/supabase'
+import type { JobApplicationStatus, JobContractType, JobOfferMediaType } from '@ibee/supabase'
+
+type JobOfferMediaInput = { url: string; type: JobOfferMediaType; alt_text?: string | null }
+
+// Limites de nombre proposees par la mission "feat/job-offer-media-form",
+// A VALIDER PAR KILLIAN avant mise en production : miroir des limites deja
+// en vigueur cote boutique (StepEssentials.tsx:228-234 - 10 medias, 1 video
+// max), reprises par defaut faute de besoin metier connu specifique aux
+// offres d'emploi. Verifiees ici cote serveur (pas seulement dans
+// JobOfferDialog.tsx) : un appel direct a l'action, sans passer par le
+// formulaire, ne peut pas les contourner - meme motif que
+// requireCompensation/requireLocationText ci-dessous.
+const MAX_JOB_OFFER_MEDIA = 10
+const MAX_JOB_OFFER_VIDEOS = 1
+
+function requireMediaLimits(media: JobOfferMediaInput[] | undefined) {
+  if (!media || media.length === 0) return
+  if (media.length > MAX_JOB_OFFER_MEDIA) {
+    throw new Error(`Maximum ${MAX_JOB_OFFER_MEDIA} médias.`)
+  }
+  const videoCount = media.filter((m) => m.type === 'video').length
+  if (videoCount > MAX_JOB_OFFER_VIDEOS) {
+    throw new Error(
+      MAX_JOB_OFFER_VIDEOS === 1
+        ? 'Une seule vidéo est autorisée.'
+        : `Maximum ${MAX_JOB_OFFER_VIDEOS} vidéos.`,
+    )
+  }
+}
 
 // Une Server Action est un point d'entree HTTP public : entityId (et
 // applicationId pour updateApplicationStatusAction) arrivent du client, sans
@@ -102,6 +133,7 @@ export async function createJobOfferAction(
     apply_url?: string | null
     end_date?: string | null
     is_cadre?: boolean | null
+    media?: JobOfferMediaInput[]
   },
 ) {
   const supabase = await createClient()
@@ -109,7 +141,24 @@ export async function createJobOfferAction(
   requireFutureEndDate(input.end_date)
   requireCompensation(input)
   requireLocationText(input.location_type, input.location_text)
-  await createProjectJobOffer(supabase, entityId, input)
+  requireMediaLimits(input.media)
+
+  // media n'est pas une colonne d'entity_job_offers (table entity_job_offer_media
+  // separee) - retiree avant l'insert, reinseree ensuite via addJobOfferMedia
+  // une fois l'offre creee et son id connu. Meme flux que createProductAction
+  // (product-actions.ts) : offre creee d'abord, medias inseres ensuite, deux
+  // operations sequentielles (pas de transaction unique possible ici non plus).
+  const { media, ...offerInput } = input
+  const created = await createProjectJobOffer(supabase, entityId, offerInput)
+
+  if (media && media.length > 0) {
+    await addJobOfferMedia(
+      supabase,
+      created.id,
+      media.map((m) => ({ url: m.url, media_type: m.type, alt_text: m.alt_text ?? null })),
+    )
+  }
+
   revalidatePath('/dashboard/talent')
 }
 
@@ -129,10 +178,16 @@ export async function updateJobOfferAction(
     apply_url?: string | null
     end_date?: string | null
     is_cadre?: boolean | null
+    // Absent = ne touche pas les medias existants (ex. bascule de statut
+    // depuis le menu trois points, updateJobOfferAction(id, id, { status })
+    // - voir requireCompensation ci-dessus, meme motif de portee restreinte).
+    // Tableau (vide inclus) = remplacement integral via replaceJobOfferMedia.
+    media?: JobOfferMediaInput[]
   },
 ) {
   const supabase = await createClient()
   await requireTalentPermission(supabase, entityId)
+  requireMediaLimits(input.media)
 
   if (input.status === 'active') {
     const { data: existingOffer } = await supabase
@@ -157,9 +212,28 @@ export async function updateJobOfferAction(
     }
   }
 
-  await updateProjectJobOffer(supabase, entityId, offerId, input)
+  const { media, ...offerInput } = input
+  await updateProjectJobOffer(supabase, entityId, offerId, offerInput)
+
+  if (media !== undefined) {
+    await replaceJobOfferMedia(
+      supabase,
+      offerId,
+      media.map((m) => ({ url: m.url, media_type: m.type, alt_text: m.alt_text ?? null })),
+    )
+  }
+
   revalidatePath('/dashboard/talent')
   revalidatePath(`/dashboard/talent/${offerId}`)
+}
+
+// Lecture des medias d'une offre pour prefill du formulaire d'edition
+// (JobOfferDialog.tsx) - meme garde requireTalentPermission que les autres
+// actions de ce fichier, pas seulement RLS (.claude/rules/server-actions.md).
+export async function getJobOfferMediaAction(entityId: string, offerId: string) {
+  const supabase = await createClient()
+  await requireTalentPermission(supabase, entityId)
+  return listJobOfferMedia(supabase, offerId)
 }
 
 export async function deleteJobOfferAction(entityId: string, offerId: string) {

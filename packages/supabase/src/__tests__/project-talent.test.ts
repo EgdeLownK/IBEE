@@ -1,7 +1,12 @@
 import { describe, it, expect, vi } from 'vitest'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '../types'
-import { getActiveJobOffer, createJobApplication } from '../project-talent'
+import {
+  getActiveJobOffer,
+  createJobApplication,
+  addJobOfferMedia,
+  listJobOfferMedia,
+} from '../project-talent'
 
 type Client = SupabaseClient<Database>
 
@@ -83,5 +88,48 @@ describe('createJobApplication', () => {
       expect.objectContaining({ offer_id: 'offer-1', session_number: 3 }),
     )
     expect(result.session_number).toBe(3)
+  })
+})
+
+describe('addJobOfferMedia', () => {
+  // Meme choix que addProductMedia (products.ts) : display_order derive de
+  // la position dans le tableau quand non fourni explicitement.
+  it('derive display_order de la position quand non fourni', async () => {
+    const insertMock = vi.fn().mockReturnValue({
+      select: vi.fn().mockResolvedValue({ data: [], error: null }),
+    })
+    const client = {
+      from: vi.fn().mockReturnValue({ insert: insertMock }),
+    } as unknown as SupabaseClient<Database>
+
+    await addJobOfferMedia(client, 'offer-1', [
+      { url: 'https://x.test/a.jpg', media_type: 'image' },
+      { url: 'https://x.test/b.jpg', media_type: 'image' },
+    ])
+
+    expect(insertMock).toHaveBeenCalledWith([
+      { url: 'https://x.test/a.jpg', media_type: 'image', offer_id: 'offer-1', display_order: 0 },
+      { url: 'https://x.test/b.jpg', media_type: 'image', offer_id: 'offer-1', display_order: 1 },
+    ])
+  })
+})
+
+describe('listJobOfferMedia', () => {
+  it('trie par display_order croissant', async () => {
+    const orderMock = vi.fn().mockResolvedValue({
+      data: [{ id: 'm1', display_order: 0 }],
+      error: null,
+    })
+    const client = {
+      from: vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({ order: orderMock }),
+        }),
+      }),
+    } as unknown as SupabaseClient<Database>
+
+    await listJobOfferMedia(client, 'offer-1')
+
+    expect(orderMock).toHaveBeenCalledWith('display_order', { ascending: true })
   })
 })
