@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Plus, Search } from 'lucide-react'
-import { JobOffer, JobOfferWithMedia } from '@ibee/supabase'
+import { JobOffer, JobOfferWithMedia, JobSector } from '@ibee/supabase'
 import { JobOfferDialog } from './JobOfferDialog'
 import { JobOfferRow } from '@/components/public/jobs/JobOfferRow'
 import { updateJobOfferAction, deleteJobOfferAction } from '@/app/dashboard/talent/talent-actions'
@@ -12,9 +12,11 @@ import { updateJobOfferAction, deleteJobOfferAction } from '@/app/dashboard/tale
 export function TalentDashboard({
   entityId,
   offers,
+  sectors,
 }: {
   entityId: string
   offers: JobOfferWithMedia[]
+  sectors: JobSector[]
 }) {
   const router = useRouter()
   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -114,6 +116,7 @@ export function TalentDashboard({
         href={`/dashboard/talent/${offer.id}`}
         title={offer.title}
         contractType={offer.contract_type}
+        sectorLabel={offer.job_sectors?.label}
         locationType={offer.location_type}
         locationText={offer.location_text}
         endDate={offer.end_date}
@@ -222,6 +225,7 @@ export function TalentDashboard({
         onOpenChange={setIsDialogOpen}
         entityId={entityId}
         offer={selectedOffer}
+        sectors={sectors}
       />
     </div>
   )

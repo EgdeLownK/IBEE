@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { JobOffer, JobApplication } from '@ibee/supabase'
+import { JobOffer, JobApplication, JobSector } from '@ibee/supabase'
 import type { HistoryBlock } from '@ibee/shared'
 import { MapPin, Download, Users, Users2, CalendarDays, ChevronLeft, Search } from 'lucide-react'
 import Link from 'next/link'
@@ -75,10 +75,12 @@ export function JobOfferDetails({
   entityId,
   offer,
   applications,
+  sectors,
 }: {
   entityId: string
   offer: JobOffer
   applications: JobApplication[]
+  sectors: JobSector[]
 }) {
   const router = useRouter()
   const [isEditOpen, setIsEditOpen] = useState(false)
@@ -667,6 +669,7 @@ export function JobOfferDetails({
         onOpenChange={setIsEditOpen}
         entityId={entityId}
         offer={offer}
+        sectors={sectors}
       />
     </div>
   )

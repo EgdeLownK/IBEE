@@ -15,6 +15,7 @@ import {
   getServiceReviewAggregates,
   getAppointmentTypesByEntity,
   countEventRegistrations,
+  listJobSectors,
   listMenuSectionStates,
   listProductCategories,
   listProductsByEntity,
@@ -113,15 +114,23 @@ export async function loadProfileStudioPlaylists() {
 
   const { supabase, entity } = ctx
 
-  const [publications, appointmentTypes, products, productCategories, upcomingEvents, jobOffers] =
-    await Promise.all([
-      getPublicationsByEntity(supabase, entity.id, { publicOnly: false, limit: 50 }),
-      getAppointmentTypesByEntity(supabase, entity.id, { activeOnly: true }),
-      listProductsByEntity(supabase, entity.id, { limit: 60 }),
-      listProductCategories(supabase, entity.id),
-      listUpcomingEventsForOwner(supabase, entity.id),
-      listProjectJobOffers(supabase, entity.id),
-    ])
+  const [
+    publications,
+    appointmentTypes,
+    products,
+    productCategories,
+    upcomingEvents,
+    jobOffers,
+    jobSectors,
+  ] = await Promise.all([
+    getPublicationsByEntity(supabase, entity.id, { publicOnly: false, limit: 50 }),
+    getAppointmentTypesByEntity(supabase, entity.id, { activeOnly: true }),
+    listProductsByEntity(supabase, entity.id, { limit: 60 }),
+    listProductCategories(supabase, entity.id),
+    listUpcomingEventsForOwner(supabase, entity.id),
+    listProjectJobOffers(supabase, entity.id),
+    listJobSectors(supabase),
+  ])
 
   const [productReviewStats, serviceReviewStats, eventRegistrationCounts] = await Promise.all([
     Promise.all(
@@ -152,6 +161,7 @@ export async function loadProfileStudioPlaylists() {
       id: o.id,
       title: o.title,
       contract_type: o.contract_type,
+      sector_label: o.job_sectors?.label ?? null,
       location_type: o.location_type,
       location_text: o.location_text,
       end_date: o.end_date,
@@ -191,6 +201,7 @@ export async function loadProfileStudioPlaylists() {
       physical_stock_quantity: p.physical_stock_quantity,
     })),
     productCategories,
+    jobSectors,
     playlistServices: appointmentTypes.map((s, i) => ({
       id: s.id,
       title: s.title,

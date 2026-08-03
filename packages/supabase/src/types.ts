@@ -1264,6 +1264,7 @@ export type Database = {
           is_cadre: boolean | null
           location_text: string | null
           location_type: Database["public"]["Enums"]["entity_job_location_type"]
+          sector_id: string | null
           session_count: number
           status: Database["public"]["Enums"]["entity_job_status_v2"]
           title: string
@@ -1287,6 +1288,7 @@ export type Database = {
           is_cadre?: boolean | null
           location_text?: string | null
           location_type?: Database["public"]["Enums"]["entity_job_location_type"]
+          sector_id?: string | null
           session_count?: number
           status?: Database["public"]["Enums"]["entity_job_status_v2"]
           title: string
@@ -1310,6 +1312,7 @@ export type Database = {
           is_cadre?: boolean | null
           location_text?: string | null
           location_type?: Database["public"]["Enums"]["entity_job_location_type"]
+          sector_id?: string | null
           session_count?: number
           status?: Database["public"]["Enums"]["entity_job_status_v2"]
           title?: string
@@ -1329,6 +1332,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "publication_comments_with_author"
             referencedColumns: ["author_entity_id"]
+          },
+          {
+            foreignKeyName: "entity_job_offers_sector_id_fkey"
+            columns: ["sector_id"]
+            isOneToOne: false
+            referencedRelation: "job_sectors"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -2378,6 +2388,30 @@ export type Database = {
             referencedColumns: ["author_entity_id"]
           },
         ]
+      }
+      job_sectors: {
+        Row: {
+          created_at: string
+          display_order: number
+          id: string
+          label: string
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          label: string
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          label?: string
+          slug?: string
+        }
+        Relationships: []
       }
       notifications: {
         Row: {
@@ -4091,6 +4125,7 @@ export type Database = {
           is_cadre: boolean | null
           location_text: string | null
           location_type: Database["public"]["Enums"]["entity_job_location_type"]
+          sector_id: string | null
           session_count: number
           status: Database["public"]["Enums"]["entity_job_status_v2"]
           title: string

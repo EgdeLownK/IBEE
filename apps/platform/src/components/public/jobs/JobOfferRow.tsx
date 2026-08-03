@@ -110,6 +110,8 @@ type JobOfferRowBaseProps = {
   href: string | null
   title: string
   contractType: JobContractType
+  /** Libelle du secteur (job_sectors.label), deja resolu par l'appelant via le join entity_job_offers -> job_sectors. Absent/null = pas de tag secteur (aucun "Non renseigne"). */
+  sectorLabel?: string | null
   locationType: LocationType
   locationText: string | null
   endDate: string | null
@@ -148,6 +150,7 @@ export function JobOfferRow(props: JobOfferRowProps) {
     href,
     title,
     contractType,
+    sectorLabel,
     locationType,
     locationText,
     endDate,
@@ -162,8 +165,15 @@ export function JobOfferRow(props: JobOfferRowProps) {
   } = props
   const { videoRef, cardRef, onMouseEnter, onMouseLeave } = useExclusiveVideoPlayback()
   const contractName = contractLabel(contractType)
+  // Ordre valide par Killian (rapport phase 0, mission feat/job-offer-sector-ui) :
+  // contrat, puis secteur (absent = aucun tag, jamais "Non renseigne"), puis
+  // lieu, puis Cadre en dernier. VOLONTAIRE : le style special du 1er tag
+  // (.job-row__tag--contract, ci-dessous) cible l'INDEX 0, pas la nature du
+  // tag - toute reorganisation future de cet ordre qui ne garderait pas le
+  // contrat en tete casserait ce style sans erreur de compilation.
   const tags = [
     contractName,
+    ...(sectorLabel ? [sectorLabel] : []),
     ...locationTags(locationType, locationText),
     ...(isCadre ? ['Cadre'] : []),
   ]

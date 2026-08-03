@@ -170,6 +170,7 @@ export async function loadPublicProfileBySlug(slug: string) {
     id: offer.id,
     title: offer.title,
     contract_type: offer.contract_type,
+    sector_label: offer.job_sectors?.label ?? null,
     location_type: offer.location_type,
     location_text: offer.location_text,
     end_date: offer.end_date,
