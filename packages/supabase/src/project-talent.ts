@@ -10,6 +10,10 @@ export type JobCompType = Database['public']['Enums']['entity_job_comp_type']
 export type JobCompFreq = Database['public']['Enums']['entity_job_comp_freq']
 
 export type JobOffer = Database['public']['Tables']['entity_job_offers']['Row']
+// Non trie par display_order cote requete (pas de precedent d'ordre sur
+// relation embarquee dans ce package, voir listProductsByEntity) : trier
+// cote appelant, meme convention que product_media (ProductDetail.tsx).
+export type JobOfferWithMedia = JobOffer & { entity_job_offer_media: JobOfferMedia[] }
 
 export type JobApplicationStatus = Database['public']['Enums']['entity_job_application_status']
 export type JobApplication = Database['public']['Tables']['entity_job_applications']['Row']
@@ -21,10 +25,10 @@ type JobOfferMediaInsert = Database['public']['Tables']['entity_job_offer_media'
 export async function listProjectJobOffers(
   client: Client,
   entityId: string
-): Promise<JobOffer[]> {
+): Promise<JobOfferWithMedia[]> {
   const { data, error } = await client
     .from('entity_job_offers')
-    .select('*')
+    .select('*, entity_job_offer_media(*)')
     .eq('entity_id', entityId)
     .order('created_at', { ascending: false })
 
@@ -36,10 +40,10 @@ export async function getProjectJobOffer(
   client: Client,
   entityId: string,
   offerId: string
-): Promise<JobOffer> {
+): Promise<JobOfferWithMedia> {
   const { data, error } = await client
     .from('entity_job_offers')
-    .select('*')
+    .select('*, entity_job_offer_media(*)')
     .eq('id', offerId)
     .eq('entity_id', entityId)
     .single()
@@ -249,10 +253,10 @@ export async function listMyApplications(
 export async function listActiveJobOffersByEntity(
   client: Client,
   entityId: string
-): Promise<JobOffer[]> {
+): Promise<JobOfferWithMedia[]> {
   const { data, error } = await client
     .from('entity_job_offers')
-    .select('*')
+    .select('*, entity_job_offer_media(*)')
     .eq('entity_id', entityId)
     .eq('status', 'active')
     .order('created_at', { ascending: false })

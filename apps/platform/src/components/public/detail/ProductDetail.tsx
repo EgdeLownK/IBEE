@@ -12,7 +12,7 @@ import {
 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { useHorizontalCarousel } from '@/hooks/useHorizontalCarousel'
+import { useHorizontalCarousel } from '@ibee/ui-react'
 import type { DetailContentBlock } from '@/lib/entity-content-blocks'
 import { formatDetailPrice } from '@/lib/detail-format'
 import { isProductScheduled, msUntilScheduled } from '@/lib/product-schedule'

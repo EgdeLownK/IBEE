@@ -47,9 +47,16 @@ export default async function PublicJobOfferPage({ params }: Props) {
     data: { user },
   } = await authClient.auth.getUser()
 
+  // Trie cote appelant, meme convention que product_media (pas d'ordre sur
+  // relation embarquee cote requete, cf. project-talent.ts).
+  const media = [...(offer.entity_job_offer_media ?? [])].sort(
+    (a, b) => (a.display_order ?? 0) - (b.display_order ?? 0),
+  )
+
   return (
     <PublicJobOfferDetail
       offer={offer}
+      media={media}
       entitySlug={slug}
       entityName={entity.display_name}
       entityAvatarUrl={entity.avatar_url}

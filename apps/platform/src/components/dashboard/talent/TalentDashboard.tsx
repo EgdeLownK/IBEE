@@ -4,12 +4,18 @@ import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Plus, Search } from 'lucide-react'
-import { JobOffer } from '@ibee/supabase'
+import { JobOffer, JobOfferWithMedia } from '@ibee/supabase'
 import { JobOfferDialog } from './JobOfferDialog'
 import { JobOfferRow } from '@/components/public/jobs/JobOfferRow'
 import { updateJobOfferAction, deleteJobOfferAction } from '@/app/dashboard/talent/talent-actions'
 
-export function TalentDashboard({ entityId, offers }: { entityId: string; offers: JobOffer[] }) {
+export function TalentDashboard({
+  entityId,
+  offers,
+}: {
+  entityId: string
+  offers: JobOfferWithMedia[]
+}) {
   const router = useRouter()
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [selectedOffer, setSelectedOffer] = useState<JobOffer | null>(null)
@@ -94,7 +100,12 @@ export function TalentDashboard({ entityId, offers }: { entityId: string; offers
   const activeOffers = filteredAndSortedOffers.filter((offer) => offer.status === 'active')
   const inactiveOffers = filteredAndSortedOffers.filter((offer) => offer.status === 'inactive')
 
-  function renderOfferRow(offer: JobOffer) {
+  function renderOfferRow(offer: JobOfferWithMedia) {
+    // Trie cote appelant, meme convention que product_media (pas d'ordre
+    // sur relation embarquee cote requete, cf. project-talent.ts).
+    const media = [...(offer.entity_job_offer_media ?? [])].sort(
+      (a, b) => (a.display_order ?? 0) - (b.display_order ?? 0),
+    )
     return (
       <JobOfferRow
         key={offer.id}
@@ -111,6 +122,7 @@ export function TalentDashboard({ entityId, offers }: { entityId: string; offers
         compensationType={offer.compensation_type}
         compensationFrequency={offer.compensation_frequency}
         blocks={offer.blocks}
+        media={media[0] ?? null}
         status={offer.status}
         onEdit={() => handleEdit(offer)}
         ctaLabel="Ouvrir"

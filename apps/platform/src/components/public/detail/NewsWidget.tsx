@@ -3,7 +3,7 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 import { formatRelativeDateFr } from '@/lib/format-date-fr'
-import { useHorizontalCarousel } from '@/hooks/useHorizontalCarousel'
+import { useHorizontalCarousel } from '@ibee/ui-react'
 
 interface Props {
   entitySlug: string

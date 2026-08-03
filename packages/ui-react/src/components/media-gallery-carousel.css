@@ -1,0 +1,90 @@
+/* MediaGalleryCarousel -- copie a l'identique de .product-detail__media/
+   __carousel/__slide/__nav (+ .product-detail .gallery-strip) dans
+   packages/ui-react/src/profile/detail-styles.css. Memes valeurs, meme
+   media query 768px -- voir commentaire d'en-tete de MediaGalleryCarousel.tsx.
+   Toute divergence volontaire doit etre commentee ici. */
+
+.media-gallery {
+  position: relative;
+  padding: 16px 0;
+}
+.media-gallery__carousel {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-padding-left: 22px;
+  padding: 0 22px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+.media-gallery__carousel::-webkit-scrollbar {
+  display: none;
+}
+.media-gallery__slide {
+  flex: 0 0 58%;
+  aspect-ratio: 1 / 1;
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  background: var(--color-panel);
+  scroll-snap-align: start;
+}
+.media-gallery__nav {
+  display: none;
+}
+@media (min-width: 768px) {
+  .media-gallery__carousel {
+    cursor: grab;
+  }
+  .media-gallery__carousel.is-grabbing {
+    cursor: grabbing;
+    scroll-behavior: auto;
+    user-select: none;
+  }
+  .media-gallery__carousel.is-grabbing img {
+    pointer-events: none;
+  }
+  .media-gallery__nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 3;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 1px solid var(--color-border);
+    background: color-mix(in srgb, var(--color-surface) 92%, transparent);
+    backdrop-filter: blur(8px);
+    color: var(--color-neutral-800);
+    box-shadow: 0 6px 18px -10px rgba(0, 0, 0, 0.35);
+    cursor: pointer;
+    transition:
+      background 0.16s ease,
+      transform 0.08s ease,
+      opacity 0.16s ease;
+  }
+  .media-gallery__nav svg {
+    width: 20px;
+    height: 20px;
+  }
+  .media-gallery__nav:hover {
+    background: var(--color-surface);
+  }
+  .media-gallery__nav:active {
+    transform: translateY(-50%) scale(0.94);
+  }
+  .media-gallery__nav--prev {
+    left: 30px;
+  }
+  .media-gallery__nav--next {
+    right: 30px;
+  }
+  .media-gallery__nav[disabled] {
+    opacity: 0;
+    pointer-events: none;
+  }
+}
