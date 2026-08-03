@@ -2,8 +2,19 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { createPublicSupabaseClient } from '@/lib/site-url'
 import { createClient } from '@/lib/supabase/server'
-import { getEntityBySlug, getProjectJobOffer } from '@ibee/supabase'
+import {
+  getEntityBySlug,
+  getProjectJobOffer,
+  listOtherActiveJobOffersByEntity,
+  listSimilarActiveJobOffersBySector,
+} from '@ibee/supabase'
 import { PublicJobOfferDetail } from '@/components/public/jobs/PublicJobOfferDetail'
+
+// Nombre d'offres par section de contenus lies (memes profil / secteur) --
+// A VALIDER PAR KILLIAN : repris par defaut de la limite boutique
+// equivalente (load-public-product.ts, .slice(0, 4) pour profileRelated/
+// similarRelated), faute de besoin metier connu specifique aux offres.
+const RELATED_OFFERS_LIMIT = 4
 
 type Props = {
   params: Promise<{ slug: string; offerId: string }>
@@ -53,6 +64,23 @@ export default async function PublicJobOfferPage({ params }: Props) {
     (a, b) => (a.display_order ?? 0) - (b.display_order ?? 0),
   )
 
+  // Deux sections de contenus lies (mission feat/job-offer-related-content) :
+  // dependent de `offer` (entity_id, sector_id) donc apres sa resolution,
+  // mais paralleles entre elles (Promise.all). Offre sans secteur : pas de
+  // section "similaires" (rapprochement impossible), resolue directement en
+  // tableau vide sans requete.
+  const [otherProfileOffers, similarOffers] = await Promise.all([
+    listOtherActiveJobOffersByEntity(supabase, entity.id, offer.id, RELATED_OFFERS_LIMIT),
+    offer.sector_id
+      ? listSimilarActiveJobOffersBySector(
+          supabase,
+          offer.sector_id,
+          entity.id,
+          RELATED_OFFERS_LIMIT,
+        )
+      : Promise.resolve([]),
+  ])
+
   return (
     <PublicJobOfferDetail
       offer={offer}
@@ -65,6 +93,8 @@ export default async function PublicJobOfferPage({ params }: Props) {
       userEmail={user?.email ?? ''}
       userFirstName={''}
       userLastName={''}
+      otherProfileOffers={otherProfileOffers}
+      similarOffers={similarOffers}
     />
   )
 }
