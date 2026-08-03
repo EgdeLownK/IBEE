@@ -1,0 +1,30 @@
+{
+  "projectId": "f847181c-0d31-4fcc-813a-470d9c514c3d",
+  "pkg": "@ibee/ui-react",
+  "shape": "package",
+  "buildCmd": "cd packages/ui-react && npx tsc --emitDeclarationOnly --declaration && cd ../.. && node .design-sync/tailwind-build.mjs && node .design-sync/fonts-build.mjs",
+  "cssEntry": "dist/tailwind-compiled.css",
+  "readmeHeader": ".design-sync/conventions.md",
+  "extraFonts": ["dist/fonts/fonts.css"],
+  "overrides": {
+    "ProfileHeroView": { "cardMode": "column" },
+    "AvatarCropperModal": { "cardMode": "single", "viewport": "900x950" },
+    "ProfileHeroReact": { "viewport": "900x1150" },
+    "PublicationActionsMenu": { "cardMode": "single", "primaryStory": "Open" }
+  },
+  "componentSrcMap": {
+    "ProfileCardReact": "src/components/ProfileCardReact.tsx",
+    "ProfileHeroReact": "src/components/ProfileHeroReact.tsx",
+    "Input": "src/components/Input.tsx",
+    "Textarea": "src/components/Textarea.tsx",
+    "UploadAvatar": "src/components/UploadAvatar.tsx",
+    "AvatarCropperModal": "src/components/AvatarCropperModal.tsx",
+    "UploadPublicationImages": "src/components/UploadPublicationImages.tsx",
+    "PublicationCardPreview": "src/components/PublicationCardPreview.tsx",
+    "PublicationMediaCarousel": "src/components/PublicationMediaCarousel.tsx",
+    "PublicationActionsMenu": "src/components/PublicationActionsMenu.tsx",
+    "MediaGalleryCarousel": "src/components/MediaGalleryCarousel.tsx",
+    "ProfileShell": "src/profile/ProfileShell.tsx",
+    "ProfileHeroView": "src/profile/ProfileHeroView.tsx"
+  }
+}

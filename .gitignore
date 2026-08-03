@@ -109,3 +109,15 @@ Profile.pdf
 .vercel
 .env*
 supabase/.branches/
+
+# design-sync (claude.ai/design) — scripts stagés, bundle généré, cache/état
+# machine. Le "durable set" (config.json, NOTES.md, conventions.md, previews/,
+# overrides/) N'EST PAS ignoré ici, il doit être commité — voir
+# .design-sync/NOTES.md § Re-sync risks.
+.ds-sync/
+ds-bundle/
+.design-sync/.cache/
+.design-sync/learnings/
+.design-sync/node_modules
+.design-sync/generated/
+apps/platform/.design-sync-tailwind-entry.css
