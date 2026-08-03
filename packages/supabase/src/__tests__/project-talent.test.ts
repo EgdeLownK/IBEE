@@ -6,6 +6,8 @@ import {
   createJobApplication,
   addJobOfferMedia,
   listJobOfferMedia,
+  listOtherActiveJobOffersByEntity,
+  listSimilarActiveJobOffersBySector,
 } from '../project-talent'
 
 type Client = SupabaseClient<Database>
@@ -131,5 +133,80 @@ describe('listJobOfferMedia', () => {
     await listJobOfferMedia(client, 'offer-1')
 
     expect(orderMock).toHaveBeenCalledWith('display_order', { ascending: true })
+  })
+})
+
+describe('listOtherActiveJobOffersByEntity', () => {
+  // Section "Autres offres de ce profil" (PublicJobOfferDetail.tsx) :
+  // preuve que la requete exclut bien l'offre courante et ne demande que
+  // les offres actives -- .eq('status', 'active') est le filtre applicatif,
+  // complementaire au RLS entity_job_offers_public_select (qui refuse deja
+  // toute lecture d'une offre inactive a anon/authenticated, quelle que
+  // soit l'entite proprietaire -- voir .claude/rules/database.md).
+  it('filtre entity_id, status=active, exclut l’offre courante et applique la limite', async () => {
+    const limitMock = vi.fn().mockResolvedValue({
+      data: [{ id: 'offer-2', entity_id: 'entity-a', status: 'active' }],
+      error: null,
+    })
+    const orderMock = vi.fn().mockReturnValue({ limit: limitMock })
+    const neqMock = vi.fn().mockReturnValue({ order: orderMock })
+    const eqStatusMock = vi.fn().mockReturnValue({ neq: neqMock })
+    const eqEntityMock = vi.fn().mockReturnValue({ eq: eqStatusMock })
+    const client = {
+      from: vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({ eq: eqEntityMock }),
+      }),
+    } as unknown as SupabaseClient<Database>
+
+    const result = await listOtherActiveJobOffersByEntity(client, 'entity-a', 'offer-1', 4)
+
+    expect(eqEntityMock).toHaveBeenCalledWith('entity_id', 'entity-a')
+    expect(eqStatusMock).toHaveBeenCalledWith('status', 'active')
+    expect(neqMock).toHaveBeenCalledWith('id', 'offer-1')
+    expect(limitMock).toHaveBeenCalledWith(4)
+    expect(result).toHaveLength(1)
+  })
+})
+
+describe('listSimilarActiveJobOffersBySector', () => {
+  // PREUVE EXIGEE (mission feat/job-offer-related-content) : une offre
+  // INACTIVE d'une autre entite n'apparait jamais dans les "offres
+  // similaires". La requete construit explicitement .eq('status', 'active')
+  // -- filtre applicatif en defense en profondeur, le RLS
+  // entity_job_offers_public_select (qual: status = 'active', roles
+  // anon/authenticated, PAS scopee par entite) est la source de verite
+  // reelle qui empeche cette lecture cote base, quelle que soit l'entite
+  // proprietaire de l'offre inactive.
+  it('filtre sector_id, status=active, exclut l’entite courante et applique la limite', async () => {
+    const limitMock = vi.fn().mockResolvedValue({
+      data: [
+        {
+          id: 'offer-similar-1',
+          entity_id: 'entity-b',
+          status: 'active',
+          sector_id: 'sector-1',
+          entity: { slug: 'entite-b', display_name: 'Entité B' },
+        },
+      ],
+      error: null,
+    })
+    const orderMock = vi.fn().mockReturnValue({ limit: limitMock })
+    const neqMock = vi.fn().mockReturnValue({ order: orderMock })
+    const eqStatusMock = vi.fn().mockReturnValue({ neq: neqMock })
+    const eqSectorMock = vi.fn().mockReturnValue({ eq: eqStatusMock })
+    const client = {
+      from: vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({ eq: eqSectorMock }),
+      }),
+    } as unknown as SupabaseClient<Database>
+
+    const result = await listSimilarActiveJobOffersBySector(client, 'sector-1', 'entity-a', 4)
+
+    expect(eqSectorMock).toHaveBeenCalledWith('sector_id', 'sector-1')
+    expect(eqStatusMock).toHaveBeenCalledWith('status', 'active')
+    expect(neqMock).toHaveBeenCalledWith('entity_id', 'entity-a')
+    expect(limitMock).toHaveBeenCalledWith(4)
+    expect(result).toHaveLength(1)
+    expect(result[0]!.entity).toEqual({ slug: 'entite-b', display_name: 'Entité B' })
   })
 })

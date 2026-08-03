@@ -272,6 +272,70 @@ export async function listActiveJobOffersByEntity(
   return data
 }
 
+// entity(slug, display_name) embarque : la carte "offres similaires"
+// (PublicJobOfferDetail.tsx) pointe vers une AUTRE entite -- son slug doit
+// voyager avec la meme requete (aucune requete par carte, meme motif que le
+// join media/secteur ci-dessus). isOneToOne false cote type genere (2
+// entrees "entity_job_offers_entity_id_fkey" dans Relationships, dont une
+// vers la vue publication_comments_with_author) -- nommer explicitement la
+// relation cible ("entity") leve l'ambiguite, meme mecanisme que
+// job_sectors(id, label) plus haut.
+export type JobOfferWithMediaAndEntity = JobOfferWithMedia & {
+  entity: Pick<Database['public']['Tables']['entity']['Row'], 'slug' | 'display_name'> | null
+}
+
+// Autres offres actives du meme profil, offre courante exclue -- section
+// "Autres offres de ce profil" (PublicJobOfferDetail.tsx). Variante limitee
+// de listActiveJobOffersByEntity ci-dessus (carrousel, pas une liste
+// complete) : idx_entity_job_offers_entity_id (btree simple, pas partiel)
+// sert le filtre entity_id ; status='active' reste un filtre residuel sur
+// le petit sous-ensemble d'une seule entite, cout negligeable au volume
+// actuel -- pas d'index compose necessaire.
+export async function listOtherActiveJobOffersByEntity(
+  client: Client,
+  entityId: string,
+  excludeOfferId: string,
+  limit: number
+): Promise<JobOfferWithMedia[]> {
+  const { data, error } = await client
+    .from('entity_job_offers')
+    .select('*, entity_job_offer_media(*), job_sectors(id, label)')
+    .eq('entity_id', entityId)
+    .eq('status', 'active')
+    .neq('id', excludeOfferId)
+    .order('created_at', { ascending: false })
+    .limit(limit)
+
+  if (error) throw error
+  return data
+}
+
+// Offres actives du meme secteur, chez D'AUTRES entites -- section "Offres
+// similaires" (decision Killian assumee : peut pointer vers un concurrent).
+// idx_entity_job_offers_sector_id (index PARTIEL sur status = 'active',
+// 20260804100000_job_sectors.sql) sert directement ce filtre -- cree
+// precisement pour cet usage (voir commentaire de cette migration).
+// entity_id != exclu reste un filtre residuel sur le sous-ensemble deja
+// restreint au secteur.
+export async function listSimilarActiveJobOffersBySector(
+  client: Client,
+  sectorId: string,
+  excludeEntityId: string,
+  limit: number
+): Promise<JobOfferWithMediaAndEntity[]> {
+  const { data, error } = await client
+    .from('entity_job_offers')
+    .select('*, entity_job_offer_media(*), entity(slug, display_name)')
+    .eq('sector_id', sectorId)
+    .eq('status', 'active')
+    .neq('entity_id', excludeEntityId)
+    .order('created_at', { ascending: false })
+    .limit(limit)
+
+  if (error) throw error
+  return data as unknown as JobOfferWithMediaAndEntity[]
+}
+
 // Liste fermee geree par IBEE (voir 20260804100000_job_sectors.sql) - triee
 // par display_order pour que "Autre" (valeur la plus elevee) apparaisse
 // naturellement en dernier dans le selecteur du formulaire.

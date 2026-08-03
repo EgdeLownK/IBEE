@@ -3,10 +3,16 @@
 import { useState, useSyncExternalStore } from 'react'
 import { createPortal } from 'react-dom'
 import { ProfileShell } from '@ibee/ui-react/profile'
-import type { JobOffer, JobOfferMedia } from '@ibee/supabase'
+import type {
+  JobOffer,
+  JobOfferMedia,
+  JobOfferWithMedia,
+  JobOfferWithMediaAndEntity,
+} from '@ibee/supabase'
 import { parseHistoryBlocks } from '@ibee/shared'
 import { MediaGalleryCarousel } from '@ibee/ui-react'
 import { DetailTopBar } from '@/components/public/DetailTopBar'
+import { RelatedContent } from '../detail/RelatedContent'
 import { ApplyBottomSheet } from './ApplyBottomSheet'
 import { contractLabel } from './contract-labels'
 
@@ -47,6 +53,14 @@ function locationLabel(offer: JobOffer): string {
   return offer.location_text || LOCATION_LABELS[offer.location_type] || 'Sur site'
 }
 
+// Premiere media (display_order le plus bas) pour la vignette RelatedContent
+// -- trie cote appelant, meme convention que le reste du fichier (galerie,
+// carte Pilotage).
+function firstMediaUrl(mediaList: JobOfferMedia[] | undefined): string | null {
+  if (!mediaList || mediaList.length === 0) return null
+  return [...mediaList].sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))[0]!.url
+}
+
 interface Props {
   offer: JobOffer
   /** Triee par display_order par l'appelant (page.tsx). */
@@ -59,6 +73,10 @@ interface Props {
   userEmail: string
   userFirstName: string
   userLastName: string
+  /** Autres offres actives du meme profil, offre courante deja exclue par l'appelant (page.tsx). */
+  otherProfileOffers?: JobOfferWithMedia[]
+  /** Offres actives du meme secteur chez d'autres entites, deja resolu vide si l'offre n'a pas de secteur. */
+  similarOffers?: JobOfferWithMediaAndEntity[]
 }
 
 /**
@@ -84,6 +102,8 @@ export function PublicJobOfferDetail({
   userEmail,
   userFirstName,
   userLastName,
+  otherProfileOffers = [],
+  similarOffers = [],
 }: Props) {
   const [applyOpen, setApplyOpen] = useState(false)
   const mounted = useSyncExternalStore(
@@ -158,6 +178,33 @@ export function PublicJobOfferDetail({
     </div>
   )
 
+  // RelatedContent (detail/RelatedContent.tsx, lu, jamais modifie) : son
+  // type Kind ('service'|'product'|'event') n'inclut pas 'job', mais
+  // KIND_LABEL associe n'est de toute facon jamais rendu dans son JSX (import
+  // mort deja present avant cette mission) -- kind: 'service' est une valeur
+  // arbitraire non affichee, sans consequence visuelle.
+  const otherProfileItems = otherProfileOffers.map((o) => ({
+    kind: 'service' as const,
+    title: o.title,
+    meta: `${contractLabel(o.contract_type)} · ${locationLabel(o)}`,
+    href: `/${entitySlug}/offres/${o.id}`,
+    cover_url: firstMediaUrl(o.entity_job_offer_media),
+  }))
+
+  // "Offres similaires" : chaque offre appartient a une AUTRE entite -- le
+  // nom de l'entite remplace le lieu dans le meta (contexte plus utile ici
+  // que la localisation) et l'URL utilise le slug de CETTE entite, pas
+  // entitySlug (page courante).
+  const similarItems = similarOffers.map((o) => ({
+    kind: 'service' as const,
+    title: o.title,
+    meta: o.entity
+      ? `${contractLabel(o.contract_type)} · ${o.entity.display_name}`
+      : contractLabel(o.contract_type),
+    href: o.entity ? `/${o.entity.slug}/offres/${o.id}` : undefined,
+    cover_url: firstMediaUrl(o.entity_job_offer_media),
+  }))
+
   return (
     <main className="profile-page">
       <div className="flex justify-center items-start gap-8 mx-auto w-full max-w-[1152px] xl:px-8 lg:px-4">
@@ -216,6 +263,22 @@ export function PublicJobOfferDetail({
               return null
             })}
           </div>
+
+          {otherProfileItems.length > 0 && (
+            <div className="pb-2">
+              <RelatedContent
+                title="Autres offres de ce profil"
+                items={otherProfileItems}
+                moreHref={`/${entitySlug}#jobs`}
+              />
+            </div>
+          )}
+
+          {similarItems.length > 0 && (
+            <div className="pb-6">
+              <RelatedContent title="Offres similaires" items={similarItems} />
+            </div>
+          )}
         </ProfileShell>
 
         <aside
