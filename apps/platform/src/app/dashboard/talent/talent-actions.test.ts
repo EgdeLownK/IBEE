@@ -117,11 +117,11 @@ const OFFER_ID = 'offer-3333-3333-3333-333333333333'
 
 describe('talent-actions.ts — permission verifiee via entity_user_has_permission (apres correction)', () => {
   describe('createJobOfferAction / updateJobOfferAction / deleteJobOfferAction', () => {
-    // Remuneration + localisation obligatoires a la creation depuis
-    // requireCompensation/requireLocationText (talent-actions.ts) : fixture
-    // complete pour que ces tests de permission ne soient pas bloques par la
-    // validation metier qu'ils ne visent pas a tester. location_type: 'remote'
-    // dispense de location_text (jamais requis pour ce type).
+    // Remuneration + localisation + secteur obligatoires a la creation depuis
+    // requireCompensation/requireLocationText/requireSector (talent-actions.ts) :
+    // fixture complete pour que ces tests de permission ne soient pas bloques
+    // par la validation metier qu'ils ne visent pas a tester. location_type:
+    // 'remote' dispense de location_text (jamais requis pour ce type).
     const newOfferInput = {
       title: 'Offre',
       contract_type: 'cdi' as const,
@@ -131,6 +131,7 @@ describe('talent-actions.ts — permission verifiee via entity_user_has_permissi
       compensation_type: 'fixed' as const,
       compensation_amount: 3000,
       compensation_frequency: 'monthly' as const,
+      sector_id: 'sector-1111-1111-1111-111111111111',
     }
 
     it('a) appel légitime (permission accordée sur l’entité) → la mutation atteint la base', async () => {
@@ -145,6 +146,39 @@ describe('talent-actions.ts — permission verifiee via entity_user_has_permissi
         args: { p_entity_id: OWNED_ENTITY, p_permission: 'talent' },
       })
       expect(dbCalls.some((c) => c.table === 'entity_job_offers' && c.op === 'insert')).toBe(true)
+    })
+
+    // PREUVE mission feat/job-offer-sector-ui, sens (a) : une offre creee
+    // avec un secteur l'enregistre correctement (sector_id transmis tel quel
+    // a l'insert, aucune transformation).
+    it('a2) créée avec un secteur → sector_id transmis tel quel à l’insert', async () => {
+      mockUser = { id: 'user-legitime' }
+      mockPermission = true
+
+      await expect(createJobOfferAction(OWNED_ENTITY, newOfferInput)).resolves.toBeUndefined()
+
+      const insertCall = dbCalls.find((c) => c.table === 'entity_job_offers' && c.op === 'insert')
+      expect(insertCall).toBeDefined()
+      expect((insertCall!.args[0] as { sector_id?: string }).sector_id).toBe(
+        newOfferInput.sector_id,
+      )
+    })
+
+    // PREUVE mission feat/job-offer-sector-ui, sens (b) : une creation SANS
+    // secteur est refusee COTE SERVEUR (requireSector), pas seulement par le
+    // gate client de JobOfferDialog - appel direct de l'action qui contourne
+    // le formulaire.
+    it('a3) créée sans secteur → refusé côté serveur avant tout appel BDD (contournement direct du client)', async () => {
+      mockUser = { id: 'user-legitime' }
+      mockPermission = true
+
+      const { sector_id: _sector_id, ...withoutSector } = newOfferInput
+
+      await expect(createJobOfferAction(OWNED_ENTITY, withoutSector)).rejects.toThrow(
+        "Veuillez sélectionner un secteur d'activité.",
+      )
+
+      expect(dbCalls.some((c) => c.table === 'entity_job_offers' && c.op === 'insert')).toBe(false)
     })
 
     it('b) même appel avec une entité étrangère → refusé par le code, avant tout appel BDD sur entity_job_offers', async () => {

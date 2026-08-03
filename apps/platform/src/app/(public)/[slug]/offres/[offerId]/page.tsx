@@ -57,6 +57,7 @@ export default async function PublicJobOfferPage({ params }: Props) {
     <PublicJobOfferDetail
       offer={offer}
       media={media}
+      sectorLabel={offer.job_sectors?.label ?? null}
       entitySlug={slug}
       entityName={entity.display_name}
       entityAvatarUrl={entity.avatar_url}

@@ -10,10 +10,17 @@ export type JobCompType = Database['public']['Enums']['entity_job_comp_type']
 export type JobCompFreq = Database['public']['Enums']['entity_job_comp_freq']
 
 export type JobOffer = Database['public']['Tables']['entity_job_offers']['Row']
+export type JobSector = Database['public']['Tables']['job_sectors']['Row']
 // Non trie par display_order cote requete (pas de precedent d'ordre sur
 // relation embarquee dans ce package, voir listProductsByEntity) : trier
 // cote appelant, meme convention que product_media (ProductDetail.tsx).
-export type JobOfferWithMedia = JobOffer & { entity_job_offer_media: JobOfferMedia[] }
+// job_sectors : relation many-to-one (sector_id nullable) -> objet unique ou
+// null, jamais un tableau. Colonnes limitees a id/label (pas le Row complet)
+// pour matcher exactement le .select() ci-dessous.
+export type JobOfferWithMedia = JobOffer & {
+  entity_job_offer_media: JobOfferMedia[]
+  job_sectors: Pick<JobSector, 'id' | 'label'> | null
+}
 
 export type JobApplicationStatus = Database['public']['Enums']['entity_job_application_status']
 export type JobApplication = Database['public']['Tables']['entity_job_applications']['Row']
@@ -28,7 +35,7 @@ export async function listProjectJobOffers(
 ): Promise<JobOfferWithMedia[]> {
   const { data, error } = await client
     .from('entity_job_offers')
-    .select('*, entity_job_offer_media(*)')
+    .select('*, entity_job_offer_media(*), job_sectors(id, label)')
     .eq('entity_id', entityId)
     .order('created_at', { ascending: false })
 
@@ -43,7 +50,7 @@ export async function getProjectJobOffer(
 ): Promise<JobOfferWithMedia> {
   const { data, error } = await client
     .from('entity_job_offers')
-    .select('*, entity_job_offer_media(*)')
+    .select('*, entity_job_offer_media(*), job_sectors(id, label)')
     .eq('id', offerId)
     .eq('entity_id', entityId)
     .single()
@@ -256,10 +263,23 @@ export async function listActiveJobOffersByEntity(
 ): Promise<JobOfferWithMedia[]> {
   const { data, error } = await client
     .from('entity_job_offers')
-    .select('*, entity_job_offer_media(*)')
+    .select('*, entity_job_offer_media(*), job_sectors(id, label)')
     .eq('entity_id', entityId)
     .eq('status', 'active')
     .order('created_at', { ascending: false })
+
+  if (error) throw error
+  return data
+}
+
+// Liste fermee geree par IBEE (voir 20260804100000_job_sectors.sql) - triee
+// par display_order pour que "Autre" (valeur la plus elevee) apparaisse
+// naturellement en dernier dans le selecteur du formulaire.
+export async function listJobSectors(client: Client): Promise<JobSector[]> {
+  const { data, error } = await client
+    .from('job_sectors')
+    .select('*')
+    .order('display_order', { ascending: true })
 
   if (error) throw error
   return data

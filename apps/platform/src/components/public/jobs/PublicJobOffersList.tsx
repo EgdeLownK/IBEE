@@ -5,6 +5,7 @@ type JobOfferPublic = {
   id: string
   title: string
   contract_type: JobContractType
+  sector_label?: string | null
   location_type: string
   location_text: string | null
   end_date: string | null
@@ -61,6 +62,7 @@ export function PublicJobOffersList({
           applyHref={`/${entitySlug}/offres/${offer.id}`}
           title={offer.title}
           contractType={offer.contract_type}
+          sectorLabel={offer.sector_label}
           locationType={offer.location_type as 'remote' | 'onsite' | 'hybrid'}
           locationText={offer.location_text}
           endDate={offer.end_date}

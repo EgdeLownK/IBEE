@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { getProjectJobOffer, listJobApplications } from '@ibee/supabase'
+import { getProjectJobOffer, listJobApplications, listJobSectors } from '@ibee/supabase'
 import { getDashboardContext } from '@/lib/dashboard-context'
 import { JobOfferDetails } from '../../../../components/dashboard/talent/JobOfferDetails'
 
@@ -11,12 +11,20 @@ export default async function JobOfferPage({ params }: { params: Promise<{ offer
   }
 
   const { offerId } = await params
-  const offer = await getProjectJobOffer(ctx.supabase, ctx.entity.id, offerId)
-  const applications = await listJobApplications(ctx.supabase, offerId)
+  const [offer, applications, sectors] = await Promise.all([
+    getProjectJobOffer(ctx.supabase, ctx.entity.id, offerId),
+    listJobApplications(ctx.supabase, offerId),
+    listJobSectors(ctx.supabase),
+  ])
 
   return (
     <div className="flex flex-1 flex-col gap-6 p-8">
-      <JobOfferDetails entityId={ctx.entity.id} offer={offer} applications={applications} />
+      <JobOfferDetails
+        entityId={ctx.entity.id}
+        offer={offer}
+        applications={applications}
+        sectors={sectors}
+      />
     </div>
   )
 }

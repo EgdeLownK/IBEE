@@ -38,6 +38,7 @@ const EMPTY_PLAYLISTS = {
   jobOffers: [] as JobOffer[],
   shopProducts: [] as ShopProduct[],
   productCategories: [] as ProfileStudioData['productCategories'],
+  jobSectors: [] as ProfileStudioData['jobSectors'],
   playlistServices: [] as PlaylistService[],
   playlistEvents: [] as PlaylistEvent[],
 }
@@ -491,6 +492,7 @@ export function ProfileStudio() {
 
       <JobOfferDialog
         open={jobOfferWizardOpen}
+        sectors={playlists?.jobSectors ?? []}
         // Cast volontaire : JobOfferDialog attend le JobOffer complet
         // (@ibee/supabase, toutes les colonnes entity_job_offers), mais ne lit
         // en pratique que les champs deja presents sur ProfileStudioData

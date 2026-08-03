@@ -118,6 +118,18 @@ function requireLocationText(
   }
 }
 
+// Secteur obligatoire a la creation (decision Killian, mission
+// feat/job-offer-sector-ui) - meme portee restreinte a createJobOfferAction
+// que requireCompensation/requireLocationText : les offres existantes sans
+// secteur (posees avant ce champ) ne sont jamais revalidees ici, seul le
+// gate cote client (JobOfferDialog, etape 1 "Vitrine") le redemande a la
+// prochaine ouverture du formulaire d'edition.
+function requireSector(sectorId: string | null | undefined) {
+  if (!sectorId) {
+    throw new Error("Veuillez sélectionner un secteur d'activité.")
+  }
+}
+
 export async function createJobOfferAction(
   entityId: string,
   input: {
@@ -133,6 +145,7 @@ export async function createJobOfferAction(
     apply_url?: string | null
     end_date?: string | null
     is_cadre?: boolean | null
+    sector_id?: string | null
     media?: JobOfferMediaInput[]
   },
 ) {
@@ -141,6 +154,7 @@ export async function createJobOfferAction(
   requireFutureEndDate(input.end_date)
   requireCompensation(input)
   requireLocationText(input.location_type, input.location_text)
+  requireSector(input.sector_id)
   requireMediaLimits(input.media)
 
   // media n'est pas une colonne d'entity_job_offers (table entity_job_offer_media
@@ -178,6 +192,7 @@ export async function updateJobOfferAction(
     apply_url?: string | null
     end_date?: string | null
     is_cadre?: boolean | null
+    sector_id?: string | null
     // Absent = ne touche pas les medias existants (ex. bascule de statut
     // depuis le menu trois points, updateJobOfferAction(id, id, { status })
     // - voir requireCompensation ci-dessus, meme motif de portee restreinte).

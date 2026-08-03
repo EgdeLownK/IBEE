@@ -33,6 +33,8 @@ interface Props {
   offer: JobOffer
   /** Triee par display_order par l'appelant (page.tsx). */
   media?: JobOfferMedia[]
+  /** Libelle du secteur (job_sectors.label), resolu par l'appelant (page.tsx) via le join entity_job_offers -> job_sectors. Absent/null = pas de chip secteur. */
+  sectorLabel?: string | null
   entitySlug: string
   entityName: string
   entityAvatarUrl: string | null
@@ -45,6 +47,7 @@ interface Props {
 export function PublicJobOfferDetail({
   offer,
   media = [],
+  sectorLabel,
   entitySlug,
   entityName,
   entityAvatarUrl,
@@ -84,6 +87,11 @@ export function PublicJobOfferDetail({
               <Briefcase className="h-3 w-3" />
               {contractLabel(offer.contract_type)}
             </span>
+            {sectorLabel ? (
+              <span className="inline-flex items-center rounded-full border border-neutral-200 bg-neutral-50 px-3 py-1 text-xs text-neutral-700">
+                {sectorLabel}
+              </span>
+            ) : null}
             <span className="inline-flex items-center gap-1.5 rounded-full border border-neutral-200 bg-neutral-50 px-3 py-1 text-xs text-neutral-700">
               <MapPin className="h-3 w-3" />
               {offer.location_type === 'remote'

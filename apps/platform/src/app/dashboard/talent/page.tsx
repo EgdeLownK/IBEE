@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { listProjectJobOffers } from '@ibee/supabase'
+import { listProjectJobOffers, listJobSectors } from '@ibee/supabase'
 import { TalentDashboard } from '../../../components/dashboard/talent/TalentDashboard'
 import { getDashboardContext } from '@/lib/dashboard-context'
 
@@ -10,7 +10,10 @@ export default async function TalentPage() {
     redirect('/login')
   }
 
-  const offers = await listProjectJobOffers(ctx.supabase, ctx.entity.id)
+  const [offers, sectors] = await Promise.all([
+    listProjectJobOffers(ctx.supabase, ctx.entity.id),
+    listJobSectors(ctx.supabase),
+  ])
 
-  return <TalentDashboard entityId={ctx.entity.id} offers={offers} />
+  return <TalentDashboard entityId={ctx.entity.id} offers={offers} sectors={sectors} />
 }

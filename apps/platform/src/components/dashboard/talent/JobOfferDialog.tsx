@@ -4,7 +4,7 @@ import { useEffect, useState, useTransition } from 'react'
 import { createPortal, flushSync } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { JobOffer, JobCompType, JobCompFreq, JobContractType } from '@ibee/supabase'
+import { JobOffer, JobCompType, JobCompFreq, JobContractType, JobSector } from '@ibee/supabase'
 import {
   createJobOfferAction,
   updateJobOfferAction,
@@ -96,9 +96,17 @@ type JobOfferDialogProps = {
   ) => void
   entityId: string
   offer?: JobOffer | null
+  /** Triee par display_order par l'appelant (voir listJobSectors, @ibee/supabase). */
+  sectors: JobSector[]
 }
 
-export function JobOfferDialog({ open, onOpenChange, entityId, offer }: JobOfferDialogProps) {
+export function JobOfferDialog({
+  open,
+  onOpenChange,
+  entityId,
+  offer,
+  sectors,
+}: JobOfferDialogProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
@@ -112,6 +120,7 @@ export function JobOfferDialog({ open, onOpenChange, entityId, offer }: JobOffer
   // Step 1 "Vitrine" states
   const [media, setMedia] = useState<JobOfferMediaDraft[]>([])
   const [title, setTitle] = useState(offer?.title || '')
+  const [sectorId, setSectorId] = useState(offer?.sector_id || '')
   // Step 2 "Informations" states
   const [contractType, setContractType] = useState<JobContractType>(offer?.contract_type || 'cdi')
   const [isCadre, setIsCadre] = useState<boolean>(offer?.is_cadre ?? false)
@@ -132,6 +141,7 @@ export function JobOfferDialog({ open, onOpenChange, entityId, offer }: JobOffer
       setStep(1)
       setError(null)
       setTitle(offer?.title || '')
+      setSectorId(offer?.sector_id || '')
       setContractType(offer?.contract_type || 'cdi')
       setIsCadre(offer?.is_cadre ?? false)
       setStatus(offer?.status || 'inactive')
@@ -339,11 +349,19 @@ export function JobOfferDialog({ open, onOpenChange, entityId, offer }: JobOffer
     setBlocks((prev) => prev.map((b, i) => (i === index ? block : b)))
   }
 
-  // Etape 1 "Vitrine" -> 2 "Informations" : seul le titre est requis ici (la
-  // zone media est optionnelle, cf. rapport phase 0).
+  // Etape 1 "Vitrine" -> 2 "Informations" : titre + secteur requis (la zone
+  // media reste optionnelle, cf. rapport phase 0). S'applique sans condition
+  // de creation/edition (meme motif que les controles de handleNextFromInformations
+  // ci-dessous) : une offre existante sans secteur (posee avant ce champ,
+  // mission feat/job-offer-sector-ui) redemande le secteur des qu'on rouvre
+  // son formulaire d'edition, pas seulement a la creation.
   const handleNextFromVitrine = () => {
     if (!title.trim()) {
       setError('Veuillez renseigner le titre du poste.')
+      return
+    }
+    if (!sectorId) {
+      setError("Veuillez sélectionner un secteur d'activité.")
       return
     }
     setError(null)
@@ -407,6 +425,7 @@ export function JobOfferDialog({ open, onOpenChange, entityId, offer }: JobOffer
       try {
         const payload = {
           title,
+          sector_id: sectorId || null,
           contract_type: contractType,
           status: targetStatus as any,
           location_type: locationType as any,
@@ -594,6 +613,25 @@ export function JobOfferDialog({ open, onOpenChange, entityId, offer }: JobOffer
                   required
                   placeholder="Ex: Développeur Fullstack React"
                 />
+              </div>
+
+              <div className="pco__field">
+                <label className="text-sm font-medium" htmlFor="job-offer-sector">
+                  Secteur d&apos;activité *
+                </label>
+                <select
+                  id="job-offer-sector"
+                  value={sectorId}
+                  onChange={(e) => setSectorId(e.target.value)}
+                  className="block w-full rounded-field border border-neutral-200 bg-surface px-4 py-3 text-neutral-900 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-neutral-900/20 hover:border-neutral-300"
+                >
+                  <option value="">Sélectionner un secteur</option>
+                  {sectors.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.label}
+                    </option>
+                  ))}
+                </select>
               </div>
             </section>
           ) : step === 2 ? (
