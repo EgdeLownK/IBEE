@@ -181,6 +181,11 @@ export async function loadPublicProfileBySlug(slug: string) {
     // `as unknown` : évite TS2742 (type Json non portable hors du package
     // @ibee/supabase, cf. commentaire équivalent dans profile-studio-data.ts).
     blocks: offer.blocks as unknown,
+    // Trie cote appelant, meme convention que product_media (pas d'ordre
+    // sur relation embarquee cote requete, cf. project-talent.ts).
+    media: [...(offer.entity_job_offer_media ?? [])].sort(
+      (a, b) => (a.display_order ?? 0) - (b.display_order ?? 0),
+    ),
   }))
 
   const siteUrl = process.env.NEXT_PUBLIC_WEB_URL ?? 'http://localhost:3000'

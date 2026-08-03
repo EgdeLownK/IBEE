@@ -1,4 +1,4 @@
-import type { JobContractType } from '@ibee/supabase'
+import type { JobContractType, JobOfferMedia } from '@ibee/supabase'
 import { JobOfferRow } from './JobOfferRow'
 
 type JobOfferPublic = {
@@ -15,6 +15,8 @@ type JobOfferPublic = {
   created_at: string
   blocks?: unknown
   status?: 'active' | 'inactive'
+  /** Triee par display_order par l'appelant (voir profile-studio-data.ts / load-public-profile.ts). */
+  media?: JobOfferMedia[]
 }
 
 /**
@@ -69,6 +71,7 @@ export function PublicJobOffersList({
             offer.compensation_frequency as 'weekly' | 'monthly' | 'mission' | null
           }
           blocks={offer.blocks}
+          media={offer.media?.[0] ?? null}
           adminMenu={
             adminActions && offer.status
               ? {

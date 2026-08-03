@@ -1,8 +1,9 @@
 import Link from 'next/link'
 import { Briefcase } from 'lucide-react'
 import type { HistoryBlock } from '@ibee/shared'
-import type { JobContractType } from '@ibee/supabase'
+import type { JobContractType, JobOfferMedia } from '@ibee/supabase'
 import { entityDetailExcerpt } from '@/lib/entity-detail-excerpt'
+import { useExclusiveVideoPlayback } from '@/hooks/useExclusiveVideoPlayback'
 import { contractLabel } from './contract-labels'
 import { JobOfferAdminMenu } from './JobOfferAdminMenu'
 
@@ -118,6 +119,8 @@ type JobOfferRowBaseProps = {
   compensationFrequency?: CompensationFrequency | null
   /** Json brut de la colonne `blocks` (entity_job_offers) — HistoryBlock[] en pratique. */
   blocks?: unknown
+  /** Premier média (display_order le plus bas) de entity_job_offer_media, deja resolu par l'appelant. Absent/null = repli icone Briefcase. */
+  media?: JobOfferMedia | null
   adminMenu?: JobOfferAdminMenuConfig
   /** 'compact' reserve a TalentDashboard (offre hors ligne) — voir en-tete de fichier. */
   display?: 'full' | 'compact'
@@ -153,9 +156,11 @@ export function JobOfferRow(props: JobOfferRowProps) {
     compensationType,
     compensationFrequency,
     blocks,
+    media,
     adminMenu,
     display = 'full',
   } = props
+  const { videoRef, cardRef, onMouseEnter, onMouseLeave } = useExclusiveVideoPlayback()
   const contractName = contractLabel(contractType)
   const tags = [
     contractName,
@@ -179,6 +184,25 @@ export function JobOfferRow(props: JobOfferRowProps) {
   const isLongCompensationAmount = (compensationAmountLabel?.length ?? 0) > 7
   const excerpt = blocks ? entityDetailExcerpt({ content_blocks: blocks as HistoryBlock[] }) : ''
 
+  // Vignette .job-row__media : premier media de la galerie offre (deja
+  // resolu par l'appelant), repli icone Briefcase si aucun. Video : muette,
+  // lecture exclusive toute-page (voir useExclusiveVideoPlayback).
+  const mediaNode = !media ? (
+    <Briefcase className="job-row__media-icon" aria-hidden="true" />
+  ) : media.media_type === 'video' ? (
+    <video
+      ref={videoRef}
+      src={media.url}
+      muted
+      loop
+      playsInline
+      preload="metadata"
+      aria-hidden="true"
+    />
+  ) : (
+    <img src={media.url} alt={media.alt_text ?? ''} />
+  )
+
   const adminMenuNode = adminMenu && (
     <JobOfferAdminMenu
       title={title}
@@ -192,12 +216,15 @@ export function JobOfferRow(props: JobOfferRowProps) {
 
   if (display === 'compact') {
     return (
-      <article className="job-row job-row--compact">
+      <article
+        className="job-row job-row--compact"
+        ref={cardRef}
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onMouseLeave}
+      >
         {href && <Link className="job-row__stretch" href={href} aria-label={title} />}
         {adminMenuNode}
-        <div className="job-row__media">
-          <Briefcase className="job-row__media-icon" aria-hidden="true" />
-        </div>
+        <div className="job-row__media">{mediaNode}</div>
         <div className="job-row__body">
           <h3 className="job-row__title">{title}</h3>
           <div className="job-row__tags">
@@ -235,12 +262,15 @@ export function JobOfferRow(props: JobOfferRowProps) {
   }
 
   return (
-    <article className="job-row">
+    <article
+      className="job-row"
+      ref={cardRef}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+    >
       {href && <Link className="job-row__stretch" href={href} aria-label={title} />}
       {adminMenuNode}
-      <div className="job-row__media">
-        <Briefcase className="job-row__media-icon" aria-hidden="true" />
-      </div>
+      <div className="job-row__media">{mediaNode}</div>
       <div className="job-row__body">
         <h3 className={`job-row__title${adminMenu ? ' job-row__title--with-menu' : ''}`}>
           {title}

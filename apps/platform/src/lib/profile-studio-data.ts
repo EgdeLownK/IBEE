@@ -163,6 +163,11 @@ export async function loadProfileStudioPlaylists() {
       blocks: o.blocks as unknown, // TS2742, cf. commentaire ci-dessus
       status: o.status,
       apply_url: o.apply_url,
+      // Trie cote appelant, meme convention que product_media (pas d'ordre
+      // sur relation embarquee cote requete, cf. project-talent.ts).
+      media: [...(o.entity_job_offer_media ?? [])].sort(
+        (a, b) => (a.display_order ?? 0) - (b.display_order ?? 0),
+      ),
     })),
     shopProducts: products.map((p, i) => ({
       id: p.id,

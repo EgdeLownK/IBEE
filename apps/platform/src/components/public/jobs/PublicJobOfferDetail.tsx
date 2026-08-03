@@ -3,8 +3,9 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Briefcase, MapPin } from 'lucide-react'
-import type { JobOffer } from '@ibee/supabase'
+import type { JobOffer, JobOfferMedia } from '@ibee/supabase'
 import { parseHistoryBlocks } from '@ibee/shared'
+import { MediaGalleryCarousel } from '@ibee/ui-react'
 import { ApplyBottomSheet } from './ApplyBottomSheet'
 import { contractLabel } from './contract-labels'
 
@@ -30,6 +31,8 @@ function compensationLabel(offer: JobOffer): string | null {
 
 interface Props {
   offer: JobOffer
+  /** Triee par display_order par l'appelant (page.tsx). */
+  media?: JobOfferMedia[]
   entitySlug: string
   entityName: string
   entityAvatarUrl: string | null
@@ -41,6 +44,7 @@ interface Props {
 
 export function PublicJobOfferDetail({
   offer,
+  media = [],
   entitySlug,
   entityName,
   entityAvatarUrl,
@@ -93,6 +97,8 @@ export function PublicJobOfferDetail({
             ) : null}
           </div>
         </div>
+
+        <MediaGalleryCarousel media={media} title={offer.title} />
 
         <div className="space-y-4 mb-8 text-sm text-neutral-700">
           {blocks.map((block, i) => {

@@ -15,6 +15,7 @@
 @import '../../../../packages/ui-react/src/dashboard/activite-styles.css';
 @import '../../../../packages/ui-react/src/dashboard/messages-styles.css';
 @import '../../../../packages/ui-react/src/home-feed.css';
+@import '../../../../packages/ui-react/src/components/media-gallery-carousel.css';
 
 @source "../**/*.{ts,tsx}";
 @source "../../../../packages/ui-react/src/**/*.{ts,tsx}";

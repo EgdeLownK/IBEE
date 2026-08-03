@@ -2,7 +2,7 @@
 
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
-import { useHorizontalCarousel } from '@/hooks/useHorizontalCarousel'
+import { useHorizontalCarousel } from '@ibee/ui-react'
 
 type Kind = 'service' | 'product' | 'event'
 
