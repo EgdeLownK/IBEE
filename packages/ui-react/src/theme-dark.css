@@ -1,0 +1,19 @@
+/* Mode sombre — présent, jamais activé (hors périmètre de ce remplacement,
+   voir RAPPORT-remplacement-design-tokens.md). Rien dans le repo ne pose
+   [data-theme="dark"] : ce bloc reste inerte. Le slate double comme mode
+   sombre : seuls les rôles bougent. */
+[data-theme='dark'] {
+  --color-background: #101d2c;
+  --color-surface: #17293d;
+  --color-panel: #22394f;
+  --color-panel-2: #34506a;
+  --color-border: #22394f;
+  --color-border-soft: #1b304a;
+  --color-text: #eef2f7;
+  --color-text-muted: #9db0c4;
+  --color-text-disabled: #5b7793;
+  --color-link: #e8541c;
+  --color-link-hover: #fdeae0;
+  --color-link-visited: #c2cfdd;
+  --focus-color: #5b7793;
+}

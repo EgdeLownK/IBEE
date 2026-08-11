@@ -1,6 +1,8 @@
 @import 'tailwindcss';
 @import '../../../../packages/ui-react/src/tokens.css';
-@import '../../../../packages/ui-react/src/button.css';
+@import '../../../../packages/ui-react/src/controls.css';
+@import '../../../../packages/ui-react/src/components.css';
+@import '../../../../packages/ui-react/src/theme-dark.css';
 @import '../../../../packages/ui-react/src/app-shell.css';
 @import '../../../../packages/ui-react/src/navpill.css' layer(components);
 @import '../../../../packages/ui-react/src/profile/profile-styles.css';

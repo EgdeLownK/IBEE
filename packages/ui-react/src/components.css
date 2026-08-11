@@ -1,0 +1,643 @@
+/* Composants .ibee-* — token/components.css du bundle Claude Design, importé
+   globalement (arbitrage Killian). 0 usage réel dans le code au moment de
+   l'intégration — voir RAPPORT-remplacement-design-tokens.md §2c/§6.
+
+   10 couleurs en dur du fichier source mappées vers des tokens (aucune
+   valeur hexadécimale nouvelle) : les 4 paires fond/texte success/error/
+   warning/info vers les 8 tokens -soft/-strong de tokens.css, les 3
+   rgb(23 41 61 / x) (une 3e occurrence trouvée ici en plus des 2 déjà
+   signalées en phase 0 — même base que --color-ink) vers color-mix() sur
+   --color-ink, et les 2 #fff vers --color-text-on-ink. */
+
+/* Card / panel */
+.ibee-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  padding: var(--space-6);
+}
+.ibee-card--flat {
+  border-color: var(--color-border-soft);
+  box-shadow: none;
+}
+.ibee-card--raised {
+  box-shadow: var(--shadow-card);
+}
+.ibee-card--shell {
+  box-shadow: var(--shadow-shell);
+  border-color: transparent;
+}
+.ibee-card--panel {
+  background: var(--color-panel);
+  border-color: transparent;
+}
+.ibee-card__title {
+  font: var(--type-card-title);
+  color: var(--color-text);
+}
+.ibee-card--interactive {
+  cursor: pointer;
+  transition:
+    border-color var(--transition-base),
+    box-shadow var(--transition-base);
+}
+.ibee-card--interactive:hover {
+  border-color: var(--color-border-strong);
+  box-shadow: var(--shadow-card);
+}
+
+/* Badge — échelle caption, rayon chip */
+.ibee-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  height: 22px;
+  padding: 0 9px;
+  border-radius: var(--radius-chip);
+  font: var(--weight-medium) 11px/1 var(--font-display);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.ibee-badge--accent {
+  background: var(--color-accent-soft);
+  color: var(--color-accent-strong);
+}
+.ibee-badge--neutral {
+  background: var(--color-panel);
+  color: var(--color-text-muted);
+}
+.ibee-badge--ink {
+  background: var(--color-ink);
+  color: var(--color-text-on-ink);
+}
+.ibee-badge--success {
+  background: var(--color-success-soft);
+  color: var(--color-success-strong);
+}
+.ibee-badge--error {
+  background: var(--color-error-soft);
+  color: var(--color-error-strong);
+}
+.ibee-badge--warning {
+  background: var(--color-warning-soft);
+  color: var(--color-warning-strong);
+}
+.ibee-badge--info {
+  background: var(--color-info-soft);
+  color: var(--color-info-strong);
+}
+
+/* Chip — filtre / tag, contrôle 36px */
+.ibee-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: var(--control-h-sm);
+  padding: 0 var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-chip);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: var(--weight-medium) var(--step-sm)/1 var(--font-display);
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background-color var(--transition-base),
+    border-color var(--transition-base),
+    color var(--transition-base);
+}
+.ibee-chip:hover {
+  background: var(--color-panel);
+}
+.ibee-chip[aria-pressed='true'],
+.ibee-chip--selected {
+  background: var(--color-ink);
+  border-color: var(--color-ink);
+  color: var(--color-text-on-ink);
+}
+.ibee-chip--static {
+  cursor: default;
+  background: var(--color-panel);
+  border-color: transparent;
+  color: var(--color-text-muted);
+}
+.ibee-chip--static:hover {
+  background: var(--color-panel);
+}
+.ibee-chip__remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: inherit;
+  font: var(--weight-medium) 14px/1 var(--font-sans);
+  cursor: pointer;
+  opacity: 0.6;
+}
+.ibee-chip__remove:hover {
+  opacity: 1;
+}
+
+/* Tuile média */
+.ibee-tile {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-tile);
+  background: var(--color-panel);
+  border: 1px solid var(--color-border-soft);
+}
+.ibee-tile--empty {
+  background: var(--color-slate-700);
+  border-color: transparent;
+}
+.ibee-tile img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.ibee-tile__scrim {
+  position: absolute;
+  inset: auto 0 0 0;
+  padding: var(--space-4);
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--color-ink) 72%, transparent),
+    transparent
+  );
+  color: var(--color-text-on-ink);
+}
+.ibee-tile__badge {
+  position: absolute;
+  top: var(--space-3);
+  left: var(--space-3);
+}
+.ibee-tile__duration {
+  position: absolute;
+  bottom: var(--space-3);
+  right: var(--space-3);
+  padding: 2px 6px;
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--color-ink) 80%, transparent);
+  color: var(--color-text-on-ink);
+  font: var(--weight-medium) 11px/1.4 var(--font-mono);
+}
+
+/* Champs — libellé, contrôle, puis aide OU erreur, jamais les deux */
+.ibee-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.ibee-field__label {
+  font: var(--type-label);
+  color: var(--color-text);
+}
+.ibee-field__label--disabled {
+  color: var(--color-text-disabled);
+}
+.ibee-field__req {
+  color: var(--color-accent);
+  margin-left: 2px;
+}
+.ibee-field__help {
+  font: var(--weight-regular) var(--step-xs)/1.5 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.ibee-field__error {
+  font: var(--weight-regular) var(--step-xs)/1.5 var(--font-sans);
+  color: var(--color-error-field);
+}
+.ibee-field__foot {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+.ibee-input,
+.ibee-select {
+  height: var(--control-h);
+  padding: 0 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-field);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: var(--weight-regular) var(--step-md) var(--font-sans);
+  width: 100%;
+  transition: border-color var(--transition-base);
+}
+.ibee-textarea {
+  min-height: 104px;
+  padding: 12px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-field);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: var(--weight-regular) var(--step-md)/1.6 var(--font-sans);
+  width: 100%;
+  resize: vertical;
+  transition: border-color var(--transition-base);
+}
+.ibee-input::placeholder,
+.ibee-textarea::placeholder {
+  color: var(--color-text-disabled);
+}
+.ibee-input:hover,
+.ibee-textarea:hover,
+.ibee-select:hover {
+  border-color: var(--color-border-strong);
+}
+.ibee-input:focus,
+.ibee-textarea:focus,
+.ibee-select:focus {
+  outline: none;
+  border: 2px solid var(--color-ink);
+  padding-inline: 13px;
+}
+.ibee-textarea:focus {
+  padding: 11px 13px;
+}
+.ibee-input--active,
+.ibee-select--active {
+  border: 2px solid var(--color-ink);
+  padding-inline: 13px;
+}
+.ibee-textarea--active {
+  border: 2px solid var(--color-ink);
+  padding: 11px 13px;
+}
+.ibee-input--error,
+.ibee-textarea--error,
+.ibee-select--error {
+  border-color: var(--color-error-field);
+}
+.ibee-input:disabled,
+.ibee-textarea:disabled,
+.ibee-select:disabled {
+  background: var(--color-background);
+  border-color: var(--color-border-soft);
+  color: var(--color-text-disabled);
+  cursor: not-allowed;
+}
+.ibee-select {
+  appearance: none;
+  padding-right: 38px;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--color-slate-500) 50%),
+    linear-gradient(135deg, var(--color-slate-500) 50%, transparent 50%);
+  background-position:
+    calc(100% - 19px) 20px,
+    calc(100% - 14px) 20px;
+  background-size:
+    5px 5px,
+    5px 5px;
+  background-repeat: no-repeat;
+}
+
+/* Alerte — ce qui s'est passé, puis quoi faire */
+.ibee-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  border-radius: var(--radius-tile);
+  padding: 18px 20px;
+}
+.ibee-alert__bar {
+  width: 4px;
+  align-self: stretch;
+  border-radius: 2px;
+  flex: none;
+}
+.ibee-alert__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-width: var(--reading-max);
+}
+.ibee-alert__title {
+  font: var(--weight-medium) var(--step-md)/1.3 var(--font-display);
+}
+.ibee-alert__text {
+  font: var(--weight-regular) var(--step-sm)/1.6 var(--font-sans);
+}
+.ibee-alert--accent {
+  background: var(--color-accent-soft);
+  color: var(--color-accent-strong);
+}
+.ibee-alert--accent .ibee-alert__bar {
+  background: var(--color-accent);
+}
+.ibee-alert--neutral {
+  background: var(--color-panel);
+  color: var(--color-slate-700);
+}
+.ibee-alert--neutral .ibee-alert__bar {
+  background: var(--color-slate-400);
+}
+.ibee-alert--error {
+  background: var(--color-surface);
+  border: 1px solid var(--color-error-field);
+  color: var(--color-text);
+}
+.ibee-alert--error .ibee-alert__bar {
+  background: var(--color-error-field);
+}
+.ibee-alert--success {
+  background: var(--color-success-soft);
+  color: var(--color-success-strong);
+}
+.ibee-alert--success .ibee-alert__bar {
+  background: var(--color-success);
+}
+
+/* Squelette — forme du contenu réel, pas d'animation de balayage */
+.ibee-skeleton {
+  background: var(--color-panel);
+  border-radius: 7px;
+}
+.ibee-skeleton--block {
+  border-radius: var(--radius-tile);
+}
+.ibee-skeleton-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* État vide — propose toujours l'action qui le résout */
+.ibee-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  text-align: center;
+  background: var(--color-background);
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-tile);
+  padding: 28px 20px;
+}
+.ibee-empty__title {
+  font: var(--weight-medium) var(--step-lg)/1.3 var(--font-display);
+  color: var(--color-text);
+}
+.ibee-empty__text {
+  font: var(--weight-regular) var(--step-sm)/1.5 var(--font-sans);
+  color: var(--color-text-muted);
+  max-width: 32ch;
+}
+
+/* Toast */
+.ibee-toast {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 14px 18px;
+  border-radius: var(--radius-tile);
+  background: var(--color-ink);
+  color: var(--color-text-on-ink);
+  box-shadow: var(--shadow-pop);
+  font: var(--weight-regular) var(--step-sm)/1.4 var(--font-sans);
+  z-index: var(--z-toast);
+}
+.ibee-toast__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-pill);
+  flex: none;
+}
+.ibee-toast__action {
+  margin-left: var(--space-2);
+  background: none;
+  border: 0;
+  color: var(--color-accent-soft);
+  font: var(--weight-medium) var(--step-sm) var(--font-display);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Modale */
+.ibee-modal__scrim {
+  position: fixed;
+  inset: 0;
+  background: color-mix(in srgb, var(--color-ink) 50%, transparent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6);
+  z-index: var(--z-modal);
+}
+.ibee-modal {
+  background: var(--color-surface);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-pop);
+  width: 100%;
+  max-width: 520px;
+  display: flex;
+  flex-direction: column;
+}
+.ibee-modal__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-6) var(--space-6) 0;
+}
+.ibee-modal__title {
+  font: var(--type-card-title);
+  color: var(--color-text);
+}
+.ibee-modal__body {
+  padding: var(--space-4) var(--space-6);
+  font: var(--type-body-sm);
+  color: var(--color-text-muted);
+}
+.ibee-modal__foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-6) var(--space-6);
+}
+
+/* En-tête d'app */
+.ibee-header {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-header);
+  height: var(--app-header-height);
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  padding: 0 var(--page-padding-x);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+.ibee-header__brand {
+  font: var(--weight-semibold) var(--step-xl)/1 var(--font-display);
+  letter-spacing: -0.02em;
+  color: var(--color-ink);
+  text-decoration: none;
+}
+.ibee-header__spacer {
+  flex: 1;
+}
+.ibee-header__search {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: var(--control-h-sm);
+  max-width: 360px;
+  flex: 1;
+  padding: 0 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-background);
+  color: var(--color-text-disabled);
+  font: var(--weight-regular) var(--step-sm) var(--font-sans);
+}
+
+/* Nav pill — navigation principale flottante */
+.ibee-navpill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 6px;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-pop);
+  z-index: var(--z-navpill);
+}
+.ibee-navpill--fixed {
+  position: fixed;
+  left: 0;
+  right: 0;
+  margin: 0 auto;
+  width: max-content;
+  bottom: var(--space-6);
+}
+.ibee-navpill__item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: var(--control-h-sm);
+  padding: 0 var(--space-4);
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--color-text-muted);
+  font: var(--weight-medium) var(--step-sm)/1 var(--font-display);
+  cursor: pointer;
+  transition:
+    background-color var(--transition-base),
+    color var(--transition-base);
+}
+.ibee-navpill__item:hover {
+  background: var(--color-panel);
+  color: var(--color-text);
+}
+.ibee-navpill__item--active {
+  background: var(--color-ink);
+  color: var(--color-text-on-ink);
+}
+.ibee-navpill__item--active:hover {
+  background: var(--color-slate-800);
+  color: var(--color-text-on-ink);
+}
+
+/* Dropdown */
+.ibee-dropdown {
+  position: relative;
+  display: inline-flex;
+}
+.ibee-dropdown__menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 200px;
+  padding: 6px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-tile);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-pop);
+  z-index: var(--z-dropdown);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.ibee-dropdown__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  height: var(--control-h-sm);
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: var(--radius-lg);
+  background: transparent;
+  color: var(--color-text);
+  font: var(--weight-regular) var(--step-sm) var(--font-sans);
+  text-align: left;
+  cursor: pointer;
+  width: 100%;
+}
+.ibee-dropdown__item:hover {
+  background: var(--color-panel);
+}
+.ibee-dropdown__item--danger {
+  color: var(--color-error-field);
+}
+.ibee-dropdown__sep {
+  height: 1px;
+  background: var(--color-border-soft);
+  margin: 4px 2px;
+}
+
+/* Wordmark provisoire — aucun fichier logo fourni avec les sources de marque */
+.ibee-wordmark {
+  display: inline-flex;
+  align-items: baseline;
+  font: var(--weight-semibold) var(--step-2xl)/1 var(--font-display);
+  letter-spacing: -0.02em;
+  color: var(--color-ink);
+}
+.ibee-wordmark__dot {
+  color: var(--color-accent);
+}
+
+/* Icônes : un seul jeu de traits, hérite currentColor */
+.ibee-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--icon-md);
+  height: var(--icon-md);
+  flex: none;
+}
+.ibee-icon > svg {
+  width: 100%;
+  height: 100%;
+  stroke-width: var(--icon-stroke);
+}
+svg.ibee-icon {
+  stroke-width: var(--icon-stroke);
+}
+.ibee-icon--sm {
+  width: var(--icon-sm);
+  height: var(--icon-sm);
+}
+.ibee-icon--lg {
+  width: var(--icon-lg);
+  height: var(--icon-lg);
+}
+
+/* Conteneurs de défilement type device-mock : pas de chrome de scrollbar natif */
+.ibee-noscrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.ibee-noscrollbar::-webkit-scrollbar {
+  display: none;
+}

@@ -1,22 +1,26 @@
-/* Tokens + base IBEE — source unique web ↔ dashboard */
+/* Tokens + base IBEE — source unique web ↔ dashboard.
+   Reconstruit depuis le bundle Claude Design (token/*.css, 13 fichiers) en
+   syntaxe @theme Tailwind v4 — un simple :root ne génère aucune classe
+   utilitaire (voir RAPPORT-remplacement-design-tokens.md §0). Décisions
+   d'arbitrage Killian et détails de reconstruction : même rapport, §6/§7. */
 
 @theme {
   --breakpoint-profile: 800px;
-  --breakpoint-lg: 1200px;
+  --breakpoint-lg: 1200px; /* bundle propose 1024px (--bp-lg dans layout.css) : écarté, casserait le seuil desktop actuel entre 1024-1200px */
 
-  --color-accent: #d95525;
-  --color-accent-hover: #c44a1e;
-  --color-accent-soft: #fcebe2;
-  --color-accent-strong: #b53a0d;
-  --color-accent-tint: rgba(217, 85, 37, 0.1);
+  --color-accent: #e8541c;
+  --color-accent-hover: #cc4413;
+  --color-accent-soft: #fdeae0;
+  --color-accent-strong: #a8330b;
+  --color-accent-tint: rgba(232, 84, 28, 0.1);
 
-  --color-cta-primary: #2a2a2a;
+  --color-cta-primary: #2a2a2a; /* aucun équivalent bundle — conservé tel quel */
   --color-cta-primary-hover: #d95525;
 
-  --color-background: #fafafa;
+  --color-background: #f5f7fa;
   --color-surface: #ffffff;
-  --color-panel: #f9fafb;
-  --color-panel-2: #f3f4f6;
+  --color-panel: #eef2f7;
+  --color-panel-2: #dbe3ec;
   --color-amber: #f59e0b;
 
   --color-neutral-0: #ffffff;
@@ -31,22 +35,30 @@
   --color-neutral-800: #1f2937;
   --color-neutral-900: #2a2a2a;
 
-  --color-border: #e8eaed;
-  --color-border-soft: #f3f4f6;
+  --color-border: #dbe3ec;
+  --color-border-soft: #eef2f7;
 
   --color-success: #16a34a;
+  --color-success-soft: #e7f6ec;
+  --color-success-strong: #0f7a37;
   --color-error: #dc2626;
+  --color-error-soft: #fdeaea;
+  --color-error-strong: #b31d1d;
   --color-warning: #d97706;
+  --color-warning-soft: #fdf1e0;
+  --color-warning-strong: #9a5a06;
   --color-info: #2563eb;
+  --color-info-soft: #e8effd;
+  --color-info-strong: #1c4fbf;
 
-  --font-sans: 'Roboto', 'Inter Variable', system-ui, sans-serif;
-  --font-display: 'Poppins', 'Roboto', 'Inter Variable', sans-serif;
-  --font-mono: ui-monospace, monospace;
+  --font-sans: 'Roboto', system-ui, -apple-system, sans-serif;
+  --font-display: 'Poppins', system-ui, -apple-system, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
 
   --radius-sm: 6px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
+  --radius-md: 12px; /* bundle propose 6px (marqué "deprecated, do not use") : écarté, 109 occurrences rounded-md/lg/xl auraient rétréci silencieusement */
+  --radius-lg: 16px; /* idem, bundle propose 8px */
+  --radius-xl: 24px; /* idem, bundle propose 10px */
   --radius-card: 18px;
   --radius-tile: 14px;
   --radius-field: 12px;
@@ -54,18 +66,142 @@
   --radius-chip: 30px;
 
   --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.04);
-  --shadow-md: 0 2px 8px rgb(0 0 0 / 0.08);
-  --shadow-lg: 0 8px 24px rgb(0 0 0 / 0.12);
+  --shadow-md: 0 2px 8px rgb(0 0 0 / 0.08); /* aucun équivalent bundle — conservé */
+  --shadow-lg: 0 8px 24px rgb(0 0 0 / 0.12); /* aucun équivalent bundle — conservé */
   --shadow-card: 0 2px 8px rgb(0 0 0 / 0.08);
   --shadow-shell: 0 24px 60px -24px rgb(20 22 28 / 0.28), 0 2px 8px rgb(0 0 0 / 0.04);
   --shadow-pop: 0 8px 24px rgb(0 0 0 / 0.12);
-  --shadow-nav: 0 2px 8px rgb(0 0 0 / 0.08), 0 1px 2px rgb(0 0 0 / 0.04);
+  --shadow-nav:
+    0 2px 8px rgb(0 0 0 / 0.08), 0 1px 2px rgb(0 0 0 / 0.04); /* aucun équivalent bundle — conservé */
 }
 
 :root {
+  /* — Slate : nouvelle échelle neutre du bundle, consommée par controls.css
+     et components.css via var(). Volontairement hors @theme : "slate" est
+     déjà un nom de couleur Tailwind par défaut (aucun usage réel vérifié
+     dans le repo — voir rapport), pas de raison de lui donner un statut de
+     classe utilitaire tant que rien ne l'adopte explicitement en JSX. */
+  --color-slate-25: #f7f9fb;
+  --color-slate-50: #eef2f7;
+  --color-slate-100: #dbe3ec;
+  --color-slate-200: #c2cfdd;
+  --color-slate-300: #9db0c4;
+  --color-slate-400: #7590aa;
+  --color-slate-500: #5b7793;
+  --color-slate-700: #34506a;
+  --color-slate-800: #22394f;
+  --color-slate-900: #17293d;
+  --color-ink: #17293d;
+
+  --color-text: #17293d;
+  --color-text-muted: #5b7793;
+  --color-text-disabled: #9db0c4;
+  --color-text-on-accent: #ffffff;
+  --color-text-on-ink: #ffffff;
+  --color-border-strong: #c2cfdd;
+  --color-error-field: #e0342c;
+
+  --color-link: #a8330b;
+  --color-link-hover: #e8541c;
+  --color-link-visited: #34506a;
+
+  --color-border-legacy: #e8eaed;
+
+  --focus-width: 2px;
+  --focus-offset: 2px;
+  --focus-color: #c2cfdd;
+  --focus-color-accent: #e8541c;
+
+  /* — Espacement : noms "--space-*" (pas "--spacing"), ne redéfinit pas
+     l'échelle Tailwind par défaut consommée par les classes padding, margin,
+     gap (voir .claude/rules/design.md §Espacements) — additif, aucune
+     collision. */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  --tap-min: 44px;
+  --control-h: 44px;
+  --control-h-sm: 36px;
+
+  --icon-sm: 16px;
+  --icon-md: 20px;
+  --icon-lg: 24px;
+  --icon-stroke: 1.75px;
+
+  /* — Layout (bp-lg volontairement omis : --breakpoint-lg ci-dessus est la
+     seule valeur de seuil "lg" à faire foi dans le projet). */
+  --bp-sm: 640px;
+  --bp-md: 768px;
+  --bp-xl: 1280px;
+  --container-max: 1120px;
+  --gutter: 24px;
+  --page-padding-x: 20px;
   --app-header-height: 65px;
   --app-navpill-clearance: 100px;
   --profile-main-padding-y: 32px;
+
+  /* — Mouvement */
+  --duration-fast: 120ms;
+  --duration-base: 180ms;
+  --duration-slow: 280ms;
+  --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: var(--duration-base) var(--ease-out);
+
+  /* — Calques */
+  --z-header: 100;
+  --z-navpill: 200;
+  --z-dropdown: 300;
+  --z-popover: 400;
+  --z-modal: 500;
+  --z-toast: 600;
+
+  /* — Typographie de rôle. Échelle atomique nommée "--step-*" (pas
+     "--text-*") : Tailwind expose déjà des classes text-xs/sm/lg/xl/2xl par
+     défaut, et text-lg par défaut vaut 18px contre 16px ici — nommer
+     pareil aurait changé la valeur résolue de la classe Tailwind existante
+     sans la moindre nouvelle classe visible dans un diff JSX. --step-*
+     n'alimente que les tokens --type-* ci-dessous, jamais une classe
+     utilitaire directement. */
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+
+  --step-4xl: 36px;
+  --leading-4xl: 1.1;
+  --tracking-4xl: -0.025em;
+  --step-2xl: 24px;
+  --leading-2xl: 1.2;
+  --step-xl: 20px;
+  --leading-xl: 1.3;
+  --step-lg: 16px;
+  --leading-lg: 1.6;
+  --step-md: 15px;
+  --leading-md: 1.6;
+  --step-sm: 14px;
+  --leading-sm: 1.5;
+  --step-xs: 12px;
+  --leading-xs: 1.4;
+  --tracking-xs: 0.02em;
+
+  --type-page-title: var(--weight-semibold) var(--step-4xl)/var(--leading-4xl) var(--font-display);
+  --type-section-title: var(--weight-semibold) var(--step-2xl)/var(--leading-2xl)
+    var(--font-display);
+  --type-card-title: var(--weight-medium) var(--step-xl)/var(--leading-xl) var(--font-display);
+  --type-body: var(--weight-regular) var(--step-lg)/var(--leading-lg) var(--font-sans);
+  --type-body-sm: var(--weight-regular) var(--step-sm)/var(--leading-sm) var(--font-sans);
+  --type-label: var(--weight-medium) var(--step-sm)/1.3 var(--font-display);
+  --type-control: var(--weight-medium) var(--step-md)/1 var(--font-display);
+  --type-caption: var(--weight-medium) var(--step-xs)/var(--leading-xs) var(--font-sans);
+  --type-mono: var(--weight-regular) var(--step-xs)/1.5 var(--font-mono);
+
+  --reading-max: 68ch;
 }
 
 html {
@@ -95,6 +231,21 @@ button:not([disabled]),
 [role='button']:not([aria-disabled='true']),
 a[href]:not([aria-disabled='true']) {
   cursor: pointer;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 0ms;
+    --duration-base: 0ms;
+    --duration-slow: 0ms;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 /* Drawer mobile */
