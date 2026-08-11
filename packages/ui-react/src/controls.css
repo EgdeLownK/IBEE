@@ -1,0 +1,114 @@
+/* Système de boutons IBEE — remplace button.css (token/controls.css du
+   bundle Claude Design, arbitré par Killian : ce fichier fait foi sur
+   l'ancien .btn — voir RAPPORT-remplacement-design-tokens.md §2b/§6).
+   Utiliser .btn (+ .btn--accent / .btn--dark / .btn--ghost / .btn--sm) et
+   .iconbtn pour tout bouton : ne jamais restyler un <button> au cas par
+   cas — règle complète : .claude/rules/design.md. */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  height: var(--control-h);
+  min-width: var(--tap-min);
+  padding: 0 var(--space-6);
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  font: var(--type-control);
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background-color var(--transition-base),
+    border-color var(--transition-base),
+    color var(--transition-base);
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  background: var(--color-panel);
+  border-color: var(--color-border-soft);
+  color: var(--color-text-disabled);
+}
+
+.btn--accent {
+  background: var(--color-accent);
+  color: var(--color-text-on-accent);
+}
+
+.btn--accent:hover:not(:disabled) {
+  background: var(--color-accent-hover);
+}
+
+.btn--accent:active:not(:disabled) {
+  background: var(--color-accent-strong);
+}
+
+.btn--accent:focus-visible {
+  outline-color: var(--focus-color-accent);
+}
+
+.btn--dark {
+  background: var(--color-ink);
+  color: var(--color-text-on-ink);
+}
+
+.btn--dark:hover:not(:disabled) {
+  background: var(--color-slate-800);
+}
+
+.btn--dark:active:not(:disabled) {
+  background: var(--color-slate-900);
+}
+
+.btn--ghost {
+  background: var(--color-surface);
+  border-color: var(--color-border);
+  color: var(--color-text);
+}
+
+.btn--ghost:hover:not(:disabled) {
+  background: var(--color-panel);
+}
+
+.btn--ghost:active:not(:disabled) {
+  background: var(--color-panel-2);
+}
+
+.btn--sm {
+  height: var(--control-h-sm);
+  padding: 0 var(--space-4);
+  font-size: var(--step-sm);
+}
+
+.iconbtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--tap-min);
+  height: var(--tap-min);
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--color-text-muted);
+  font: var(--type-control);
+  cursor: pointer;
+  transition:
+    background-color var(--transition-base),
+    color var(--transition-base);
+}
+
+.iconbtn:hover {
+  background: var(--color-panel);
+  color: var(--color-text);
+}
+
+.iconbtn:active {
+  background: var(--color-panel-2);
+}
+
+.iconbtn:disabled {
+  color: var(--color-text-disabled);
+  cursor: not-allowed;
+}
