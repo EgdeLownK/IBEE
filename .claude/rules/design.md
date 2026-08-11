@@ -6,9 +6,16 @@ paths:
 
 # Design system IBEE
 
-Source des tokens : `packages/ui-react/src/tokens.css` (bloc `@theme`). Ne
-jamais lire les valeurs ci-dessous comme la source de vérité — en cas de
-divergence, `tokens.css` gagne et cette règle doit être corrigée.
+Source des tokens : `packages/ui-react/src/tokens.css` — bloc `@theme{}` pour
+tout ce qui doit générer une classe utilitaire Tailwind (couleurs, rayons,
+ombres, breakpoints, polices), bloc `:root{}` pour le reste (espacement,
+mouvement, calques, typographie de rôle interne — voir §Polices). Le système
+de boutons (`.btn`, `.iconbtn`) vit dans `packages/ui-react/src/controls.css`,
+les composants `.ibee-*` dans `packages/ui-react/src/components.css` — les
+deux consomment les tokens via `var()`, importés globalement dans
+`apps/platform/src/app/globals.css`. Ne jamais lire les valeurs ci-dessous
+comme la source de vérité — en cas de divergence, `tokens.css` gagne et cette
+règle doit être corrigée.
 
 ## Configuration Tailwind (`@source`)
 
@@ -26,7 +33,7 @@ Deux formes existent pour chaque token, à utiliser selon le fichier :
 - **Dans un composant JSX/TSX** → la **classe utilitaire** Tailwind générée
   automatiquement depuis la clé `@theme` (ex. `bg-surface`, `rounded-card`,
   `shadow-card`, `font-display`).
-- **Dans un fichier `.css`** (`button.css`, `profile-styles.css`, etc.) → la
+- **Dans un fichier `.css`** (`controls.css`, `profile-styles.css`, etc.) → la
   **variable CSS** directement (`var(--color-surface)`, `var(--radius-card)`,
   `var(--shadow-card)`, `var(--font-display)`). Les classes utilitaires
   Tailwind n'existent pas en dehors du JSX scanné par `@source` — dans un
@@ -54,6 +61,10 @@ Deux formes existent pour chaque token, à utiliser selon le fichier :
 - `success`, `error`, `warning`, `info` (ex. `bg-success`, `text-error`) /
   `var(--color-success)`, `var(--color-error)`, … — jamais de
   `red-*`/`green-*`/`emerald-*` bruts pour exprimer un état
+- `success-soft`/`-strong`, `error-soft`/`-strong`, `warning-soft`/`-strong`,
+  `info-soft`/`-strong` (ex. `bg-success-soft`, `text-success-strong`) /
+  `var(--color-success-soft)`, … — fond doux + texte appuyé pour badges et
+  alertes, même famille que `accent-soft`/`accent-strong`
 
 **Couleur d'accent produit**
 - `accent`, `accent-hover`, `accent-soft`, `accent-strong`, `accent-tint`
@@ -133,6 +144,20 @@ juste que `lg:` ne s'est pas encore déclenché dans ce projet. Vérifier
 `--breakpoint-profile` (800px, seuil custom sans équivalent Tailwind) plutôt
 que de deviner un seuil standard pour toute mise en page profil.
 
+**Typographie de rôle (`--step-*`)** : Tailwind expose par défaut ses propres
+classes `text-xs`/`text-sm`/`text-lg`/`text-xl`/`text-2xl` avec sa propre
+échelle (`text-lg` = 18px par défaut Tailwind). Le système de rôle IBEE
+(titre de page, titre de carte, corps, libellé, contrôle, légende — composés
+dans `--type-*`) n'utilise donc jamais le nom `--text-*` : il est nommé
+`--step-*` (`--step-lg`, `--step-xl`, …), volontairement hors `@theme`,
+précisément pour ne jamais prendre la place de l'échelle Tailwind par
+défaut. Nommer un token de rôle `--text-lg` aurait changé silencieusement la
+valeur de la classe Tailwind `text-lg` déjà utilisée dans le code (16px IBEE
+vs 18px Tailwind), sans qu'aucune nouvelle classe n'apparaisse dans un diff
+JSX — même mécanisme que le piège des rayons ci-dessus. `--step-*` n'alimente
+que `--type-*`, consommé via `var()` dans un `.css`, jamais comme classe
+Tailwind directe.
+
 **Autres écarts audités dans `tokens.css`** (mêmes noms que Tailwind par
 défaut, valeurs différentes — moins piégeux car ils ne faussent pas un calcul
 de seuil ou de taille, mais à connaître) :
@@ -143,9 +168,13 @@ de seuil ou de taille, mais à connaître) :
 | `--font-sans` / `--font-mono` | pile de police IBEE (Roboto / ui-monospace, monospace) au lieu de la pile système par défaut Tailwind — customisation volontaire, pas une erreur |
 | `--color-neutral-50` → `--color-neutral-900` | valeurs hex IBEE au lieu de l'échelle `oklch` par défaut Tailwind — c'est précisément pour cette divergence que `gray-*` est interdit au profit de `neutral-*` (voir table ci-dessus) |
 
-Aucun autre token de `tokens.css` ne partage un nom avec un token par défaut
-Tailwind (`--radius-card`, `--breakpoint-profile`, `--color-accent`, etc.
-sont tous des noms propres au projet, sans collision).
+Aucun autre token du bloc `@theme` de `tokens.css` ne partage un nom avec un
+token par défaut Tailwind (`--radius-card`, `--breakpoint-profile`,
+`--color-accent`, etc. sont tous des noms propres au projet, sans
+collision) — c'est précisément pour cette raison que la typographie de rôle
+est nommée `--step-*` plutôt que `--text-*` (voir ci-dessus), et que
+`--color-slate-*` (autre nom de palette Tailwind par défaut, 0 usage réel
+vérifié dans le repo) reste lui aussi dans le bloc `:root`, hors `@theme`.
 
 ## Rayons concentriques
 
@@ -180,14 +209,15 @@ l'intention.
 
 `.btn--block` (largeur 100%) existe déjà comme modificateur du système, mais
 est actuellement défini dans `packages/ui-react/src/profile/detail-styles.css`
-plutôt que dans `button.css` — un rapatriement dans `button.css` est prévu
-pour que tous les modificateurs `.btn*` vivent au même endroit. En attendant,
-il reste utilisable (`class="btn btn--dark btn--block"`), simplement pas
-co-localisé avec le reste du système.
+plutôt que dans `controls.css` — un rapatriement dans `controls.css` est
+prévu pour que tous les modificateurs `.btn*` vivent au même endroit. En
+attendant, il reste utilisable (`class="btn btn--dark btn--block"`),
+simplement pas co-localisé avec le reste du système.
 
-Tout bouton utilise le système `.btn` (+ modificateur `.btn--dark` ou
-`.btn--ghost`) ou `.iconbtn` pour les boutons icône seule, défini dans
-`packages/ui-react/src/button.css` et importé globalement via
+Tout bouton utilise le système `.btn` (+ modificateur `.btn--accent`,
+`.btn--dark`, `.btn--ghost`, ou `.btn--sm` pour la taille compacte) ou
+`.iconbtn` pour les boutons icône seule, défini dans
+`packages/ui-react/src/controls.css` et importé globalement via
 `apps/platform/src/app/globals.css`.
 
 Ne jamais restyler un `<button>` au cas par cas (classes Tailwind ad hoc,
