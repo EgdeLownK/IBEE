@@ -50,7 +50,7 @@ export function ProfileSidebar() {
   const pilotageItems: SidebarItem[] = [
     {
       href: '/dashboard/talent',
-      label: 'Talent',
+      label: 'Recrutement',
       icon: <Sparkles className="h-5 w-5" aria-hidden="true" />,
       isActive: pathname.startsWith('/dashboard/talent'),
     },
