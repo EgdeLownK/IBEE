@@ -452,7 +452,7 @@ export function JobOfferDialog({
           await createJobOfferAction(entityId, payload)
           if (targetStatus === 'inactive') {
             toast.success(
-              'Offre enregistrée hors ligne — retrouvable dans Pilotage > Talent pour la publier plus tard.',
+              'Offre enregistrée hors ligne — retrouvable dans Pilotage > Recrutement pour la publier plus tard.',
             )
           } else {
             toast.success('Offre publiée.')

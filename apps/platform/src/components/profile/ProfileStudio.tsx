@@ -243,7 +243,7 @@ export function ProfileStudio() {
       }
     } else if (
       !window.confirm(
-        'Mettre cette offre hors ligne la fera disparaître de cette vue. Elle reste accessible et réactivable depuis Pilotage > Talent.',
+        'Mettre cette offre hors ligne la fera disparaître de cette vue. Elle reste accessible et réactivable depuis Pilotage > Recrutement.',
       )
     ) {
       return

@@ -148,7 +148,7 @@ export function TalentDashboard({
       <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="font-display text-3xl font-bold tracking-tight text-neutral-900">
-            Talent
+            Recrutement
           </h1>
           <p className="text-sm text-neutral-500 mt-1.5">
             Gérez vos offres d&apos;emploi et recrutements.
@@ -176,16 +176,13 @@ export function TalentDashboard({
       </div>
 
       {filteredAndSortedOffers.length === 0 ? (
-        <div className="p-8 text-center text-neutral-500">
+        <div className="ibee-empty">
           {searchQuery ? (
-            <p>Aucune offre ne correspond à votre recherche.</p>
+            <p className="ibee-empty__title">Aucune offre ne correspond à votre recherche.</p>
           ) : (
             <>
-              <p>Aucune offre d&apos;emploi pour le moment.</p>
-              <button
-                className="mt-4 inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-950 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-neutral-200 bg-white hover:bg-neutral-100 hover:text-neutral-900 h-10 px-4 py-2"
-                onClick={handleCreate}
-              >
+              <p className="ibee-empty__title">Aucune offre d&apos;emploi pour le moment.</p>
+              <button className="btn btn--ghost" onClick={handleCreate}>
                 Créer votre première offre
               </button>
             </>

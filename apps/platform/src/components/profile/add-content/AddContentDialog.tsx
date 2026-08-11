@@ -122,7 +122,7 @@ export function AddContentDialog({
   const toolbarItems = useMemo((): ToolbarItem[] => {
     const all: ToolbarItem[] = [
       { type: 'news', label: 'News', mode: 'composer', Icon: Newspaper },
-      { type: 'talent', label: 'Talent', mode: 'overlay', Icon: Users },
+      { type: 'talent', label: 'Recrutement', mode: 'overlay', Icon: Users },
       { type: 'history', label: 'Histoire', mode: 'overlay', Icon: BookOpen },
     ]
     return all.filter((item) => activeSectionTypes.has(item.type))
