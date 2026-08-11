@@ -82,7 +82,7 @@ interface Props {
 /**
  * Refonte sur le modele de ProductDetail/ProductDetailPage (lu, jamais
  * modifie) : ProfileShell (carte 800px) + DetailTopBar, galerie en premier,
- * bloc "faits cles" bordé + bouton Postuler dupliques en flux (<1200px,
+ * bloc "faits cles" bordé + bouton Rejoindre dupliques en flux (<1200px,
  * juste apres le titre) et via portail dans une colonne laterale sticky
  * (>=1200px) -- meme mecanisme que #buybox-portal (ProductDetail.tsx), sous
  * un id distinct (job-offer-buybox-portal) pour ne jamais partager de DOM
@@ -173,7 +173,7 @@ export function PublicJobOfferDetail({
         })}
       </div>
       <button type="button" onClick={() => setApplyOpen(true)} className="btn btn--dark btn--block">
-        Postuler à cette offre
+        Rejoindre cette offre
       </button>
     </div>
   )

@@ -90,7 +90,7 @@ export function ApplyBottomSheet({
         aria-label="Fermer"
         onClick={onClose}
       />
-      <div className="relative bg-white rounded-t-2xl px-5 pt-5 pb-8 max-h-[90vh] overflow-y-auto shadow-xl">
+      <div className="relative bg-surface rounded-t-card px-5 pt-5 pb-8 max-h-[90vh] overflow-y-auto shadow-xl">
         <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-neutral-200" />
 
         <div className="flex items-center justify-between mb-4">
@@ -110,18 +110,14 @@ export function ApplyBottomSheet({
             <p className="text-sm text-neutral-500 mt-1">
               Nous avons bien reçu votre candidature. Bonne chance !
             </p>
-            <button
-              type="button"
-              onClick={onClose}
-              className="mt-6 w-full rounded-xl bg-neutral-900 py-3 text-sm font-semibold text-white"
-            >
+            <button type="button" onClick={onClose} className="btn btn--dark btn--block mt-6">
               Fermer
             </button>
           </div>
         ) : !isAuthenticated ? (
           <div className="py-4 text-center">
             <p className="text-sm text-neutral-600 mb-6">
-              Connectez-vous pour postuler et suivre vos candidatures.
+              Connectez-vous pour rejoindre cette offre et suivre vos candidatures.
             </p>
             <button
               type="button"
@@ -130,75 +126,65 @@ export function ApplyBottomSheet({
                   `/login?next=${encodeURIComponent(typeof window !== 'undefined' ? window.location.pathname : '/')}`,
                 )
               }
-              className="w-full rounded-xl bg-neutral-900 py-3.5 text-sm font-semibold text-white mb-3"
+              className="btn btn--dark btn--block mb-3"
             >
               Se connecter
             </button>
-            <button
-              type="button"
-              onClick={onClose}
-              className="w-full rounded-xl border border-neutral-200 py-3 text-sm font-medium text-neutral-700"
-            >
+            <button type="button" onClick={onClose} className="btn btn--ghost btn--block">
               Plus tard
             </button>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs font-medium text-neutral-600 block mb-1">Prénom *</label>
+              <div className="ibee-field">
+                <label className="ibee-field__label">Prénom *</label>
                 <input
                   type="text"
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
-                  className="w-full rounded-lg border border-neutral-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900/20"
+                  className="ibee-input"
                   placeholder="Prénom"
                   required
                 />
               </div>
-              <div>
-                <label className="text-xs font-medium text-neutral-600 block mb-1">Nom *</label>
+              <div className="ibee-field">
+                <label className="ibee-field__label">Nom *</label>
                 <input
                   type="text"
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
-                  className="w-full rounded-lg border border-neutral-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900/20"
+                  className="ibee-input"
                   placeholder="Nom"
                   required
                 />
               </div>
             </div>
-            <div>
-              <label className="text-xs font-medium text-neutral-600 block mb-1">Email *</label>
+            <div className="ibee-field">
+              <label className="ibee-field__label">Email *</label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-lg border border-neutral-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900/20"
+                className="ibee-input"
                 placeholder="votre@email.com"
                 required
               />
             </div>
-            <div>
-              <label className="text-xs font-medium text-neutral-600 block mb-1">
-                Message (optionnel)
-              </label>
+            <div className="ibee-field">
+              <label className="ibee-field__label">Message (optionnel)</label>
               <textarea
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 rows={4}
-                className="w-full rounded-lg border border-neutral-200 px-3 py-2.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-neutral-900/20"
+                className="ibee-textarea"
                 placeholder="Décrivez votre motivation en quelques lignes..."
               />
             </div>
 
-            {error ? <p className="text-xs text-red-600 font-medium">{error}</p> : null}
+            {error ? <p className="ibee-field__error">{error}</p> : null}
 
-            <button
-              type="submit"
-              disabled={isPending}
-              className="w-full rounded-xl bg-neutral-900 py-3.5 text-sm font-semibold text-white disabled:opacity-60"
-            >
+            <button type="submit" disabled={isPending} className="btn btn--dark btn--block">
               {isPending ? (
                 <span className="flex items-center justify-center gap-2">
                   <Loader2 className="h-4 w-4 animate-spin" /> Envoi...
