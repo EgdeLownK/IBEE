@@ -24,7 +24,7 @@ import { JobOfferAdminMenu } from './JobOfferAdminMenu'
  *
  * `adminMenu` (menu "trois points" Modifier/Bascule/Supprimer) est
  * volontairement independant de `variant` : le studio (ProfileStudio.tsx)
- * garde `variant="visitor"` pour conserver le CTA "Postuler" tel quel et
+ * garde `variant="visitor"` pour conserver le CTA "Rejoindre" tel quel et
  * ajoute seulement ce menu par-dessus. Absent (PublicJobOffersList
  * visiteur, TalentDashboard sans action) = aucune trace dans le DOM.
  *
@@ -332,7 +332,7 @@ export function JobOfferRow(props: JobOfferRowProps) {
         <div className="job-row__comp-actions">
           {props.variant === 'visitor' ? (
             <Link className="job-row__cta" href={props.applyHref}>
-              Postuler
+              Rejoindre
             </Link>
           ) : (
             props.onEdit && (
