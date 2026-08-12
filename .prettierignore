@@ -35,3 +35,11 @@ test_db.mjs
 .tmp-standalone-decoded.html
 IBEE Profil (offline).html
 IBEE Profile (standalone).html
+
+# Maquettes de référence non trackées (jamais commitées, voir CLAUDE.md) —
+# présentes seulement en local pendant le travail de design ; prettier ne
+# sait pas parser leurs balises custom (sc-if, dc-import, x-dc) et fait
+# échouer `format:check` tant qu'elles trainent au repo sans cette exception.
+Detail offre.dc.html
+Prototype desktop.dc.html
+Prototype mobile.dc.html

@@ -10,7 +10,17 @@
 
 @media (min-width: 1200px) {
   .app-layout__sidebar {
-    width: 260px;
+    /* Rail flottant desktop (maquette Prototype desktop.dc.html, L43) : slot de
+       116px qui centre horizontalement la pill (ni bord à bord, ni pleine
+       largeur) — remplace l'ancienne colonne 260px bord-à-bord. */
+    width: 116px;
+    display: flex;
+    justify-content: center;
+    /* align-items: flex-start (pas stretch, le défaut du flex parent
+       .app-layout__body) — sinon .main-rail est étiré à la hauteur du slot et
+       le sticky n'a plus de plage de défilement où "coller". */
+    align-items: flex-start;
+    padding: var(--space-6) 0;
   }
 }
 
@@ -73,14 +83,24 @@
 
   .main-rail {
     position: sticky;
-    top: var(--app-header-height);
+    /* La maquette pose top:var(--space-6) sur un cadre statique sans en-tête
+       collant testé au scroll. Notre en-tête réel est sticky top:0 sur
+       var(--app-header-height) (65px) : sans en tenir compte ici, la pill
+       passerait SOUS l'en-tête dès le premier pixel de scroll. Décalage
+       corrigé = hauteur en-tête + la même respiration de 24px. */
+    top: calc(var(--app-header-height) + var(--space-6));
     left: auto;
     z-index: auto;
-    width: 100%;
-    height: calc(100vh - var(--app-header-height));
+    width: auto;
+    height: auto;
+    max-height: calc(100vh - var(--app-header-height) - var(--space-6) * 2);
     transform: none;
-    box-shadow: none;
-    border-right: 1px solid var(--color-border);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-pop);
+    border-right: none;
+    border-radius: var(--radius-pill);
+    padding: var(--space-2);
+    overflow-y: auto;
   }
 
   .main-rail__head {
@@ -88,7 +108,8 @@
   }
 
   .sidebar-nav {
-    padding-top: 22px;
+    padding: 0;
+    gap: var(--space-1);
   }
 }
 
@@ -167,16 +188,13 @@
 }
 
 .app-header__brand {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
   font-family: var(--font-sans);
   font-weight: 700;
-  font-size: 24px;
+  font-size: 20px;
   letter-spacing: 0.02em;
   color: var(--color-neutral-900);
   text-decoration: none;
+  flex-shrink: 0;
 }
 
 .app-header__brand sup {
@@ -194,29 +212,24 @@
   gap: 14px;
 }
 
-.app-header__weather {
-  display: inline-flex;
+/* Cluster météo + heure — un seul élément centré, sans température affichée
+   (maquette Prototype desktop.dc.html L33). Centrage par position absolute
+   (immunisé aux largeurs asymétriques gauche/droite), même mécanisme que
+   .app-header__brand avant ce lot — voir RAPPORT pour le repositionnement. */
+.app-header__meta {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
   align-items: center;
-  gap: 6px;
+  gap: var(--space-3);
   color: var(--color-neutral-500);
   font-family: var(--font-display);
-  font-size: 14px;
-  font-weight: 500;
-  padding: 4px 10px;
-  border-radius: var(--radius-pill);
-  background: var(--color-panel);
+  font-size: 18px;
   cursor: default;
 }
 
-.app-header__weather-temp {
-  font-variant-numeric: tabular-nums;
-  color: var(--color-neutral-900);
-}
-
-.app-header__time {
-  font-family: var(--font-display);
-  font-size: 18px;
-  color: var(--color-neutral-500);
+.app-header__meta-time {
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;
 }
@@ -226,8 +239,8 @@
 }
 
 .app-header__avatar {
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   background: var(--color-panel-2);
   cursor: pointer;
@@ -462,41 +475,14 @@
   padding: 22px 25px;
 }
 
-.sidebar-nav__body {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  gap: 24px;
-  min-height: 0;
-  overflow-y: auto;
-}
-
-.sidebar-nav__footer {
-  flex-shrink: 0;
-  margin-top: auto;
-  padding-top: 16px;
-  border-top: 1px solid var(--color-border-soft);
-}
-
-.sidebar__section {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.sidebar__label {
-  font-size: 14px;
-  color: var(--color-neutral-500);
-  margin: 0 0 4px;
-}
-
-.sidebar__item {
+/* ---------- Rail — items (liste mobile pleine largeur -> capsule desktop) ---------- */
+.rail-btn {
   display: flex;
   align-items: center;
   gap: 12px;
   width: 100%;
   border: none;
-  border-radius: 14px;
+  border-radius: var(--radius-tile);
   padding: 10px 12px;
   margin: 0;
   color: var(--color-neutral-900);
@@ -509,55 +495,159 @@
   background: transparent;
 }
 
-.sidebar__item:hover {
+.rail-btn:hover {
   background: var(--color-panel);
 }
 
-.sidebar__item.is-active {
+.rail-btn.is-active {
   background: var(--color-panel);
-  box-shadow: inset 2px 0 0 var(--color-neutral-300);
   font-weight: 600;
 }
 
-.sidebar__item.is-disabled {
-  opacity: 0.55;
+.rail-btn.is-disabled {
+  color: var(--color-neutral-400);
   cursor: default;
   pointer-events: none;
 }
 
-.sidebar__item-soon {
-  flex-shrink: 0;
-  font-size: 10px;
-  font-weight: 500;
-  color: var(--color-neutral-400);
-}
-
-.sidebar__account-switcher {
+.rail-btn__icon {
   display: flex;
+  flex-shrink: 0;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  width: 100%;
-  border: none;
-  border-radius: 14px;
-  padding: 10px 12px;
-  margin: 0;
-  color: var(--color-neutral-900);
-  font-family: var(--font-display);
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 120ms ease;
-  background: transparent;
+  justify-content: center;
 }
 
-.sidebar__account-switcher:hover {
-  background: var(--color-panel);
-}
-
-.sidebar__account-switcher__label {
+.rail-btn__label {
   min-width: 0;
-  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rail-btn__badge {
+  flex-shrink: 0;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent);
+  color: var(--color-text-on-accent);
+  font-size: 10px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+}
+
+.rail-separator {
+  height: 1px;
+  margin: 4px 8px;
+  background: var(--color-border-soft);
+  border: none;
+}
+
+.rail-btn__avatar {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--color-ink);
+  color: var(--color-text-on-ink);
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.rail-btn__avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+@media (min-width: 1200px) {
+  .sidebar-nav {
+    align-items: center;
+  }
+
+  /* Capsule 68px : largeur figée localement (pas un token) pour dériver le
+     rayon des boutons d'extrémité — voir .rail-btn--cap-top/bottom. */
+  .rail-btn {
+    --rail-btn-size: 68px;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+    width: var(--rail-btn-size);
+    min-height: var(--rail-btn-size);
+    padding: 6px 4px;
+    border-radius: var(--radius-card);
+    text-align: center;
+  }
+
+  .rail-btn__label {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: normal;
+    font-size: var(--step-xs);
+    line-height: var(--leading-xs);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+
+  .rail-btn__badge {
+    position: absolute;
+    top: 2px;
+    right: 6px;
+    margin-left: 0;
+  }
+
+  .rail-btn {
+    position: relative;
+  }
+
+  /* Chevron retour (zone profile-web) : bouton court et isolé, pill pleine
+     (pas de capsule composite — voir la fiche maquette, le chevron n'est pas
+     visuellement lié aux items qui suivent car séparé par .rail-separator). */
+  .rail-btn--pill {
+    min-height: 44px;
+    border-radius: var(--radius-pill);
+  }
+
+  /* Premier/dernier bouton visuel d'une colonne rail continue (zone home :
+     Accueil en haut, Projet en bas ; zone profile-web : "À venir" en bas) —
+     VOLONTAIRE : 34px = calc(var(--rail-btn-size) / 2), aucun token de rayon
+     n'exprime ce demi-cercle de capsule (cas signalé en rapport, clause
+     d'escalade design.md — à formaliser en token si le motif se répète). */
+  .rail-btn--cap-top {
+    border-radius: calc(var(--rail-btn-size) / 2) calc(var(--rail-btn-size) / 2) var(--radius-card)
+      var(--radius-card);
+  }
+
+  .rail-btn--cap-bottom {
+    border-radius: var(--radius-card) var(--radius-card) calc(var(--rail-btn-size) / 2)
+      calc(var(--rail-btn-size) / 2);
+  }
+
+  .rail-separator {
+    width: 100%;
+  }
+
+  .rail-btn__avatar {
+    width: 26px;
+    height: 26px;
+  }
+
+  .rail-btn__avatar--lg {
+    width: 30px;
+    height: 30px;
+    font-size: 11px;
+  }
 }
 
 .project-account-switcher__chevron {
@@ -565,7 +655,7 @@
   transition: transform 0.22s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
-.sidebar__account-switcher.is-open .project-account-switcher__chevron,
+.rail-btn.is-open .project-account-switcher__chevron,
 .app-header__project.is-open .project-account-switcher__chevron {
   transform: rotate(180deg);
 }

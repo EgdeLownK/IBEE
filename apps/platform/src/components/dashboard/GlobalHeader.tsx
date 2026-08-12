@@ -109,20 +109,16 @@ function GuestGlobalHeader({ loginUrl = '/login' }: Pick<Props, 'loginUrl'>) {
 
   return (
     <header className="app-header">
-      <div className="flex items-center gap-2" aria-hidden="true" />
-
       <Link href="/" className="app-header__brand" aria-label="Accueil IBEE">
         IBEE<sup>v0.4</sup>
       </Link>
 
+      <div className="app-header__meta hidden md:inline-flex" aria-label="Météo et heure">
+        <Sun className="h-4 w-4" aria-hidden="true" />
+        <span className="app-header__meta-time">{clock}</span>
+      </div>
+
       <div className="app-header__right">
-        <div className="app-header__weather hidden md:inline-flex" aria-label="Météo">
-          <Sun className="h-4 w-4" aria-hidden="true" />
-          <span className="app-header__weather-temp">21°</span>
-        </div>
-
-        <span className="app-header__time hidden md:inline">{clock}</span>
-
         <a
           href={loginUrl}
           className="inline-flex items-center rounded-full border border-neutral-200 bg-surface px-4 py-1.5 text-sm font-medium text-neutral-900 transition-colors hover:bg-panel-2"
@@ -206,7 +202,7 @@ function AuthenticatedGlobalHeader(_props: Props) {
 
   return (
     <header className="app-header">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3">
         {showSidebar ? (
           <button
             type="button"
@@ -218,21 +214,19 @@ function AuthenticatedGlobalHeader(_props: Props) {
           </button>
         ) : null}
 
+        <Link href="/" className="app-header__brand" aria-label="Accueil IBEE">
+          IBEE<sup>v0.4</sup>
+        </Link>
+
         {!hideProjectSwitcher ? <ProjectAccountSwitcher variant="header" /> : null}
       </div>
 
-      <Link href="/" className="app-header__brand" aria-label="Accueil IBEE">
-        IBEE<sup>v0.4</sup>
-      </Link>
+      <div className="app-header__meta hidden md:inline-flex" aria-label="Météo et heure">
+        <Sun className="h-4 w-4" aria-hidden="true" />
+        <span className="app-header__meta-time">{clock}</span>
+      </div>
 
       <div className="app-header__right">
-        <div className="app-header__weather hidden md:inline-flex" aria-label="Météo">
-          <Sun className="h-4 w-4" aria-hidden="true" />
-          <span className="app-header__weather-temp">21°</span>
-        </div>
-
-        <span className="app-header__time hidden md:inline">{clock}</span>
-
         <Link
           href="/notifications"
           className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-neutral-600 transition hover:bg-panel md:hidden"
