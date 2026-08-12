@@ -51,6 +51,8 @@
   --color-info-soft: #e8effd;
   --color-info-strong: #1c4fbf;
 
+  --color-ink: #17293d; /* exposé en @theme (bg-ink) : la barre collante de PublicJobOfferDetail est la 1ere consommatrice JSX — voir feat/lot2-detail-restructure. Valeur toujours dupliquée dans --color-slate-900 (:root ci-dessous), même rôle sémantique */
+
   --font-sans: 'Roboto', system-ui, -apple-system, sans-serif;
   --font-display: 'Poppins', system-ui, -apple-system, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -91,7 +93,7 @@
   --color-slate-700: #34506a;
   --color-slate-800: #22394f;
   --color-slate-900: #17293d;
-  --color-ink: #17293d;
+  /* --color-ink vit désormais dans @theme ci-dessus (bg-ink) — pas de doublon ici. */
 
   --color-text: #17293d;
   --color-text-muted: #5b7793;

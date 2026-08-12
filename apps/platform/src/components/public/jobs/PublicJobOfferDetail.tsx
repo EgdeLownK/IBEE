@@ -1,7 +1,6 @@
 'use client'
 
-import { useState, useSyncExternalStore } from 'react'
-import { createPortal } from 'react-dom'
+import { useState } from 'react'
 import { ProfileShell } from '@ibee/ui-react/profile'
 import type {
   JobOffer,
@@ -36,18 +35,6 @@ function compensationLabel(offer: JobOffer): string | null {
   return `${offer.compensation_amount}${unit}${freq}`
 }
 
-// Ne s'abonne a rien (jamais de re-render declenche) : useSyncExternalStore
-// sert ici uniquement a distinguer serveur (snapshot false, document
-// n'existe pas) de client apres hydratation (snapshot true) -- pattern
-// recommande pour ce besoin precis, evite l'erreur eslint
-// react-hooks/set-state-in-effect que declenche le motif classique
-// useState+useEffect(() => setMounted(true)) (deja gelee pour ce meme motif
-// dans ProductDetail.tsx via eslint-suppressions.json, mais uniquement pour
-// ce fichier -- ne pas elargir cette liste).
-function subscribeNever() {
-  return () => {}
-}
-
 function locationLabel(offer: JobOffer): string {
   if (offer.location_type === 'remote') return LOCATION_LABELS.remote!
   return offer.location_text || LOCATION_LABELS[offer.location_type] || 'Sur site'
@@ -80,13 +67,16 @@ interface Props {
 }
 
 /**
- * Refonte sur le modele de ProductDetail/ProductDetailPage (lu, jamais
- * modifie) : ProfileShell (carte 800px) + DetailTopBar, galerie en premier,
- * bloc "faits cles" bordé + bouton Rejoindre dupliques en flux (<1200px,
- * juste apres le titre) et via portail dans une colonne laterale sticky
- * (>=1200px) -- meme mecanisme que #buybox-portal (ProductDetail.tsx), sous
- * un id distinct (job-offer-buybox-portal) pour ne jamais partager de DOM
- * avec la page produit. Pas de DetailEntityStrip : ce composant partage
+ * Restructuration feat/lot2-detail-restructure (remplace la colonne
+ * laterale sticky + portail #job-offer-buybox-portal de la refonte du 3
+ * aout, devenue perimee) : ProfileShell (carte 800px unique) + DetailTopBar,
+ * puis en-tete (avatar/titre agrandis) avant la galerie, stats "faits cles"
+ * en ligne, galerie MediaGalleryCarousel repositionnee plus bas et
+ * redimensionnee (media-gallery-carousel.css), CTA "Rejoindre" en barre
+ * collante pleine largeur (identique desktop/mobile, plus de duplication
+ * flux/sidebar). Sections maquette a donnee absente (equipe, prerequis,
+ * carte du lieu, "poste en trois points", badge "Nouveau") deliberement
+ * absentes -- lot 4. Pas de DetailEntityStrip : ce composant partage
  * (Event/Service/Booking) ne rend en realite ni avatar ni displayName
  * (props declarees, jamais utilisees dans son JSX) -- le reprendre aurait
  * fait disparaitre l'avatar, contraire a la consigne "reste affiche".
@@ -106,11 +96,6 @@ export function PublicJobOfferDetail({
   similarOffers = [],
 }: Props) {
   const [applyOpen, setApplyOpen] = useState(false)
-  const mounted = useSyncExternalStore(
-    subscribeNever,
-    () => true,
-    () => false,
-  )
 
   const blocks = offer.blocks ? parseHistoryBlocks(offer.blocks) : []
   const comp = compensationLabel(offer)
@@ -118,65 +103,18 @@ export function PublicJobOfferDetail({
   // Faits cles : 2 a 4 items selon les champs renseignes (secteur/remuneration
   // optionnels) -- jamais de "Non renseigne" invente, l'item est simplement
   // absent (meme regle que le tag secteur des cartes, JobOfferRow.tsx). Ordre
-  // fixe Contrat/Secteur/Lieu/Remuneration : avec la grille 2 colonnes
-  // ci-dessous, ca produit exactement Contrat|Secteur // Lieu|Remuneration
-  // quand les 4 sont presents (disposition demandee par Killian suite au
-  // debordement de la version 4-colonnes-egales -- secteur/remuneration
-  // peuvent etre des libelles longs, ex. "Marketing, Communication & Design").
+  // fixe Contrat/Secteur/Lieu/Remuneration. La maquette montre Contrat/
+  // Horaires/Duree en ligne : Horaires et Duree n'existent pas en base
+  // (aucune colonne heures hebdomadaires / duree de contrat sur
+  // entity_job_offers) -- on garde la disposition en ligne demandee mais
+  // avec les donnees reelles disponibles, jamais une case vide (rapport
+  // phase 0, feat/lot2-detail-restructure).
   const facts = [
     { label: 'Contrat', value: contractLabel(offer.contract_type) },
     ...(sectorLabel ? [{ label: 'Secteur', value: sectorLabel }] : []),
     { label: 'Lieu', value: locationLabel(offer) },
     ...(comp ? [{ label: 'Rémunération', value: comp }] : []),
   ]
-  // 2 colonnes fixes en toutes circonstances (pas de bascule par largeur,
-  // decision Killian). grid-cols-2 (minmax(0,1fr) implicite) empeche tout
-  // debordement horizontal -- un libelle long wrap plutot que deborder,
-  // contrairement au flex precedent. Dernier item en nombre impair (3
-  // faits, ex. pas de remuneration) : occupe les 2 colonnes plutot que de
-  // laisser une cellule vide a cote. Bordures posees par position (pas de
-  // divide-x/divide-y, inadaptes a une grille 2D) : verticale entre les 2
-  // colonnes sauf sur la ligne qui span, horizontale entre les lignes sauf
-  // la derniere -- meme hauteur de cellule automatique par ligne (CSS
-  // Grid stretch), donc pas de desalignement si un libelle passe sur 2
-  // lignes.
-  const factRows = Math.ceil(facts.length / 2)
-
-  const buyBoxContent = (
-    <div className="flex flex-col gap-4">
-      <div className="grid grid-cols-2 rounded-card border border-border bg-surface">
-        {facts.map((fact, i) => {
-          const isSpanningLast = facts.length % 2 === 1 && i === facts.length - 1
-          const row = isSpanningLast ? factRows - 1 : Math.floor(i / 2)
-          const isLastRow = row === factRows - 1
-          const isRightCol = !isSpanningLast && i % 2 === 1
-          return (
-            <div
-              key={fact.label}
-              className={[
-                'flex flex-col items-center justify-center gap-1 px-2 py-3 text-center',
-                isSpanningLast ? 'col-span-2' : '',
-                !isSpanningLast && !isRightCol ? 'border-r border-border' : '',
-                !isLastRow ? 'border-b border-border' : '',
-              ]
-                .filter(Boolean)
-                .join(' ')}
-            >
-              <span className="text-[10px] font-semibold uppercase tracking-wide text-neutral-400">
-                {fact.label}
-              </span>
-              <span className="font-display text-[15px] font-bold text-neutral-900">
-                {fact.value}
-              </span>
-            </div>
-          )
-        })}
-      </div>
-      <button type="button" onClick={() => setApplyOpen(true)} className="btn btn--dark btn--block">
-        Rejoindre cette offre
-      </button>
-    </div>
-  )
 
   // RelatedContent (detail/RelatedContent.tsx, lu, jamais modifie) : son
   // type Kind ('service'|'product'|'event') n'inclut pas 'job', mais
@@ -207,30 +145,44 @@ export function PublicJobOfferDetail({
 
   return (
     <main className="profile-page">
-      <div className="flex justify-center items-start gap-8 mx-auto w-full max-w-[1152px] xl:px-8 lg:px-4">
+      <div className="mx-auto w-full max-w-[800px] xl:px-8 lg:px-4">
         <ProfileShell>
           <DetailTopBar
             backHref={`/${entitySlug}#jobs`}
             title={`Voir le profil de ${entityName}`}
           />
 
-          <MediaGalleryCarousel media={media} title={offer.title} />
-
-          <div className="px-[22px] pt-4">
-            <div className="flex items-center gap-2 mb-3">
-              {entityAvatarUrl ? (
-                <img
-                  src={entityAvatarUrl}
-                  alt={entityName}
-                  className="h-8 w-8 rounded-full object-cover"
-                />
-              ) : null}
-              <span className="text-sm text-neutral-500">{entityName}</span>
+          <div className="flex items-start gap-5 px-[22px] pt-5">
+            {entityAvatarUrl ? (
+              <img
+                src={entityAvatarUrl}
+                alt={entityName}
+                className="h-[100px] w-[100px] shrink-0 rounded-tile object-cover"
+              />
+            ) : null}
+            <div className="min-w-0">
+              <span className="mb-2 block text-sm text-neutral-500">{entityName}</span>
+              <h1 className="font-display text-[44px] font-bold leading-tight text-neutral-900">
+                {offer.title}
+              </h1>
             </div>
-            <h1 className="font-display text-[28px] font-bold text-neutral-900">{offer.title}</h1>
           </div>
 
-          <div className="lg:hidden px-[22px] mt-5">{buyBoxContent}</div>
+          <div className="flex items-center gap-5 overflow-x-auto px-[22px] pt-5">
+            {facts.map((fact, i) => (
+              <div
+                key={fact.label}
+                className={`flex min-w-0 shrink-0 flex-col gap-1 ${i > 0 ? 'border-l border-border pl-5' : ''}`}
+              >
+                <span className="whitespace-nowrap font-display text-base font-semibold text-neutral-900">
+                  {fact.value}
+                </span>
+                <span className="whitespace-nowrap text-xs text-neutral-400">{fact.label}</span>
+              </div>
+            ))}
+          </div>
+
+          <MediaGalleryCarousel media={media} title={offer.title} />
 
           <div className="px-[22px] py-6 space-y-4 text-sm text-neutral-700">
             {blocks.map((block, i) => {
@@ -280,15 +232,26 @@ export function PublicJobOfferDetail({
             </div>
           )}
         </ProfileShell>
+      </div>
 
-        <aside
-          id="job-offer-buybox-portal"
-          className="hidden lg:block w-[320px] shrink-0 sticky top-8 bg-surface border border-border shadow-shell rounded-card p-6"
-        />
-
-        {mounted && document.getElementById('job-offer-buybox-portal')
-          ? createPortal(buyBoxContent, document.getElementById('job-offer-buybox-portal')!)
-          : null}
+      {/* Barre collante : ancree a bottom: var(--app-navpill-clearance)
+          (pas bottom:0 comme la maquette) pour ne jamais passer sous la nav
+          pill flottante (navpill.css, position:fixed;bottom:24px -- rapport
+          phase 0, feat/lot2-detail-restructure). Identique desktop/mobile,
+          remplace la colonne laterale + portail ci-dessus. */}
+      <div className="sticky bottom-[var(--app-navpill-clearance)] z-10 px-4">
+        <div className="mx-auto flex w-full max-w-[800px] items-center gap-4 rounded-pill bg-ink px-3 py-3 pl-6 text-white shadow-pop">
+          <p className="min-w-0 flex-1 truncate font-display text-base font-medium">
+            {offer.title}
+          </p>
+          <button
+            type="button"
+            onClick={() => setApplyOpen(true)}
+            className="btn btn--accent shrink-0"
+          >
+            Rejoindre
+          </button>
+        </div>
       </div>
 
       <ApplyBottomSheet

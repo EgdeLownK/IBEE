@@ -22,13 +22,23 @@
 .media-gallery__carousel::-webkit-scrollbar {
   display: none;
 }
+/* flex:0 0 280px + ratio 4/5 (portrait) : bande "Aperçu" repositionnée plus
+   bas dans PublicJobOfferDetail (feat/lot2-detail-restructure), remplace
+   58%/1:1 (carrousel plein écran en tête de page) — même maquette que le
+   reste, taille fixe car la bande n'est plus l'élément hero de la page. */
 .media-gallery__slide {
-  flex: 0 0 58%;
-  aspect-ratio: 1 / 1;
-  border-radius: var(--radius-card);
+  flex: 0 0 280px;
+  aspect-ratio: 4 / 5;
+  border-radius: var(--radius-tile);
   overflow: hidden;
   background: var(--color-panel);
   scroll-snap-align: start;
+}
+
+@media (max-width: 640px) {
+  .media-gallery__slide {
+    flex-basis: 180px;
+  }
 }
 .media-gallery__nav {
   display: none;
