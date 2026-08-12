@@ -83,12 +83,16 @@
 
   .main-rail {
     position: sticky;
-    /* La maquette pose top:var(--space-6) sur un cadre statique sans en-tête
-       collant testé au scroll. Notre en-tête réel est sticky top:0 sur
-       var(--app-header-height) (65px) : sans en tenir compte ici, la pill
-       passerait SOUS l'en-tête dès le premier pixel de scroll. Décalage
-       corrigé = hauteur en-tête + la même respiration de 24px. */
-    top: calc(var(--app-header-height) + var(--space-6));
+    /* top:var(--space-6), comme la maquette — vérifié contre le modèle de
+       scroll réel : .app-layout__sidebar est un cousin de .app-layout__content
+       (le scroller interne, overflow:auto), pas un descendant. Rien ne
+       défile jamais au niveau document (chaîne min-h-0/flex-1 depuis
+       apps/platform/.../AppShell.tsx + PublicShell.tsx jusqu'à
+       .app-layout__content, qui absorbe tout le débordement) : le sticky
+       n'a donc aucun scrollport où s'activer, top reste inerte aujourd'hui.
+       Si ce modèle change (page qui défile au niveau document), revoir ce
+       top pour compenser l'en-tête sticky top:0 (var(--app-header-height)). */
+    top: var(--space-6);
     left: auto;
     z-index: auto;
     width: auto;
@@ -469,9 +473,13 @@
   display: flex;
   flex: 1;
   flex-direction: column;
-  gap: 0;
+  /* var(--space-1) et overflow-y:auto (pas hidden) : depuis la suppression de
+     .sidebar-nav__body/.sidebar-nav__footer, .rail-btn est enfant direct —
+     sans ça le tiroir mobile (<1200px) colle les items entre eux et ne peut
+     plus défiler si le contenu dépasse. */
+  gap: var(--space-1);
   min-height: 0;
-  overflow: hidden;
+  overflow-y: auto;
   padding: 22px 25px;
 }
 
