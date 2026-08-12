@@ -64,6 +64,8 @@ interface Props {
   otherProfileOffers?: JobOfferWithMedia[]
   /** Offres actives du meme secteur chez d'autres entites, deja resolu vide si l'offre n'a pas de secteur. */
   similarOffers?: JobOfferWithMediaAndEntity[]
+  /** Triees par display_order par l'appelant (page.tsx). Vide = section "Demande dans l'offre" absente (jamais affichee vide, Lot 4 Mission 2). */
+  skills?: { id: string; label: string }[]
 }
 
 /**
@@ -94,6 +96,7 @@ export function PublicJobOfferDetail({
   userLastName,
   otherProfileOffers = [],
   similarOffers = [],
+  skills = [],
 }: Props) {
   const [applyOpen, setApplyOpen] = useState(false)
 
@@ -215,6 +218,21 @@ export function PublicJobOfferDetail({
               return null
             })}
           </div>
+
+          {skills.length > 0 && (
+            <div className="px-[22px] pb-6">
+              <h2 className="mb-3 font-display text-lg font-semibold text-neutral-900">
+                Demandé dans l&apos;offre
+              </h2>
+              <div className="flex flex-wrap gap-2">
+                {skills.map((skill) => (
+                  <span key={skill.id} className="job-row__tag">
+                    {skill.label}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
 
           {otherProfileItems.length > 0 && (
             <div className="pb-2">

@@ -29,6 +29,25 @@ export type JobOfferMediaType = Database['public']['Enums']['entity_job_offer_me
 export type JobOfferMedia = Database['public']['Tables']['entity_job_offer_media']['Row']
 type JobOfferMediaInsert = Database['public']['Tables']['entity_job_offer_media']['Insert']
 
+// job_skills : referentiel partage offre/profil (supabase/migrations/
+// 20260812130000_job_skills.sql). Colonnes limitees a id/label pour
+// l'embed, meme convention que job_sectors(id, label) plus haut -- une
+// seule FK entity_job_offer_skills -> job_skills (skill_id), pas
+// d'ambiguite de relation a lever ici.
+export type JobSkill = Database['public']['Tables']['job_skills']['Row']
+export type JobOfferSkillRow = Database['public']['Tables']['entity_job_offer_skills']['Row']
+export type JobOfferSkillWithSkill = JobOfferSkillRow & {
+  job_skills: Pick<JobSkill, 'id' | 'label'>
+}
+
+// Variante de JobOfferWithMedia (pas une extension de ce type partage lui-meme,
+// pour ne pas alourdir listActiveJobOffersByEntity/listOtherActiveJobOffersByEntity/
+// listSimilarActiveJobOffersBySector d'un join dont elles n'ont pas besoin) --
+// utilisee uniquement par getProjectJobOffer (fiche complete d'une offre).
+export type JobOfferWithSkills = JobOfferWithMedia & {
+  entity_job_offer_skills: JobOfferSkillWithSkill[]
+}
+
 export async function listProjectJobOffers(
   client: Client,
   entityId: string
@@ -43,20 +62,26 @@ export async function listProjectJobOffers(
   return data
 }
 
+// Etendue Lot 4 Mission 2 (feat/job-skills-form) avec le join
+// entity_job_offer_skills(job_skills) -- fiche complete d'une offre (page
+// detail publique + Pilotage), meme motif que le join media/secteur deja en
+// place : aucune requete par carte, tout arrive dans le meme select.
 export async function getProjectJobOffer(
   client: Client,
   entityId: string,
   offerId: string
-): Promise<JobOfferWithMedia> {
+): Promise<JobOfferWithSkills> {
   const { data, error } = await client
     .from('entity_job_offers')
-    .select('*, entity_job_offer_media(*), job_sectors(id, label)')
+    .select(
+      '*, entity_job_offer_media(*), job_sectors(id, label), entity_job_offer_skills(offer_id, skill_id, display_order, created_at, job_skills(id, label))'
+    )
     .eq('id', offerId)
     .eq('entity_id', entityId)
     .single()
 
   if (error) throw error
-  return data
+  return data as unknown as JobOfferWithSkills
 }
 
 export async function createProjectJobOffer(
@@ -166,6 +191,129 @@ export async function replaceJobOfferMedia(
   if (media.length === 0) return []
 
   return addJobOfferMedia(client, offerId, media)
+}
+
+// ---------------------------------------------------------------------------
+// Aptitudes d'une offre (entity_job_offer_skills) -- meme structure list/add/
+// replace que la galerie media ci-dessus, ordre porte par display_order.
+// ---------------------------------------------------------------------------
+
+export async function listJobOfferSkills(
+  client: Client,
+  offerId: string
+): Promise<JobOfferSkillWithSkill[]> {
+  const { data, error } = await client
+    .from('entity_job_offer_skills')
+    .select('offer_id, skill_id, display_order, created_at, job_skills(id, label)')
+    .eq('offer_id', offerId)
+    .order('display_order', { ascending: true })
+
+  if (error) throw error
+  return data as unknown as JobOfferSkillWithSkill[]
+}
+
+export async function addJobOfferSkills(
+  client: Client,
+  offerId: string,
+  skillIds: string[]
+): Promise<void> {
+  if (skillIds.length === 0) return
+  const inserts = skillIds.map((skillId, i) => ({
+    offer_id: offerId,
+    skill_id: skillId,
+    display_order: i,
+  }))
+
+  const { error } = await client.from('entity_job_offer_skills').insert(inserts)
+  if (error) throw error
+}
+
+// Remplacement integral (delete puis insert) -- meme motif que
+// replaceJobOfferMedia ci-dessus.
+export async function replaceJobOfferSkills(
+  client: Client,
+  offerId: string,
+  skillIds: string[]
+): Promise<void> {
+  const { error: deleteError } = await client
+    .from('entity_job_offer_skills')
+    .delete()
+    .eq('offer_id', offerId)
+
+  if (deleteError) throw deleteError
+  if (skillIds.length === 0) return
+
+  await addJobOfferSkills(client, offerId, skillIds)
+}
+
+// ---------------------------------------------------------------------------
+// Referentiel partage job_skills (recherche + find-or-create). Les deux
+// fonctions recoivent une valeur DEJA NORMALISEE par l'appelant
+// (normalizeJobSkillLabel, @ibee/shared) : ce package ne peut pas dependre de
+// @ibee/shared (aucune entree `dependencies` de ce type dans
+// packages/supabase/package.json, voir .claude/rules/shared.md) -- la
+// normalisation se fait donc en amont, cote apps/platform (talent-actions.ts).
+// ---------------------------------------------------------------------------
+
+// Recherche par sous-chaine sur normalized_label -- alimente l'autocompletion
+// du formulaire offre. Recherche par SOUS-CHAINE uniquement (insensible
+// casse/accents/espaces via normalized_label) : la similarite floue pg_trgm
+// (proposer une aptitude approchante malgre une faute de frappe) N'EST PAS
+// cablee ici -- decision Killian (Lot 4 Mission 2, option (b) du rapport
+// phase 0) : PostgREST n'expose ni l'operateur `%` de pg_trgm ni un tri par
+// similarity() via une requete REST standard, seule une fonction SQL dediee
+// le permettrait -- et ecrire cette fonction est une migration, hors
+// perimetre d'une mission applicative. L'index GIN trigram pose en Mission 1
+// (idx_job_skills_normalized_label_trgm) reste donc INUTILISE pour
+// l'instant : CE N'EST PAS UN OUBLI, une mission dediee avec sa propre
+// migration cablera "Vouliez-vous dire ?" dessus plus tard.
+export async function searchJobSkills(
+  client: Client,
+  normalizedQuery: string,
+  limit = 8
+): Promise<JobSkill[]> {
+  const { data, error } = await client
+    .from('job_skills')
+    .select('*')
+    .ilike('normalized_label', `%${normalizedQuery}%`)
+    .order('label', { ascending: true })
+    .limit(limit)
+
+  if (error) throw error
+  return data
+}
+
+// FIND-OR-CREATE (voir supabase/migrations/20260812130000_job_skills.sql,
+// en-tete) : upsert avec ignoreDuplicates traduit exactement
+// INSERT ... ON CONFLICT (normalized_label) DO NOTHING cote PostgREST --
+// jamais DO UPDATE, aucune policy UPDATE n'existe sur job_skills (une
+// aptitude ne se renomme pas, voir la migration). Si l'upsert ne retourne
+// aucune ligne (conflit -> aptitude deja existante), re-selection par
+// normalized_label (`normalizedLabel`, deja calcule par l'appelant) pour
+// recuperer la ligne existante -- ce deuxieme temps garantit qu'aucun
+// doublon n'est jamais cree, meme a la casse/aux accents pres.
+export async function findOrCreateJobSkill(
+  client: Client,
+  label: string,
+  normalizedLabel: string
+): Promise<JobSkill> {
+  const { data: inserted, error: upsertError } = await client
+    .from('job_skills')
+    .upsert({ label }, { onConflict: 'normalized_label', ignoreDuplicates: true })
+    .select()
+    .maybeSingle()
+
+  if (upsertError) throw upsertError
+  if (inserted) return inserted
+
+  const { data: existing, error: selectError } = await client
+    .from('job_skills')
+    .select('*')
+    .eq('normalized_label', normalizedLabel)
+    .single()
+
+  if (selectError) throw selectError
+  return existing
 }
 
 export async function listJobApplications(

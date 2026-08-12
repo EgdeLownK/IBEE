@@ -9,8 +9,14 @@ import {
   listJobOfferMedia,
   addJobOfferMedia,
   replaceJobOfferMedia,
+  listJobOfferSkills,
+  addJobOfferSkills,
+  replaceJobOfferSkills,
+  searchJobSkills,
+  findOrCreateJobSkill,
 } from '@ibee/supabase'
 import { revalidatePath } from 'next/cache'
+import { MAX_JOB_OFFER_SKILLS, normalizeJobSkillLabel, validateJobSkillLabel } from '@ibee/shared'
 import type { HistoryBlock } from '@ibee/shared'
 import type { JobApplicationStatus, JobContractType, JobOfferMediaType } from '@ibee/supabase'
 
@@ -39,6 +45,17 @@ function requireMediaLimits(media: JobOfferMediaInput[] | undefined) {
         ? 'Une seule vidéo est autorisée.'
         : `Maximum ${MAX_JOB_OFFER_VIDEOS} vidéos.`,
     )
+  }
+}
+
+// Plafond d'aptitudes par offre (Lot 4 Mission 2, valide par Killian) --
+// verifie ici cote serveur, pas seulement dans JobSkillsPicker.tsx : meme
+// motif que requireMediaLimits ci-dessus, un appel direct a l'action ne peut
+// pas contourner la limite.
+function requireJobOfferSkillsLimit(skillIds: string[] | undefined) {
+  if (!skillIds || skillIds.length === 0) return
+  if (skillIds.length > MAX_JOB_OFFER_SKILLS) {
+    throw new Error(`Maximum ${MAX_JOB_OFFER_SKILLS} aptitudes.`)
   }
 }
 
@@ -147,6 +164,9 @@ export async function createJobOfferAction(
     is_cadre?: boolean | null
     sector_id?: string | null
     media?: JobOfferMediaInput[]
+    /** Ids deja resolus (find-or-create fait au fur et a mesure de la saisie,
+     * voir createJobSkillAction) -- ordre du tableau = display_order. */
+    skill_ids?: string[]
   },
 ) {
   const supabase = await createClient()
@@ -156,13 +176,15 @@ export async function createJobOfferAction(
   requireLocationText(input.location_type, input.location_text)
   requireSector(input.sector_id)
   requireMediaLimits(input.media)
+  requireJobOfferSkillsLimit(input.skill_ids)
 
-  // media n'est pas une colonne d'entity_job_offers (table entity_job_offer_media
-  // separee) - retiree avant l'insert, reinseree ensuite via addJobOfferMedia
-  // une fois l'offre creee et son id connu. Meme flux que createProductAction
-  // (product-actions.ts) : offre creee d'abord, medias inseres ensuite, deux
-  // operations sequentielles (pas de transaction unique possible ici non plus).
-  const { media, ...offerInput } = input
+  // media/skill_ids ne sont pas des colonnes d'entity_job_offers (tables
+  // separees) - retirees avant l'insert, reinserees ensuite une fois l'offre
+  // creee et son id connu. Meme flux que createProductAction
+  // (product-actions.ts) : offre creee d'abord, medias/aptitudes inseres
+  // ensuite, operations sequentielles (pas de transaction unique possible
+  // ici non plus).
+  const { media, skill_ids, ...offerInput } = input
   const created = await createProjectJobOffer(supabase, entityId, offerInput)
 
   if (media && media.length > 0) {
@@ -171,6 +193,10 @@ export async function createJobOfferAction(
       created.id,
       media.map((m) => ({ url: m.url, media_type: m.type, alt_text: m.alt_text ?? null })),
     )
+  }
+
+  if (skill_ids && skill_ids.length > 0) {
+    await addJobOfferSkills(supabase, created.id, skill_ids)
   }
 
   revalidatePath('/dashboard/talent')
@@ -198,11 +224,15 @@ export async function updateJobOfferAction(
     // - voir requireCompensation ci-dessus, meme motif de portee restreinte).
     // Tableau (vide inclus) = remplacement integral via replaceJobOfferMedia.
     media?: JobOfferMediaInput[]
+    /** Meme convention que `media` ci-dessus : absent = aptitudes existantes
+     * inchangees, tableau (vide inclus) = remplacement integral. */
+    skill_ids?: string[]
   },
 ) {
   const supabase = await createClient()
   await requireTalentPermission(supabase, entityId)
   requireMediaLimits(input.media)
+  requireJobOfferSkillsLimit(input.skill_ids)
 
   if (input.status === 'active') {
     const { data: existingOffer } = await supabase
@@ -227,7 +257,7 @@ export async function updateJobOfferAction(
     }
   }
 
-  const { media, ...offerInput } = input
+  const { media, skill_ids, ...offerInput } = input
   await updateProjectJobOffer(supabase, entityId, offerId, offerInput)
 
   if (media !== undefined) {
@@ -236,6 +266,10 @@ export async function updateJobOfferAction(
       offerId,
       media.map((m) => ({ url: m.url, media_type: m.type, alt_text: m.alt_text ?? null })),
     )
+  }
+
+  if (skill_ids !== undefined) {
+    await replaceJobOfferSkills(supabase, offerId, skill_ids)
   }
 
   revalidatePath('/dashboard/talent')
@@ -249,6 +283,53 @@ export async function getJobOfferMediaAction(entityId: string, offerId: string) 
   const supabase = await createClient()
   await requireTalentPermission(supabase, entityId)
   return listJobOfferMedia(supabase, offerId)
+}
+
+// Lecture des aptitudes d'une offre pour prefill du formulaire d'edition
+// (JobOfferDialog.tsx) - meme garde requireTalentPermission que
+// getJobOfferMediaAction ci-dessus, pas seulement RLS.
+export async function getJobOfferSkillsAction(entityId: string, offerId: string) {
+  const supabase = await createClient()
+  await requireTalentPermission(supabase, entityId)
+  return listJobOfferSkills(supabase, offerId)
+}
+
+// Recherche par sous-chaine (normalized_label) pour l'autocompletion du
+// formulaire offre (JobSkillsPicker.tsx). job_skills est en lecture publique
+// (policy job_skills_public_select, anon+authenticated) : pas de
+// requireTalentPermission ici, seule la lecture est en jeu. Similarite floue
+// pg_trgm NON cablee (voir searchJobSkills, project-talent.ts) - Lot 4
+// Mission 2, decision Killian.
+export async function searchJobSkillsAction(query: string) {
+  const supabase = await createClient()
+  const normalized = normalizeJobSkillLabel(query)
+  if (!normalized) return []
+  return searchJobSkills(supabase, normalized)
+}
+
+// Cree (ou reutilise) une aptitude au nom de l'utilisateur connecte --
+// job_skills n'est pas scope par entite (referentiel partage), donc pas de
+// requireTalentPermission ici : seule l'identite de l'appelant compte
+// (policy job_skills_authenticated_insert, WITH CHECK created_by = auth.uid()).
+// Resolue au moment ou l'utilisateur ajoute le tag (JobSkillsPicker.tsx),
+// pas a la soumission du formulaire - meme flux que l'upload media
+// (uploadOneMedia, JobOfferDialog.tsx), pour que le payload final ne
+// transporte que des skill_ids deja connus.
+export async function createJobSkillAction(label: string) {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) {
+    console.error('[talent-actions] refus creation aptitude : appel non authentifie')
+    throw new Error('Vous devez être connecté pour créer une aptitude.')
+  }
+
+  const trimmed = label.trim()
+  const validationError = validateJobSkillLabel(trimmed)
+  if (validationError) throw new Error(validationError)
+
+  return findOrCreateJobSkill(supabase, trimmed, normalizeJobSkillLabel(trimmed))
 }
 
 export async function deleteJobOfferAction(entityId: string, offerId: string) {

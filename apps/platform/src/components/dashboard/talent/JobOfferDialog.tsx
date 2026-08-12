@@ -9,7 +9,9 @@ import {
   createJobOfferAction,
   updateJobOfferAction,
   getJobOfferMediaAction,
+  getJobOfferSkillsAction,
 } from '../../../app/dashboard/talent/talent-actions'
+import { JobSkillsPicker, type JobSkillTag } from './JobSkillsPicker'
 import { uploadProductMediaAction } from '@/app/dashboard/site/product-actions'
 import { Input } from '@ibee/ui-react'
 import {
@@ -33,6 +35,7 @@ import {
   HISTORY_TEXT_MAX,
   HistoryBlock,
   parseHistoryBlocks,
+  MAX_JOB_OFFER_SKILLS,
 } from '@ibee/shared'
 import {
   DraftBlock,
@@ -110,7 +113,7 @@ export function JobOfferDialog({
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
-  const [step, setStep] = useState<1 | 2 | 3>(1)
+  const [step, setStep] = useState<1 | 2 | 3 | 4>(1)
   // Distingue quel bouton est en vol (creation seulement, deux boutons) pour
   // afficher le bon libelle/spinner - inutile en edition (un seul bouton).
   const [pendingIntent, setPendingIntent] = useState<'publish' | 'draft' | null>(null)
@@ -133,7 +136,9 @@ export function JobOfferDialog({
   const [applyUrl, setApplyUrl] = useState(offer?.apply_url || '')
   const [endDate, setEndDate] = useState(offer?.end_date || '')
 
-  // Step 3 "Contenu" states
+  // Step 3 "Compétences" state
+  const [skills, setSkills] = useState<JobSkillTag[]>([])
+  // Step 4 "Contenu" states
   const [blocks, setBlocks] = useState<DraftBlock[]>([])
 
   useEffect(() => {
@@ -185,6 +190,29 @@ export function JobOfferDialog({
           cancelled = true
         }
       }
+    }
+  }, [open, offer, entityId])
+
+  // Aptitudes : table separee (entity_job_offer_skills), meme motif que les
+  // medias ci-dessus (reset synchrone + garde `cancelled`, effet distinct
+  // pour ne pas entremeler les deux nettoyages async dans le meme effet).
+  useEffect(() => {
+    if (!open) return
+    setSkills([])
+    if (!offer) return
+
+    let cancelled = false
+    getJobOfferSkillsAction(entityId, offer.id)
+      .then((rows) => {
+        if (cancelled) return
+        setSkills(rows.map((r) => ({ id: r.skill_id, label: r.job_skills.label })))
+      })
+      .catch(() => {
+        if (cancelled) return
+        toast.error('Impossible de charger les aptitudes de cette offre.')
+      })
+    return () => {
+      cancelled = true
     }
   }, [open, offer, entityId])
 
@@ -368,8 +396,10 @@ export function JobOfferDialog({
     setStep(2)
   }
 
-  // Etape 2 "Informations" -> 3 "Contenu" : reprend telles quelles les deux
-  // validations qui portaient auparavant sur l'unique etape 1.
+  // Etape 2 "Informations" -> 3 "Compétences" : reprend telles quelles les
+  // deux validations qui portaient auparavant sur l'unique etape 1 (le
+  // numero d'etape suivant est desormais "Compétences", pas "Contenu" -
+  // voir handleNextFromCompetences ci-dessous, Lot 4 Mission 2).
   const handleNextFromInformations = () => {
     if (locationType !== 'remote' && !locationText.trim()) {
       setError('Veuillez renseigner la localisation.')
@@ -381,6 +411,15 @@ export function JobOfferDialog({
     }
     setError(null)
     setStep(3)
+  }
+
+  // Etape 3 "Compétences" -> 4 "Contenu" : aucune validation, les aptitudes
+  // sont optionnelles (decision Killian, Lot 4 Mission 2) - le plafond
+  // (MAX_JOB_OFFER_SKILLS) est deja applique dans JobSkillsPicker (input
+  // desactive une fois atteint), pas besoin de le revalider ici.
+  const handleNextFromCompetences = () => {
+    setError(null)
+    setStep(4)
   }
 
   // `explicitStatus` porte le choix Publier ('active') / Enregistrer
@@ -444,6 +483,10 @@ export function JobOfferDialog({
           // Uploads en attente deja bloques par le garde media.some(uploading)
           // plus haut - ne reste ici que des medias avec une url definitive.
           media: media.map((m) => ({ url: m.url, type: m.type, alt_text: null })),
+          // Chaque tag est deja resolu (find-or-create) au moment de son
+          // ajout dans JobSkillsPicker - ne reste ici qu'a transmettre les
+          // ids dans l'ordre d'affichage (display_order = position).
+          skill_ids: skills.map((s) => s.id),
         }
 
         if (isEditing && offer) {
@@ -498,14 +541,20 @@ export function JobOfferDialog({
         </header>
 
         <nav className="pco__steps" aria-label="Étapes de création">
-          {[1, 2, 3].map((n) => (
+          {[1, 2, 3, 4].map((n) => (
             <span
               key={n}
               className={`pco__step${step === n ? ' is-active' : ''}${step > n ? ' is-done' : ''}`}
             >
               <span className="pco__step-num">{n}</span>
               <span className="pco__step-label">
-                {n === 1 ? 'Vitrine' : n === 2 ? 'Informations' : 'Contenu'}
+                {n === 1
+                  ? 'Vitrine'
+                  : n === 2
+                    ? 'Informations'
+                    : n === 3
+                      ? 'Compétences'
+                      : 'Contenu'}
               </span>
             </span>
           ))}
@@ -757,6 +806,18 @@ export function JobOfferDialog({
                 <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
               </div>
             </div>
+          ) : step === 3 ? (
+            <section className="pco__stage p-6">
+              <span className="pco__label">
+                Aptitudes demandées{' '}
+                <span className="pco__hint">(optionnel, max {MAX_JOB_OFFER_SKILLS})</span>
+              </span>
+              <p className="mt-1 mb-4 text-sm text-neutral-500">
+                Ce que vous attendez du candidat — permis, machines, logiciels... Il pourra les
+                ajouter en un clic à son profil.
+              </p>
+              <JobSkillsPicker value={skills} onChange={setSkills} />
+            </section>
           ) : (
             <section className="pco__stage p-6">
               <span className="pco__label">
@@ -890,8 +951,12 @@ export function JobOfferDialog({
               <button type="button" className="pco__btn pco__btn--ghost" onClick={() => setStep(1)}>
                 <ArrowLeft className="h-4 w-4" /> Précédent
               </button>
-            ) : (
+            ) : step === 3 ? (
               <button type="button" className="pco__btn pco__btn--ghost" onClick={() => setStep(2)}>
+                <ArrowLeft className="h-4 w-4" /> Précédent
+              </button>
+            ) : (
+              <button type="button" className="pco__btn pco__btn--ghost" onClick={() => setStep(3)}>
                 <ArrowLeft className="h-4 w-4" /> Précédent
               </button>
             )}
@@ -910,6 +975,14 @@ export function JobOfferDialog({
                 type="button"
                 className="pco__btn pco__btn--primary"
                 onClick={handleNextFromInformations}
+              >
+                Suivant <ArrowRight className="h-4 w-4" />
+              </button>
+            ) : step === 3 ? (
+              <button
+                type="button"
+                className="pco__btn pco__btn--primary"
+                onClick={handleNextFromCompetences}
               >
                 Suivant <ArrowRight className="h-4 w-4" />
               </button>

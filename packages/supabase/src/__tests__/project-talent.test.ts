@@ -8,6 +8,8 @@ import {
   listJobOfferMedia,
   listOtherActiveJobOffersByEntity,
   listSimilarActiveJobOffersBySector,
+  addJobOfferSkills,
+  findOrCreateJobSkill,
 } from '../project-talent'
 
 type Client = SupabaseClient<Database>
@@ -113,6 +115,100 @@ describe('addJobOfferMedia', () => {
       { url: 'https://x.test/a.jpg', media_type: 'image', offer_id: 'offer-1', display_order: 0 },
       { url: 'https://x.test/b.jpg', media_type: 'image', offer_id: 'offer-1', display_order: 1 },
     ])
+  })
+})
+
+describe('addJobOfferSkills', () => {
+  // Meme choix que addJobOfferMedia ci-dessus : display_order derive de la
+  // position dans le tableau recu (Lot 4 Mission 2, preuve sens (a)).
+  it('derive display_order de la position des skill_ids reçus', async () => {
+    const insertMock = vi.fn().mockResolvedValue({ data: null, error: null })
+    const client = {
+      from: vi.fn().mockReturnValue({ insert: insertMock }),
+    } as unknown as SupabaseClient<Database>
+
+    await addJobOfferSkills(client, 'offer-1', ['skill-c', 'skill-a'])
+
+    expect(insertMock).toHaveBeenCalledWith([
+      { offer_id: 'offer-1', skill_id: 'skill-c', display_order: 0 },
+      { offer_id: 'offer-1', skill_id: 'skill-a', display_order: 1 },
+    ])
+  })
+})
+
+describe('findOrCreateJobSkill', () => {
+  // PREUVE Lot 4 Mission 2, sens (c) : aucun conflit -- l'upsert cree la
+  // ligne et la retourne directement, une seule requete (pas de
+  // re-selection).
+  it('cree une nouvelle aptitude quand aucun conflit (upsert avec ignoreDuplicates)', async () => {
+    const newSkill = {
+      id: 'skill-new',
+      label: 'Permis B',
+      normalized_label: 'permis b',
+      created_by: 'user-1',
+      created_at: '2026-08-12T00:00:00Z',
+    }
+    const maybeSingleMock = vi.fn().mockResolvedValue({ data: newSkill, error: null })
+    const selectMock = vi.fn().mockReturnValue({ maybeSingle: maybeSingleMock })
+    const upsertMock = vi.fn().mockReturnValue({ select: selectMock })
+    const fromMock = vi.fn().mockReturnValue({ upsert: upsertMock })
+    const client = { from: fromMock } as unknown as SupabaseClient<Database>
+
+    const result = await findOrCreateJobSkill(client, 'Permis B', 'permis b')
+
+    expect(upsertMock).toHaveBeenCalledWith(
+      { label: 'Permis B' },
+      { onConflict: 'normalized_label', ignoreDuplicates: true },
+    )
+    expect(result).toEqual(newSkill)
+    expect(fromMock).toHaveBeenCalledTimes(1)
+  })
+
+  // PREUVE Lot 4 Mission 2, sens (c) — le coeur de la preuve exigee : creer
+  // une aptitude qui existe deja A LA CASSE/AUX ACCENTS PRES (le libelle
+  // envoye est different, mais son normalized_label est identique a une
+  // ligne existante) reutilise l'existante, n'en cree pas une seconde.
+  // ON CONFLICT (normalized_label) DO NOTHING ne retourne aucune ligne ->
+  // findOrCreateJobSkill re-selectionne par normalized_label et renvoie la
+  // ligne EXISTANTE (id different de ce qu'un nouvel insert aurait produit).
+  it('réutilise l’aptitude existante quand le libellé normalisé existe déjà (casse/accents différents), n’en crée pas une seconde', async () => {
+    const existingSkill = {
+      id: 'skill-existing',
+      label: 'Permis B',
+      normalized_label: 'permis b',
+      created_by: 'user-0',
+      created_at: '2026-08-01T00:00:00Z',
+    }
+
+    // Etape 1 : upsert ignoreDuplicates -- conflit, aucune ligne retournee.
+    const maybeSingleMock = vi.fn().mockResolvedValue({ data: null, error: null })
+    const upsertSelectMock = vi.fn().mockReturnValue({ maybeSingle: maybeSingleMock })
+    const upsertMock = vi.fn().mockReturnValue({ select: upsertSelectMock })
+
+    // Etape 2 : re-selection par normalized_label -- retrouve la ligne
+    // existante.
+    const singleMock = vi.fn().mockResolvedValue({ data: existingSkill, error: null })
+    const eqMock = vi.fn().mockReturnValue({ single: singleMock })
+    const reselectSelectMock = vi.fn().mockReturnValue({ eq: eqMock })
+
+    const fromMock = vi
+      .fn()
+      .mockReturnValueOnce({ upsert: upsertMock })
+      .mockReturnValueOnce({ select: reselectSelectMock })
+    const client = { from: fromMock } as unknown as SupabaseClient<Database>
+
+    // "PERMIS B" (majuscules) envoye par un second utilisateur -- meme
+    // aptitude que "Permis B" deja creee, une fois normalise.
+    const result = await findOrCreateJobSkill(client, 'PERMIS B', 'permis b')
+
+    expect(upsertMock).toHaveBeenCalledWith(
+      { label: 'PERMIS B' },
+      { onConflict: 'normalized_label', ignoreDuplicates: true },
+    )
+    expect(eqMock).toHaveBeenCalledWith('normalized_label', 'permis b')
+    expect(result).toEqual(existingSkill)
+    expect(result.id).toBe('skill-existing')
+    expect(fromMock).toHaveBeenCalledTimes(2)
   })
 })
 
