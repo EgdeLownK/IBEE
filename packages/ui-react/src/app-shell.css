@@ -96,6 +96,9 @@
     left: auto;
     z-index: auto;
     width: auto;
+    /* Garde-fou : le rail ne doit jamais forcer de défilement horizontal
+       même si un contenu interne calcule mal sa largeur. */
+    max-width: 100%;
     height: auto;
     max-height: calc(100vh - var(--app-header-height) - var(--space-6) * 2);
     transform: none;
@@ -583,22 +586,35 @@
   }
 
   /* Capsule 68px : largeur figée localement (pas un token) pour dériver le
-     rayon des boutons d'extrémité — voir .rail-btn--cap-top/bottom. */
+     rayon des boutons d'extrémité — voir .rail-btn--cap-top/bottom. Pas de
+     padding : absent de la maquette (seul le conteneur .main-rail a
+     padding:var(--space-2)) — le centrage flex suffit à l'espacement
+     icône/libellé. min-width:0 : évite qu'un mot non sécable (ex.
+     "Confidentialité") ne force ce flex-item à s'élargir au-delà de 68px et
+     fasse défiler le rail horizontalement — motif déjà rencontré 3 fois. */
   .rail-btn {
     --rail-btn-size: 68px;
     flex-direction: column;
     justify-content: center;
     gap: 2px;
     width: var(--rail-btn-size);
+    min-width: 0;
     min-height: var(--rail-btn-size);
-    padding: 6px 4px;
+    padding: 0;
     border-radius: var(--radius-card);
     text-align: center;
+  }
+
+  .rail-btn__icon svg {
+    width: 24px;
+    height: 24px;
   }
 
   .rail-btn__label {
     max-width: 100%;
     overflow: hidden;
+    overflow-wrap: break-word;
+    word-break: break-word;
     text-overflow: ellipsis;
     white-space: normal;
     font-size: var(--step-xs);

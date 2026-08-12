@@ -16,7 +16,10 @@ export function ZoneSidebar() {
 
   let sidebar = <ProfileWebSidebar />
   if (zone === 'personal-account') sidebar = <AccountSidebar />
-  if (zone === 'home') sidebar = <HomeSidebar />
+  // zone 'messages' -> même variante que 'home' : la maquette n'a pas de rail
+  // dédié aux messages, l'écran messages reste sur appLevel=true (rail
+  // Accueil/Messages/Projet), voir Prototype desktop.dc.html L45/L774.
+  if (zone === 'home' || zone === 'messages') sidebar = <HomeSidebar />
 
   return <div className="app-layout__sidebar">{sidebar}</div>
 }

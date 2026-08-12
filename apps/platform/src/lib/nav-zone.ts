@@ -36,7 +36,7 @@ export function getNavZone(pathname: string, isPersonalMode: boolean): NavZone {
 }
 
 export function shouldShowSidebar(zone: NavZone, isAuthenticated = false): boolean {
-  if (zone === 'home') return isAuthenticated
+  if (zone === 'home' || zone === 'messages') return isAuthenticated
   if (zone === 'activity') return false
   return zone === 'profile-web' || zone === 'personal-account'
 }
