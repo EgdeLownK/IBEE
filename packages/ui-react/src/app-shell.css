@@ -659,9 +659,13 @@
       calc(var(--rail-btn-size) / 2);
   }
 
-  .rail-separator {
-    width: 100%;
-  }
+  /* PAS de width:100% ici : <hr> est display:block par défaut, sa largeur
+     "auto" remplit déjà le contenant moins ses marges (margin:4px 8px,
+     règle de base) — cumuler width:100% ET une marge horizontale ajoute
+     8px+8px AU-DELÀ de 100%, donc au-delà de la largeur du rail (68px) :
+     c'est cette règle, précise, qui causait le débordement horizontal
+     signalé — présent uniquement sur ProfileWebSidebar car .rail-separator
+     n'existe que là (aucun séparateur dans HomeSidebar/AccountSidebar). */
 
   .rail-btn__avatar {
     width: 26px;
