@@ -113,11 +113,6 @@
   .main-rail__head {
     display: none;
   }
-
-  .sidebar-nav {
-    padding: 0;
-    gap: var(--space-1);
-  }
 }
 
 .app-layout__body {
@@ -581,8 +576,14 @@
 }
 
 @media (min-width: 1200px) {
+  /* padding:0 vivait auparavant dans un @media(1200px) plus haut dans ce
+     fichier (celui qui gère .main-rail) — la règle de base .sidebar-nav
+     (padding:22px 25px, plus bas dans ce fichier) le regagnait à chaque
+     fois en cascade (même spécificité, apparaît après). Regroupé ici, dans
+     le seul bloc @media qui vient APRÈS la règle de base. */
   .sidebar-nav {
     align-items: center;
+    padding: 0;
   }
 
   /* Capsule 68px : largeur figée localement (pas un token) pour dériver le

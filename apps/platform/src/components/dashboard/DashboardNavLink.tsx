@@ -12,6 +12,7 @@ type Props = {
   label: string
   className: string
   children: ReactNode
+  onClick?: () => void
 }
 
 function NavPendingReporter() {
@@ -25,7 +26,7 @@ function NavPendingReporter() {
   return null
 }
 
-export function DashboardNavLink({ href, label, className, children }: Props) {
+export function DashboardNavLink({ href, label, className, children, onClick }: Props) {
   const router = useRouter()
 
   return (
@@ -37,6 +38,7 @@ export function DashboardNavLink({ href, label, className, children }: Props) {
       aria-label={label}
       onMouseEnter={() => router.prefetch(href)}
       onClick={() => {
+        onClick?.()
         if (window.innerWidth < 1200) closeAppDrawer()
       }}
     >

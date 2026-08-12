@@ -6,13 +6,18 @@
 // Mon site, Recrutement, À venir. "Stats" (maquette L56) n'est volontairement
 // pas repris — décision Killian actée dans le brief : non construit.
 import { ChevronLeft, Clock, PanelsTopLeft, Users } from 'lucide-react'
-import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { DashboardNavLink } from './DashboardNavLink'
-import { MainRail, closeAppDrawer } from './MainRail'
+import { MainRail } from './MainRail'
 import { ProjectAccountSwitcher } from './ProjectAccountSwitcher'
 
-export function ProfileWebSidebar() {
+interface Props {
+  /** Bascule le rail sur la variante "home" sans navigation — voir
+   *  ZoneSidebar.tsx (Prototype desktop.dc.html L775, railToApp). */
+  onBack: () => void
+}
+
+export function ProfileWebSidebar({ onBack }: Props) {
   const pathname = usePathname() ?? ''
   const searchParams = useSearchParams()
   const isPreviewDashboard = searchParams?.get('preview') === 'dashboard'
@@ -29,19 +34,17 @@ export function ProfileWebSidebar() {
 
   return (
     <MainRail ariaLabel="Navigation profil web">
-      <Link
-        href="/"
+      <button
+        type="button"
         className="rail-btn rail-btn--pill"
-        title="Retour à l'accueil"
-        aria-label="Retour à l'accueil"
-        onClick={() => {
-          if (window.innerWidth < 1200) closeAppDrawer()
-        }}
+        title="Revenir à la navigation générale"
+        aria-label="Revenir à la navigation générale"
+        onClick={onBack}
       >
         <span className="rail-btn__icon" aria-hidden="true">
           <ChevronLeft className="h-5 w-5" />
         </span>
-      </Link>
+      </button>
 
       <ProjectAccountSwitcher variant="rail" />
 
