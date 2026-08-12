@@ -1245,6 +1245,42 @@ export type Database = {
           },
         ]
       }
+      entity_job_offer_skills: {
+        Row: {
+          created_at: string
+          display_order: number
+          offer_id: string
+          skill_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          offer_id: string
+          skill_id: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          offer_id?: string
+          skill_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entity_job_offer_skills_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "entity_job_offers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entity_job_offer_skills_skill_id_fkey"
+            columns: ["skill_id"]
+            isOneToOne: false
+            referencedRelation: "job_skills"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       entity_job_offers: {
         Row: {
           apply_url: string | null
@@ -2413,6 +2449,30 @@ export type Database = {
         }
         Relationships: []
       }
+      job_skills: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          label: string
+          normalized_label: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          label: string
+          normalized_label?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          label?: string
+          normalized_label?: string | null
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           actor_entity_id: string | null
@@ -3566,6 +3626,32 @@ export type Database = {
         }
         Relationships: []
       }
+      user_skills: {
+        Row: {
+          created_at: string
+          skill_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          skill_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          skill_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_skills_skill_id_fkey"
+            columns: ["skill_id"]
+            isOneToOne: false
+            referencedRelation: "job_skills"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       wishlist_items: {
         Row: {
           added_at: string
@@ -4101,6 +4187,7 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      normalize_job_skill_label: { Args: { input: string }; Returns: string }
       refresh_client_counters: {
         Args: { p_client_id: string }
         Returns: undefined
@@ -4184,6 +4271,8 @@ export type Database = {
         Args: { p_event_id: string; p_ticket_code: string }
         Returns: Json
       }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
       slugify: { Args: { input: string }; Returns: string }
       submit_manual_reg_contact_session: {
         Args: {

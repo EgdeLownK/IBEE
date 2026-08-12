@@ -64,6 +64,13 @@ export default async function PublicJobOfferPage({ params }: Props) {
     (a, b) => (a.display_order ?? 0) - (b.display_order ?? 0),
   )
 
+  // Aptitudes demandees ("Demande dans l'offre") -- meme convention de tri
+  // cote appelant que media ci-dessus. Reduit a {id, label} : PublicJobOfferDetail
+  // n'a besoin de rien d'autre pour l'affichage (Lot 4 Mission 2).
+  const skills = [...(offer.entity_job_offer_skills ?? [])]
+    .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))
+    .map((s) => ({ id: s.skill_id, label: s.job_skills.label }))
+
   // Deux sections de contenus lies (mission feat/job-offer-related-content) :
   // dependent de `offer` (entity_id, sector_id) donc apres sa resolution,
   // mais paralleles entre elles (Promise.all). Offre sans secteur : pas de
@@ -95,6 +102,7 @@ export default async function PublicJobOfferPage({ params }: Props) {
       userLastName={''}
       otherProfileOffers={otherProfileOffers}
       similarOffers={similarOffers}
+      skills={skills}
     />
   )
 }

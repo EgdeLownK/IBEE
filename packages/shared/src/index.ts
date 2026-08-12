@@ -169,3 +169,10 @@ export type {
 } from './home-feed'
 export { parseContactFromQr } from './manual-reg-contact-qr'
 export type { ParsedContactQr } from './manual-reg-contact-qr'
+export {
+  MAX_JOB_OFFER_SKILLS,
+  JOB_SKILL_LABEL_MIN_LENGTH,
+  JOB_SKILL_LABEL_MAX_LENGTH,
+  normalizeJobSkillLabel,
+  validateJobSkillLabel,
+} from './job-skills'

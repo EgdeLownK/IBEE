@@ -62,6 +62,16 @@ CREATE EXTENSION IF NOT EXISTS pg_trgm;
 --    UNIQUE, elle doit resoudre unaccent() de la meme facon quel que soit le
 --    search_path de l'appelant.
 -- =====================================================================
+--
+-- MIROIR TYPESCRIPT (ajoute Lot 4 Mission 2, feat/job-skills-form) :
+-- packages/shared/src/job-skills.ts, fonction normalizeJobSkillLabel().
+-- PostgREST ne transforme jamais une valeur envoyee par le client -- toute
+-- recherche/creation depuis l'app doit reproduire cet algorithme en TS avant
+-- d'interroger normalized_label. VOLONTAIRE : si cette fonction change,
+-- normalizeJobSkillLabel() doit suivre a l'identique, sinon la recherche/
+-- creation cote app diverge silencieusement de la contrainte UNIQUE
+-- reellement appliquee ici.
+-- =====================================================================
 
 CREATE OR REPLACE FUNCTION normalize_job_skill_label(input text)
 RETURNS text

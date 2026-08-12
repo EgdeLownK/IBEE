@@ -270,6 +270,54 @@ describe('talent-actions.ts — permission verifiee via entity_user_has_permissi
       expect(dbCalls.some((c) => c.table === 'entity_job_offers' && c.op === 'insert')).toBe(false)
     })
 
+    // PREUVE Lot 4 Mission 2, sens (a) : une offre creee avec des aptitudes
+    // les enregistre via addJobOfferSkills, dans l'ordre recu -
+    // display_order derive de la position dans skill_ids, jamais d'un champ
+    // fourni par le client (meme motif que les medias ci-dessus).
+    it('e) créée avec des aptitudes → enregistrées via addJobOfferSkills, display_order croissant selon l’ordre reçu', async () => {
+      mockUser = { id: 'user-legitime' }
+      mockPermission = true
+      mockOffer = { id: 'new-offer-id', entity_id: OWNED_ENTITY, status: 'active' }
+
+      await expect(
+        createJobOfferAction(OWNED_ENTITY, {
+          ...newOfferInput,
+          skill_ids: ['skill-c', 'skill-a', 'skill-b'],
+        }),
+      ).resolves.toBeUndefined()
+
+      const skillsInsert = dbCalls.find(
+        (c) => c.table === 'entity_job_offer_skills' && c.op === 'insert',
+      )
+      expect(skillsInsert).toBeDefined()
+      const rows = skillsInsert!.args[0] as Array<{
+        offer_id: string
+        skill_id: string
+        display_order: number
+      }>
+      expect(rows.every((r) => r.offer_id === 'new-offer-id')).toBe(true)
+      expect(rows.map((r) => r.skill_id)).toEqual(['skill-c', 'skill-a', 'skill-b'])
+      expect(rows.map((r) => r.display_order)).toEqual([0, 1, 2])
+    })
+
+    // PREUVE Lot 4 Mission 2, sens (b) : un depassement du plafond
+    // (MAX_JOB_OFFER_SKILLS = 8) est refuse COTE SERVEUR - appel direct de
+    // l'action avec une charge deja hors limite, sans jamais passer par
+    // JobSkillsPicker.tsx (meme motif que le plafond media ci-dessus).
+    it('f) plus de 8 aptitudes → refusé côté serveur avant tout appel BDD (contournement direct du client)', async () => {
+      mockUser = { id: 'user-legitime' }
+      mockPermission = true
+
+      const tooManySkills = Array.from({ length: 9 }, (_, i) => `skill-${i}`)
+
+      await expect(
+        createJobOfferAction(OWNED_ENTITY, { ...newOfferInput, skill_ids: tooManySkills }),
+      ).rejects.toThrow('Maximum 8 aptitudes.')
+
+      expect(dbCalls.some((c) => c.table === 'entity_job_offers' && c.op === 'insert')).toBe(false)
+      expect(dbCalls.some((c) => c.table === 'entity_job_offer_skills')).toBe(false)
+    })
+
     it('a) updateJobOfferAction — appel légitime → la mutation atteint la base', async () => {
       mockUser = { id: 'user-legitime' }
       mockPermission = true
