@@ -3,8 +3,9 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { ImageIcon } from 'lucide-react'
 import type { HomeFeedPost } from '@ibee/shared'
-import { HomeFeedActionBar } from './HomeFeedActionBar'
+import { formatFeedContextLine, formatFeedEntityInitials } from '@ibee/shared'
 
 const KIND_LABELS: Record<HomeFeedPost['kind'], string> = {
   product: 'Produit',
@@ -14,26 +15,24 @@ const KIND_LABELS: Record<HomeFeedPost['kind'], string> = {
 
 type Props = {
   post: HomeFeedPost
-  isDesktop?: boolean
-  isSelected?: boolean
-  onSelect?: (post: HomeFeedPost) => void
 }
 
-export function HomeFeedCard({ post, isDesktop = false, isSelected = false, onSelect }: Props) {
+export function HomeFeedCard({ post }: Props) {
   const router = useRouter()
-  const initial = post.entity.displayName.trim().charAt(0).toUpperCase() || '?'
+  const initials = formatFeedEntityInitials(post.entity.displayName) || '?'
+  const contextLine = formatFeedContextLine(post.entity.location, post.sortAt)
 
   function handleCardClick() {
-    if (isDesktop && onSelect) {
-      onSelect(post)
-      return
-    }
     router.push(post.href)
+  }
+
+  function stopRowClick(e: React.MouseEvent<HTMLElement>) {
+    e.stopPropagation()
   }
 
   return (
     <article
-      className={`home-feed-card${isSelected ? ' is-selected' : ''}`}
+      className="home-feed-card"
       onClick={handleCardClick}
       role="link"
       tabIndex={0}
@@ -48,37 +47,67 @@ export function HomeFeedCard({ post, isDesktop = false, isSelected = false, onSe
         <Link
           href={`/${post.entity.slug}`}
           className="home-feed-card__author"
-          onClick={(e) => e.stopPropagation()}
+          onClick={stopRowClick}
         >
           <span className="home-feed-card__avatar" aria-hidden="true">
             {post.entity.avatarUrl ? (
-              <Image src={post.entity.avatarUrl} alt="" width={32} height={32} />
+              <Image src={post.entity.avatarUrl} alt="" width={38} height={38} />
             ) : (
-              <span>{initial}</span>
+              <span>{initials}</span>
             )}
           </span>
-          <span className="home-feed-card__author-name truncate">{post.entity.displayName}</span>
+          <span className="home-feed-card__author-meta">
+            <span className="home-feed-card__author-name truncate">{post.entity.displayName}</span>
+            <span className="home-feed-card__context truncate">{contextLine}</span>
+          </span>
         </Link>
-        <span className="home-feed-card__badge">{KIND_LABELS[post.kind]}</span>
       </header>
 
       <div className="home-feed-card__media">
-        <Image
-          src={post.imageUrl}
-          alt=""
-          width={600}
-          height={400}
-          className="h-full w-full object-cover"
-          loading="lazy"
-        />
+        {post.imageUrl ? (
+          <Image
+            src={post.imageUrl}
+            alt=""
+            width={600}
+            height={600}
+            className="home-feed-card__media-img"
+            loading="lazy"
+          />
+        ) : (
+          <span className="home-feed-card__media-placeholder" aria-hidden="true">
+            <ImageIcon className="h-6 w-6" aria-hidden="true" />
+          </span>
+        )}
+        <span className="home-feed-card__gradient" aria-hidden="true" />
+        <div className="home-feed-card__overlay">
+          <span className="home-feed-card__overlay-text">
+            <span className="home-feed-card__badge">{KIND_LABELS[post.kind]}</span>
+            <span className="home-feed-card__title">{post.title}</span>
+          </span>
+          <Link href={post.href} className="home-feed-card__join" onClick={stopRowClick}>
+            {post.ctaLabel}
+          </Link>
+        </div>
       </div>
 
-      <div className="home-feed-card__body">
-        <h2 className="home-feed-card__title">{post.title}</h2>
-        {post.priceLabel ? <p className="home-feed-card__price">{post.priceLabel}</p> : null}
-      </div>
+      {post.priceLabel ? (
+        <div className="home-feed-card__body">
+          <p className="home-feed-card__price">{post.priceLabel}</p>
+        </div>
+      ) : null}
 
-      <HomeFeedActionBar post={post} />
+      {post.skills && post.skills.length > 0 ? (
+        <div className="home-feed-card__skills">
+          <span className="home-feed-card__skills-label">DEMANDÉ DANS L&apos;OFFRE</span>
+          <span className="home-feed-card__skills-list">
+            {post.skills.map((skill) => (
+              <span key={skill.id} className="home-feed-card__skill">
+                {skill.label}
+              </span>
+            ))}
+          </span>
+        </div>
+      ) : null}
     </article>
   )
 }

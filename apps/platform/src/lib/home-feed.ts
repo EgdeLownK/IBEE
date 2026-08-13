@@ -22,6 +22,7 @@ type EntityEmbed = {
   slug: string
   display_name: string
   avatar_url: string | null
+  location: string | null
 }
 
 const POOL_PER_KIND = 48
@@ -34,6 +35,7 @@ function mapEntity(row: EntityEmbed | null | undefined) {
     slug: row.slug,
     displayName: row.display_name,
     avatarUrl: row.avatar_url,
+    location: row.location,
   }
 }
 
@@ -76,7 +78,7 @@ async function fetchProductPosts(client: Client): Promise<HomeFeedPost[]> {
       id, title, slug, type, price_cents, sale_price_cents, currency, published_at,
       og_image_url,
       product_media (url, media_type, display_order),
-      entity:entity_id (id, slug, display_name, avatar_url)
+      entity:entity_id (id, slug, display_name, avatar_url, location)
     `,
     )
     .eq('status', 'published')
@@ -119,7 +121,7 @@ async function fetchEventPosts(client: Client): Promise<HomeFeedPost[]> {
     .select(
       `
       id, title, slug, price_cents, currency, start_at, created_at, gallery_images,
-      entity:entity_id (id, slug, display_name, avatar_url)
+      entity:entity_id (id, slug, display_name, avatar_url, location)
     `,
     )
     .eq('is_published', true)
@@ -159,7 +161,7 @@ async function fetchServicePosts(client: Client): Promise<HomeFeedPost[]> {
     .select(
       `
       id, title, slug, price_cents, promo_price_cents, currency, created_at, gallery_images,
-      entity:entity_id (id, slug, display_name, avatar_url)
+      entity:entity_id (id, slug, display_name, avatar_url, location)
     `,
     )
     .eq('is_active', true)
@@ -200,7 +202,7 @@ async function fetchNewsItems(client: Client, limit = 16): Promise<HomeFeedNewsI
       `
       id, title, slug, published_at,
       publication_media (url, type, position),
-      entity:entity_id (id, slug, display_name, avatar_url)
+      entity:entity_id (id, slug, display_name, avatar_url, location)
     `,
     )
     .eq('status', 'published')
