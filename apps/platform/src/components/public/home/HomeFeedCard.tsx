@@ -7,7 +7,12 @@ import { ImageIcon } from 'lucide-react'
 import type { HomeFeedPost } from '@ibee/shared'
 import { formatFeedContextLine, formatFeedEntityInitials } from '@ibee/shared'
 
-const KIND_LABELS: Record<HomeFeedPost['kind'], string> = {
+// 'offer' n'a pas d'entrée ici : son badge vient de post.badgeLabel
+// (contractPill(contract_type).label, calculé côté fetch — voir
+// apps/platform/src/lib/home-feed.ts, fetchJobOfferPosts). Ce Record ne sert
+// plus qu'aux kinds product/event/service, tous morts depuis la mission
+// accueil #3 (filtrage) mais gardés (voir home-feed.ts).
+const KIND_LABELS: Record<Exclude<HomeFeedPost['kind'], 'offer'>, string> = {
   product: 'Produit',
   event: 'Événement',
   service: 'Service',
@@ -81,7 +86,9 @@ export function HomeFeedCard({ post }: Props) {
         <span className="home-feed-card__gradient" aria-hidden="true" />
         <div className="home-feed-card__overlay">
           <span className="home-feed-card__overlay-text">
-            <span className="home-feed-card__badge">{KIND_LABELS[post.kind]}</span>
+            <span className="home-feed-card__badge">
+              {post.badgeLabel ?? (post.kind === 'offer' ? '' : KIND_LABELS[post.kind])}
+            </span>
             <span className="home-feed-card__title">{post.title}</span>
           </span>
           <Link href={post.href} className="home-feed-card__join" onClick={stopRowClick}>

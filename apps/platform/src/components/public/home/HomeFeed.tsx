@@ -76,11 +76,16 @@ export function HomeFeed({ initial }: Props) {
     <div className="home-feed-layout__feed">
       <div className="home-feed__inner">
         {!hasPosts ? (
-          <div className="home-feed__empty">
-            <p>Aucun contenu avec image pour le moment.</p>
-            <p className="home-feed__empty-sub">
-              Les produits, événements et services publiés apparaîtront ici.
-            </p>
+          // .ibee-empty (packages/ui-react/src/components.css) — convention
+          // établie (voir TalentDashboard.tsx), pas d'invention locale. Sans
+          // CTA (contrairement à TalentDashboard) : ceci est la page publique
+          // visiteur, pas le studio owner — aucune action de création à
+          // proposer ici. Texte proposé, AUCUNE maquette ne montre cet état
+          // (0-2 offres actives en base à ce jour, rapport phase 0) — à
+          // valider visuellement par Killian.
+          <div className="ibee-empty">
+            <p className="ibee-empty__title">Aucune offre active pour le moment.</p>
+            <p className="ibee-empty__text">Les nouvelles offres publiées apparaîtront ici.</p>
           </div>
         ) : (
           rows.map((row, index) => {

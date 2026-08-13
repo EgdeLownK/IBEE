@@ -1,4 +1,4 @@
-export type HomeFeedPostKind = 'product' | 'event' | 'service'
+export type HomeFeedPostKind = 'product' | 'event' | 'service' | 'offer'
 
 export type HomeFeedEntity = {
   id: string
@@ -30,15 +30,18 @@ export type HomeFeedPost = {
   currency: string
   viewCount: number
   productType?: 'physical' | 'digital'
-  /** Réservé au futur kind 'offre' (mission data ultérieure) : produits,
-   *  événements et services n'ont structurellement aucune ligne
-   *  entity_job_offer_skills (FK scopée à entity_job_offers.id), ce champ
-   *  reste donc toujours absent pour eux. Motif de jointure sans requête
-   *  par carte déjà en place : packages/supabase/src/project-talent.ts,
-   *  getProjectJobOffer — '*, entity_job_offer_skills(offer_id, skill_id,
-   *  display_order, created_at, job_skills(id, label))', à réutiliser tel
-   *  quel quand une fonction de fetch d'offres sera ajoutée à home-feed.ts. */
+  /** Aptitudes demandées (entity_job_offer_skills → job_skills.label) —
+   *  toujours absent pour product/event/service, structurellement présent
+   *  uniquement pour kind 'offer' (FK scopée à entity_job_offers.id). */
   skills?: HomeFeedSkill[]
+  /** Libellé de badge déjà formaté côté fetch (ex. "Alternance" pour une
+   *  offre, dérivé de contract_type via contractPill — apps/platform,
+   *  hors périmètre de ce package). Absent → HomeFeedCard replie sur
+   *  KIND_LABELS[kind] ("Produit"/"Événement"/"Service"). Champ ajouté
+   *  plutôt que de déplacer contract-labels.ts dans packages/shared : ce
+   *  package ne connaît aucune règle métier de libellé de contrat, il ne
+   *  transporte que la chaîne déjà résolue. */
+  badgeLabel?: string
 }
 
 export type HomeFeedNewsItem = {
@@ -77,6 +80,7 @@ const KIND_ORDER: Record<HomeFeedPostKind, number> = {
   product: 0,
   event: 1,
   service: 2,
+  offer: 3,
 }
 
 export function encodeHomeFeedCursor(cursor: HomeFeedCursor): string {
@@ -88,7 +92,7 @@ export function decodeHomeFeedCursor(raw: string | null | undefined): HomeFeedCu
   const parts = raw.split('|')
   if (parts.length !== 3) return null
   const [sortAt, kind, id] = parts
-  if (!sortAt || !id || !['product', 'event', 'service'].includes(kind)) return null
+  if (!sortAt || !id || !['product', 'event', 'service', 'offer'].includes(kind)) return null
   return { sortAt, kind: kind as HomeFeedPostKind, id }
 }
 
