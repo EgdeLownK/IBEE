@@ -620,6 +620,15 @@
   .rail-btn__icon svg {
     width: 32px;
     height: 32px;
+    /* VOLONTAIRE — 1.5 (demande Killian, traits jugés trop épais), ne
+       référence PAS --icon-stroke (1.75px, tokens.css) : ce token n'a aucun
+       consommateur JSX réel dans le dépôt (les seules règles qui le lisent,
+       .ibee-icon et svg.ibee-icon dans components.css, ne sont appliquées à
+       aucun composant) — les icônes du rail rendent avec le strokeWidth par
+       défaut de lucide-react (2), pas avec ce token. Surcharge locale scopée
+       au rail plutôt que modification du token global : signalé à Killian, à
+       trancher si le token doit être aligné sur 1.5 ou nettoyé (mort). */
+    stroke-width: 1.5;
   }
 
   .rail-btn__label {
@@ -639,11 +648,22 @@
     -webkit-box-orient: vertical;
   }
 
+  /* VOLONTAIRE — écart assumé avec la maquette (min-width/hauteur 18px,
+     police 10px, .rail-btn__badge règle de base ci-dessus), demande Killian
+     ("trop petit") : 22px/22px, police --step-xs (12px, tokens.css) — cohérent
+     avec l'agrandissement du rail (bouton 92px, icônes 32px, libellés 14px,
+     voir commentaires .app-layout__sidebar/.rail-btn__icon svg ci-dessus).
+     À VALIDER visuellement par Killian. Pastilles factices (Recrutement,
+     Messages) : aucune donnée réelle derrière, voir RAPPORT. */
   .rail-btn__badge {
     position: absolute;
     top: 2px;
     right: 6px;
     margin-left: 0;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 6px;
+    font-size: var(--step-xs);
   }
 
   .rail-btn {
@@ -686,9 +706,15 @@
     height: 26px;
   }
 
+  /* VOLONTAIRE — 40px (demande Killian) : cible l'avatar de
+     ProjectAccountSwitcher variant="rail" (ProfileWebSidebar — zone "profil
+     du projet" du rail, .rail-btn__avatar--lg), pas l'avatar de l'item
+     "Projet" de HomeSidebar (zone home, .rail-btn__avatar sans --lg,
+     26px ci-dessus, non touché ici). Les deux avatars restent donc
+     volontairement de tailles différentes — signalé à Killian. */
   .rail-btn__avatar--lg {
-    width: 30px;
-    height: 30px;
+    width: 40px;
+    height: 40px;
     font-size: 11px;
   }
 }
