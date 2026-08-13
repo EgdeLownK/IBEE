@@ -104,6 +104,7 @@ Deux formes existent pour chaque token, à utiliser selon le fichier :
 | Valeurs arbitraires Tailwind (`[22px]`, `[18px]`, `[#d95525]`, …) | le token existant le plus proche par rôle | une valeur arbitraire contourne le design system silencieusement |
 | Couleur hexadécimale en dur dans un composant | le token correspondant | perd la cohérence thème + casse toute mise à jour centralisée |
 | `--color-amber` (`bg-amber`, …) | `warning` (`--color-warning`) | doublon quasi-identique de `warning` (`#f59e0b` vs `#d97706`) — deux noms pour un seul rôle sémantique, source de confusion sur lequel utiliser |
+| `text-xs`/`text-sm`/`text-base`/`text-lg`/`text-xl`/`text-2xl`/`text-3xl`/`text-4xl` (Tailwind, taille brute — y compris préfixé par un variant : `sm:text-lg`, `profile:text-sm`, …) | la classe/variable du token de rôle correspondant (`--type-card-title`, `--type-body-sm`, `--type-control`, `--type-caption`, …) ou, à défaut de composite adapté, `var(--step-*)` directement dans un `.css` de `packages/ui-react` | échelle Tailwind par défaut, pas l'échelle IBEE (`--step-*`) — 360 occurrences mesurées au 2026-08-13, système de rôle remonté d'un cran le même jour : une taille brute ne suit pas cette remontée, silencieusement. **Baseline en mode migration** (voir §Garde-fou CI) : contrairement aux autres motifs de ce tableau (dette historique gelée), celui-ci a un objectif explicite de décroissance — Killian a décidé la migration complète, ce garde-fou empêche seulement la dérive pendant qu'elle se fait progressivement. |
 
 ## Le piège : plusieurs noms Tailwind standards ont une valeur différente ici
 
@@ -157,6 +158,15 @@ vs 18px Tailwind), sans qu'aucune nouvelle classe n'apparaisse dans un diff
 JSX — même mécanisme que le piège des rayons ci-dessus. `--step-*` n'alimente
 que `--type-*`, consommé via `var()` dans un `.css`, jamais comme classe
 Tailwind directe.
+
+**Mesure réelle (2026-08-13)** : l'échelle Tailwind par défaut (`text-xs`…
+`text-4xl` bruts, hors du système `--step-*`) est utilisée **~9× plus souvent**
+que le système de rôle dans le code actuel — 360 occurrences contre 39. Ce
+n'est donc pas un cas marginal : c'est le mode de sizing dominant de
+l'application aujourd'hui, y compris dans `packages/ui-react` lui-même (62%
+de ses fichiers `.tsx`). Migration décidée par Killian, garde-fou de
+non-régression en place (§Garde-fou CI ci-dessous) — la migration elle-même
+n'a pas encore commencé.
 
 **Autres écarts audités dans `tokens.css`** (mêmes noms que Tailwind par
 défaut, valeurs différentes — moins piégeux car ils ne faussent pas un calcul
@@ -261,9 +271,13 @@ du nombre d'occurrences fait échouer la CI.
 **Motifs vérifiés** : `bg-white`, `gray-*`, `red-*`/`green-*`/`emerald-*`/`amber-*`
 bruts, `rounded-sm|md|lg|xl|2xl|3xl`, couleur/rayon en valeur arbitraire
 (`bg-[#...]`, `rounded-[...]`, etc. — **zéro tolérance**, aucune occurrence
-gelée), couleur hexadécimale en dur dans un `.tsx`. `text-white` est
-volontairement exclu : légitime comme texte de contraste sur fond sombre/accent,
-ce n'est pas un contournement de `bg-surface`.
+gelée), couleur hexadécimale en dur dans un `.tsx`, `text-xs|sm|base|lg|xl|
+2xl|3xl|4xl` Tailwind bruts (motif fermé sur ces 8 mots-clés exacts — ne
+capture ni la couleur `text-neutral-500`, ni l'alignement `text-center`, ni
+le wrap `text-nowrap`, aucun de ces suffixes ne correspondant à un mot-clé de
+taille). `text-white` est volontairement exclu : légitime comme texte de
+contraste sur fond sombre/accent, ce n'est pas un contournement de
+`bg-surface`.
 
 **Seuil gelé** : `design-guard-baseline.json` à la racine, compté par couple
 fichier + motif (pas par ligne exacte — insensible aux décalages de ligne dus
@@ -282,6 +296,20 @@ corrigées dans le code, régénérer la baseline avec
 `node scripts/design-guard.mjs --update-baseline`, puis committer le
 `design-guard-baseline.json` mis à jour. Jamais automatique, jamais depuis
 la CI — geste délibéré après une vraie correction.
+
+**Piège vérifié** : `--update-baseline` régénère TOUT le fichier depuis un
+scan frais (pas d'ajout incrémental) — un lot de correction sur un motif
+fait donc apparaître dans le diff toute dérive silencieuse des AUTRES
+motifs depuis la dernière régénération (comptes qui auraient dû baisser
+suite à une correction antérieure jamais suivie de cette procédure).
+Vérifié en pratique le 2026-08-13 : plusieurs fichiers de
+`components/dashboard/talent` et `components/public/jobs` avaient des
+violations `bg-white`/`rounded-<taille>`/couleur déjà corrigées dans le code
+sans que la baseline n'ait jamais été régénérée pour le refléter. Un diff de
+baseline qui ne touche QUE des baisses (jamais des hausses) sur des motifs
+non concernés par le lot en cours est donc attendu et sain — à vérifier motif
+par motif avant de committer (jamais une hausse non expliquée), pas à
+supposer suspect par défaut.
 
 **Interdiction formelle** : ne jamais élargir la baseline ni l'allowlist pour
 faire passer une CI rouge. Ce garde-fou existe précisément pour empêcher
