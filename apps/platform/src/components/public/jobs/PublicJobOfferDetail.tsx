@@ -252,11 +252,17 @@ export function PublicJobOfferDetail({
         </ProfileShell>
       </div>
 
-      {/* Barre collante : ancree a bottom: var(--app-navpill-clearance)
-          (pas bottom:0 comme la maquette) pour ne jamais passer sous la nav
-          pill flottante (navpill.css, position:fixed;bottom:24px -- rapport
-          phase 0, feat/lot2-detail-restructure). Identique desktop/mobile,
-          remplace la colonne laterale + portail ci-dessus. */}
+      {/* Barre collante : ancrée à bottom: var(--app-navpill-clearance),
+          pas une valeur bottom-0 en dur. Cette page est rendue par
+          PublicShell (app-shell.css, .app-layout__main--no-navpill), qui
+          redéfinit le token à 0 dans tout son sous-arbre — la barre colle
+          donc au bord bas de l'écran, connecté ou visiteur (plus de nav
+          flottante sur PublicShell, décision Killian). Référence le token
+          plutôt qu'une valeur figée au cas où cette page serait un jour
+          rendue dans un gabarit qui réserve encore cet espace (AppShell,
+          où la nav flottante existe toujours le temps d'un lot séparé).
+          Identique desktop/mobile, remplace la colonne latérale + portail
+          ci-dessus. */}
       <div className="sticky bottom-[var(--app-navpill-clearance)] z-10 px-4">
         <div className="mx-auto flex w-full max-w-[800px] items-center gap-4 rounded-pill bg-ink px-3 py-3 pl-6 text-white shadow-pop">
           <p className="min-w-0 flex-1 truncate font-display text-base font-medium">

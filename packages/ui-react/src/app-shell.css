@@ -10,7 +10,22 @@
 
 @media (min-width: 1200px) {
   .app-layout__sidebar {
-    width: 260px;
+    /* Rail flottant desktop : slot qui centre horizontalement la pill (ni
+       bord à bord, ni pleine largeur) — remplace l'ancienne colonne 260px
+       bord-à-bord. VOLONTAIRE — écart assumé avec la maquette (décision
+       Killian, agrandissement "Option B") : Prototype desktop.dc.html L43
+       donne 116px de slot / 68px de bouton / 24px d'icône. Valeur retenue
+       ici : 160px de slot / 92px de bouton (voir --rail-btn-size) / 32px
+       d'icône (voir .rail-btn__icon svg). Ne pas "corriger" vers 116px en
+       pensant à une erreur de fidélité — c'est un choix produit délibéré. */
+    width: 160px;
+    display: flex;
+    justify-content: center;
+    /* align-items: flex-start (pas stretch, le défaut du flex parent
+       .app-layout__body) — sinon .main-rail est étiré à la hauteur du slot et
+       le sticky n'a plus de plage de défilement où "coller". */
+    align-items: flex-start;
+    padding: var(--space-6) 0;
   }
 }
 
@@ -73,22 +88,35 @@
 
   .main-rail {
     position: sticky;
-    top: var(--app-header-height);
+    /* top:var(--space-6), comme la maquette — vérifié contre le modèle de
+       scroll réel : .app-layout__sidebar est un cousin de .app-layout__content
+       (le scroller interne, overflow:auto), pas un descendant. Rien ne
+       défile jamais au niveau document (chaîne min-h-0/flex-1 depuis
+       apps/platform/.../AppShell.tsx + PublicShell.tsx jusqu'à
+       .app-layout__content, qui absorbe tout le débordement) : le sticky
+       n'a donc aucun scrollport où s'activer, top reste inerte aujourd'hui.
+       Si ce modèle change (page qui défile au niveau document), revoir ce
+       top pour compenser l'en-tête sticky top:0 (var(--app-header-height)). */
+    top: var(--space-6);
     left: auto;
     z-index: auto;
-    width: 100%;
-    height: calc(100vh - var(--app-header-height));
+    width: auto;
+    /* Garde-fou : le rail ne doit jamais forcer de défilement horizontal
+       même si un contenu interne calcule mal sa largeur. */
+    max-width: 100%;
+    height: auto;
+    max-height: calc(100vh - var(--app-header-height) - var(--space-6) * 2);
     transform: none;
-    box-shadow: none;
-    border-right: 1px solid var(--color-border);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-pop);
+    border-right: none;
+    border-radius: var(--radius-pill);
+    padding: var(--space-2);
+    overflow-y: auto;
   }
 
   .main-rail__head {
     display: none;
-  }
-
-  .sidebar-nav {
-    padding-top: 22px;
   }
 }
 
@@ -98,6 +126,19 @@
 
 .app-layout__main {
   min-width: 0;
+}
+
+/* PublicShell (public + compte) n'affiche plus de barre flottante en bas
+   d'écran (FloatingNavPill supprimée, décision Killian — voir
+   PublicShell.tsx) : redéfinit --app-navpill-clearance à 0 pour tout le
+   sous-arbre, sans toucher au token global (100px, tokens.css), toujours
+   utilisé par AppShell (dashboard) où la barre existe encore le temps d'un
+   lot séparé (reconstruction du composer de messages, voir RAPPORT).
+   Cascade automatiquement vers .app-layout__content ci-dessous,
+   home-feed.css et la barre collante de la page détail d'offre
+   (PublicJobOfferDetail.tsx) — pas besoin de les modifier individuellement. */
+.app-layout__main--no-navpill {
+  --app-navpill-clearance: 0;
 }
 
 .app-layout__content {
@@ -167,16 +208,13 @@
 }
 
 .app-header__brand {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
   font-family: var(--font-sans);
   font-weight: 700;
-  font-size: 24px;
+  font-size: 20px;
   letter-spacing: 0.02em;
   color: var(--color-neutral-900);
   text-decoration: none;
+  flex-shrink: 0;
 }
 
 .app-header__brand sup {
@@ -194,29 +232,24 @@
   gap: 14px;
 }
 
-.app-header__weather {
-  display: inline-flex;
+/* Cluster météo + heure — un seul élément centré, sans température affichée
+   (maquette Prototype desktop.dc.html L33). Centrage par position absolute
+   (immunisé aux largeurs asymétriques gauche/droite), même mécanisme que
+   .app-header__brand avant ce lot — voir RAPPORT pour le repositionnement. */
+.app-header__meta {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
   align-items: center;
-  gap: 6px;
+  gap: var(--space-3);
   color: var(--color-neutral-500);
   font-family: var(--font-display);
-  font-size: 14px;
-  font-weight: 500;
-  padding: 4px 10px;
-  border-radius: var(--radius-pill);
-  background: var(--color-panel);
+  font-size: 18px;
   cursor: default;
 }
 
-.app-header__weather-temp {
-  font-variant-numeric: tabular-nums;
-  color: var(--color-neutral-900);
-}
-
-.app-header__time {
-  font-family: var(--font-display);
-  font-size: 18px;
-  color: var(--color-neutral-500);
+.app-header__meta-time {
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;
 }
@@ -226,8 +259,8 @@
 }
 
 .app-header__avatar {
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   background: var(--color-panel-2);
   cursor: pointer;
@@ -456,47 +489,24 @@
   display: flex;
   flex: 1;
   flex-direction: column;
-  gap: 0;
+  /* var(--space-1) et overflow-y:auto (pas hidden) : depuis la suppression de
+     .sidebar-nav__body/.sidebar-nav__footer, .rail-btn est enfant direct —
+     sans ça le tiroir mobile (<1200px) colle les items entre eux et ne peut
+     plus défiler si le contenu dépasse. */
+  gap: var(--space-1);
   min-height: 0;
-  overflow: hidden;
+  overflow-y: auto;
   padding: 22px 25px;
 }
 
-.sidebar-nav__body {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  gap: 24px;
-  min-height: 0;
-  overflow-y: auto;
-}
-
-.sidebar-nav__footer {
-  flex-shrink: 0;
-  margin-top: auto;
-  padding-top: 16px;
-  border-top: 1px solid var(--color-border-soft);
-}
-
-.sidebar__section {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.sidebar__label {
-  font-size: 14px;
-  color: var(--color-neutral-500);
-  margin: 0 0 4px;
-}
-
-.sidebar__item {
+/* ---------- Rail — items (liste mobile pleine largeur -> capsule desktop) ---------- */
+.rail-btn {
   display: flex;
   align-items: center;
   gap: 12px;
   width: 100%;
   border: none;
-  border-radius: 14px;
+  border-radius: var(--radius-tile);
   padding: 10px 12px;
   margin: 0;
   color: var(--color-neutral-900);
@@ -509,55 +519,217 @@
   background: transparent;
 }
 
-.sidebar__item:hover {
+.rail-btn:hover {
   background: var(--color-panel);
 }
 
-.sidebar__item.is-active {
+.rail-btn.is-active {
   background: var(--color-panel);
-  box-shadow: inset 2px 0 0 var(--color-neutral-300);
   font-weight: 600;
 }
 
-.sidebar__item.is-disabled {
-  opacity: 0.55;
+.rail-btn.is-disabled {
+  color: var(--color-neutral-400);
   cursor: default;
   pointer-events: none;
 }
 
-.sidebar__item-soon {
-  flex-shrink: 0;
-  font-size: 10px;
-  font-weight: 500;
-  color: var(--color-neutral-400);
-}
-
-.sidebar__account-switcher {
+.rail-btn__icon {
   display: flex;
+  flex-shrink: 0;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  width: 100%;
-  border: none;
-  border-radius: 14px;
-  padding: 10px 12px;
-  margin: 0;
-  color: var(--color-neutral-900);
-  font-family: var(--font-display);
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 120ms ease;
-  background: transparent;
+  justify-content: center;
 }
 
-.sidebar__account-switcher:hover {
-  background: var(--color-panel);
-}
-
-.sidebar__account-switcher__label {
+.rail-btn__label {
   min-width: 0;
-  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rail-btn__badge {
+  flex-shrink: 0;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent);
+  color: var(--color-text-on-accent);
+  font-size: 10px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+}
+
+.rail-separator {
+  height: 1px;
+  margin: 4px 8px;
+  background: var(--color-border-soft);
+  border: none;
+}
+
+.rail-btn__avatar {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--color-ink);
+  color: var(--color-text-on-ink);
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.rail-btn__avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+@media (min-width: 1200px) {
+  /* padding:0 vivait auparavant dans un @media(1200px) plus haut dans ce
+     fichier (celui qui gère .main-rail) — la règle de base .sidebar-nav
+     (padding:22px 25px, plus bas dans ce fichier) le regagnait à chaque
+     fois en cascade (même spécificité, apparaît après). Regroupé ici, dans
+     le seul bloc @media qui vient APRÈS la règle de base. */
+  .sidebar-nav {
+    align-items: center;
+    padding: 0;
+  }
+
+  /* Capsule 68px : largeur figée localement (pas un token) pour dériver le
+     rayon des boutons d'extrémité — voir .rail-btn--cap-top/bottom. Pas de
+     padding : absent de la maquette (seul le conteneur .main-rail a
+     padding:var(--space-2)) — le centrage flex suffit à l'espacement
+     icône/libellé. min-width:0 : évite qu'un mot non sécable (ex.
+     "Confidentialité") ne force ce flex-item à s'élargir au-delà de sa
+     taille et fasse défiler le rail horizontalement — motif déjà rencontré
+     3 fois (dernier cas : .rail-separator, voir plus haut dans ce fichier).
+     VOLONTAIRE — 92px : écart assumé avec la maquette (68px), voir le
+     commentaire sur .app-layout__sidebar ci-dessus pour le détail des 3
+     valeurs retenues. */
+  .rail-btn {
+    --rail-btn-size: 92px;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+    width: var(--rail-btn-size);
+    min-width: 0;
+    min-height: var(--rail-btn-size);
+    padding: 0;
+    border-radius: var(--radius-card);
+    text-align: center;
+  }
+
+  /* VOLONTAIRE — 32px : écart assumé avec la maquette (24px), même décision
+     que .rail-btn ci-dessus. */
+  .rail-btn__icon svg {
+    width: 32px;
+    height: 32px;
+    /* VOLONTAIRE — 1.5 (demande Killian, traits jugés trop épais), ne
+       référence PAS --icon-stroke (1.75px, tokens.css) : ce token n'a aucun
+       consommateur JSX réel dans le dépôt (les seules règles qui le lisent,
+       .ibee-icon et svg.ibee-icon dans components.css, ne sont appliquées à
+       aucun composant) — les icônes du rail rendent avec le strokeWidth par
+       défaut de lucide-react (2), pas avec ce token. Surcharge locale scopée
+       au rail plutôt que modification du token global : signalé à Killian, à
+       trancher si le token doit être aligné sur 1.5 ou nettoyé (mort). */
+    stroke-width: 1.5;
+  }
+
+  .rail-btn__label {
+    max-width: 100%;
+    overflow: hidden;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    text-overflow: ellipsis;
+    white-space: normal;
+    /* VOLONTAIRE — --step-sm (14px) au lieu de --step-xs (12px), demandé par
+       Killian ("c'est trop petit") en plus de l'agrandissement Option B.
+       Reste un token de rôle existant, pas une valeur inventée. */
+    font-size: var(--step-sm);
+    line-height: var(--leading-sm);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+
+  /* VOLONTAIRE — écart assumé avec la maquette (min-width/hauteur 18px,
+     police 10px, .rail-btn__badge règle de base ci-dessus), demande Killian
+     ("trop petit") : 22px/22px, police --step-xs (12px, tokens.css) — cohérent
+     avec l'agrandissement du rail (bouton 92px, icônes 32px, libellés 14px,
+     voir commentaires .app-layout__sidebar/.rail-btn__icon svg ci-dessus).
+     À VALIDER visuellement par Killian. Pastilles factices (Recrutement,
+     Messages) : aucune donnée réelle derrière, voir RAPPORT. */
+  .rail-btn__badge {
+    position: absolute;
+    top: 2px;
+    right: 6px;
+    margin-left: 0;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 6px;
+    font-size: var(--step-xs);
+  }
+
+  .rail-btn {
+    position: relative;
+  }
+
+  /* Chevron retour (zone profile-web) : bouton court et isolé, pill pleine
+     (pas de capsule composite — voir la fiche maquette, le chevron n'est pas
+     visuellement lié aux items qui suivent car séparé par .rail-separator). */
+  .rail-btn--pill {
+    min-height: 44px;
+    border-radius: var(--radius-pill);
+  }
+
+  /* Premier/dernier bouton visuel d'une colonne rail continue (zone home :
+     Accueil en haut, Projet en bas ; zone profile-web : "À venir" en bas) —
+     VOLONTAIRE : 34px = calc(var(--rail-btn-size) / 2), aucun token de rayon
+     n'exprime ce demi-cercle de capsule (cas signalé en rapport, clause
+     d'escalade design.md — à formaliser en token si le motif se répète). */
+  .rail-btn--cap-top {
+    border-radius: calc(var(--rail-btn-size) / 2) calc(var(--rail-btn-size) / 2) var(--radius-card)
+      var(--radius-card);
+  }
+
+  .rail-btn--cap-bottom {
+    border-radius: var(--radius-card) var(--radius-card) calc(var(--rail-btn-size) / 2)
+      calc(var(--rail-btn-size) / 2);
+  }
+
+  /* PAS de width:100% ici : <hr> est display:block par défaut, sa largeur
+     "auto" remplit déjà le contenant moins ses marges (margin:4px 8px,
+     règle de base) — cumuler width:100% ET une marge horizontale ajoute
+     8px+8px AU-DELÀ de 100%, donc au-delà de la largeur du rail (68px) :
+     c'est cette règle, précise, qui causait le débordement horizontal
+     signalé — présent uniquement sur ProfileWebSidebar car .rail-separator
+     n'existe que là (aucun séparateur dans HomeSidebar/AccountSidebar). */
+
+  .rail-btn__avatar {
+    width: 26px;
+    height: 26px;
+  }
+
+  /* VOLONTAIRE — 40px (demande Killian) : cible l'avatar de
+     ProjectAccountSwitcher variant="rail" (ProfileWebSidebar — zone "profil
+     du projet" du rail, .rail-btn__avatar--lg), pas l'avatar de l'item
+     "Projet" de HomeSidebar (zone home, .rail-btn__avatar sans --lg,
+     26px ci-dessus, non touché ici). Les deux avatars restent donc
+     volontairement de tailles différentes — signalé à Killian. */
+  .rail-btn__avatar--lg {
+    width: 40px;
+    height: 40px;
+    font-size: 11px;
+  }
 }
 
 .project-account-switcher__chevron {
@@ -565,7 +737,7 @@
   transition: transform 0.22s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
-.sidebar__account-switcher.is-open .project-account-switcher__chevron,
+.rail-btn.is-open .project-account-switcher__chevron,
 .app-header__project.is-open .project-account-switcher__chevron {
   transform: rotate(180deg);
 }

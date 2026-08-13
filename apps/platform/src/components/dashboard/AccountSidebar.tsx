@@ -44,22 +44,19 @@ export function AccountSidebar() {
 
   return (
     <MainRail ariaLabel="Navigation compte personnel">
-      <div className="sidebar__section">
-        <p className="sidebar__label">Compte</p>
-        {accountItems.map((item) => renderItem(item))}
-      </div>
+      {accountItems.map((item) => renderItem(item))}
     </MainRail>
   )
 }
 
 function renderItem(item: SidebarItem) {
-  const className = `sidebar__item${item.isActive ? ' is-active' : ''}`
+  const className = `rail-btn${item.isActive ? ' is-active' : ''}`
   const content = (
     <>
-      <span className="sidebar__item-icon flex h-5 w-5 shrink-0 items-center justify-center">
+      <span className="rail-btn__icon" aria-hidden="true">
         {item.icon}
       </span>
-      <span className="sidebar__item-text truncate">{item.label}</span>
+      <span className="rail-btn__label">{item.label}</span>
     </>
   )
 
