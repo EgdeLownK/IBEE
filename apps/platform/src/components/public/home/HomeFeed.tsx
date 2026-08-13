@@ -1,11 +1,10 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { HomeFeedPage, HomeFeedPost, HomeFeedRow } from '@ibee/shared'
+import type { HomeFeedPage, HomeFeedRow } from '@ibee/shared'
 import { HomeFeedCard } from './HomeFeedCard'
 import { HomeFeedNewsRow } from './HomeFeedNewsRow'
 import { HomeFeedProfilesRow } from './HomeFeedProfilesRow'
-import { HomeFeedPreviewPanel } from './HomeFeedPreviewPanel'
 
 type Props = {
   initial: HomeFeedPage
@@ -32,96 +31,12 @@ function mergeRows(current: HomeFeedRow[], incoming: HomeFeedRow[]) {
   return next
 }
 
-function findFirstPost(rows: HomeFeedRow[]): HomeFeedPost | null {
-  const row = rows.find(
-    (item): item is Extract<HomeFeedRow, { type: 'post' }> => item.type === 'post',
-  )
-  return row?.post ?? null
-}
-
-function isSamePost(a: HomeFeedPost | null, b: HomeFeedPost | null) {
-  if (!a || !b) return false
-  return a.kind === b.kind && a.id === b.id
-}
-
 export function HomeFeed({ initial }: Props) {
   const [rows, setRows] = useState<HomeFeedRow[]>(initial.rows)
   const [cursor, setCursor] = useState<string | null>(initial.nextCursor)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [isDesktop, setIsDesktop] = useState(false)
-  const [selectedPost, setSelectedPost] = useState<HomeFeedPost | null>(null)
   const sentinelRef = useRef<HTMLDivElement | null>(null)
-  const previewSlotRef = useRef<HTMLDivElement | null>(null)
-  const [previewFixedRect, setPreviewFixedRect] = useState<{
-    top: number
-    left: number
-    width: number
-    height: number
-  } | null>(null)
-
-  const syncPreviewRect = useCallback(() => {
-    const slot = previewSlotRef.current
-    if (!slot) {
-      setPreviewFixedRect(null)
-      return
-    }
-    const rect = slot.getBoundingClientRect()
-    setPreviewFixedRect({
-      top: rect.top,
-      left: rect.left,
-      width: rect.width,
-      height: rect.height,
-    })
-  }, [])
-
-  useEffect(() => {
-    const mq = window.matchMedia('(min-width: 768px)')
-    const update = () => setIsDesktop(mq.matches)
-    update()
-    mq.addEventListener('change', update)
-    return () => mq.removeEventListener('change', update)
-  }, [])
-
-  useEffect(() => {
-    if (!isDesktop) {
-      setSelectedPost(null)
-      return
-    }
-    const first = findFirstPost(rows)
-    if (!first) {
-      setSelectedPost(null)
-      return
-    }
-    setSelectedPost((current) => {
-      if (!current) return first
-      const stillVisible = rows.some(
-        (row) =>
-          row.type === 'post' && row.post.kind === current.kind && row.post.id === current.id,
-      )
-      return stillVisible ? current : first
-    })
-  }, [isDesktop, rows])
-
-  useEffect(() => {
-    if (!isDesktop) {
-      setPreviewFixedRect(null)
-      return
-    }
-
-    syncPreviewRect()
-    const slot = previewSlotRef.current
-    if (!slot) return
-
-    const observer = new ResizeObserver(() => syncPreviewRect())
-    observer.observe(slot)
-
-    window.addEventListener('resize', syncPreviewRect)
-    return () => {
-      observer.disconnect()
-      window.removeEventListener('resize', syncPreviewRect)
-    }
-  }, [isDesktop, syncPreviewRect])
 
   const loadMore = useCallback(async () => {
     if (!cursor || loading) return
@@ -170,15 +85,14 @@ export function HomeFeed({ initial }: Props) {
         ) : (
           rows.map((row, index) => {
             if (row.type === 'post') {
-              return (
-                <HomeFeedCard
-                  key={`${row.post.kind}-${row.post.id}`}
-                  post={row.post}
-                  isDesktop={isDesktop}
-                  isSelected={isDesktop && isSamePost(selectedPost, row.post)}
-                  onSelect={setSelectedPost}
-                />
-              )
+              // VOLONTAIRE — pas de isDesktop/isSelected/onSelect : le panneau
+              // d'aperçu desktop en iframe (HomeFeedPreviewPanel) est abandonné
+              // (décision Killian, mission enveloppe accueil). HomeFeedCard
+              // n'est pas modifié (hors scope) — ses props par défaut
+              // (isDesktop=false) suffisent à retrouver le comportement de la
+              // maquette : clic = navigation directe vers l'offre, identique
+              // mobile/desktop, sans état de sélection.
+              return <HomeFeedCard key={`${row.post.kind}-${row.post.id}`} post={row.post} />
             }
             if (row.type === 'news') {
               return <HomeFeedNewsRow key={`news-${index}`} items={row.items} />
@@ -196,19 +110,14 @@ export function HomeFeed({ initial }: Props) {
 
   return (
     <main className="home-feed-layout">
-      <div className="home-feed-layout__cluster">
-        {feedColumn}
-        {isDesktop ? (
-          <div
-            ref={previewSlotRef}
-            className="home-feed-preview home-feed-preview--slot"
-            aria-hidden="true"
-          />
-        ) : null}
-      </div>
-      {isDesktop && previewFixedRect ? (
-        <HomeFeedPreviewPanel post={selectedPost} fixedRect={previewFixedRect} />
-      ) : null}
+      {/* .home-feed-layout__cluster : SIGNALÉ, pas supprimé — enveloppait
+          jusqu'ici {feedColumn} + le slot du panneau d'aperçu iframe
+          (abandonné, décision Killian). Ne wrappe plus qu'un seul enfant,
+          devenue une coquille sans rôle de mise en page à 2 colonnes ; son
+          CSS (packages/ui-react/src/home-feed.css) n'est pas retiré non
+          plus, même remarque. Retrait formel = décision produit distincte,
+          pas prise ici. */}
+      <div className="home-feed-layout__cluster">{feedColumn}</div>
     </main>
   )
 }
