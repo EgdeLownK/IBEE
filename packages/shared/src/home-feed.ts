@@ -5,6 +5,15 @@ export type HomeFeedEntity = {
   slug: string
   displayName: string
   avatarUrl: string | null
+  /** entity.location (colonne réelle, nullable) — pas propre au recrutement,
+   *  utilisable par les 4 types de carte du flux. */
+  location: string | null
+}
+
+/** Aptitude demandée sur une offre (entity_job_offer_skills → job_skills.label). */
+export type HomeFeedSkill = {
+  id: string
+  label: string
 }
 
 export type HomeFeedPost = {
@@ -21,6 +30,15 @@ export type HomeFeedPost = {
   currency: string
   viewCount: number
   productType?: 'physical' | 'digital'
+  /** Réservé au futur kind 'offre' (mission data ultérieure) : produits,
+   *  événements et services n'ont structurellement aucune ligne
+   *  entity_job_offer_skills (FK scopée à entity_job_offers.id), ce champ
+   *  reste donc toujours absent pour eux. Motif de jointure sans requête
+   *  par carte déjà en place : packages/supabase/src/project-talent.ts,
+   *  getProjectJobOffer — '*, entity_job_offer_skills(offer_id, skill_id,
+   *  display_order, created_at, job_skills(id, label))', à réutiliser tel
+   *  quel quand une fonction de fetch d'offres sera ajoutée à home-feed.ts. */
+  skills?: HomeFeedSkill[]
 }
 
 export type HomeFeedNewsItem = {
@@ -97,4 +115,57 @@ export function getHomeFeedDetailPreviewPath(post: HomeFeedPost): string {
   const segments = post.href.split('/').filter(Boolean)
   const itemSlug = segments[segments.length - 1]
   return `/feed-detail/${post.entity.slug}/${section}/${itemSlug}`
+}
+
+/**
+ * Initiales à 2 lettres d'un nom d'entité (repli avatar), fidèle à la
+ * maquette accueil ("Atelier Grézan" → "AG"). Extrait de la fonction
+ * `initials` locale à MessagesChatPanel.tsx (dupliquée par ailleurs dans
+ * HomeSidebar.tsx/ProjectAccountSwitcher.tsx en version 1 lettre, non
+ * concernées ici) — seule HomeFeedCard.tsx est migrée vers cette version
+ * partagée dans cette mission, les autres copies existantes restent en
+ * l'état (hors périmètre accueil, signalé au rapport).
+ */
+export function formatFeedEntityInitials(name: string): string {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? '')
+    .join('')
+}
+
+/**
+ * Ancienneté relative en français ("il y a 2 heures", "hier", "il y a 3
+ * jours"), au-delà de 7 jours une date courte ("13 août"). Même logique que
+ * `formatNotifDate` (GlobalHeader.tsx, non partagée) plutôt qu'un nouveau
+ * format inventé. VOLONTAIRE — mots entiers ("heures"), pas l'abréviation
+ * "h" de la maquette (Prototype desktop.dc.html : "il y a 2 h") : aligné sur
+ * le seul autre endroit de l'app qui formate déjà une ancienneté relative,
+ * à valider visuellement par Killian si l'abréviation est préférée.
+ */
+export function formatFeedAge(sortAt: string, now: Date = new Date()): string {
+  const date = new Date(sortAt)
+  const diffMs = now.getTime() - date.getTime()
+  const sevenDays = 7 * 24 * 60 * 60 * 1000
+  if (diffMs < sevenDays) {
+    const rtf = new Intl.RelativeTimeFormat('fr', { numeric: 'auto' })
+    const diffMin = Math.round(diffMs / 60000)
+    if (diffMin < 60) return rtf.format(-diffMin, 'minute')
+    const diffH = Math.round(diffMin / 60)
+    if (diffH < 24) return rtf.format(-diffH, 'hour')
+    return rtf.format(-Math.round(diffH / 24), 'day')
+  }
+  return new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long' }).format(date)
+}
+
+/**
+ * Ligne de contexte "lieu · ancienneté" (maquette : "Bouillargues · il y a
+ * 2 h", segment distance "· 9 km" omis — décision Killian, aucune
+ * géolocalisation réelle). Lieu absent (entity.location null) → ancienneté
+ * seule, sans séparateur orphelin (aucune valeur de repli inventée).
+ */
+export function formatFeedContextLine(location: string | null, sortAt: string, now?: Date): string {
+  const age = formatFeedAge(sortAt, now)
+  return location ? `${location} · ${age}` : age
 }

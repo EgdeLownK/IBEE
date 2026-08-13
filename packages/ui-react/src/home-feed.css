@@ -111,11 +111,12 @@
   height: 1px;
 }
 
-/* ---------- Carte post principale ---------- */
+/* ---------- Carte post principale (Prototype desktop.dc.html / Prototype
+   mobile.dc.html, zone isHome — mission cartes accueil) ---------- */
 .home-feed-card {
   background: var(--color-surface);
-  border: 1px solid var(--color-border-soft);
-  border-radius: 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
   overflow: hidden;
   cursor: pointer;
   box-shadow: var(--shadow-sm);
@@ -124,17 +125,11 @@
     box-shadow 0.15s ease;
 }
 
-.home-feed-card.is-selected {
-  border-color: var(--color-accent);
-  box-shadow: 0 0 0 1px var(--color-accent);
-}
-
+/* .home-feed-card__head/__author/__avatar/__author-name : valeurs mobile
+   (règle de base) ; le palier desktop (768px, seuil laissé tel quel —
+   mission enveloppe) ajuste avatar/paddings plus bas dans ce fichier. */
 .home-feed-card__head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 12px 14px;
+  padding: 12px 13px;
 }
 
 .home-feed-card__author {
@@ -149,16 +144,22 @@
 .home-feed-card__avatar {
   width: 36px;
   height: 36px;
-  border-radius: 50%;
+  border-radius: var(--radius-pill);
   overflow: hidden;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--color-panel-2);
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--color-accent);
+  /* VOLONTAIRE — --color-slate-200/--color-slate-500 (fond/texte de repli
+     avatar) : ces tokens existent dans tokens.css mais n'avaient aucun
+     usage réel ailleurs dans le dépôt avant cette mission (voir
+     .claude/rules/design.md, "0 usage réel vérifié"). Cette carte en
+     devient donc la première consommatrice effective — ils font désormais
+     référence pour un fond sombre neutre de ce type, choix délibéré
+     (Killian), pas un effet de bord. */
+  background: var(--color-slate-200);
+  color: var(--color-slate-500);
+  font: var(--weight-semibold) 12px/1 var(--font-display);
 }
 
 .home-feed-card__avatar img {
@@ -167,57 +168,199 @@
   object-fit: cover;
 }
 
-.home-feed-card__author-name {
-  font-family: var(--font-display);
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--color-neutral-900);
+/* Empile nom + ligne de contexte (lieu · ancienneté) à droite de l'avatar —
+   min-width:0 obligatoire (piège connu : un enfant flex sans min-width:0
+   déborde son ancêtre, .home-feed-card__author ci-dessus est le flex row
+   parent). */
+.home-feed-card__author-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
-.home-feed-card__badge {
-  flex-shrink: 0;
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: var(--color-panel);
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--color-neutral-600);
+.home-feed-card__author-name {
+  font: var(--weight-semibold) var(--step-sm)/1.3 var(--font-display);
+  color: var(--color-text);
+}
+
+/* Ligne "lieu · ancienneté" (distance omise — aucune géolocalisation
+   réelle, décision Killian). Absente de repli inventé : lieu manquant =
+   ancienneté seule (voir formatFeedContextLine, @ibee/shared). */
+.home-feed-card__context {
+  display: block;
+  font: var(--type-caption);
+  color: var(--color-text-muted);
+  margin-top: 2px;
 }
 
 .home-feed-card__media {
   position: relative;
   width: 100%;
   aspect-ratio: 1 / 1;
-  background: var(--color-panel-2);
+  /* Même piège que le carrousel News (commentaire plus haut dans ce
+     fichier) : cet élément N'EST PAS un item flex ici (enfant direct de
+     .home-feed-card, display:block par défaut), donc pas concerné — mais
+     display:flex est ajouté ci-dessous pour positionner le bandeau de
+     superposition en bas, d'où overflow:hidden + position:relative posés
+     par prudence dès maintenant plutôt qu'après un bug identique. */
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+  padding: 14px;
+  background: var(--color-slate-700);
 }
 
-.home-feed-card__media img {
-  display: block;
+.home-feed-card__media-img {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.home-feed-card__body {
-  padding: 12px 14px 0;
+/* Repli "sans image" (carte sans photo) : aucune donnée inventée, seule une
+   icône générique remplace le fond photo — même traitement que la maquette
+   (icône image, blanc à 30% d'opacité via color-mix, pas de rgba() en dur). */
+.home-feed-card__media-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: color-mix(in srgb, var(--color-surface) 30%, transparent);
 }
 
+/* Dégradé bas-de-carte pour la lisibilité du texte blanc superposé.
+   rgb(23 41 61) de la maquette = var(--color-ink) exactement (#17293d) :
+   color-mix() reproduit l'opacité .78 sans rgba() en dur (même motif que
+   navpill.css, .navpill-composer__input-attach:hover). */
+.home-feed-card__gradient {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 64%;
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--color-ink) 78%, transparent),
+    transparent
+  );
+}
+
+.home-feed-card__overlay {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px;
+  width: 100%;
+}
+
+/* min-width:0 obligatoire (piège connu, titre long — voir VÉRIFICATION
+   NAVIGATEUR du rapport) : sans lui, un titre long pousse le bouton hors
+   carte au lieu de passer à la ligne. */
+.home-feed-card__overlay-text {
+  min-width: 0;
+  flex: 1;
+}
+
+.home-feed-card__badge {
+  display: block;
+  font: var(--weight-medium) 11px/1.2 var(--font-display);
+  letter-spacing: 0.06em;
+  color: color-mix(in srgb, var(--color-surface) 75%, transparent);
+  margin-bottom: 5px;
+}
+
+/* Ligne-clamp à 2 : absent de la maquette (son titre exemple tient sur une
+   ligne), ajouté pour borner la hauteur d'un titre long — signalé au
+   rapport, à valider visuellement. */
 .home-feed-card__title {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
   margin: 0;
-  font-family: var(--font-display);
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--color-neutral-900);
-  line-height: 1.35;
+  font: var(--weight-semibold) var(--step-lg)/1.25 var(--font-display);
+  color: var(--color-surface);
+}
+
+/* Bouton "Rejoindre"/CTA incrusté — classe dédiée hors système .btn, même
+   convention que .job-row__cta (profile-styles.css) : un CTA de carte
+   d'offre n'a jamais réutilisé .btn dans ce dépôt, pas de raison de
+   commencer ici. */
+.home-feed-card__join {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font: var(--weight-semibold) var(--step-sm)/1 var(--font-display);
+  text-decoration: none;
+}
+
+.home-feed-card__join:hover {
+  opacity: 0.92;
+}
+
+.home-feed-card__body {
+  padding: 12px 13px 0;
 }
 
 .home-feed-card__price {
-  margin: 6px 0 0;
+  margin: 0;
   font-size: 15px;
   font-weight: 600;
   color: var(--color-neutral-800);
 }
 
+/* Bloc "DEMANDÉ DANS L'OFFRE" — ne s'affiche aujourd'hui sur AUCUNE carte :
+   produits/services/événements n'ont structurellement aucune ligne
+   entity_job_offer_skills (voir HomeFeedPost.skills, @ibee/shared). Codé et
+   stylé pour le futur kind offre, non observable avec les données actuelles
+   du flux (signalé au rapport, pas un défaut). */
+.home-feed-card__skills {
+  padding: 12px 13px;
+  border-top: 1px solid var(--color-border-soft);
+  background: var(--color-panel);
+}
+
+.home-feed-card__skills-label {
+  display: block;
+  font: var(--weight-medium) 10px/1.4 var(--font-display);
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+  margin-bottom: 8px;
+}
+
+.home-feed-card__skills-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-height: 56px;
+  overflow: hidden;
+}
+
+.home-feed-card__skill {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 10px;
+  border-radius: var(--radius-chip);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  font: var(--weight-medium) 11px/1.2 var(--font-display);
+}
+
+/* ---------- Orphelines : HomeFeedActionBar.tsx n'est plus importé par
+   HomeFeedCard.tsx (remplacé par .home-feed-card__join incrusté sur
+   l'image, ci-dessus) mais le fichier composant n'est PAS supprimé (même
+   motif que HomeFeedPreviewPanel.tsx, mission enveloppe accueil) — son
+   propre JSX référence toujours ces classes. Conservées à l'identique pour
+   ne pas le laisser sans style s'il était un jour réimporté ; retrait
+   formel = décision distincte, pas prise ici. ---------- */
 .home-feed-card__actions {
   display: flex;
   align-items: center;
@@ -475,6 +618,48 @@
      qu'ils restent dans le flux. */
   .home-feed-row {
     grid-column: 1 / -1;
+  }
+
+  /* Carte du flux (Prototype desktop.dc.html, zone isHome) : valeurs
+     desktop exactes, remplacent les valeurs mobile de la règle de base
+     plus haut dans ce fichier. */
+  .home-feed-card__head {
+    padding: 13px 14px;
+  }
+
+  .home-feed-card__avatar {
+    width: 38px;
+    height: 38px;
+    font-size: 13px;
+  }
+
+  .home-feed-card__media {
+    padding: 16px;
+  }
+
+  .home-feed-card__title {
+    font-size: var(--step-xl);
+  }
+
+  .home-feed-card__join {
+    height: 38px;
+    padding: 0 16px;
+  }
+
+  .home-feed-card__body {
+    padding: 13px 14px 0;
+  }
+
+  .home-feed-card__skills {
+    padding: 13px 14px;
+  }
+
+  .home-feed-card__skills-list {
+    max-height: 58px;
+  }
+
+  .home-feed-card__skill {
+    padding: 5px 11px;
   }
 
   .home-feed-preview {

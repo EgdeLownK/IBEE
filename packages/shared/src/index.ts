@@ -156,10 +156,14 @@ export {
   compareHomeFeedPosts,
   isHomeFeedPostBeforeCursor,
   getHomeFeedDetailPreviewPath,
+  formatFeedEntityInitials,
+  formatFeedAge,
+  formatFeedContextLine,
 } from './home-feed'
 export type {
   HomeFeedPostKind,
   HomeFeedEntity,
+  HomeFeedSkill,
   HomeFeedPost,
   HomeFeedNewsItem,
   HomeFeedProfile,
