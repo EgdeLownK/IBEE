@@ -5,7 +5,6 @@ import { usePathname } from 'next/navigation'
 import type { AccountShellData } from '@/lib/account-shell-data'
 import { getNavZone, isPublicChromelessPath, shouldShowSidebar } from '@/lib/nav-zone'
 import { GlobalHeader } from '@/components/dashboard/GlobalHeader'
-import { FloatingNavPill } from '@/components/dashboard/FloatingNavPill'
 import { ZoneSidebar } from '@/components/dashboard/ZoneSidebar'
 import { AccountContextProvider, useAccountContext } from '@/components/dashboard/AccountContext'
 
@@ -20,7 +19,6 @@ function PublicShellInner({ children, webUrl }: Omit<Props, 'accountData'>) {
   const { isPersonalMode, activeProject } = useAccountContext()
   const zone = getNavZone(pathname, isPersonalMode)
   const webProfileUrl = '/dashboard/site'
-  const webProfileActive = pathname === webProfileUrl || pathname.startsWith(`${webProfileUrl}/`)
   const showSidebar = shouldShowSidebar(zone, true)
   const contentClassName =
     pathname === '/' ? 'app-layout__content app-layout__content--home-feed' : 'app-layout__content'
@@ -38,15 +36,9 @@ function PublicShellInner({ children, webUrl }: Omit<Props, 'accountData'>) {
         {showSidebar ? <ZoneSidebar /> : null}
         <main
           id="main-content"
-          className="app-layout__main relative flex min-h-0 min-w-0 flex-1 flex-col"
+          className="app-layout__main app-layout__main--no-navpill relative flex min-h-0 min-w-0 flex-1 flex-col"
         >
           <div className={contentClassName}>{children}</div>
-          <FloatingNavPill
-            webProfileUrl={webProfileUrl}
-            webProfileActive={webProfileActive}
-            currentPath={pathname}
-            isAuthenticated
-          />
         </main>
       </div>
     </div>
@@ -91,7 +83,7 @@ export function PublicShell({ children, accountData, webUrl }: Props) {
       <div className="app-layout__body flex min-h-0 flex-1">
         <main
           id="main-content"
-          className="app-layout__main relative flex min-h-0 min-w-0 flex-1 flex-col"
+          className="app-layout__main app-layout__main--no-navpill relative flex min-h-0 min-w-0 flex-1 flex-col"
         >
           <div
             className={
@@ -102,13 +94,6 @@ export function PublicShell({ children, accountData, webUrl }: Props) {
           >
             {children}
           </div>
-          <FloatingNavPill
-            webProfileUrl="/login"
-            webProfileActive={false}
-            currentPath={pathname}
-            isAuthenticated={false}
-            loginUrl="/login"
-          />
         </main>
       </div>
     </div>

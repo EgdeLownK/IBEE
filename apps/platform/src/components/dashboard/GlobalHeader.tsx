@@ -119,11 +119,11 @@ function GuestGlobalHeader({ loginUrl = '/login' }: Pick<Props, 'loginUrl'>) {
       </div>
 
       <div className="app-header__right">
-        <a
-          href={loginUrl}
-          className="inline-flex items-center rounded-full border border-neutral-200 bg-surface px-4 py-1.5 text-sm font-medium text-neutral-900 transition-colors hover:bg-panel-2"
-        >
+        <a href={loginUrl} className="btn btn--ghost btn--sm">
           Se connecter
+        </a>
+        <a href={loginUrl} className="btn btn--accent btn--sm">
+          S&apos;inscrire
         </a>
       </div>
     </header>

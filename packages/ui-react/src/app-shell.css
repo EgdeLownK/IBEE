@@ -128,6 +128,19 @@
   min-width: 0;
 }
 
+/* PublicShell (public + compte) n'affiche plus de barre flottante en bas
+   d'écran (FloatingNavPill supprimée, décision Killian — voir
+   PublicShell.tsx) : redéfinit --app-navpill-clearance à 0 pour tout le
+   sous-arbre, sans toucher au token global (100px, tokens.css), toujours
+   utilisé par AppShell (dashboard) où la barre existe encore le temps d'un
+   lot séparé (reconstruction du composer de messages, voir RAPPORT).
+   Cascade automatiquement vers .app-layout__content ci-dessous,
+   home-feed.css et la barre collante de la page détail d'offre
+   (PublicJobOfferDetail.tsx) — pas besoin de les modifier individuellement. */
+.app-layout__main--no-navpill {
+  --app-navpill-clearance: 0;
+}
+
 .app-layout__content {
   display: flex;
   flex-direction: column;
