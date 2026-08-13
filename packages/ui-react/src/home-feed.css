@@ -333,15 +333,18 @@
   color: var(--color-neutral-800);
 }
 
-/* Bloc "DEMANDÉ DANS L'OFFRE" — ne s'affiche aujourd'hui sur AUCUNE carte :
-   produits/services/événements n'ont structurellement aucune ligne
-   entity_job_offer_skills (voir HomeFeedPost.skills, @ibee/shared). Codé et
-   stylé pour le futur kind offre, non observable avec les données actuelles
-   du flux (signalé au rapport, pas un défaut). */
+/* Bloc "DEMANDÉ DANS L'OFFRE" — actif pour de vrai depuis la mission accueil
+   #3 (filtrage, offres réelles avec aptitudes en base). */
 .home-feed-card__skills {
   padding: 12px 13px;
   border-top: 1px solid var(--color-border-soft);
-  background: var(--color-panel);
+  /* VOLONTAIRE — ÉCART ASSUMÉ avec la maquette (décision Killian, vérif
+     navigateur post-mission #3) : --color-surface (blanc) au lieu de
+     --color-panel d'origine. Le corps de la carte (.home-feed-card,
+     ligne ~129) est déjà --color-surface — ce bloc se fond donc désormais
+     dans le corps, séparation portée uniquement par le border-top
+     ci-dessus. */
+  background: var(--color-surface);
 }
 
 .home-feed-card__skills-label {
@@ -475,7 +478,12 @@
 
 /* News */
 .home-feed-news-card {
-  flex: 0 0 200px;
+  /* VOLONTAIRE — 300px, pas 200px (demande Killian, vignettes trop petites en
+     vérif navigateur) : +50%, ratio 1/1 inchangé. .home-feed-row__track
+     (overflow-x:auto, scroll-snap-type:x) n'a aucune largeur fixe qui en
+     dépendait — élargir la carte n'affecte ni le défilement ni le mobile
+     (pas de media query dédiée à cette largeur). */
+  flex: 0 0 300px;
   scroll-snap-align: start;
   display: flex;
   flex-direction: column;
@@ -489,8 +497,9 @@
 
 .home-feed-news-card__media {
   /* VOLONTAIRE — 1/1 au lieu de 4/5 (demande Killian) : uniquement le ratio
-     change ici, largeur de vignette (.home-feed-news-card, flex:0 0 200px
-     ci-dessus), défilement, espacements et titres restent tels quels.
+     change ici, largeur de vignette (.home-feed-news-card, flex:0 0 300px
+     ci-dessus — passée de 200 à 300px dans une mission ultérieure, voir sa
+     propre note), défilement, espacements et titres restent tels quels.
      Carrousel transitoire — disparaît quand l'accueil devient purement
      recrutement (correctif assumé sur du code voué à disparaître).
      position:relative + overflow:hidden ne sont PAS cosmétiques : cet
