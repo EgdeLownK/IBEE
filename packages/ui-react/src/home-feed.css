@@ -328,7 +328,12 @@
 }
 
 .home-feed-news-card__media {
-  aspect-ratio: 4 / 5;
+  /* VOLONTAIRE — 1/1 au lieu de 4/5 (demande Killian) : uniquement le ratio
+     change ici, largeur de vignette (.home-feed-news-card, flex:0 0 200px
+     ci-dessus), défilement, espacements et titres restent tels quels.
+     Carrousel transitoire — disparaît quand l'accueil devient purement
+     recrutement (correctif assumé sur du code voué à disparaître). */
+  aspect-ratio: 1 / 1;
   background: var(--color-panel-2);
 }
 

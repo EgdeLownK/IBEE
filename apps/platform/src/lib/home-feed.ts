@@ -314,7 +314,15 @@ function buildFeedRows(
 
     if (!includeCarousels) return
 
-    if (!newsInserted && index === 2 && news.length > 0) {
+    // VOLONTAIRE — index 3 (4 cartes), pas 2 (3 cartes) : le flux accueil
+    // est une grille 2 colonnes en desktop (home-feed.css, mission enveloppe
+    // accueil) ; un carrousel pleine largeur inséré après un nombre IMPAIR
+    // de cartes laisse une case vide sur la rangée précédente (rapport
+    // vérif navigateur, Killian). 4 est pair, et l'écart jusqu'au
+    // déclencheur profils ci-dessous (index 5) reste pair (5 − 3 = 2) : un
+    // seul changement corrige les deux trous, aucune retouche du
+    // déclencheur profils nécessaire.
+    if (!newsInserted && index === 3 && news.length > 0) {
       rows.push({ type: 'news', items: news })
       newsInserted = true
     }
@@ -326,14 +334,32 @@ function buildFeedRows(
 
   if (includeCarousels) {
     if (!newsInserted && news.length > 0) {
-      rows.splice(Math.min(3, rows.length), 0, { type: 'news', items: news })
+      insertCarouselKeepingParity(rows, { type: 'news', items: news })
     }
     if (!profilesInserted && profiles.length > 0) {
-      rows.push({ type: 'profiles', items: profiles })
+      insertCarouselKeepingParity(rows, { type: 'profiles', items: profiles })
     }
   }
 
   return rows
+}
+
+/**
+ * Cas de repli : moins de cartes au total que ce qu'il faut pour atteindre
+ * un déclencheur ci-dessus (index 3 ou 5) — insère quand même le carrousel
+ * en fin de flux, sans casser la parité de la grille 2 colonnes desktop
+ * (home-feed.css). Compte les cartes consécutives en toute fin de tableau
+ * (depuis le dernier carrousel, ou depuis le début) : si ce nombre est pair,
+ * le carrousel s'ajoute normalement après elles ; s'il est impair, il se
+ * place juste AVANT la dernière carte plutôt qu'après elle — cette carte se
+ * retrouve alors seule en TOUTE fin de flux, seul cas de carte orpheline
+ * accepté par Killian (contrairement à un trou en milieu de grille).
+ */
+function insertCarouselKeepingParity(rows: HomeFeedRow[], row: HomeFeedRow) {
+  let trailingPosts = 0
+  for (let i = rows.length - 1; i >= 0 && rows[i].type === 'post'; i--) trailingPosts++
+  const insertAt = trailingPosts % 2 === 0 ? rows.length : rows.length - 1
+  rows.splice(insertAt, 0, row)
 }
 
 export async function getHomeFeedPage(
