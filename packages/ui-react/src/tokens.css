@@ -175,20 +175,29 @@
   --weight-medium: 500;
   --weight-semibold: 600;
 
-  --step-4xl: 36px;
+  /* VOLONTAIRE — échelle remontée d'un cran (décision Killian, 2026-08-13,
+     rapport "échelle typographique — remontée d'un cran") : facteur
+     multiplicatif uniforme ~+10-12% par palier, arrondi à l'entier lisible
+     le plus proche, PAS un décalage de rang (qui aurait écrasé la
+     différenciation déjà mince entre xs/sm/md — alternative écartée,
+     rapport phase 0). Valeurs d'origine gelées en commentaire pour mémoire :
+     4xl 36→40, 2xl 24→27, xl 20→22, lg 16→18, md 15→16, sm 14→15, xs 12→13.
+     Interlignage et tracking (leading/tracking ci-dessous) inchangés (hors
+     périmètre de cette mission). */
+  --step-4xl: 40px;
   --leading-4xl: 1.1;
   --tracking-4xl: -0.025em;
-  --step-2xl: 24px;
+  --step-2xl: 27px;
   --leading-2xl: 1.2;
-  --step-xl: 20px;
+  --step-xl: 22px;
   --leading-xl: 1.3;
-  --step-lg: 16px;
+  --step-lg: 18px;
   --leading-lg: 1.6;
-  --step-md: 15px;
+  --step-md: 16px;
   --leading-md: 1.6;
-  --step-sm: 14px;
+  --step-sm: 15px;
   --leading-sm: 1.5;
-  --step-xs: 12px;
+  --step-xs: 13px;
   --leading-xs: 1.4;
   --tracking-xs: 0.02em;
 
