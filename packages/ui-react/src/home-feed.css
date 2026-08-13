@@ -14,6 +14,13 @@
   overflow-y: auto;
 }
 
+/* .home-feed-layout__cluster : ORPHELINE — servait à poser {feedColumn} et
+   le slot du panneau d'aperçu iframe côte à côte (flex-direction:row en
+   desktop, ci-dessous). Le panneau est abandonné (décision Killian, mission
+   enveloppe accueil) : ce sélecteur n'entoure plus qu'un seul enfant. Ses
+   règles ci-dessous (base + @media 768px) restent inertes mais correctes
+   (un flex à un seul enfant ne casse rien) — non retirées, signalées ici
+   plutôt que supprimées (voir HomeFeed.tsx). */
 .home-feed-layout__cluster {
   display: flex;
   flex-direction: column;
@@ -23,14 +30,23 @@
   width: 100%;
 }
 
+/* Colonne unique du flux (largeurs/espacements fidèles à Prototype
+   desktop.dc.html / Prototype mobile.dc.html, zone isHome — mission
+   "enveloppe accueil"). Mobile (base) : padding horizontal 16px + bas 20px,
+   gap 14px entre cartes — valeurs maquette mobile exactes. Le padding-top
+   (16px) et le max-width (650px, hérité, pas de valeur maquette mobile
+   équivalente puisque le téléphone prototype n'a pas de plafond de largeur)
+   restent des choix de continuité, pas des mesures de la maquette : cette
+   mission ne construit pas la barre de recherche (Killian, décision 2) qui
+   occuperait normalement cet espace au-dessus des cartes. */
 .home-feed__inner {
   width: 100%;
   max-width: 650px;
   margin: 0 auto;
-  padding: 16px 0 calc(16px + var(--app-navpill-clearance));
+  padding: 16px 16px 20px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 14px;
 }
 
 .home-feed-preview {
@@ -312,7 +328,23 @@
 }
 
 .home-feed-news-card__media {
-  aspect-ratio: 4 / 5;
+  /* VOLONTAIRE — 1/1 au lieu de 4/5 (demande Killian) : uniquement le ratio
+     change ici, largeur de vignette (.home-feed-news-card, flex:0 0 200px
+     ci-dessus), défilement, espacements et titres restent tels quels.
+     Carrousel transitoire — disparaît quand l'accueil devient purement
+     recrutement (correctif assumé sur du code voué à disparaître).
+     position:relative + overflow:hidden ne sont PAS cosmétiques : cet
+     élément est un item flex (.home-feed-news-card, flex-direction:column,
+     ci-dessous) — sans overflow différent de visible, sa "taille minimale
+     automatique" (CSS Flexbox) se cale sur le ratio INTRINSÈQUE de l'image
+     plutôt que sur aspect-ratio dès que ce ratio est portrait (image plus
+     haute que large), écrasant silencieusement le carré voulu. Vérifié en
+     DOM réel (getBoundingClientRect) : 247.5px de haut sans cette règle,
+     198px (carré) avec. .home-feed-card__media n'a jamais ce problème car
+     ce n'est pas un item flex — comparaison non transposable telle quelle. */
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 1 / 1;
   background: var(--color-panel-2);
 }
 
@@ -398,6 +430,9 @@
     overflow: hidden;
   }
 
+  /* Inerte depuis l'abandon du panneau d'aperçu (voir commentaire sur le
+     sélecteur de base ci-dessus) : un seul enfant flex, ce bloc ne fait plus
+     que réserver une largeur max de 1300px, sans effet visible au-delà. */
   .home-feed-layout__cluster {
     flex-direction: row;
     flex: 0 1 auto;
@@ -406,17 +441,40 @@
     margin-inline: auto;
   }
 
+  /* Enveloppe extérieure (Prototype desktop.dc.html, zone isHome) :
+     padding:28px 32px 36px, colonne centrée — valeurs maquette exactes.
+     min-width:0 obligatoire (piège connu de ce dépôt : un enfant flex sans
+     min-width:0 déborde son ancêtre — voir .claude/rules, 4 bugs déjà
+     causés par son absence). */
   .home-feed-layout__feed {
-    flex: 1 1 650px;
-    max-width: 650px;
+    display: flex;
+    justify-content: center;
     min-width: 0;
-    padding-bottom: 0;
+    padding: 28px 32px 36px;
   }
 
+  /* Colonne de contenu (Prototype desktop.dc.html, zone isHome) :
+     max-width:910px, grille 2 colonnes gap:16px — valeurs maquette exactes.
+     Remplace le flex mono-colonne du mobile (règle de base ci-dessus). */
   .home-feed__inner {
+    width: 100%;
+    max-width: 910px;
     margin: 0;
-    max-width: none;
-    padding: 24px 16px 24px;
+    padding: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    align-items: start;
+  }
+
+  /* Les carrousels News/Profils occupent les 2 colonnes de la grille
+     ci-dessus : sans cette règle, ils seraient écrasés dans une seule
+     cellule de 1fr au lieu de leur défilement horizontal plein largeur.
+     La maquette ne montre ni l'un ni l'autre (signalé en rapport, mission
+     précédente) — règle défensive pour ne pas casser leur rendu tant
+     qu'ils restent dans le flux. */
+  .home-feed-row {
+    grid-column: 1 / -1;
   }
 
   .home-feed-preview {
